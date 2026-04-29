@@ -10,24 +10,25 @@ theme:
   # favicon: images/favicon.ico
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: blue
+      accent: blue
       toggle:
         icon: material/brightness-7
         name: 切换暗色模式
     - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: blue
+      accent: light-blue
       toggle:
         icon: material/brightness-4
         name: 切换亮色模式
   features:
-    # 顶部横向标签栏已移除，全部收进左侧导航树
+    # 去掉 navigation.sections，让所有有子项的导航项都可以折叠
+    # 这样"第3章 Linux内核深度解析"也会有下拉箭头，默认折叠
     # - navigation.sections
-    # - navigation.expand
     - navigation.indexes
     - navigation.top
     - navigation.path
+    - toc.follow
     - search.suggest
     - search.highlight
     - content.code.copy
@@ -56,6 +57,7 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+      toc_depth: 4
   - admonition
   - pymdownx.details
   - pymdownx.tabbed:
