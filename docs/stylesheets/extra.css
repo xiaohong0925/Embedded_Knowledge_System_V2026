@@ -1,0 +1,189 @@
+/* ============================================================
+   嵌入式 Linux 知识体系（V2025）- 自定义样式
+   文件位置：docs/stylesheets/extra.css
+   ============================================================ */
+
+/* ---------------- 基础调色板（行内文字颜色） ---------------- */
+.md-typeset .red,
+.md-typeset .color-red {
+  color: #e53935 !important;
+  font-weight: 500;
+}
+
+.md-typeset .blue,
+.md-typeset .color-blue {
+  color: #1e88e5 !important;
+  font-weight: 500;
+}
+
+.md-typeset .green,
+.md-typeset .color-green {
+  color: #43a047 !important;
+  font-weight: 500;
+}
+
+.md-typeset .orange,
+.md-typeset .color-orange {
+  color: #fb8c00 !important;
+  font-weight: 500;
+}
+
+.md-typeset .purple,
+.md-typeset .color-purple {
+  color: #8e24aa !important;
+  font-weight: 500;
+}
+
+.md-typeset .gray,
+.md-typeset .color-gray {
+  color: #757575 !important;
+}
+
+/* ---------------- 高亮背景色（重点标记） ---------------- */
+.md-typeset mark {
+  background-color: #fff59d;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.md-typeset .hl-red {
+  background-color: #ffcdd2;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md-typeset .hl-yellow {
+  background-color: #fff9c4;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md-typeset .hl-green {
+  background-color: #c8e6c9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md-typeset .hl-blue {
+  background-color: #bbdefb;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ---------------- BIEM 难度标签样式 ---------------- */
+.md-typeset .badge-b {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.md-typeset .badge-i {
+  display: inline-block;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.md-typeset .badge-e {
+  display: inline-block;
+  background: #fff3e0;
+  color: #ef6c00;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.md-typeset .badge-m {
+  display: inline-block;
+  background: #f3e5f5;
+  color: #7b1fa2;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* ---------------- 图片样式优化 ---------------- */
+.md-typeset img {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+/* 图片居中 + 带边框 */
+.md-typeset .img-border {
+  border: 1px solid #e0e0e0;
+  padding: 8px;
+  background: #fafafa;
+}
+
+/* 图片点击放大光标 */
+.md-typeset a.glightbox img {
+  cursor: zoom-in;
+}
+
+/* ---------------- 表格样式优化 ---------------- */
+.md-typeset table {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.md-typeset table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+/* ---------------- 代码块微调 ---------------- */
+.md-typeset .highlight pre {
+  border-radius: 6px;
+  font-size: 0.85em;
+}
+
+/* 行内代码 */
+.md-typeset code {
+  background-color: rgba(27, 31, 35, 0.06);
+  border-radius: 3px;
+  padding: 0.2em 0.4em;
+  font-size: 0.9em;
+}
+
+/* ---------------- 暗色模式适配 ---------------- */
+[data-md-color-scheme="slate"] .md-typeset .hl-yellow {
+  background-color: #5d4037;
+  color: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hl-green {
+  background-color: #1b5e20;
+  color: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hl-blue {
+  background-color: #0d47a1;
+  color: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .hl-red {
+  background-color: #b71c1c;
+  color: #fff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table th {
+  background-color: #424242;
+}

@@ -1,0 +1,118 @@
+site_name: 嵌入式 Linux 知识体系（V2025）
+site_url: https://xiaohong0925.github.io/Embedded_Knowledge_System_V2026/
+repo_url: https://github.com/xiaohong0925/Embedded_Knowledge_System_V2026
+repo_name: GitHub
+
+theme:
+  name: material
+  language: zh
+  logo: images/logo.png              # 站点 Logo（可选，没有就注释掉）
+  favicon: images/favicon.ico        # 站点图标（可选）
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换暗色模式
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换亮色模式
+  features:
+    - navigation.tabs                # 顶部标签导航
+    - navigation.sections            # 左侧目录可折叠
+    - navigation.expand              # 默认展开目录
+    - navigation.top                 # 返回顶部按钮
+    - navigation.path                # 面包屑导航
+    - search.suggest                 # 搜索建议
+    - search.highlight               # 搜索结果高亮
+    - search.share                   # 分享搜索结果
+    - content.code.copy              # 代码块复制按钮
+    - content.code.annotate          # 代码注释
+    - content.action.edit            # 编辑按钮（跳转到 GitHub 编辑）
+    - content.action.view            # 查看源码按钮
+
+plugins:
+  - search:
+      lang: zh
+  - glightbox:                       # 图片点击放大（需要额外安装 pip install mkdocs-glightbox）
+      zoomable: true
+
+extra_css:
+  - stylesheets/extra.css            # 自定义颜色、字体等样式
+
+extra_javascript:
+  - javascripts/mathjax.js           # 如需数学公式支持（可选）
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - tables
+  - toc:
+      permalink: true
+  - admonition                       # 提示框 !!! note
+  - pymdownx.details                 # 可折叠内容 ???
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.mark                    # 文本高亮 ==高亮== 
+  - pymdownx.caret                   # 上标 ^上标^
+  - pymdownx.tilde                   # 下标 ~下标~
+  - attr_list                        # 给图片/链接加属性
+  - md_in_html                       # HTML 标签内支持 Markdown
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/xiaohong0925
+  version:
+    provider: mike                    # 多版本支持（可选）
+
+# 导航目录（和 docs/ 下的实际文件路径一一对应）
+nav:
+  - 首页: index.md
+
+  - 第3章 内核深度解析:
+    - 5. 驱动模型:
+      - 概览: 03-Linux内核深度解析/05-驱动模型/00-README.md
+      - 1. 基础认知: 03-Linux内核深度解析/05-驱动模型/01-驱动模型基础认知.md
+      - 2. 原理解析: 03-Linux内核深度解析/05-驱动模型/02-核心驱动模型原理解析.md
+      - 3. 技术教学: 03-Linux内核深度解析/05-驱动模型/03-驱动开发核心技术教学.md
+      - 4. 实战场景: 03-Linux内核深度解析/05-驱动模型/04-软硬件实战场景.md
+      - 5. 进阶优化: 03-Linux内核深度解析/05-驱动模型/05-驱动模型进阶与优化.md
+      - 6. 历史演进: 03-Linux内核深度解析/05-驱动模型/06-驱动模型历史演进与生态.md
+    - 6. 中断机制:
+      - 1. 中断基础与硬件抽象: 03-Linux内核深度解析/06-中断机制/01-中断基础与硬件抽象.md
+
+  # 其他章节（后续有 md 文件后，取消注释并补充路径）
+  # - 第1章 硬件层:
+  #   - 概览: 01-硬件层/index.md
+  # - 第2章 Bootloader与系统启动:
+  #   - 概览: 02-Bootloader与系统启动/index.md
+  # - 第4章 系统构建与部署:
+  #   - 概览: 04-系统构建与部署/index.md
+  # - 第5章 设备驱动开发:
+  #   - 概览: 05-设备驱动开发/index.md
+  # - 第6章 内核调试与性能优化:
+  #   - 概览: 06-内核调试与性能优化/index.md
+  # - 第7章 应用层开发:
+  #   - 概览: 07-应用层开发/index.md
+  # - 第8章 系统安全与功能安全:
+  #   - 概览: 08-系统安全与功能安全/index.md
+  # - 第9章 Linux文件系统与文件管理:
+  #   - 概览: 09-Linux文件系统与文件管理/index.md
+  # - 第10章 专用技术与前沿趋势:
+  #   - 概览: 10-专用技术与前沿趋势/index.md
+  # - 附录:
+  #   - 概览: 附录/index.md
