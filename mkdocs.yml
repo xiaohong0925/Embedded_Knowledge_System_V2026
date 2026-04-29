@@ -23,8 +23,8 @@ theme:
         name: 切换亮色模式
   features:
     # 顶部横向标签栏已移除，全部收进左侧导航树
-    - navigation.sections
-    - navigation.expand
+    # - navigation.sections
+    # - navigation.expand
     - navigation.indexes
     - navigation.top
     - navigation.path
