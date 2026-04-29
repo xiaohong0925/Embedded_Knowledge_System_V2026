@@ -38,8 +38,6 @@ theme:
 plugins:
   - search:
       lang: zh
-  - glightbox:                       # 图片点击放大（需要额外安装 pip install mkdocs-glightbox）
-      zoomable: true
 
 extra_css:
   - stylesheets/extra.css            # 自定义颜色、字体等样式
