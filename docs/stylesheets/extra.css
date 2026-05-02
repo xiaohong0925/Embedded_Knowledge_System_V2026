@@ -1,722 +1,367 @@
-/* ============================================================
-   嵌入式 Linux 知识体系（V2025）- 自定义样式
-   ============================================================ */
+/* ========================================
+   Linux知识体系 V2026 - 自定义样式
+   颜色标签 + BIEM难度徽章 + 全局美化
+   ======================================== */
 
-/* ---------------- 基础调色板（行内文字颜色） ---------------- */
-.md-typeset .red,
-.md-typeset .color-red {
-  color: #e53935 !important;
-  font-weight: 500;
+/* --- 四色标记系统 --- */
+
+span.red {
+    color: #E53935;
+    font-weight: 600;
 }
 
-.md-typeset .blue,
-.md-typeset .color-blue {
-  color: #1e88e5 !important;
-  font-weight: 500;
+span.green {
+    color: #43A047;
+    font-weight: 600;
 }
 
-.md-typeset .green,
-.md-typeset .color-green {
-  color: #43a047 !important;
-  font-weight: 500;
+span.blue {
+    color: #1E88E5;
+    font-weight: 600;
 }
 
-.md-typeset .orange,
-.md-typeset .color-orange {
-  color: #fb8c00 !important;
-  font-weight: 500;
+span.orange {
+    color: #FB8C00;
+    font-weight: 600;
 }
 
-.md-typeset .purple,
-.md-typeset .color-purple {
-  color: #8e24aa !important;
-  font-weight: 500;
+/* --- BIEM 难度徽章 --- */
+
+span.badge-b {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #43A047;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
 }
 
-.md-typeset .gray,
-.md-typeset .color-gray {
-  color: #757575 !important;
+span.badge-i {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #1E88E5;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
 }
 
-/* ---------------- 高亮背景色（重点标记） ---------------- */
-.md-typeset mark {
-  background-color: #fff59d;
-  padding: 0 4px;
-  border-radius: 3px;
+span.badge-e {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #FB8C00;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
 }
 
-.md-typeset .hl-red {
-  background-color: #ffcdd2;
-  padding: 2px 6px;
-  border-radius: 4px;
+span.badge-m {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #E53935;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
 }
 
-.md-typeset .hl-yellow {
-  background-color: #fff9c4;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.md-typeset .hl-green {
-  background-color: #c8e6c9;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.md-typeset .hl-blue {
-  background-color: #bbdefb;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* ---------------- BIEM 难度标签样式 ---------------- */
-.md-typeset .badge-b {
-  display: inline-block;
-  background: #e3f2fd;
-  color: #1565c0;
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.md-typeset .badge-i {
-  display: inline-block;
-  background: #e8f5e9;
-  color: #2e7d32;
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.md-typeset .badge-e {
-  display: inline-block;
-  background: #fff3e0;
-  color: #ef6c00;
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.md-typeset .badge-m {
-  display: inline-block;
-  background: #f3e5f5;
-  color: #7b1fa2;
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-/* ============================================================
-   布局优化：目录贴边 + 正文占满剩余空间
-   ============================================================ */
-
-/* 整体主容器：去掉所有宽度限制 */
-.md-main__inner {
-  max-width: none !important;
-  width: 100% !important;
-}
-
-.md-grid {
-  max-width: none !important;
-}
-
-/* 左侧导航栏：固定 320px，贴左边 */
-.md-sidebar--primary {
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
-  left: 0 !important;
-  border-right: 1px solid #424242 !important;
-}
-
-/* 右侧 TOC：固定 300px，贴右边 */
-.md-sidebar--secondary {
-  width: 300px !important;
-  min-width: 300px !important;
-  max-width: 300px !important;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
-  right: 0 !important;
-  border-left: 1px solid #424242 !important;
-}
-
-/* 正文内容区：占满剩余所有空间 */
-.md-content {
-  max-width: none !important;
-  width: auto !important;
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  padding-left: 32px !important;
-  padding-right: 32px !important;
-  border-left: 1px solid #424242 !important;
-}
-
-/* 正文内部容器也去掉限制 */
-.md-content__inner {
-  max-width: none !important;
-}
-
-/* 亮色模式边框 */
-[data-md-color-scheme="default"] .md-sidebar--primary {
-  border-right-color: #e0e0e0 !important;
-}
-
-[data-md-color-scheme="default"] .md-sidebar--secondary {
-  border-left-color: #e0e0e0 !important;
-}
-
-[data-md-color-scheme="default"] .md-content {
-  border-left-color: #e0e0e0 !important;
-}
-
-/* ---------------- 全局字体与间距 ---------------- */
-.md-typeset {
-  font-size: 0.85rem;
-  line-height: 1.8;
-}
-
-/* ---------------- 标题样式（蓝色系） ---------------- */
-.md-typeset h1 {
-  color: #0075c9;
-  font-weight: 500;
-  font-size: 2em;
-  margin-bottom: 0.8em;
-  margin-top: 0;
-  border-bottom: none;
-}
-
-.md-typeset h2 {
-  color: #0075c9;
-  font-weight: 500;
-  font-size: 1.5em;
-  margin-top: 2em;
-  margin-bottom: 0.8em;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 0.3em;
-}
-
-.md-typeset h3 {
-  color: #0075c9;
-  font-weight: 500;
-  font-size: 1.25em;
-  margin-top: 1.8em;
-  margin-bottom: 0.6em;
-}
-
-.md-typeset h4 {
-  color: #0075c9;
-  font-weight: 500;
-  font-size: 1.1em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-}
-
-/* ---------------- 段落间距 ---------------- */
-.md-typeset p {
-  margin-bottom: 1.2em;
-  margin-top: 0.6em;
-  text-align: justify;
-}
-
-/* ---------------- 链接样式 ---------------- */
-.md-typeset a {
-  color: #0075c9;
-  text-decoration: none;
-}
-
-.md-typeset a:hover {
-  text-decoration: underline;
-}
-
-/* ---------------- 列表样式 ---------------- */
-.md-typeset ul li,
-.md-typeset ol li {
-  margin-bottom: 0.6em;
-}
-
-/* ---------------- 引用块样式 ---------------- */
-.md-typeset blockquote {
-  border-left: 4px solid #0075c9;
-  background-color: #f5f5f5;
-  padding: 0.8em 1.2em;
-  margin: 1.2em 0;
-  border-radius: 0 4px 4px 0;
-}
-
-/* ---------------- 水平分割线 ---------------- */
-.md-typeset hr {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 2.5em 0;
-}
-
-/* ---------------- 图片样式优化 ---------------- */
-.md-typeset img {
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1.2em auto;
-}
-
-.md-typeset .img-border {
-  border: 1px solid #e0e0e0;
-  padding: 8px;
-  background: #fafafa;
-}
-
-.md-typeset a.glightbox img {
-  cursor: zoom-in;
-}
-
-/* ---------------- 表格样式优化 ---------------- */
-.md-typeset table {
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  font-size: 0.85em;
-  margin: 1.5em 0;
-}
-
-.md-typeset table th {
-  background-color: #f5f5f5;
-  font-weight: 600;
-}
-
-.md-typeset table td,
-.md-typeset table th {
-  padding: 0.8em 1.2em;
-}
-
-/* ---------------- 代码块微调 ---------------- */
-.md-typeset .highlight pre {
-  border-radius: 6px;
-  font-size: 0.8em;
-  line-height: 1.6;
-  margin: 1.2em 0;
-}
+/* --- 代码块优化 --- */
 
 .md-typeset code {
-  background-color: rgba(27, 31, 35, 0.06);
-  border-radius: 3px;
-  padding: 0.2em 0.4em;
-  font-size: 0.9em;
-  /* 不强制设置 color，保留 Material 主题默认语法高亮 */
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.85em;
 }
 
-/* ---------------- 右侧 TOC 样式优化（小字体、紧凑） ---------------- */
-.md-nav--secondary .md-nav__link {
-  font-size: 0.75rem;
-  padding: 0.25em 0;
-  line-height: 1.4;
+.md-typeset pre > code {
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 0.82em;
+    line-height: 1.6;
 }
 
-.md-nav--secondary .md-nav__link--active {
-  color: #0075c9;
-  font-weight: 600;
+/* --- 表格美化 --- */
+
+.md-typeset table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.9em;
 }
 
-.md-nav--secondary .md-nav__title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 0.5em;
+.md-typeset table th {
+    background-color: #f0f0f0;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid #ddd;
 }
 
-/* ---------------- 左侧导航栏样式优化 ---------------- */
-.md-nav__link {
-  padding: 0.4em 0.6em;
-  margin: 0.1em 0;
-  border-radius: 4px;
+.md-typeset table td {
+    padding: 10px 16px;
+    border-top: 1px solid #e8e8e8;
 }
 
-.md-nav__link--active {
-  color: #0075c9;
-  font-weight: 600;
+.md-typeset table tr:nth-child(even) {
+    background-color: #fafafa;
 }
 
-.md-nav__item--active > .md-nav__link {
-  background-color: rgba(0, 117, 201, 0.08);
+.md-typeset table tr:hover {
+    background-color: #f5f5f5;
 }
 
-.md-nav__item--section > .md-nav__link {
-  font-weight: 600;
-  font-size: 0.9em;
-  margin-top: 0.5em;
+/* --- 引用块优化 --- */
+
+.md-typeset blockquote {
+    border-left: 4px solid #1E88E5;
+    padding: 12px 20px;
+    margin: 16px 0;
+    background-color: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+    color: #555;
 }
 
-/* ---------------- 面包屑导航 ---------------- */
-.md-header__topic {
-  font-weight: 500;
+.md-typeset blockquote p {
+    margin: 0;
 }
 
-/* ---------------- 暗色模式适配 ---------------- */
-[data-md-color-scheme="slate"] .md-typeset h1,
-[data-md-color-scheme="slate"] .md-typeset h2,
-[data-md-color-scheme="slate"] .md-typeset h3,
-[data-md-color-scheme="slate"] .md-typeset h4 {
-  color: #4fc3f7;
+/* --- Mermaid 图表容器 --- */
+
+.mermaid {
+    text-align: center;
+    margin: 20px 0;
 }
 
-[data-md-color-scheme="slate"] .md-typeset a {
-  color: #4fc3f7;
+/* --- 暗色模式适配 --- */
+
+[data-md-color-scheme="slate"] span.red {
+    color: #EF5350;
 }
 
-[data-md-color-scheme="slate"] .md-typeset blockquote {
-  border-left-color: #4fc3f7;
-  background-color: #2d2d2d;
+[data-md-color-scheme="slate"] span.green {
+    color: #66BB6A;
 }
 
-[data-md-color-scheme="slate"] .md-typeset hr {
-  border-top-color: #424242;
+[data-md-color-scheme="slate"] span.blue {
+    color: #42A5F5;
 }
 
-[data-md-color-scheme="slate"] .md-typeset .hl-yellow {
-  background-color: #5d4037;
-  color: #fff;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .hl-green {
-  background-color: #1b5e20;
-  color: #fff;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .hl-blue {
-  background-color: #0d47a1;
-  color: #fff;
-}
-
-[data-md-color-scheme="slate"] .md-typeset .hl-red {
-  background-color: #b71c1c;
-  color: #fff;
+[data-md-color-scheme="slate"] span.orange {
+    color: #FFA726;
 }
 
 [data-md-color-scheme="slate"] .md-typeset table th {
-  background-color: #424242;
+    background-color: #2d2d2d;
+    border-bottom-color: #444;
 }
 
-[data-md-color-scheme="slate"] .md-nav__link--active {
-  color: #4fc3f7;
+[data-md-color-scheme="slate"] .md-typeset table td {
+    border-top-color: #333;
 }
 
-[data-md-color-scheme="slate"] .md-nav__item--active > .md-nav__link {
-  background-color: rgba(79, 195, 247, 0.12);
+[data-md-color-scheme="slate"] .md-typeset table tr:nth-child(even) {
+    background-color: #2a2a2a;
 }
 
-/* ============================================================
-   知识体系地图表格样式（Excel 看板风格）
-   ============================================================ */
-
-.knowledge-map {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  margin: 1em 0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+[data-md-color-scheme="slate"] .md-typeset table tr:hover {
+    background-color: #333;
 }
 
-.knowledge-map thead th {
-  background: #f0f2f5;
-  color: #24292f;
-  font-weight: 600;
-  padding: 10px 8px;
-  text-align: left;
-  border-bottom: 2px solid #d0d7de;
-  white-space: nowrap;
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+    background-color: #2a2a2a;
+    border-left-color: #42A5F5;
+    color: #ccc;
 }
 
-.knowledge-map tbody tr {
-  transition: background 0.15s ease;
+/* --- Admonition 样式增强 --- */
+
+.md-typeset .admonition {
+    border-radius: 8px;
+    font-size: 0.95em;
 }
 
-.knowledge-map tbody tr.odd {
-  background: #ffffff;
+.md-typeset .admonition-title {
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
 }
 
-.knowledge-map tbody tr.even {
-  background: #f6f8fa;
+/* --- Tabbed 内容 --- */
+
+.tabbed-set {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
 }
 
-.knowledge-map tbody tr:hover {
-  background: #e8f4fd;
+[data-md-color-scheme="slate"] .tabbed-set {
+    border-color: #333;
 }
 
-.knowledge-map td {
-  padding: 7px 8px;
-  border-bottom: 1px solid #e1e4e8;
-  vertical-align: middle;
+/* --- 响应式优化 --- */
+
+@media screen and (max-width: 768px) {
+    span.badge-b, span.badge-i, span.badge-e, span.badge-m {
+        font-size: 0.7em;
+        padding: 1px 5px;
+    }
+
+    .md-typeset table {
+        font-size: 0.8em;
+    }
+
+    .md-typeset pre > code {
+        font-size: 0.75em;
+        padding: 10px;
+    }
 }
 
-/* 章节合并单元格 */
-.knowledge-map .chapter-cell {
-  background: #fafbfc;
-  font-weight: 600;
-  color: #24292f;
-  border-right: 2px solid #d0d7de;
-  border-bottom: 1px solid #e1e4e8;
-  vertical-align: middle;
-  text-align: center;
-  font-size: 0.88rem;
+/* --- 打印优化 --- */
+
+@media print {
+    span.red, span.green, span.blue, span.orange {
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    span.badge-b { background-color: #43A047 !important; }
+    span.badge-i { background-color: #1E88E5 !important; }
+    span.badge-e { background-color: #FB8C00 !important; }
+    span.badge-m { background-color: #E53935 !important; }
+
+    .md-typeset pre > code {
+        border: 1px solid #ccc;
+        background-color: #f5f5f5 !important;
+    }
 }
 
-.knowledge-map .chapter-level {
-  display: block;
-  font-size: 0.72em;
-  color: #57606a;
-  font-weight: 400;
-  margin-top: 4px;
+/* ========================================
+   三栏布局自适应优化
+   左侧目录靠最左、右侧目录靠最右、中间正文拉满
+   ======================================== */
+
+/* 1. 整体容器宽度：释放限制，让三栏可以撑满 */
+.md-grid {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
-/* 状态标签 */
-.status-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.72em;
-  font-weight: 600;
-  white-space: nowrap;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
+/* 2. 主内容区 */
+.md-main__inner {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 8px;
 }
 
-.status-done {
-  background: #dafbe1;
-  color: #1a7f37;
-  border: 1px solid #aceebb;
+/* 3. 左侧导航栏 */
+.md-sidebar--primary {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 280px !important;
+    left: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
 }
 
-.status-building {
-  background: #fff8c5;
-  color: #7d4e00;
-  border: 1px solid #fae17c;
+/* 4. 右侧目录栏：加宽 */
+.md-sidebar--secondary {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 260px !important;
+    right: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
 }
 
-.status-shelved {
-  background: #e2e2e2;
-  color: #555555;
-  border: 1px solid #cccccc;
+/* TOC 目录优化 */
+.md-nav--secondary .md-nav__list {
+    font-size: 0.75rem;
+    line-height: 1.5;
 }
 
-.status-todo {
-  background: #ffebe9;
-  color: #cf222e;
-  border: 1px solid #ffd7d5;
+.md-nav--secondary .md-nav__item {
+    padding-left: 0;
 }
 
-/* 阶段标签 */
-.phase-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.7em;
-  font-weight: 600;
-  white-space: nowrap;
+.md-nav--secondary .md-nav__link {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.phase-l5 {
-  background: #c8e6c9;
-  color: #1b5e20;
-  border: 1px solid #a5d6a7;
+/* TOC 层级缩进 */
+.md-nav--secondary .md-nav__item .md-nav__list {
+    padding-left: 0.75rem;
 }
 
-.phase-l3 {
-  background: #fff9c4;
-  color: #7d4e00;
-  border: 1px solid #fff59d;
+/* 5. 中间正文区域：拉满 */
+.md-content {
+    flex: 1 1 auto !important;
+    max-width: none !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
 }
 
-.phase-l2 {
-  background: #ffe0b2;
-  color: #e65100;
-  border: 1px solid #ffcc80;
+/* 正文内部最大宽度放开 */
+.md-content__inner {
+    max-width: none !important;
 }
 
-.phase-l1 {
-  background: #b3e5fc;
-  color: #01579b;
-  border: 1px solid #81d4fa;
+/* 6. 大屏时进一步加宽左右栏 */
+@media screen and (min-width: 1600px) {
+    .md-sidebar--primary {
+        width: 300px !important;
+        min-width: 300px !important;
+    }
+    .md-sidebar--secondary {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
 }
 
-.phase-empty, .date-empty, .os-empty, .quick-link-empty {
-  color: #9e9e9e;
-  font-size: 0.9em;
+/* 7. 中等屏幕适配 */
+@media screen and (min-width: 1200px) and (max-width: 1599px) {
+    .md-sidebar--primary {
+        width: 250px !important;
+        min-width: 250px !important;
+    }
+    .md-sidebar--secondary {
+        width: 220px !important;
+        min-width: 220px !important;
+    }
 }
 
-/* 日期标签 */
-.date-tag {
-  font-size: 0.75em;
-  color: #424242;
-  font-family: "SFMono-Regular", Consolas, monospace;
-  white-space: nowrap;
-}
-
-/* 开源标签 */
-.os-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.7em;
-  font-weight: 600;
-}
-
-.os-yes {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-}
-
-.os-no {
-  background: #fafafa;
-  color: #757575;
-  border: 1px solid #e0e0e0;
-}
-
-/* 快速链接 */
-.quick-link {
-  font-size: 0.8em;
-  color: #0969da;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* BIEM 小标签 */
-.biem-tag {
-  font-size: 0.72em;
-  color: #57606a;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-}
-
-/* 图例 */
-.map-legend {
-  font-size: 0.8rem;
-  color: #57606a;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #f6f8fa;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-.map-legend .status-badge {
-  margin: 0 4px;
-}
-
-/* ---------------- 暗色模式适配 ---------------- */
-[data-md-color-scheme="slate"] .knowledge-map {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-[data-md-color-scheme="slate"] .knowledge-map thead th {
-  background: #2d2d2d;
-  color: #e0e0e0;
-  border-bottom-color: #424242;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map tbody tr.odd {
-  background: #1e1e1e;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map tbody tr.even {
-  background: #252525;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map tbody tr:hover {
-  background: #1a3a4a;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map td {
-  border-bottom-color: #424242;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map .chapter-cell {
-  background: #252525;
-  color: #e0e0e0;
-  border-right-color: #424242;
-}
-
-[data-md-color-scheme="slate"] .knowledge-map .chapter-level {
-  color: #9e9e9e;
-}
-
-[data-md-color-scheme="slate"] .status-done {
-  background: #1b5e20;
-  color: #c8e6c9;
-  border-color: #2e7d32;
-}
-
-[data-md-color-scheme="slate"] .status-building {
-  background: #5d4037;
-  color: #fff9c4;
-  border-color: #795548;
-}
-
-[data-md-color-scheme="slate"] .status-shelved {
-  background: #424242;
-  color: #bdbdbd;
-  border-color: #616161;
-}
-
-[data-md-color-scheme="slate"] .status-todo {
-  background: #b71c1c;
-  color: #ffcdd2;
-  border-color: #c62828;
-}
-
-[data-md-color-scheme="slate"] .phase-l5 {
-  background: #1b5e20;
-  color: #c8e6c9;
-  border-color: #2e7d32;
-}
-
-[data-md-color-scheme="slate"] .phase-l3 {
-  background: #5d4037;
-  color: #fff9c4;
-  border-color: #795548;
-}
-
-[data-md-color-scheme="slate"] .phase-l2 {
-  background: #bf360c;
-  color: #ffe0b2;
-  border-color: #e65100;
-}
-
-[data-md-color-scheme="slate"] .phase-l1 {
-  background: #01579b;
-  color: #b3e5fc;
-  border-color: #0288d1;
-}
-
-[data-md-color-scheme="slate"] .os-yes {
-  background: #1b5e20;
-  color: #c8e6c9;
-  border-color: #2e7d32;
-}
-
-[data-md-color-scheme="slate"] .os-no {
-  background: #424242;
-  color: #bdbdbd;
-  border-color: #616161;
-}
-
-[data-md-color-scheme="slate"] .quick-link {
-  color: #58a6ff;
-}
-
-[data-md-color-scheme="slate"] .map-legend {
-  background: #2d2d2d;
-  color: #b0b0b0;
+/* 8. 小屏时保留 Material 默认折叠行为 */
+@media screen and (max-width: 960px) {
+    .md-grid {
+        max-width: none !important;
+        margin: 0 auto !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    .md-main__inner {
+        padding: 0;
+    }
+    .md-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
 }
