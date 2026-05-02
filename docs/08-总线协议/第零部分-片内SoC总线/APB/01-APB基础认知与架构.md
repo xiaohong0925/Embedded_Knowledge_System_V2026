@@ -1,49 +1,205 @@
-# APB 基础认知与架构 **[B→I]**
+# APB 基础认知与架构 [B→I]
 
-> <span class="badge-b">B</span> → <span class="badge-i">I</span>
+> **本章学习目标**：
+> - 理解 <span class="red">APB（Advanced Peripheral Bus）</span> 的极简设计哲学
+> - 掌握 APB 的 <span class="red">单周期读写</span> 与信号定义
+> - 了解 APB 在 Cortex-M 系统中的定位
 
-### <strong>APB 核心定义与价值</strong>
+---
 
-<span class="badge-b">B</span>
+<span class="blue">从何而来 → 为什么需要 → 哪里用：</span><br>
+<span class="red">APB</span> 诞生于 <span class="green">1996 年</span>（AMBA 1 规范），是 AMBA 协议族中最古老的成员。<br>
+早期 SoC 中，CPU 通过总线访问 <span class="green">UART</span>、<span class="green">Timer</span> 等寄存器型外设，<br>
+但这些外设只需单次寄存器读写，无需高速突发传输。<span class="blue">APB 用极简的 10 个信号实现单周期读写，面积和功耗均为 AXI 的 1/5。</span><br>
+如今，APB 是所有 ARM SoC 的低速外设总线标准，<span class="green">STM32</span>、<span class="green">Raspberry Pi RP2040</span>、<span class="green">RISC-V</span> 芯片均使用 APB 挂接 GPIO/UART/I2C。<br>
 
-APB（Advanced Peripheral Bus）是 AMBA 家族中最低速、最简化的总线标准。它面向"寄存器型外设"：UART、I2C、GPIO、定时器、看门狗。
+---
 
-为什么不用 AHB/APB 直接连所有外设？
-- **功耗**：高速总线时钟门控困难，APB 可以单独关时钟。一个 APB 桥下的 20 个外设，不用时整体关断
-- **面积**：APB 从机接口只有十几个信号，AHB 需要几十个。50 个 APB 外设节省的面积很可观
-- **速度匹配**：UART 波特率寄存器不需要 200MHz 访问，APB 的几十 MHz 足够
+## APB 的设计哲学：极简与低功耗
 
-<span class="blue">APB 是总线世界的自行车，慢但省能量，短距离最合适。</span>
+---
 
-### <strong>APB 与 AHB 的本质差异</strong>
+### <strong>为什么需要 APB：寄存器访问的专用总线</strong>
 
-<span class="badge-b">B</span>
+<span class="red">APB</span> 诞生于 <span class="green">1996 年</span>（AMBA 1 规范），<br>
+是 AMBA 协议族中最简单的总线。<br>
 
-| 特性 | APB | AHB |
-|------|-----|-----|
-| 通道 | 1（地址+数据复用） | 1（地址+数据复用，但支持流水线） |
-| 时钟 | 可单独分频/关断 | 通常与系统同频 |
-| 突发 | 不支持 | 支持 |
-| 等待 | 通过 PREADY 插入 | 通过 HREADY 插入 |
-| 信号数 | ~12 个 | ~20+ 个 |
+APB 的设计目标只有一个：<br>
+<span class="blue">"用最少的信号和最低的功耗，完成寄存器读写"</span>。<br>
 
-APB 不是 AHB 的"降级版"，而是"专用版"——专门为寄存器访问优化。
+<span class="blue">类比理解：APB 如同"社区便利店"</span><br>
+AXI 是"大型物流中心"（处理大批量货物，设备昂贵）。<br>
+AHB 是"中型超市"（处理中等批量货物）。<br>
+APB 是"社区便利店"（只卖日用品，店面小、成本低）。<br>
+寄存器访问就是"买一瓶水"，不需要动用物流中心。<br>
 
-### <strong>APB 总线信号速览</strong>
+相比 AHB 和 AXI：<br>
+* 无流水线（单周期完成）<br>
+* 无突发传输（每次仅 1 beat）<br>
+* 无仲裁（仅单 Master）<br>
+* 无时钟门控外的功耗控制<br>
 
-<span class="badge-i">I</span>
+<span class="blue">APB 的典型场景：UART、I2C、SPI、Timer、GPIO 等寄存器型外设。</span><br>
 
-| 信号 | 方向 | 作用 |
-|------|------|------|
-| PCLK / PRESETn | 系统 | 时钟与复位 |
-| PADDR[31:0] | Master→Slave | 地址总线 |
-| PWDATA / PRDATA | Master→Slave / Slave→Master | 写数据 / 读数据 |
-| PWRITE | Master→Slave | 1=写，0=读 |
-| PSELx | Master→Slave | Slave 选择（每个 Slave 一根） |
-| PENABLE | Master→Slave | 传输使能 |
-| PREADY | Slave→Master | 1=就绪，0=插入等待 |
-| PSLVERR | Slave→Master | 1=传输错误（APB3+） |
-| PPROT[2:0] | Master→Slave | 保护类型（APB4） |
-| PSTRB[3:0] | Master→Slave | 字节选通（APB4） |
+---
 
-PSELx 是 APB 的特色：每个 Slave 有一根独立的 PSEL，由地址译码生成。这种设计简化了 Slave 逻辑——Slave 只需要看自己的 PSEL 是否拉高，不需要做地址比较。
+### <strong>APB 的信号定义</strong>
+
+APB 仅需 10 个信号（不含 PSELx 的重复），是 AXI 的 1/5。<br>
+
+| 信号名 | 宽度 | 方向 | 说明 |
+| --- | --- | --- | --- |
+| PCLK | 1 | 全局 | 总线时钟 |
+| PRESETn | 1 | 全局 | 低电平复位 |
+| PADDR | 32 | Master→Slave | 目标地址 |
+| PSELx | 1 | Master→Slave | Slave 选择（每个 Slave 一个） |
+| PENABLE | 1 | Master→Slave | 使能信号，标志 Access 阶段 |
+| PWRITE | 1 | Master→Slave | 1=写，0=读 |
+| PWDATA | 32 | Master→Slave | 写数据 |
+| PRDATA | 32 | Slave→Master | 读数据 |
+| PREADY | 1 | Slave→Master | 1=传输完成，0=等待 |
+| PSLVERR | 1 | Slave→Master | 1=传输错误 |
+
+<span class="blue">APB 仅需 10 个信号（不含 PSELx 的重复），是 AXI 的 1/5。</span><br>
+
+---
+
+### <strong>APB 的读写时序</strong>
+
+<span class="orange"><strong>1. 写时序（无等待）</strong></span><br>
+
+```mermaid
+sequenceDiagram
+    participant M as Master
+    participant S as Slave
+    
+    Note over M,S: T1 Setup 阶段
+    M->>S: PADDR=A1
+    M->>S: PSELx=1
+    M->>S: PENABLE=0
+    M->>S: PWRITE=1
+    M->>S: PWDATA=D1
+    
+    Note over M,S: T2 Access 阶段
+    M->>S: PENABLE=1
+    S-->>M: PREADY=1
+    Note over M,S: Slave 采样数据
+```
+
+Setup 阶段：Master 放置地址和数据<br>
+Access 阶段：PENABLE 拉高，Slave 采样数据<br>
+
+<span class="orange"><strong>2. 读时序（无等待）</strong></span><br>
+
+```mermaid
+sequenceDiagram
+    participant M as Master
+    participant S as Slave
+    
+    Note over M,S: T1 Setup 阶段
+    M->>S: PADDR=A1
+    M->>S: PSELx=1
+    M->>S: PENABLE=0
+    M->>S: PWRITE=0
+    
+    Note over M,S: T2 Access 阶段
+    M->>S: PENABLE=1
+    S->>M: PRDATA=D1
+    S-->>M: PREADY=1
+    Note over M,S: Slave 返回数据
+```
+
+<span class="blue">APB 的每个传输固定 2 个周期（Setup + Access），无法流水线重叠。</span><br>
+
+---
+
+## APB 在 SoC 中的定位
+
+---
+
+### <strong>APB Bridge：从 AHB 到 APB 的转换</strong>
+
+在 Cortex-M 系统中，APB 总线通过 Bridge 挂在 AHB 之下：<br>
+
+```mermaid
+flowchart TD
+    M["Cortex-M4<br/>AHB-Lite Master"]
+    AHB["AHB-Lite Matrix"]
+    Bridge["AHB-to-APB Bridge"]
+    UART["UART0<br/>APB Slave"]
+    I2C["I2C0<br/>APB Slave"]
+    SPI["SPI0<br/>APB Slave"]
+    TIM["Timer0<br/>APB Slave"]
+    GPIO["GPIOA<br/>APB Slave"]
+    
+    M --> AHB
+    AHB --> Bridge
+    Bridge --> UART
+    Bridge --> I2C
+    Bridge --> SPI
+    Bridge --> TIM
+    Bridge --> GPIO
+```
+
+Bridge 的核心逻辑：<br>
+* 将 AHB 的地址/数据周期映射为 APB 的 Setup/Access 周期<br>
+* AHB 的 HREADY 映射为 APB 的 PREADY 同步<br>
+* 每个 APB Slave 对应一个 PSELx 信号<br>
+
+```verilog
+// AHB-to-APB Bridge（简化）
+module ahb_apb_bridge (
+  input         HCLK, HRESETn,
+  input  [31:0] HADDR,
+  input         HWRITE,
+  input  [31:0] HWDATA,
+  output [31:0] HRDATA,
+  input         HREADY,
+  output        HREADYOUT,
+  output        PCLK, PRESETn,
+  output [31:0] PADDR,
+  output        PWRITE,
+  output [31:0] PWDATA,
+  input  [31:0] PRDATA,
+  output        PENABLE,
+  output        PSELx,
+  input         PREADY
+);
+  assign PCLK    = HCLK;
+  assign PRESETn = HRESETn;
+  assign PADDR   = HADDR;
+  assign PWRITE  = HWRITE;
+  assign PWDATA  = HWDATA;
+  assign HRDATA  = PRDATA;
+  assign PSELx   = (HADDR[31:16] == APB_BASE);  // 地址区间匹配
+
+  reg penable_reg;
+  always @(posedge HCLK) begin
+    if (!HRESETn) penable_reg <= 1'b0;
+    else if (HREADY) penable_reg <= PSELx;  // Setup 后进入 Access
+  end
+  assign PENABLE = penable_reg;
+  assign HREADYOUT = PREADY;
+endmodule
+```
+
+<span class="blue">Bridge 将 AHB 的流水线周期扩展为 APB 的 Setup/Access 两周期。</span><br>
+
+---
+
+## 本章小结
+
+| 概念 | 一句话总结 |
+| --- | --- |
+| APB | 极简总线，2 周期完成读写，无流水线 |
+| Setup/Access | T1 放地址，T2 传输数据 |
+| PSELx | 每个 Slave 一个片选，地址解码生成 |
+| APB Bridge | 将 AHB 周期映射为 APB 周期 |
+
+---
+
+## 练习
+
+1. 计算 APB 总线在 100MHz 下的最大带宽（32-bit 数据宽度）。<br>
+2. 为什么 APB 不支持突发传输？这对寄存器访问有什么影响？<br>
+3. 设计一个 APB Slave：基地址 0x4001_0000，4 个 32-bit 寄存器。
