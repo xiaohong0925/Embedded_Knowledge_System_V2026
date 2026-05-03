@@ -10,10 +10,10 @@
 
 | 章节 | 难度 | 定位 | 核心内容 |
 |------|------|------|----------|
-| [AMBA 总线协议族（总览）](AMBA总线协议族（总览）/01-AMBA是什么——ARM片上总线生态overview.md) | [B→I] | 导引 | AMBA 家族全貌、演进路线、选择决策树 |
-| [AXI 与 AXI5 与 ACE](AXI与AXI5与ACE/01-AXI是什么——五通道架构与握手机制.md) | [I→E] | 核心 | 5 通道架构、突发/乱序/QoS、ACE 缓存一致性 |
+| [AMBA 总线协议族（总览）](AMBA总线协议族（总览）/01-AMBA总线协议族概述.md) | [B→I] | 导引 | AMBA 家族全貌、演进路线、选择决策树 |
+| [AXI 与 AXI5 与 ACE](AXI与AXI5与ACE/01-AXI协议基础与五通道架构.md) | [I→E] | 核心 | 5 通道架构、突发/乱序/QoS、ACE 缓存一致性 |
 | [AHB](AHB/01-AHB基础认知与架构.md) | [B→I] | 轻量替代 | 流水线传输、多主仲裁、AHB-Lite 简化版 |
-| [APB](APB/01-APB基础认知与架构.md) | [B→I] | 寄存器专用 | 极简时序、低功耗时钟门控、桥接设计 |
+| [APB](APB/01-APB基础认知与传输时序.md) | [B→I] | 寄存器专用 | 极简时序、低功耗时钟门控、桥接设计 |
 | [TileLink](TileLink/01-TileLink基础认知与架构.md) | [I→E] | RISC-V 生态 | 三级一致性、目录式协议、Chipyard 实战 |
 | [Wishbone](Wishbone/01-Wishbone基础认知与架构.md) | [B→I] | FPGA/教学 | 最简开源总线、外设 RTL、FPGA→ASIC 迁移 |
 
