@@ -246,6 +246,15 @@ int main(int argc, char **argv) {
 
 ---
 
+
+```mermaid
+flowchart LR
+    A["/proc/stat"] --> B["CPU usage"]
+    C["/proc/meminfo"] --> D["Memory stats"]
+    E["/proc/[pid]/status"] --> F["Process info"]
+    G["sysfs /sys"] --> H["Device params"]
+```
+
 ## 历史演进：从 /proc 到统一性能接口
 
 ---

@@ -288,6 +288,17 @@ $ arm-linux-gnueabihf-readelf -d app_dynamic | grep NEEDED
 
 ---
 
+
+```mermaid
+flowchart TD
+    A["Source Code"] --> B["Preprocessor"]
+    B --> C["Compiler"]
+    C --> D["Assembler"]
+    D --> E["Linker"]
+    E --> F["Target Binary"]
+    G["Sysroot"] --> E
+```
+
 ## 课后练习
 
 1. **Makefile编写**：为一个包含5个.c文件和2个头文件目录的嵌入式项目编写Makefile，要求支持交叉编译、增量编译和体积优化。<;br>

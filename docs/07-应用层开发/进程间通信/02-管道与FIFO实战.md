@@ -360,6 +360,14 @@ int main(void) {
 
 ---
 
+
+```mermaid
+flowchart LR
+    A["Process A"] -->|"write()"| B["Pipe/FIFO"]
+    B -->|"read()"| C["Process B"]
+    D["Kernel Buffer"] --> B
+```
+
 ## 课后练习
 
 1. **代码实现**：编写一个使用两对管道实现父子进程"请求-响应"协议的程序，要求支持命令类型区分（如QUERY/UPDATE/DELETE）。<br>
