@@ -438,3 +438,13 @@ nav:
           - Wishbone:
               - 01-Wishbone基础认知与架构: 08-总线协议/第零部分-片内SoC总线/Wishbone/01-Wishbone基础认知与架构.md
               - 02-Wishbone实战与FPGA应用: 08-总线协议/第零部分-片内SoC总线/Wishbone/02-Wishbone实战与FPGA应用.md
+
+  - 10. 专用技术与前沿趋势:
+      - 概览: 10-专用技术与前沿趋势/README.md
+      - 异构多核通信:
+          - 01-异构多核架构认知: 10-专用技术与前沿趋势/异构多核通信/01-异构多核架构认知.md
+          - 02-核间通信硬件机制: 10-专用技术与前沿趋势/异构多核通信/02-核间通信硬件机制.md
+          - 03-RPMsg原理与实现: 10-专用技术与前沿趋势/异构多核通信/03-RPMsg原理与实现.md
+          - 04-remoteproc处理器生命周期: 10-专用技术与前沿趋势/异构多核通信/04-remoteproc处理器生命周期.md
+          - 05-实战Linux+FreeRTOS AMP部署: 10-专用技术与前沿趋势/异构多核通信/05-实战Linux+FreeRTOS AMP部署.md
+          - 06-前沿Jailhouse虚拟化与生态演进: 10-专用技术与前沿趋势/异构多核通信/06-前沿Jailhouse虚拟化与生态演进.md
