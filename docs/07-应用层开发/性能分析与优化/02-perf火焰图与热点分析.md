@@ -8,6 +8,11 @@
 
 ---
 
+<span class="red">为什么本章内容对嵌入式开发至关重要？</span><br>
+本节聚焦的议题，是嵌入式应用从"能跑"到"跑得稳"的关键跃迁。<br>
+理解其背后的设计动机，才能在选型时做出正确决策。
+
+
 ## perf 事件与 PMU 基础
 
 <span class="red">perf 是 Linux 内核内置的性能分析框架，直接操作 CPU 的 Performance Monitoring Unit，以硬件计数器方式统计指令执行、缓存命中、分支预测等微架构事件，开销远低于软件插桩。</span>

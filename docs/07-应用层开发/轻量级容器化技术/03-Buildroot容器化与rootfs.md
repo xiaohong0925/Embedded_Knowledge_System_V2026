@@ -166,6 +166,11 @@ $ systemd-nspawn -D /var/lib/machines/sensor-live --boot
 
 ---
 
+<span class="red">为什么本章内容对嵌入式开发至关重要？</span><br>
+本节聚焦的议题，是嵌入式应用从"能跑"到"跑得稳"的关键跃迁。<br>
+理解其背后的设计动机，才能在选型时做出正确决策。
+
+
 ## 历史演进与发展趋势
 
 Buildroot 诞生于 2001 年，由 uClibc 项目的开发者创建，最初目的是为无 MMU 的处理器生成精简的 rootfs。2009 年，Buildroot 重写为现代构建系统，引入 Kconfig 配置和包管理机制，成为嵌入式 Linux 的主流选择。2013 年，Buildroot 增加 systemd 支持，为后续容器化集成埋下伏笔。2015 年，systemd-nspawn 从实验性工具升级为核心组件，提供无需 Docker 的轻量容器能力。2016 年，cgroups v2 统一后，systemd 成为 cgroups v2 的主要用户态管理器，systemd-nspawn 的资源控制能力大幅提升。2018 年，Buildroot 增加 containerd 和 runc 包，正式拥抱 OCI 容器生态。2020 年后，嵌入式容器化呈现两条路径：一条是 Docker/containerd 体系，适合已熟悉云原生工具链的团队；另一条是 systemd-nspawn 体系，适合深度 systemd 集成的系统。未来趋势上，Buildroot 正在探索直接生成 OCI 镜像的能力——构建输出不再仅是 rootfs.tar，而是可直接推送到仓库的 OCI 格式分层镜像，打通嵌入式构建与云原生部署的边界。

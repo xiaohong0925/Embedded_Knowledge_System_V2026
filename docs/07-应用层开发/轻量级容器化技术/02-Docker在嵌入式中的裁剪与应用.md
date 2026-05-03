@@ -159,6 +159,11 @@ $ skopeo inspect containers-storage:embedded-app:v2
 
 ---
 
+<span class="red">为什么本章内容对嵌入式开发至关重要？</span><br>
+本节聚焦的议题，是嵌入式应用从"能跑"到"跑得稳"的关键跃迁。<br>
+理解其背后的设计动机，才能在选型时做出正确决策。
+
+
 ## 历史演进与发展趋势
 
 Docker 由 dotCloud 公司于 2013 年开源，Solomon Hykes 团队将 LXC（Linux Containers）封装为易用的镜像和仓库体系，引发云原生计算的范式转变。2014 年 Docker 1.0 发布，引入联合文件系统（UnionFS）和镜像分层，奠定了容器存储的基础模型。2015 年，Docker 将容器运行时部分捐赠给 OCI，催生 runc 标准；同时推出 containerd 作为独立守护进程，解耦 Docker 与底层运行时。2016 年，Alpine Linux 成为 Docker 官方推荐的最小基础镜像，musl libc 走进主流视野。2017 年，Docker 推出多阶段构建（Multi-stage Build），从根本上解决了镜像体积膨胀问题。2019 年，RedHat 推动 Podman 和 Buildah，证明无守护进程的容器化在技术上完全可行。2020 年后，嵌入式领域开始吸收容器化成果：NVIDIA Jetson 平台官方支持 Docker，Yocto 的 meta-virtualization 层提供容器工具链，Buildroot 增加 containerd 支持。未来趋势上，嵌入式容器正走向"单应用单容器"的极致精简方向，配合 systemd 的容器管理（systemd-nspawn/machinectl），形成不依赖 Docker 生态的独立容器化体系。
