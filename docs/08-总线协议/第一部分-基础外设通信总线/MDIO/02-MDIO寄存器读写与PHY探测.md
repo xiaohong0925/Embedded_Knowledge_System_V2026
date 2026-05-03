@@ -199,6 +199,7 @@ struct mii_bus {
 ### 错误码处理
 
 ```c
+// MDIO 寄存器读写示例
 int val = mdiobus_read(bus, phy_addr, MII_BMSR);
 if (val < 0) {
     dev_err(&bus->dev, "MDIO read failed: %d\n", val);

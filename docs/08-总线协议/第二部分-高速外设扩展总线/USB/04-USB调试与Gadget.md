@@ -19,6 +19,21 @@ USB 的设计理念是**万能插座**：无论外设功能多么不同，物理
 
 ## USB抓包工具：usbmon与Wireshark
 
+
+```mermaid
+flowchart LR
+    subgraph Host[Host PC]
+        H_CTRL[USB Host Controller]
+    end
+    subgraph Dev[USB Gadget Device]
+        UDC[UDC Driver]
+        GADGET[Gadget Driver]
+        FUNC[Function Driver]
+    end
+    H_CTRL <---> UDC
+```
+
+
 <span class="red">核心概念</span> usbmon是内核提供的USB总线级抓包接口，Wireshark通过解析usbmon数据展示人类可读的USB协议细节。两者结合可以诊断枚举失败、带宽不足、协议冲突等问题。
 
 ```bash

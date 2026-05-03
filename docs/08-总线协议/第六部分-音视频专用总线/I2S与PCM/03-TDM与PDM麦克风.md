@@ -206,7 +206,7 @@ int32_t cic_filter(int32_t input) {
 
 ## 历史演进与发展趋势
 
-<span class="red">TDM</span>（时分复用）技术起源于电信领域的 PCM 多路复用标准，将多路语音压缩到同一物理链路。进入嵌入式音频领域后，TDM 被扩展为支持 4~8 通道甚至更多声道的数字音频接口。<span class="red">PDM</span>（脉冲密度调制）则伴随 MEMS 麦克风产业兴起，Knowles、STMicroelectronics 等厂商在 2010 年前后推动 PDM 成为小型麦克风的主流数字输出格式。PDM→PCM 的滤波与抽取算法随后被集成至 SoC 音频前端，形成完整的信号链。
+<span class="red">TDM</span>（时分复用）技术起源于电信领域的 PCM 多路复用标准，将多路语音压缩到同一物理链路。进入嵌入式音频领域后，TDM 被扩展为支持 4~8 通道甚至更多声道的数字音频接口。PDM（脉冲密度调制）则伴随 MEMS 麦克风产业兴起，Knowles、STMicroelectronics 等厂商在 2010 年前后推动 PDM 成为小型麦克风的主流数字输出格式。PDM→PCM 的滤波与抽取算法随后被集成至 SoC 音频前端，形成完整的信号链。
 <br>
 
 <span class="blue">未来趋势：TDM 在多声道智能音箱与车载 DSP 中不可替代；PDM MEMS 麦克风凭借低成本、小体积，在 TWS 耳机与语音助手中渗透率持续攀升。</span>

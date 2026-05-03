@@ -228,7 +228,7 @@ printf("Cycles: %lu, CPI: %lu, LSU: %lu\n", perf[0], perf[1], perf[3]);
 
 ## 历史演进与发展趋势
 
-<span class="red">ITM</span>（Instrumentation Trace Macrocell）与 <span class="red">DWT</span>（Data Watchpoint and Trace）是 ARM Cortex-M 系列引入的轻量级调试组件。DWT 最早出现在 Cortex-M3（2004 年）中，提供硬件断点、数据观察点与性能计数器。ITM 随后加入，允许通过软件写入寄存器输出 printf 风格的调试信息，无需占用 UART 资源。2010 年代，ITM 与 DWT 的组合使 MCU 开发者能在无串口引脚的情况下完成实时日志输出与性能剖析。CMSIS-DAP 调试器的普及进一步降低了 ITM/SWO 单线跟踪的使用门槛。这一发展历史反映了嵌入式调试从重型工具向轻量级方案演进的趋势。
+<span class="red">ITM</span>（Instrumentation Trace Macrocell）与 DWT（Data Watchpoint and Trace）是 ARM Cortex-M 系列引入的轻量级调试组件。DWT 最早出现在 Cortex-M3（2004 年）中，提供硬件断点、数据观察点与性能计数器。ITM 随后加入，允许通过软件写入寄存器输出 printf 风格的调试信息，无需占用 UART 资源。2010 年代，ITM 与 DWT 的组合使 MCU 开发者能在无串口引脚的情况下完成实时日志输出与性能剖析。CMSIS-DAP 调试器的普及进一步降低了 ITM/SWO 单线跟踪的使用门槛。这一发展历史反映了嵌入式调试从重型工具向轻量级方案演进的趋势。
 <br>
 
 <span class="blue">未来趋势：ITM 与 DWT 将继续在 Cortex-M33/M55 等新一代 MCU 中标配；与 TrustZone 安全扩展的协同调试也在成为新的需求场景。</span>

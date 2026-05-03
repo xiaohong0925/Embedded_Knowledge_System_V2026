@@ -72,6 +72,7 @@ flowchart TD
 ### 温度读取
 
 ```bash
+# 1-Wire Linux 子系统命令示例
 $ cat /sys/bus/w1/devices/28-0000072431ff/w1_slave
 4b 01 4b 46 7f ff 05 10 6a : crc=6a YES
 4b 01 4b 46 7f ff 05 10 6a : t=20687
@@ -122,6 +123,7 @@ float read_temp(const char *device_id)
 w1-gpio 驱动在加载时执行一次 Search ROM 遍历，将发现的设备注册到 sysfs。插入新设备后，可通过写入 `w1_bus_master1/w1_master_search` 触发重新搜索：
 
 ```bash
+# 1-Wire Linux 子系统命令示例
 echo 0 > /sys/bus/w1/devices/w1_bus_master1/w1_master_search
 ```
 
