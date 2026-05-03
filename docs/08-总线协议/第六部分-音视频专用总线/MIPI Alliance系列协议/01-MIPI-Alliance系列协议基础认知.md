@@ -100,3 +100,14 @@ flowchart TD
 1. 为什么 D-PHY 需要 HS 和 LP 两种模式？不能一直用 HS 吗？
 2. C-PHY 的三相编码相比 D-PHY 的二进制编码有什么优势？
 3. 计算 4-lane D-PHY v2.0（2.5Gbps/lane）传输 4K@60fps 视频（12bit 色深）的理论带宽是否够用。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">MIPI Alliance</span>（移动产业处理器接口联盟）于 2003 年由 ARM、Nokia、Samsung 等厂商联合发起，旨在解决移动设备内部高速互连的标准化问题。早期智能手机内部使用并行 RGB 和私有接口连接显示屏与摄像头，布线复杂且功耗高。MIPI 随后推出 DSI（Display Serial Interface）与 CSI（Camera Serial Interface）系列协议，以差分对串行传输替代并行总线。2008 年后，MIPI 扩展至射频（RFFE）、传感器（I3C）、调试（S debug）等领域，成为移动与嵌入式生态的核心互连标准。这一演进历程体现了移动产业从私有接口走向开放标准的必然趋势。
+<br>
+
+<span class="blue">未来趋势：MIPI 协议正向车载显示、AR/VR 头显、工业视觉等领域渗透；C-PHY 与 D-PHY 共存，支持更高带宽与更低功耗的新型显示与传感接口。</span>
+<br>

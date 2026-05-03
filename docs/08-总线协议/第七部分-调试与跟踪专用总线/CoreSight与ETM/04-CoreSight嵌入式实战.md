@@ -7,6 +7,21 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 CoreSight 嵌入式实战
+
+---
+
+### <strong>为什么 CoreSight 嵌入式实战 成为行业刚需</strong>
+
+<span class="red">CoreSight 嵌入式实战</span>是将片上调试资源转化为可度量、可复现调试能力的关键环节。为何购买高端开发板后仍无法获取跟踪数据？因为 CoreSight 组件的启用涉及调试器固件、IDE 配置、目标芯片熔丝位与跟踪端口引脚复用等多个前置条件。
+<br>
+
+<span class="blue">实战的必要性：仅了解 ETM/ITM 的理论结构不足以在板级调试中使用；必须掌握 OpenOCD 脚本配置、SWO 波特率计算、TPIU 端口引脚复用解除等工程细节，才能打通从芯片到 PC 的完整跟踪链路。</span>
+<br>
+
 ## 多核跟踪
 
 ---
@@ -210,3 +225,14 @@ void CTI_Cross_Trigger_Config(void) {
 2. **CTI 配置**：编写 CTI 配置代码，实现：Core0 的硬件断点触发时，同时停止 Core1 和 Core2，但 Core3 继续运行。
 
 3. **选型决策**：某项目预算 5000 元，需调试双核 Cortex-M7 + 4-bit ETM Trace + RTT。对比 J-Link Ultra+、ULINKpro 和 DSTREAM，给出最优选型及理由。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">CoreSight 嵌入式实战</span>的技术体系伴随 ARM 调试接口的演进逐步成型。2000 年代早期，开发者依赖厂商专用调试器（如 ARM Multi-ICE），硬件昂贵且兼容性差。2005 年 OpenOCD 项目诞生后，FT2232、J-Link 等低成本适配器可通过 GDB 远程协议连接 ARM 处理器。2010 年代，CMSIS-DAP 标准统一了调试器固件，使 ST-Link、NXP LPC-Link 等板载调试器可直接用于跨厂商开发。近年来，JTAG 实战已从单纯的断点调试扩展至 RTOS 线程 awareness、Trace 数据捕获与自动化 CI 测试，成为嵌入式 DevOps 的关键环节。
+<br>
+
+<span class="blue">未来趋势：开源调试工具链（OpenOCD、pyOCD）对 CoreSight 的支持将持续增强；云端远程调试与 CI/CD 流水线中的自动化跟踪分析也在成为新的实践方向。</span>
+<br>

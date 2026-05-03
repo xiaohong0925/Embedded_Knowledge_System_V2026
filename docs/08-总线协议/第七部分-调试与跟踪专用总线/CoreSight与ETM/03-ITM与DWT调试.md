@@ -7,6 +7,46 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 ITM 与 DWT
+
+---
+
+### <strong>为什么 ITM 与 DWT 成为行业刚需</strong>
+
+<span class="red">ITM 与 DWT</span>解决了 MCU 调试中的资源与实时性痛点。传统 printf 调试依赖 UART，占用至少两根引脚且波特率有限；软件断点在时序敏感的嵌入式系统中会破坏实时性。
+<br>
+
+<span class="blue">为何选择 ITM/DWT：DWT 提供硬件观察点与性能计数器，零开销监控内存访问与指令周期；ITM 通过 SWO 单线输出 31 路虚拟通道日志，不占用 UART 引脚，且支持 printf 与 RTT 级实时性。</span>
+<br>
+
+
+### <strong>ITM/SWO 数据通道</strong>
+
+```mermaid
+flowchart LR
+    MCU["Cortex-M MCU"]
+    ITM["ITM
+31 Channels"]
+    DWT["DWT
+Watchpoints"]
+    SWO["SWO
+1-pin Output"]
+    PROBE["Debug Probe
+CMSIS-DAP"]
+    PC["PC
+Terminal/IDE"]
+
+    MCU --> ITM
+    MCU --> DWT
+    ITM --> SWO
+    DWT --> SWO
+    SWO --> PROBE
+    PROBE --> PC
+```
+
 ## ITM 数据包格式
 
 ---
@@ -182,3 +222,14 @@ printf("Cycles: %lu, CPI: %lu, LSU: %lu\n", perf[0], perf[1], perf[3]);
 2. **观察点设计**：配置 DWT 观察点，当全局变量 `threshold` 的值从 0 变为非 0 时触发 ITM 事件。写出完整的寄存器配置序列。
 
 3. **性能分析**：某函数执行后 DWT 读数：CYCCNT=10000, CPICNT=2000, LSUCNT=1500, FOLDCNT=500。计算有效 CPI 并分析可能的优化方向。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">ITM</span>（Instrumentation Trace Macrocell）与 <span class="red">DWT</span>（Data Watchpoint and Trace）是 ARM Cortex-M 系列引入的轻量级调试组件。DWT 最早出现在 Cortex-M3（2004 年）中，提供硬件断点、数据观察点与性能计数器。ITM 随后加入，允许通过软件写入寄存器输出 printf 风格的调试信息，无需占用 UART 资源。2010 年代，ITM 与 DWT 的组合使 MCU 开发者能在无串口引脚的情况下完成实时日志输出与性能剖析。CMSIS-DAP 调试器的普及进一步降低了 ITM/SWO 单线跟踪的使用门槛。这一发展历史反映了嵌入式调试从重型工具向轻量级方案演进的趋势。
+<br>
+
+<span class="blue">未来趋势：ITM 与 DWT 将继续在 Cortex-M33/M55 等新一代 MCU 中标配；与 TrustZone 安全扩展的协同调试也在成为新的需求场景。</span>
+<br>

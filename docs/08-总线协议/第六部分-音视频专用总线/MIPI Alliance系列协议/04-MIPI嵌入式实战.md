@@ -7,6 +7,47 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 MIPI 嵌入式实战
+
+---
+
+### <strong>为什么 MIPI 嵌入式实战 成为行业刚需</strong>
+
+<span class="red">MIPI 嵌入式实战</span>是将 DSI/CSI-2 协议转化为可量产显示与摄像系统的必经阶段。为何 MIPI 链路在理论上简单，但在板级调试中频繁出现黑屏、花屏或图像撕裂？因为 MIPI 的高速差分信号对阻抗匹配、时钟对齐与初始化时序极为敏感。
+<br>
+
+<span class="blue">实战的必要性：MIPI 的高速模式（HS）与低功耗模式（LP）切换涉及复杂的时序要求；只有借助逻辑分析仪抓取 LP 初始化序列，并通过设备树精确配置 D-PHY 参数，才能确保链路稳定工作。</span>
+<br>
+
+
+### <strong>MIPI 链路拓扑</strong>
+
+```mermaid
+flowchart TD
+    SOC["SoC
+DSI/CSI-2 Host"]
+    DPHY["D-PHY
+PHY Layer"]
+    PANEL["Display Panel
+DSI Device"]
+    SENSOR["Camera Sensor
+CSI-2 Device"]
+
+    SOC --> DPHY
+    DPHY --> PANEL
+    DPHY --> SENSOR
+
+    subgraph MIPI 物理层
+        CLK["CLK+/-
+差分时钟"]
+        DATA["DATA+/-
+差分数据"]
+    end
+```
+
 ## DSI LCD 初始化
 
 ---
@@ -152,3 +193,14 @@ void sensor_set_mipi_rate(struct v4l2_subdev *sd, u32 lane_rate) {
 2. **走线计算**：某 4-Lane CSI-2 设计，Data0 走线 35 mm，Data1 走线 38 mm，CLK 走线 40 mm。分析各线对长度匹配是否符合要求，给出调整建议。
 
 3. **眼图优化**：某 D-PHY 眼图测试显示眼宽仅 0.5 UI（要求 0.7 UI）。列出 3 个可能的硬件层原因及对应的调节参数。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">MIPI 嵌入式实战</span>的技术积累始于 2010 年代 Android 智能手机的 Linux 内核移植。早期 DSI 与 CSI-2 驱动由芯片厂商私有实现，缺乏统一框架。随着 Linux V4L2 与 DRM/KMS 子系统的成熟，MIPI 显示与摄像头驱动逐步纳入标准化管道。设备树（DeviceTree）成为描述 MIPI 链路拓扑的核心机制，D-PHY 控制器、DSI/CSI-2 主机、面板/传感器设备均通过设备树节点关联。近年来，MIPI 调试工具（如逻辑分析仪与示波器协议解码插件）的普及进一步降低了实战门槛。其发展历史与 Android/Linux 生态的成熟密不可分。
+<br>
+
+<span class="blue">未来趋势：MIPI 实战将更加依赖设备树与内核子系统的标准化配置；用户态的 libcamera 与 KMS 工具链也在降低 MIPI 开发的上手难度。</span>
+<br>

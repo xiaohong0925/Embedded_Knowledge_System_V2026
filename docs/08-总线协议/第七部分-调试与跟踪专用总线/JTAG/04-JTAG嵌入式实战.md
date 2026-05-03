@@ -7,6 +7,21 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 JTAG 嵌入式实战
+
+---
+
+### <strong>为什么 JTAG 嵌入式实战 成为行业刚需</strong>
+
+<span class="red">JTAG 嵌入式实战</span>是将调试理论转化为可复现工程流程的关键。为何同样的 JTAG 连接在不同开发板上表现迥异？因为 JTAG 链拓扑、TAP 控制器实现、复位时序与引脚复用策略因芯片厂商而异。
+<br>
+
+<span class="blue">实战的必要性：只有深入理解 OpenOCD 目标配置文件（target cfg）的 IR/DR 扫描链描述、复位策略与 Flash 驱动加载顺序，才能在面对陌生芯片时快速建立调试环境；JTAG 实战能力直接决定了嵌入式项目的 bring-up 效率。</span>
+<br>
+
 ## ARM Cortex-A 调试
 
 ---
@@ -130,3 +145,14 @@ flowchart LR
 2. **端接计算**：某 TCK 走线 100 mm，特性阻抗 60 Ω，驱动端输出阻抗 20 Ω。计算串联端接电阻的合理取值。
 
 3. **信号分析**：某 JTAG 调试在 16 MHz 下偶发误识别 IR 值。列出 3 个可能的信号完整性原因及排查方法。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">JTAG 嵌入式实战</span>的方法论伴随开源调试工具链的成熟而系统化。早期开发者依赖厂商专用调试器（如 ARM Multi-ICE），硬件昂贵且兼容性差。2005 年 OpenOCD 项目诞生后，FT2232、J-Link 等低成本适配器可通过 GDB 远程协议连接 ARM 处理器。2010 年代，CMSIS-DAP 标准统一了调试器固件，使 ST-Link、NXP LPC-Link 等板载调试器可直接用于跨厂商开发。近年来，JTAG 实战已从单纯的断点调试扩展至 RTOS 线程 awareness、Trace 数据捕获与自动化 CI 测试，成为嵌入式 DevOps 的关键环节。JTAG 实战方法的发展历史见证了开源工具链取代专用硬件的深刻变革。
+<br>
+
+<span class="blue">未来趋势：JTAG 实战将更加依赖 OpenOCD/pyOCD 等开源工具的标准化脚本；JTAG 作为硬件调试的最后防线，其重要性在日益复杂的 SoC 中不降反升。</span>
+<br>

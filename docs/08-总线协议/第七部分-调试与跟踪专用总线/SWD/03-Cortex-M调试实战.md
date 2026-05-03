@@ -7,6 +7,47 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 Cortex-M 调试
+
+---
+
+### <strong>为什么 Cortex-M 调试 成为行业刚需</strong>
+
+<span class="red">Cortex-M 调试实战</span>回应了 MCU 软件开发中的可观测性需求。为何 printf 调试在时序敏感的外设驱动中不可靠？因为串口输出引入毫秒级延迟，会改变中断响应时序与 DMA 传输节奏。
+<br>
+
+<span class="blue">为何需要硬件调试：DWT 的数据观察点能在不中断程序的情况下捕获内存访问异常；ITM 的 SWO 输出延迟仅为微秒级，适合实时日志；ETM 的指令跟踪则能在全速运行中还原崩溃现场。只有综合运用 CoreSight 组件，才能建立 MCU 软件的可观测体系。</span>
+<br>
+
+
+### <strong>Cortex-M 调试组件架构</strong>
+
+```mermaid
+flowchart TD
+    CORE["Cortex-M Core"]
+    DWT["DWT
+Watchpoints"]
+    ITM["ITM
+Printf Log"]
+    ETM["ETM
+Instruction Trace"]
+    TPIU["TPIU
+Trace Port"]
+    SWO["SWO
+1-pin Output"]
+
+    CORE --> DWT
+    CORE --> ITM
+    CORE --> ETM
+    DWT --> TPIU
+    ITM --> TPIU
+    ETM --> TPIU
+    TPIU --> SWO
+```
+
 ## 断点/观察点
 
 ---
@@ -226,3 +267,14 @@ RTT_Printf("CPU Load: %d%%\n", cpu_load);
 2. **ITM 配置**：Cortex-M4 内核时钟 168 MHz，目标 SWO 输出 1 Mbps。计算 TPIU 分频寄存器值，并写出完整的 ITM 初始化序列。
 
 3. **RTT 集成**：将 SEGGER RTT 集成到一个现有嵌入式项目（使用 printf 输出日志）。描述替换步骤及 RTT 缓冲区大小对性能的影响。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">Cortex-M 调试实战</span>的方法论伴随 ARM MCU 生态的扩张而成熟。2004 年 Cortex-M3 发布后，开发者最初仅能通过 JTAG/SWD 进行基础断点调试。2008 年后，ITM/SWO 与 DWT 的引入使 printf 调试与性能计数成为可能。2010 年代，RTOS（FreeRTOS、RT-Thread）在 Cortex-M 上的普及催生了线程感知调试（Thread-Aware Debugging）需求，OpenOCD 与 GDB 随后支持 RTOS 线程列表显示。近年来，自动化测试框架（如 CMocka、Unity）与硬件在环（HIL）测试的结合，使 Cortex-M 调试从人工单步执行向持续集成流水线演进。
+<br>
+
+<span class="blue">未来趋势：Cortex-M 调试将与安全扩展（TrustZone）深度结合；片上调试组件的功耗优化也在使调试能力常驻运行，支撑现场远程诊断。</span>
+<br>

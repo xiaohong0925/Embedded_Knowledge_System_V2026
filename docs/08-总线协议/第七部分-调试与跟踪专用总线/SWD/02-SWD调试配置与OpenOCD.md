@@ -7,6 +7,40 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 SWD 调试配置
+
+---
+
+### <strong>为什么 SWD 调试配置 成为行业刚需</strong>
+
+<span class="red">SWD 调试配置与 OpenOCD</span>是连接硬件调试接口与软件开发工具链的桥梁。为何调试器固件能通吃数百种不同芯片？因为 OpenOCD 将芯片特定的 TAP/SWD 时序抽象为通用适配层，通过 Tcl 脚本描述目标芯片的调试端口与存储器映射。
+<br>
+
+<span class="blue">为何需要掌握 SWD 配置：在跨厂商开发（如同时调试 STM32 与 Nordic nRF52）时，统一的 OpenOCD 配置文件比厂商专用工具更具可移植性；同时，自动化测试与远程调试场景只能依赖命令行工具链，GUI 调试器无法满足需求。</span>
+<br>
+
+
+### <strong>SWD 调试链路</strong>
+
+```mermaid
+flowchart LR
+    PC["PC
+GDB/OpenOCD"]
+    PROBE["Debug Probe
+ST-Link/J-Link"]
+    MCU["Cortex-M MCU
+SWD Port"]
+    CORE["CPU Core
+Debug AP"]
+
+    PC -->|USB| PROBE
+    PROBE -->|SWDIO+SWCLK| MCU
+    MCU --> CORE
+```
+
 ## OpenOCD SWD 配置
 
 ---
@@ -187,3 +221,14 @@ print(f"PC = 0x{pc:08X}")
 2. **脚本编写**：编写一个 TCL 脚本，实现：连接目标 → 读取芯片 ID → 擦除 Flash → 烧录 firmware.bin → 校验 → 复位运行，并打印各阶段耗时。
 
 3. **Python 工具**：使用 Python 编写一个 OpenOCD 内存转储工具，将 0x20000000~0x20010000 的 RAM 区域保存为 bin 文件。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">SWD 调试配置</span>的技术演进伴随开源工具链与商业 IDE 的成熟。2005 年 OpenOCD 项目初期仅支持 JTAG，2008 年后加入 SWD 适配层，使低成本调试器（如 ST-Link、CMSIS-DAP）可通过 SWD 协议访问 Cortex-M 内核。2010 年代，Segger J-Link、ST-Link Utility 与 Keil MDK 等商业工具完善了 SWD 的图形化配置界面；同时，pyOCD 等纯 Python 调试框架的出现使 SWD 配置可嵌入 CI/CD 流水线。近年来，VS Code + Cortex-Debug 插件的组合成为 SWD 调试的主流开发环境，进一步降低了配置门槛。
+<br>
+
+<span class="blue">未来趋势：SWD 调试配置将更多通过设备描述文件（.svd）自动生成寄存器视图；与 GDB 的集成也将更加无缝，使命令行调试体验接近 IDE 级别。</span>
+<br>

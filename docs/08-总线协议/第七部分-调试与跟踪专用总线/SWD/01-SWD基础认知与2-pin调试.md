@@ -114,3 +114,14 @@ flowchart TD
 1. SWD 的 SWDIO 如何实现双向通信？画出读写时序。
 2. 为什么 SWD 比 JTAG 更适合 Cortex-M 调试？列出 SWD 的所有优势。
 3. 在 STM32 上配置 SWD + SWO（ITM printf），写出相关的 GPIO 配置和 ITM 初始化代码。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">SWD</span>（Serial Wire Debug）的发展历史始于 ARM 对低成本调试接口的需求。2004 年，ARM 在 Cortex-M3 中首次引入 SWD，用 2 根信号线（SWDIO + SWCLK）替代 JTAG 的 4~5 根线，同时保留完整的调试功能。2008 年后，SWD 与 JTAG 的映射机制（SWJ-DP）使调试器可在同一物理接口上动态切换协议。2010 年代，SWD 成为 Cortex-M 系列 MCU 的事实标准调试接口，几乎所有 ARM MCU（STM32、NRF52、LPC 等）均优先支持 SWD。近年来，SWD 的串行线查看器（SWV）与 SWO 单线输出功能进一步扩展了其在实时跟踪中的应用边界。
+<br>
+
+<span class="blue">未来趋势：SWD 将继续作为资源受限 MCU 的首选调试接口；与 cJTAG（IEEE 1149.7）的融合也在探索中，以实现引脚数与调试能力的更优平衡。</span>
+<br>

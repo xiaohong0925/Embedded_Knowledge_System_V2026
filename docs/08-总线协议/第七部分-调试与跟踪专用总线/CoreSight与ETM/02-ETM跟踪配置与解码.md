@@ -7,6 +7,46 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 ETM
+
+---
+
+### <strong>为什么 ETM 成为行业刚需</strong>
+
+<span class="red">ETM 跟踪配置与解码</span>是高性能嵌入式调试的核心技能。为何传统断点调试无法满足多核实时系统的分析需求？因为断点会改变程序时序，且无法捕捉中断嵌套与缓存未命中等瞬态事件。
+<br>
+
+<span class="blue">为何需要 ETM：ETM 通过硬件压缩跟踪流，在不中断程序执行的情况下记录指令流、数据访问与分支决策，是唯一能在全速运行中还原程序执行路径的技术手段。</span>
+<br>
+
+
+### <strong>ETM 数据流</strong>
+
+```mermaid
+flowchart LR
+    CORE["CPU Core
+Execution"]
+    ETM["ETM
+Trace Macrocell"]
+    FUNNEL["Trace Funnel
+多核汇聚"]
+    TPIU["TPIU
+Trace Port"]
+    PROBE["Trace Probe
+逻辑分析仪"]
+    PC["PC 端
+解码软件"]
+
+    CORE --> ETM
+    ETM --> FUNNEL
+    FUNNEL --> TPIU
+    TPIU --> PROBE
+    PROBE --> PC
+```
+
 ## ETM 触发条件
 
 ---
@@ -151,3 +191,14 @@ void TPIU_Config_4bit_TRACE(void) {
 2. **带宽计算**：某 Cortex-M7 系统 HCLK=480 MHz，使用 4-bit TRACE 端口，TRACECLK=HCLK/4。计算最大理论 Trace 带宽。若平均每 4 条指令产生 1 个 Branch Address 包（2 Byte），最大可跟踪的指令速率是多少？
 
 3. **解码分析**：某 ETM Trace 捕获文件显示 `I-Sync` 后紧跟大量 `P-header`，但 `Branch Address` 极少。分析目标程序的特征（顺序执行为主还是分支密集）。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">ETM</span>（Embedded Trace Macrocell）的发展历史始于 ARM7TDMI 时代的调试需求。早期调试器仅能通过 JTAG 断点与单步执行观察程序状态，无法捕捉实时执行流。2000 年代，ARM 引入 ETM 作为硬件跟踪单元，通过专用引脚输出指令与数据访问的压缩跟踪数据。ETM v3.0 支持程序流跟踪与数据跟踪；ETM v4.0 针对 Cortex-R 系列引入分支历史与异常跟踪；ETM v4.x 针对 Cortex-A 系列支持多核并发跟踪。跟踪数据的压缩算法从简单的 Branch Address 压缩演进至高级指令匹配与周期精确跟踪。
+<br>
+
+<span class="blue">未来趋势：ETM 跟踪数据量持续增长，片上 SRAM 缓冲与片外高速接口（HSSTP）的协同将成为主流；跟踪数据的智能过滤与 AI 辅助分析也在探索中。</span>
+<br>

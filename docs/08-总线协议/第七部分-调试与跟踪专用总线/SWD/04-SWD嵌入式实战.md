@@ -7,6 +7,46 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 SWD 嵌入式实战
+
+---
+
+### <strong>为什么 SWD 嵌入式实战 成为行业刚需</strong>
+
+<span class="red">SWD 嵌入式实战</span>是将 2-pin 调试接口转化为完整调试能力的关键环节。为何仅有 SWDIO 与 SWCLK 两根线却能实现与 JTAG 等效的功能？因为 SWD 采用请求-应答协议，通过 DAP（Debug Access Port）抽象层将复杂的调试寄存器访问序列封装为高效的串行帧。
+<br>
+
+<span class="blue">实战的必要性：SWD 的 2 线优势在引脚极度受限的封装（如 WLCSP、QFN-20）中尤为突出；同时，SWO 单线跟踪功能只能在 SWD 模式下启用，是 Cortex-M 实时日志输出的唯一硬件通道。掌握 SWD 实战意味着在资源与功能之间取得最优平衡。</span>
+<br>
+
+
+### <strong>SWD 2-pin 架构</strong>
+
+```mermaid
+flowchart LR
+    PROBE["Debug Probe"]
+    SWCLK["SWCLK
+时钟"]
+    SWDIO["SWDIO
+双向数据"]
+    DAP["DAP
+Debug Access Port"]
+    AP["AP
+Access Port"]
+    MEM["Memory Map
+寄存器/Flash"]
+
+    PROBE --> SWCLK
+    PROBE --> SWDIO
+    SWCLK --> DAP
+    SWDIO --> DAP
+    DAP --> AP
+    AP --> MEM
+```
+
 ## STM32 调试配置
 
 ---
@@ -162,3 +202,14 @@ void Enter_Stop_With_Debug(void) {
 2. **低功耗设计**：某传感器节点需进入 Stop 模式，但调试时频繁断开。设计调试友好的 Stop 模式进入/退出流程（含时钟恢复）。
 
 3. **安全分析**：某产品量产时误设为 RDP Level 2，现需现场升级固件。分析可行的升级路径（如有），并给出避免此类问题的生产流程建议。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">SWD 嵌入式实战</span>的技术积累始于 2010 年代低成本 Cortex-M 开发板的普及。早期开发者依赖 Keil ULINK 等昂贵调试器；2012 年后，ST-Link/V2 的板载集成与开源固件（如 Black Magic Probe）使 SWD 调试成本降至 10 美元以下。2015 年，CMSIS-DAP 标准统一了调试器固件接口，使任何具备 USB 功能的 MCU 均可自制 SWD 调试器。近年来，Raspberry Pi Pico 等开发板甚至可用作 SWD 调试器（picoprobe），进一步降低了实战门槛。SWD 实战工具的发展历史体现了嵌入式开发民主化的趋势。SWD 实战已从专业工程师技能转变为嵌入式爱好者的入门必修课。
+<br>
+
+<span class="blue">未来趋势：SWD 实战工具将更加多样化；基于浏览器的 WebUSB 调试器与云端 GDB 服务器也在探索中，有望实现零安装的浏览器内调试体验。</span>
+<br>

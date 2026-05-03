@@ -7,6 +7,21 @@
 
 ---
 
+
+---
+
+## 需求分析：为什么需要 JTAG 调试与 Flash 烧录
+
+---
+
+### <strong>为什么 JTAG 调试与 Flash 烧录 成为行业刚需</strong>
+
+<span class="red">JTAG 调试与 Flash 烧录</span>是嵌入式开发中最基础也是最核心的工程能力。为何在芯片焊接至 PCB 后仍能通过 4~5 根线完成固件烧录与全功能调试？因为 JTAG TAP 控制器内建于芯片本身，不依赖外部存储器或 BootROM 状态。
+<br>
+
+<span class="blue">为何依赖 JTAG：在 BootROM 损坏、系统无法启动或需要单步调试 Bootloader 的场景中，JTAG 是唯一能从复位向量开始接管 CPU 的调试通道；同时，JTAG 也是量产阶段批量烧录 Flash 的标准工业接口。</span>
+<br>
+
 ## OpenOCD 配置
 
 ---
@@ -186,3 +201,14 @@ resume
 2. **烧录脚本**：编写一个 OpenOCD 烧录脚本，将 u-boot.bin（256KB）烧录至 NOR Flash 起始地址，并自动校验。
 
 3. **多核调试**：某 Zynq-7000 双核系统，Core0 运行 Linux，Core1 运行裸机 RTOS。设计 OpenOCD 调试方案，要求可独立 attach 任一核心并设置断点。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">JTAG 调试与 Flash 烧录</span>的技术演进伴随嵌入式系统存储介质的变化。1990 年代，JTAG 主要用于边界扫描测试，Flash 编程通过专用编程器完成。2000 年代初，Flash 存储器（NOR/NAND）在嵌入式系统中普及，JTAG 接口被扩展为在线烧录通道，无需拆卸芯片即可更新固件。OpenOCD 项目于 2005 年启动，将 JTAG 调试与 Flash 烧录统一于开源框架，支持数百种目标芯片。2010 年代，JTAG 进一步支持 QSPI Flash 与 eMMC 的烧录，成为从原型到量产的全生命周期调试接口。
+<br>
+
+<span class="blue">未来趋势：JTAG 烧录将更多与 DFU（Device Firmware Update）和 OTA 升级协同；在 BootROM 安全启动场景中，JTAG 烧录权限将受熔丝位严格管控。</span>
+<br>

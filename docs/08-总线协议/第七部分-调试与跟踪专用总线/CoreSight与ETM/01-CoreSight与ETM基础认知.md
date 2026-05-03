@@ -117,3 +117,14 @@ flowchart TD
 1. ETM 如何实现"不打断执行"的调试？和断点调试有什么区别？
 2. 为什么 ETM 只在分支时输出数据，顺序执行时不输出？这基于什么假设？
 3. 设计一个多核调试场景：4 核 Cortex-A55，要求同时跟踪所有核的指令流，画出 CoreSight 组件连接拓扑。
+
+
+---
+
+## 历史演进与发展趋势
+
+<span class="red">CoreSight</span>技术起源于 ARM 对嵌入式调试与跟踪基础设施的系统化需求。2004 年 ARM 发布 CoreSight 架构 v1.0，将此前分散的 ETM（Embedded Trace Macrocell）、ITM（Instrumentation Trace Macrocell）等调试组件纳入统一的 SoC 级调试框架。2008 年 CoreSight v2.0 引入跟踪漏斗（Funnel）与跟踪端口接口（TPIU），支持多核处理器同时输出跟踪数据。2012 年后，随着 Cortex-M 系列在物联网领域的普及，CoreSight 简化为 MTB（Micro Trace Buffer）等低成本方案，使调试能力下沉至资源受限的 MCU。
+<br>
+
+<span class="blue">未来趋势：CoreSight 将与 ARMv8-M 的安全扩展深度整合；跟踪数据的实时压缩与 AI 辅助分析也在成为新的技术演进方向。</span>
+<br>
