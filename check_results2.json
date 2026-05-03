@@ -1,0 +1,281 @@
+{
+  "01-I2S与PCM基础认知与数字音频.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\I2S与PCM\\01-I2S与PCM基础认知与数字音频.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)"
+    ]
+  },
+  "02-I2S时序与配置.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\I2S与PCM\\02-I2S时序与配置.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "03-TDM与PDM麦克风.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\I2S与PCM\\03-TDM与PDM麦克风.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "04-I2S嵌入式实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\I2S与PCM\\04-I2S嵌入式实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "01-MIPI-Alliance系列协议基础认知.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\MIPI Alliance系列协议\\01-MIPI-Alliance系列协议基础认知.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)"
+    ]
+  },
+  "02-MIPI-DSI显示接口.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\MIPI Alliance系列协议\\02-MIPI-DSI显示接口.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)"
+    ]
+  },
+  "03-MIPI-CSI-2摄像头接口.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\MIPI Alliance系列协议\\03-MIPI-CSI-2摄像头接口.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "04-MIPI嵌入式实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第六部分-音视频专用总线\\MIPI Alliance系列协议\\04-MIPI嵌入式实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  },
+  "01-CoreSight与ETM基础认知.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\CoreSight与ETM\\01-CoreSight与ETM基础认知.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)"
+    ]
+  },
+  "02-ETM跟踪配置与解码.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\CoreSight与ETM\\02-ETM跟踪配置与解码.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  },
+  "03-ITM与DWT调试.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\CoreSight与ETM\\03-ITM与DWT调试.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  },
+  "04-CoreSight嵌入式实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\CoreSight与ETM\\04-CoreSight嵌入式实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "01-JTAG基础认知与TAP状态机.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\JTAG\\01-JTAG基础认知与TAP状态机.md",
+    "hist_ok": true,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "练习题不足(2)"
+    ]
+  },
+  "02-JTAG边界扫描实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\JTAG\\02-JTAG边界扫描实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "03-JTAG调试与Flash烧录.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\JTAG\\03-JTAG调试与Flash烧录.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "04-JTAG嵌入式实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\JTAG\\04-JTAG嵌入式实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导"
+    ]
+  },
+  "01-SWD基础认知与2-pin调试.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\SWD\\01-SWD基础认知与2-pin调试.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": true,
+    "has_mermaid": true,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)"
+    ]
+  },
+  "02-SWD调试配置与OpenOCD.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\SWD\\02-SWD调试配置与OpenOCD.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  },
+  "03-Cortex-M调试实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\SWD\\03-Cortex-M调试实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  },
+  "04-SWD嵌入式实战.md": {
+    "path": "D:\\MyCodeSpace\\Linux_Knowledge\\Embedded_Knowledge_System_V2026\\docs\\08-总线协议\\第七部分-调试与跟踪专用总线\\SWD\\04-SWD嵌入式实战.md",
+    "hist_ok": false,
+    "has_summary": true,
+    "exercise_count": 2,
+    "has_why": false,
+    "has_mermaid": false,
+    "need_comment": 0,
+    "issues": [
+      "缺历史演进",
+      "练习题不足(2)",
+      "缺推导",
+      "缺Mermaid"
+    ]
+  }
+}
