@@ -1,8 +1,11 @@
 # CAN 总线基础认知与帧格式 [I→E]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">CAN（Controller Area Network）</span> 的差分仲裁机制
-> - 掌握 <span class="red">标准帧/扩展帧</span> 的位域结构与 CRC 校验
+> - 掌握 标准帧/扩展帧 的位域结构与 CRC 校验
 > - 了解 CAN FD 的加速与双速率机制
 
 ---

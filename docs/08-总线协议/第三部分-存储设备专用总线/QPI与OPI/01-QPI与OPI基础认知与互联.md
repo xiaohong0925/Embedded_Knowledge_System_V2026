@@ -1,8 +1,11 @@
 # QPI 与 OPI 基础认知与互联 [M]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">QPI（QuickPath Interconnect）</span> 从 FSB 演进的动机
-> - 掌握 <span class="red">OPI（On-Package Interconnect）</span> 的片外内存扩展原理
+> - 掌握 OPI（On-Package Interconnect） 的片外内存扩展原理
 > - 了解 Intel UPI/AMD Infinity Fabric 的现代演进
 
 ---

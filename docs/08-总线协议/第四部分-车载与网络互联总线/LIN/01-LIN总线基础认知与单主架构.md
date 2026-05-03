@@ -1,8 +1,11 @@
 # LIN 总线基础认知与单主架构 [B→I]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">LIN（Local Interconnect Network）</span> 的低成本设计哲学
-> - 掌握 <span class="red">单主多从架构</span> 与调度表机制
+> - 掌握 单主多从架构 与调度表机制
 > - 了解 LIN 在车身电子中的典型应用场景
 
 ---

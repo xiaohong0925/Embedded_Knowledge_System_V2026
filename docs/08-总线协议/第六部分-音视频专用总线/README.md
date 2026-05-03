@@ -1,5 +1,8 @@
 # 第六部分：音视频专用总线
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **难度等级**：I → E
 > 
 003e 本部分覆盖<span class="red">移动设备和嵌入式系统</span>中的音视频传输协议。

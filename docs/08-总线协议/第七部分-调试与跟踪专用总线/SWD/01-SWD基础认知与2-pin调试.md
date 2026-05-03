@@ -1,8 +1,11 @@
 # SWD 基础认知与 2-pin 调试 [B→I]
 
+<span class="badge-i">[I]</span> <span class="badge-m">[M]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">SWD（Serial Wire Debug）</span> 从 JTAG 简化的设计动机
-> - 掌握 <span class="red">DAP（Debug Access Port）</span> 的 DP/AP 架构
+> - 掌握 DAP（Debug Access Port） 的 DP/AP 架构
 > - 了解 SWD 在 Cortex-M 调试中的典型连接
 
 ---

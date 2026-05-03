@@ -1,8 +1,11 @@
 # EtherCAT 基础认知与"飞读飞写" [E→M]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">EtherCAT</span> 从 Beckhoff 内部项目到 IEC 61158 标准的历程
-> - 掌握 <span class="red">ESC（EtherCAT Slave Controller）</span> 的帧处理机制
+> - 掌握 ESC（EtherCAT Slave Controller） 的帧处理机制
 > - 了解分布时钟（DC）实现纳秒级同步的原理
 
 ---

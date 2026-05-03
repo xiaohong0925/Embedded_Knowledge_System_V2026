@@ -2,6 +2,9 @@
 
 # NCQ原生命令队列
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> NCQ（Native Command Queuing，原生命令队列）是 SATA 2.0 引入的核心特性，允许硬盘内部对多个待执行的读写命令重新排序，以最小化磁头移动距离，提升随机 I/O 性能。
 
 ---

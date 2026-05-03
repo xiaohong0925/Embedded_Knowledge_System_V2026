@@ -1,8 +1,11 @@
 # MIPI Alliance 系列协议基础认知 [I→E]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">MIPI Alliance</span> 作为移动生态标准组织的角色
-> - 掌握 <span class="red">DSI/CSI/D-PHY/C-PHY/M-PHY</span> 的分层架构与速率
+> - 掌握 DSI/CSI/D-PHY/C-PHY/M-PHY 的分层架构与速率
 > - 了解 D-PHY 的 HS/LP 双模式与 C-PHY 的三相编码
 
 ---

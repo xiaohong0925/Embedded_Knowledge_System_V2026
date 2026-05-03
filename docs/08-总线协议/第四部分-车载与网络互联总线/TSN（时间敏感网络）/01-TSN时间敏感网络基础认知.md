@@ -1,8 +1,11 @@
 # TSN 时间敏感网络基础认知 [E→M]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">TSN（Time-Sensitive Networking）</span> 从标准以太网演进的动机
-> - 掌握 <span class="red">IEEE 802.1Qbv 门控调度</span> 与 gPTP 时间同步
+> - 掌握 IEEE 802.1Qbv 门控调度 与 gPTP 时间同步
 > - 了解 TSN 在自动驾驶和工业控制中的关键作用
 
 ---
@@ -39,7 +42,7 @@
 
 | 特性 | NTP | PTP | gPTP | 差异 |
 | --- | --- | --- | --- | --- |
-| 精度 | 毫秒级 | 亚微秒级 | <span class="blue">纳秒级</span> | 用于实时控制 |
+| 精度 | 毫秒级 | 亚微秒级 | 纳秒级 | 用于实时控制 |
 | 时间戳 | 软件 | 硬件+软件 | 硬件 | 消除软件延迟 |
 | 拓扑 | 任意 | 主从 | 主从+驻留时间 | 网络透明时钟 |
 | 应用场景 | 互联网 | 电信/金融 | 汽车/工业 | 确定性网络 |

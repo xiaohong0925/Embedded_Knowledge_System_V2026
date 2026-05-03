@@ -2,6 +2,9 @@
 
 # PCIe基础认知与TLP
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> PCIe（Peripheral Component Interconnect Express，高速外围组件互连）是取代 PCI 和 PCI-X 的串行点对点互连标准，用差分信号对替代并行总线，支持热插拔和动态链路扩展。
 
 ---

@@ -1,8 +1,11 @@
 # eMMC 与 UFS 基础认知与演进 [I→E]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">eMMC</span> 从 MMC 演进的完整脉络与 HS400 时序
-> - 掌握 <span class="red">UFS（Universal Flash Storage）</span> 的 M-PHY + UniPro 分层架构
+> - 掌握 UFS（Universal Flash Storage） 的 M-PHY + UniPro 分层架构
 > - 了解 UFS 相比 eMMC 的性能优势与手机存储演进路线
 
 ---

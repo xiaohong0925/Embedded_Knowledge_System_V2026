@@ -2,6 +2,9 @@
 
 # AHCI瓶颈与NVMe替代
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> AHCI 诞生于机械硬盘时代，设计目标是在单队列中管理 32 个命令。当 SSD 取代 HDD 成为主流，AHCI 的架构成为 PCIe SSD 性能的枷锁，NVMe 应运而生。
 
 ---

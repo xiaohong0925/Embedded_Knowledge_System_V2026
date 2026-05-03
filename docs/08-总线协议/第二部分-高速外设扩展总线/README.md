@@ -1,5 +1,8 @@
 # 第二部分：高速外设扩展总线
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **难度等级**：I → E
 > 
 > 本部分覆盖嵌入式系统中用于高速数据传输的外设总线，

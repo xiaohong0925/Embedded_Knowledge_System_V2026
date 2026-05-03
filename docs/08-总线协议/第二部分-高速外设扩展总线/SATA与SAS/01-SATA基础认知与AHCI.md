@@ -2,6 +2,9 @@
 
 # SATA基础认知与AHCI
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> SATA（Serial Advanced Technology Attachment，串行高级技术附件）是取代 PATA（并行ATA）的存储接口标准，用串行差分信号替代并行总线，解决了并行传输的信号串扰和时钟偏移问题。
 
 ---

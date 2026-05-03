@@ -2,6 +2,9 @@
 
 # PCIe配置空间与BAR
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> PCIe 设备通过配置空间暴露自身能力，操作系统在枚举阶段读取配置头、解析 BAR（Base Address Register）、分配资源，这是设备驱动能正常工作的前提。
 
 ---

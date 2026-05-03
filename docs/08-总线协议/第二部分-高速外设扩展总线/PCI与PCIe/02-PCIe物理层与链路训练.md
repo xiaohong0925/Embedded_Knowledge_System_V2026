@@ -2,6 +2,9 @@
 
 # PCIe物理层与链路训练
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> PCIe 物理层负责电气传输和链路初始化，其核心状态机 LTSSM（Link Training and Status State Machine）管理从设备检测到链路就绪的全过程，包括速率协商和通道宽度协商。
 
 ---

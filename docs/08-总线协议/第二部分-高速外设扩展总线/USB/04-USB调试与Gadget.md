@@ -2,6 +2,9 @@
 
 # USB调试与Gadget
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> USB调试需要同时观察主机和设备两侧的行为，Linux提供usbmon和Wireshark两个层面的抓包工具。USB Gadget则让嵌入式设备充当USB外设（而非主机），通过ConfigFS动态配置RNDIS、ACM、MSD等功能。
 
 ---

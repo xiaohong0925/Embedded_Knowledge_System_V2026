@@ -2,6 +2,9 @@
 
 # USB端点与描述符
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> USB 设备的功能抽象为端点（Endpoint），端点的属性（方向、类型、带宽）通过描述符（Descriptor）链声明给主机。驱动在枚举阶段读取描述符，建立设备能力视图。
 
 ---

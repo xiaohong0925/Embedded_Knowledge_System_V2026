@@ -1,8 +1,11 @@
 # JTAG 基础认知与 TAP 状态机 [I→E]
 
+<span class="badge-i">[I]</span> <span class="badge-m">[M]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">JTAG（Joint Test Action Group）</span> 从边界扫描到通用调试的演进
-> - 掌握 <span class="red">TAP（Test Access Port）状态机</span> 的 16 状态转换
+> - 掌握 TAP（Test Access Port）状态机 的 16 状态转换
 > - 了解 IR/DR 扫描链与边界扫描寄存器（BSR）
 
 ---

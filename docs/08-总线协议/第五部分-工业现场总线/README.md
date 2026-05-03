@@ -1,5 +1,8 @@
 # 第五部分：工业现场总线
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **难度等级**：I → E
 > 
 > 本部分覆盖<span class="red">工业自动化领域</span>的经典现场总线。

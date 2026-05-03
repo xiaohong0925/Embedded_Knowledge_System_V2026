@@ -1,5 +1,8 @@
 # 第三部分：存储设备专用总线
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **难度等级**：I → E
 > 
 > 本部分聚焦嵌入式系统中<span class="red">存储介质与主控芯片之间的专用总线</span>。

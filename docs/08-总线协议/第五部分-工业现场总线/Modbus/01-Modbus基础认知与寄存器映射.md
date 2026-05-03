@@ -1,8 +1,11 @@
 # Modbus 基础认知与寄存器映射 [B→I]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">Modbus</span> 从 Modicon PLC 演进的开放协议历史
-> - 掌握 <span class="red">RTU/ASCII/TCP</span> 三种帧格式与 CRC/LRC 校验
+> - 掌握 RTU/ASCII/TCP 三种帧格式与 CRC/LRC 校验
 > - 了解线圈、离散输入、保持寄存器、输入寄存器的映射关系
 
 ---

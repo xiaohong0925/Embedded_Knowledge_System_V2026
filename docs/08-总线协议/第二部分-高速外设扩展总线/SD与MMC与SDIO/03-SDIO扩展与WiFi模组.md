@@ -2,6 +2,9 @@
 
 # SDIO扩展与WiFi模组
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> SDIO（Secure Digital Input Output，安全数字输入输出）是在 SD 物理层之上扩展的 I/O 协议，允许通过 SD 插槽连接 WiFi、蓝牙、GPS 等功能模块，而不只是存储卡。
 
 ---

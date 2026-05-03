@@ -2,6 +2,9 @@
 
 # PCIe实战：NVMe与DMA
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> NVMe SSD 是 PCIe 总线上最典型的 Endpoint 设备，它通过 PCIe 的 DMA 能力直接读写系统内存，绕过 CPU 数据搬运，实现微秒级延迟和 GB/s 级带宽。
 
 ---

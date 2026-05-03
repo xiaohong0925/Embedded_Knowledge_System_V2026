@@ -1,8 +1,11 @@
 # I2S 与 PCM 基础认知与数字音频 [B→I]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">I2S（Inter-IC Sound）</span> 从 Philips 1986 年提出的原始标准
-> - 掌握 <span class="red">PCM（Pulse Code Modulation）</span> 的时隙复用与主从模式
+> - 掌握 PCM（Pulse Code Modulation） 的时隙复用与主从模式
 > - 了解 TDM/PDM 在多通道音频中的应用
 
 ---

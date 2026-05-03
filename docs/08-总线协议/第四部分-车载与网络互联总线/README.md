@@ -1,5 +1,8 @@
 # 第四部分：车载与网络互联总线
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **难度等级**：I → E
 > 
 > 本部分覆盖<span class="red">汽车电子和工业网络</span>中使用的总线协议。

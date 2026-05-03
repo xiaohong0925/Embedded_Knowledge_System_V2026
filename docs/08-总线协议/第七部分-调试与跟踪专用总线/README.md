@@ -1,5 +1,8 @@
 # 第七部分：调试与跟踪专用总线
 
+<span class="badge-i">[I]</span> <span class="badge-m">[M]</span>
+
+
 > **难度等级**：I → M
 > 
 003e 本部分覆盖<span class="red">芯片调试和系统跟踪</span>的专用接口。

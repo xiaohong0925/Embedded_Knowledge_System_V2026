@@ -1,8 +1,11 @@
 # PROFIBUS DP 基础认知与令牌环 [I→E]
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 > **本章学习目标**：
 > - 理解 <span class="red">PROFIBUS</span> 从德国标准 DIN 19245 演进的历程
-> - 掌握 <span class="red">PROFIBUS DP（Decentralized Peripherals）</span> 的主从轮询机制
+> - 掌握 PROFIBUS DP（Decentralized Peripherals） 的主从轮询机制
 > - 了解 GSD 文件与设备配置的标准化方法
 
 ---

@@ -1,8 +1,11 @@
 # CoreSight 与 ETM 基础认知 [E→M]
 
+<span class="badge-i">[I]</span> <span class="badge-m">[M]</span>
+
+
 > **本章学习目标**：
 003e - 理解 <span class="red">CoreSight</span> 作为 ARM 调试和跟踪架构的核心组件
-003e - 掌握 <span class="red">ETM（Embedded Trace Macrocell）</span> 的指令流跟踪机制
+003e - 掌握 ETM（Embedded Trace Macrocell） 的指令流跟踪机制
 003e - 了解 ITM/SWO/TPIU 在实时调试中的协同工作
 
 ---

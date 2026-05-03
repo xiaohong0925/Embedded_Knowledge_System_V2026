@@ -1,5 +1,8 @@
 # 第一部分：基础外设通信总线
 
+<span class="badge-b">[B]</span> <span class="badge-i">[I]</span>
+
+
 > **难度等级**：B → I
 > 
 > 本部分覆盖嵌入式系统中最常用的低速外设总线，> 从 I2C、SPI 到 UART、1-Wire，> 是每个嵌入式工程师必须掌握的基础技能。

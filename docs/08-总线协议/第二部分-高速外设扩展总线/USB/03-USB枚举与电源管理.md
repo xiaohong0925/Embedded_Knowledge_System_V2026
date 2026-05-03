@@ -2,6 +2,9 @@
 
 # USB枚举与电源管理
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> USB枚举不仅是地址分配和描述符读取，还包含速度协商、电源预算分配和配置激活。电源管理则贯穿设备全生命周期，从活跃态到挂起态再到远程唤醒，每步都有精确的电气时序要求。
 
 ---

@@ -10,7 +10,7 @@ Zynq-7000 是 Xilinx 的"处理器+FPGA"融合芯片，
 <br>
 <span class="red">PS（Processing System）</span>侧跑ARM Cortex-A9，
 <br>
-<span class="red">PL（Programmable Logic）</span>侧是Artix-7/Kintex-7 FPGA fabric。
+PL（Programmable Logic）侧是Artix-7/Kintex-7 FPGA fabric。
 <br>
 
 ```mermaid

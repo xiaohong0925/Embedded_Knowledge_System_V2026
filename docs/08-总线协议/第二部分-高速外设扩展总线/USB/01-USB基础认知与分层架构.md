@@ -2,6 +2,9 @@
 
 # USB基础认知与分层架构
 
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+
+
 <span class="red">核心概念</span> USB（Universal Serial Bus，通用串行总线）是嵌入式和PC领域最通用的外设接口标准，用统一的4线物理层连接键盘、鼠标、U盘、摄像头、串口、网卡等几乎所有外设。
 
 ---
