@@ -155,6 +155,14 @@ flowchart TD
 
 ---
 
+## 技术演进与发展历史
+
+QPI（QuickPath Interconnect）的提出标志着Intel处理器互联架构的根本性变革。2008年以前，Intel x86平台长期依赖FSB（Front Side Bus）作为CPU与北桥芯片的共享总线，随着多核处理器普及，FSB成为严重的带宽瓶颈。2008年，Intel随Nehalem架构（Core i7）同步推出QPI，采用20对差分线的点对点全双工互联，彻底取代FSB。此后，QPI历经1.0（4.8 GT/s）、1.1（6.4 GT/s）、2.0（8.0 GT/s）等版本演进。2017年，Intel在Skylake-SP平台以UPI（Ultra Path Interconnect）取代QPI，进一步提升速率和可靠性。OPI（On-Package Interconnect）则是Intel面向低功耗平台的片内内存扩展接口，于Atom/Celeron产品线中广泛应用，代表了低成本封装互联的技术演进方向。
+
+<br>
+
+---
+
 ## 本章小结
 
 | 小节 | 核心要点 |
@@ -164,6 +172,8 @@ flowchart TD
 | 3D 堆叠内存 | HBM 通过 TSV 垂直堆叠，HBM3E 达 1.2 TB/s，硅中介层互联 |
 
 ---
+
+
 
 ## 练习
 

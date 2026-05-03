@@ -84,6 +84,8 @@ flowchart LR
 
 ---
 
+
+
 ## 练习
 
 1. PROFIBUS 的令牌环和 CAN 的仲裁机制各有什么优劣？

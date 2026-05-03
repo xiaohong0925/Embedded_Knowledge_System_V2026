@@ -147,6 +147,14 @@ sequenceDiagram
 
 ---
 
+## 技术演进与发展历史
+
+TSN（Time-Sensitive Networking）的发展历史根植于工业以太网的确定性需求演进。2005年，IEEE 802.1音频视频桥接（AVB）工作组成立，旨在为音视频流传输提供低延迟保障。2012年，AVB正式更名为TSN，并将目标扩展至工业自动化、汽车网络和关键基础设施。此后，IEEE相继发布了802.1Qbv（门控调度）、802.1Qbu（帧抢占）、802.1AS（时间同步）等关键标准。2016年后，TSN逐步与OPC UA融合，成为工业4.0通信架构的核心支柱。近年来，汽车领域对确定性以太网的需求推动了100BASE-T1和1000BASE-T1与TSN的结合，TSN正从实验室走向大规模产业化部署。
+
+<br>
+
+---
+
 ## 本章小结
 
 | 小节 | 核心要点 |
@@ -156,6 +164,8 @@ sequenceDiagram
 | gPTP 消息交换 | Sync+Follow_Up+Delay_Req+Delay_Resp 四消息时序，delay/offset 公式计算 |
 
 ---
+
+
 
 ## 练习
 

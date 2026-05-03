@@ -7,6 +7,16 @@
 
 ---
 
+
+---
+
+### <strong>QPI/OPI的技术背景与需求动机</strong>
+
+<span class="red">为什么</span>Intel必须放弃FSB而引入QPI？在多核时代，多个CPU核心和内存控制器共享FSB总线，带宽被迅速耗尽且延迟居高不下。QPI以点对点全双工互联取代共享总线，每个CPU拥有独立内存通道，CPU之间通过QPI直接通信，消除了FSB的瓶颈。
+<br>
+
+---
+
 ## 本地内存 vs 远程内存
 
 ---
@@ -157,6 +167,14 @@ Intel 引入了多种优化机制降低 Snoop 开销。<br>
 
 ---
 
+## 技术演进与发展历史
+
+QPI（QuickPath Interconnect）的提出标志着Intel处理器互联架构的根本性变革。2008年以前，Intel x86平台长期依赖FSB（Front Side Bus）作为CPU与北桥芯片的共享总线，随着多核处理器普及，FSB成为严重的带宽瓶颈。2008年，Intel随Nehalem架构（Core i7）同步推出QPI，采用20对差分线的点对点全双工互联，彻底取代FSB。此后，QPI历经1.0（4.8 GT/s）、1.1（6.4 GT/s）、2.0（8.0 GT/s）等版本演进。2017年，Intel在Skylake-SP平台以UPI（Ultra Path Interconnect）取代QPI，进一步提升速率和可靠性。OPI（On-Package Interconnect）则是Intel面向低功耗平台的片内内存扩展接口，于Atom/Celeron产品线中广泛应用，代表了低成本封装互联的技术演进方向。
+
+<br>
+
+---
+
 ## 本章小结
 
 | 小节 | 核心要点 |
@@ -166,6 +184,12 @@ Intel 引入了多种优化机制降低 Snoop 开销。<br>
 | Snoop 机制 | 目录过滤+Home Agent+响应聚合，降低广播开销 |
 
 ---
+
+
+
+
+---
+
 
 ## 练习
 

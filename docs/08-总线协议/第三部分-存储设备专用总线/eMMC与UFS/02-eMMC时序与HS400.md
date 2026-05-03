@@ -7,6 +7,16 @@
 
 ---
 
+
+---
+
+### <strong>eMMC/UFS的技术背景与需求动机</strong>
+
+<span class="red">为什么</span>移动设备需要从eMMC向UFS演进？eMMC采用并行接口，随着时钟频率提升，信号串扰和时序对齐难度急剧增加，HS400已达物理极限。UFS改用差分串行M-PHY接口，支持全双工和命令队列，在相同功耗下提供数倍于eMMC的带宽。
+<br>
+
+---
+
 ## eMMC 总线时序基础
 
 ---
@@ -248,6 +258,12 @@ best_phase = select_center_of_valid_window();
 | Data Strobe 详解 | DS 由 Device 输出，Host 用其边沿采样 DAT，消除 skew |
 
 ---
+
+
+
+
+---
+
 
 ## 练习
 

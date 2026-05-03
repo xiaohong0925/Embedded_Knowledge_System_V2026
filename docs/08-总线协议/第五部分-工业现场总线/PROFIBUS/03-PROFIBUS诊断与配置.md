@@ -7,6 +7,16 @@
 
 ---
 
+
+---
+
+### <strong>PROFIBUS的技术背景与需求动机</strong>
+
+<span class="red">为什么</span>德国工业界要推动PROFIBUS标准化？1980年代末，工厂自动化领域存在数十种互不兼容的现场总线，设备互换性差、维护成本高。德国联邦科技部联合主要工业厂商统一制定PROFIBUS规范，将分散的通信需求收敛为DP（工厂自动化）、PA（过程自动化）两大分支，降低了全行业的集成门槛。
+<br>
+
+---
+
 ## GSD 文件解析
 
 ---
@@ -132,6 +142,14 @@ Module = "4AI U (I + -)" 0x51,0xC4,0x00,0x00
 
 ---
 
+## 技术演进与发展历史
+
+PROFIBUS的发展历史是德国工业界推动现场总线标准化的典型范例。1987年，德国联邦科技部联合Bosch、Siemens等25家企业启动现场总线研究项目。1991年，PROFIBUS FMS（Fieldbus Message Specification）发布，面向复杂通信任务。1993年，PROFIBUS DP（Decentralized Peripherals）问世，专为工厂自动化高速周期性数据交换设计，迅速取代FMS成为主流。1998年，PROFIBUS PA（Process Automation）加入，支持本质安全区和过程仪表。此后，PROFIBUS-DP扩展出DP-V0（基本功能）、DP-V1（非周期性参数读写）和DP-V2（等时同步与从站间直接通信）三个版本。2006年，PROFIBUS国际组织（PI）推动PROFINET作为其以太网继承者，但PROFIBUS-DP凭借庞大的存量装机量，至今仍在全球工厂自动化中发挥着不可替代的作用。
+
+<br>
+
+---
+
 ## 本章小结
 
 | 小节 | 核心要点 |
@@ -141,6 +159,41 @@ Module = "4AI U (I + -)" 0x51,0xC4,0x00,0x00
 | 总线参数 | Tslot ≥ MaxTSDR + 传播延迟，Ttr 权衡实时性与负载 |
 
 ---
+
+
+---
+
+
+```mermaid
+flowchart LR
+    Master["DP主站
+PLC"]
+    Slave1["DP从站1
+变频器"]
+    Slave2["DP从站2
+IO模块"]
+    Slave3["PA从站
+压力变送器"]
+    
+    Master ---|"DP-V0/V1"| Slave1
+    Master ---|"DP-V0/V1"| Slave2
+    Master ---|"DP-PA耦合器"| Slave3
+    
+    subgraph "PROFIBUS混合网络"
+        Master
+        Slave1
+        Slave2
+        Slave3
+    end
+```
+
+<br>
+
+---
+
+
+---
+
 
 ## 练习
 

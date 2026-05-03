@@ -7,6 +7,16 @@
 
 ---
 
+
+---
+
+### <strong>eMMC/UFS的技术背景与需求动机</strong>
+
+<span class="red">为什么</span>移动设备需要从eMMC向UFS演进？eMMC采用并行接口，随着时钟频率提升，信号串扰和时序对齐难度急剧增加，HS400已达物理极限。UFS改用差分串行M-PHY接口，支持全双工和命令队列，在相同功耗下提供数倍于eMMC的带宽。
+<br>
+
+---
+
 ## M-PHY Gear 速率体系
 
 ---
@@ -194,6 +204,12 @@ SCSI Status 字段为 GOOD（0x00）表示成功，否则携带 Sense Key。<br>
 | UFS SCSI 命令集 | UPIU 封装 SCSI CDB，COMMAND→DATA→RESPONSE 三段式时序 |
 
 ---
+
+
+
+
+---
+
 
 ## 练习
 

@@ -167,6 +167,14 @@ uint8_t enhanced_checksum(uint8_t pid, uint8_t *data, uint8_t len) {
 
 ---
 
+## 技术演进与发展历史
+
+LIN总线的诞生源于汽车电子对低成本通信方案的迫切需求。1990年代末，汽车车身领域大量使用独立的开关和传感器，若全部采用CAN总线将导致成本过高。1999年，BMW、Volkswagen、Audi、Volvo等车企联合成立了LIN协会（LIN Consortium），旨在定义一种基于UART/SCI的低成本串行通信协议。2002年，LIN 1.3规范发布；2006年升级至LIN 2.1，增加了诊断功能和节点配置能力。此后，LIN成为车身控制模块（BCM）、车门、座椅、灯光等子系统的标准选择，与CAN形成互补。2020年后，LIN 2.2A及后续版本进一步增强了睡眠管理和自动波特率检测能力，持续服务于汽车低成本通信场景。
+
+<br>
+
+---
+
 ## 本章小结
 
 | 小节 | 核心要点 |
@@ -176,6 +184,8 @@ uint8_t enhanced_checksum(uint8_t pid, uint8_t *data, uint8_t len) {
 | PID+数据+校验 | 6-bit ID + 2-bit 奇偶校验，数据 1/2/4/8 byte，Classic/Enhanced 两种校验和 |
 
 ---
+
+
 
 ## 练习
 
