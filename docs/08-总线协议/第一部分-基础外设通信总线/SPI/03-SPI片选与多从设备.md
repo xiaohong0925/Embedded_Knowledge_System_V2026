@@ -1,196 +1,259 @@
-# SPI 片选与多从设备 [I]
+# SPI 片选与多从设备
 
-> **本章学习目标**：
-> - 理解 **软件 CS** 与 **硬件 CS** 的电气差异与适用场景
-> - 掌握 **菊花链（Daisy Chain）** 拓扑的时序与控制逻辑
-> - 了解 SPI Flash 多从配置的译码器设计与 Verilog 实现
+<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
 
 ---
 
-## 片选信号的本质：多从机共享总线
+### 独立 CS 控制
 
----
-
-### **为什么需要片选：SPI 总线的广播特性**
-
-<span class="red">SPI 总线</span>没有地址机制，所有从机共享 MOSI/MISO/SCK 信号。
-
-在多从机场景下，必须解决"谁接收/发送数据"的问题：
+<span class="red">片选（Chip Select，CS/SS）是 SPI 选择目标从设备的唯一手段</span>。
 <br>
-* <span class="green">硬件 CS</span>：每个从机有独立的 CS 引脚，主机控制
-<br>
-* <span class="green">软件 CS</span>：用 GPIO 模拟 CS 信号，灵活性更高
-<br>
-* <span class="green">菊花链</span>：从机串联，数据依次流经每个节点
+每增加一个从设备，就需要增加一条独立的 CS 线。
 <br>
 
-<span class="blue">CS（Chip Select）低电平有效，拉低时从机激活。多个从机的 CS 不能同时为低，否则总线冲突。</span>
+GPIO CS vs 硬件 CS：
 <br>
 
-<span class="blue">类比：CS 如同"会议室的话筒开关"——只有拿到话筒（CS=低）的人才能说话（收发数据），其他人必须静音（CS=高）。</span>
-<br>
+| 方式 | 实现 | 优点 | 缺点 |
+|------|------|------|------|
+| GPIO CS | 软件控制 GPIO 高低 | 灵活、可任意扩展 | 有软件延迟、CS 边沿不精确 |
+| 硬件 NSS | SPI 控制器自动驱动 | 时序精确、无软件开销 | 通常只有 1~2 路，扩展难 |
 
----
+GPIO CS 的典型时序控制：<br>
 
-### **软件 CS vs 硬件 CS：选择逻辑**
+```c
+// 软件 CS：GPIO 控制
+#define CS_FLASH_LOW()   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET)
+#define CS_FLASH_HIGH()  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET)
+#define CS_ADC_LOW()     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET)
+#define CS_ADC_HIGH()    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET)
 
-| 特性 | 硬件 CS | 软件 CS |
-| --- | --- | --- |
-| 引脚 | SPI 控制器专用 CS | 任意 GPIO |
-| 切换速度 | 控制器自动，快 | 软件控制，稍慢 |
-| 多从机数量 | 受 CS 引脚限制 | 无限（GPIO 够多） |
-| 灵活性 | 低 | 高 |
-| 典型场景 | 2~4 个从机 | 4+ 从机、特殊时序 |
-
-```mermaid
-flowchart TD
-    MCU["STM32\nSPI1"]
-    S1["Flash\nW25Q128"]
-    S2["LCD\nST7789"]
-    S3["ADC\nADS1115"]
-    S4["Sensor\nBME280"]
-    
-    MCU --"SCK+MOSI+MISO"--> S1
-    MCU --"SCK+MOSI+MISO"--> S2
-    MCU --"SCK+MOSI+MISO"--> S3
-    MCU --"SCK+MOSI+MISO"--> S4
-    
-    MCU --"CS0"--> S1
-    MCU --"CS1"--> S2
-    MCU --"CS2"--> S3
-    MCU --"CS3"--> S4
-    
-    subgraph 独立片选
-        direction LR
-    end
+void spi_transfer_flash(uint8_t *tx, uint8_t *rx, uint16_t len) {
+    CS_FLASH_LOW();
+    HAL_SPI_TransmitReceive(&hspi1, tx, rx, len, 100);
+    CS_FLASH_HIGH();
+}
 ```
 
-<span class="blue">STM32 的 SPI 控制器通常只有 1~2 个硬件 CS 引脚（NSS）。超过 2 个从机时，必须用软件 CS（GPIO）扩展。</span>
+<span class="blue">关键认知：CS 变低到第一个 SCK 边沿需要满足 tCSS（建立时间），
+<br>
+CS 变高前需要满足 tCSH（保持时间）。
+<br>
+GPIO 翻转太快可能导致违反建立时间——如果主控 SPI 速率极高，
+<br>
+需要在 CS 拉低后加一小段延时再启动 SCK。
+</span><br>
+
+CS 扩展方案：<br>
+- 74HC138 译码器：3 根 GPIO → 8 路 CS
+<br>
+- GPIO 扩展器：MCP23S17（SPI 转 16 路 GPIO）
+<br>
+- 菊花链：共享一条 CS 线（见下节）
 <br>
 
 ---
 
-## 菊花链：串联拓扑的级联控制
+### 菊花链拓扑
 
----
-
-### **为什么用菊花链：引脚受限时的解决方案**
-
-<span class="red">菊花链（Daisy Chain）</span>将多个从机的数据输入输出串联：
+<span class="red">菊花链（Daisy Chain）</span>让多个从设备共用一条 CS 线，
 <br>
-* 主机的 MOSI 连接到第一个从机的 DI
-<br>
-* 第一个从机的 DO 连接到第二个从机的 DI
-<br>
-* 依此类推，最后一个从机的 DO 连接到主机的 MISO
-<br>
-* 所有从机共享同一个 CS 和 SCK
+通过级联移位寄存器的方式传输数据。
 <br>
 
 ```mermaid
 flowchart LR
-    MCU["Master\nMCU"]
-    S1["Slave 1\nLED Driver"]
-    S2["Slave 2\nLED Driver"]
-    S3["Slave 3\nLED Driver"]
-    
-    MCU --"MOSI"--> S1
-    S1 --"DO→DI"--> S2
-    S2 --"DO→DI"--> S3
-    S3 --"DO"--> MCU
-    
-    MCU --"CS"--> S1
-    MCU --"CS"--> S2
-    MCU --"CS"--> S3
-    
-    subgraph 菊花链
-        note["共享 CS+SCK\n数据串联传递"]
+    Master["MCU"] --
+MOSI--> S1["Slave1\nDIN"] --
+DOUT--> S2["Slave2\nDIN"] --
+DOUT--> S3["Slave3\nDIN"]
+    Master --
+MISO--> S3
+    Master --
+SCK--> S1
+    S1 --SCK--> S2
+    S2 --SCK--> S3
+    Master --CS--> S1
+    S1 --CS--> S2
+    S2 --CS--> S3
+```
+
+工作原理：<br>
+- 数据从 MOSI 进入 Slave1 的 DIN
+<br>
+- Slave1 的 DOUT 接 Slave2 的 DIN，形成移位链
+<br>
+- 所有设备共用 SCK 和 CS
+<br>
+- 发送 N 字节 = 依次穿过 N 个设备
+<br>
+
+典型应用：<br>
+- LED 驱动器级联（74HC595 移位寄存器）
+<br>
+- ADC 多通道级联（ADS131M04）
+<br>
+- 多路 DAC 输出
+<br>
+
+延迟代价：<br>
+- N 个设备级联时，命令需要 N 个时钟周期才能到达最后一个设备
+<br>
+- 读取最后一个设备的数据也需要 N 个周期移回主设备
+<br>
+- 适合配置类操作，不适合高频实时数据
+<br>
+
+<span class="blue">关键认知：菊花链 = "一条 CS 管所有，数据排队进"，
+<br>
+省引脚但增加延迟，适合对时序不敏感的控制场景。
+</span><br>
+
+---
+
+### MISO 三态门
+
+<span class="red">多从设备共用 MISO 线时，未被选中的从设备必须释放总线</span>。
+<br>
+SPI 从设备通常在内部用三态门控制 MISO 输出。
+<br>
+
+```
+CS = 0（选中）：MISO = 内部移位寄存器输出
+CS = 1（未选中）：MISO = 高阻态（Hi-Z，相当于断开）
+```
+
+```mermaid
+flowchart LR
+    subgraph Slave["从设备内部"]
+        SR["移位寄存器"] --> TRI["三态门"]
+        CS["CS 引脚"] --> TRI
+        TRI --> MISO
     end
+    CS -->|CS=0 使能| TRI
+    CS -->|CS=1 高阻| TRI
+    MISO --> Master["主设备 MISO"]
 ```
 
-<span class="blue">菊花链的关键：每个从机在 SCK 的驱动下，将 DI 的数据移位到 DO。数据像"击鼓传花"一样依次经过每个从机。</span>
+如果没有三态门（如某些低成本移位寄存器），
 <br>
+未选中设备的 MISO 会保持最后一状态，与选中设备冲突。
+<br>
+解决方案：<br>
+- 选带三态输出的器件
+<br>
+- MISO 线上加隔离电阻（几十欧姆）
+<br>
+- 每个从设备 MISO 经独立逻辑门汇总到主设备
+<br>
+
+<span class="blue">易错点：两个从设备同时被 CS 选中时，
+</br>
+MISO 线电平冲突，数据完全错乱。
+</br>
+软件必须保证同一时刻只有一个 CS 有效。</span><br>
 
 ---
 
-### **菊花链时序：数据经过 N 个时钟周期到达目标**
+### 多从设备切换时序
 
-发送 3 个字节到第 3 个从机：
-<br>
-* 第 1 个字节：经过从机 1 → 从机 2 → 从机 3（每个 SCK 移位一次）
-<br>
-* 第 2 个字节：到达从机 2
-<br>
-* 第 3 个字节：到达从机 1
-<br>
-* CS 拉高后，3 个从机同时应用各自的配置
-<br>
+完整的多从设备读写时序：<br>
 
-| 时钟周期 | MOSI | 从机1 DI/DO | 从机2 DI/DO | 从机3 DI/DO |
-| --- | --- | --- | --- | --- |
-| 0 | Byte3 | - | - | - |
-| 1~8 | Byte3 | Byte3 | - | - |
-| 9~16 | Byte2 | Byte2 | Byte3 | - |
-| 17~24 | Byte1 | Byte1 | Byte2 | Byte3 |
-| CS↑ | 结束 | 应用 | 应用 | 应用 |
-
----
-
-## Verilog 3-8 译码器：扩展硬件 CS
-
----
-
-### **为什么用译码器：GPIO 也不够时的方案**
-
-<span class="red">当从机数量超过 GPIO 数量时</span>，可以用 3-8 译码器扩展：
-<br>
-* 3 根 GPIO 控制 8 个 CS 输出
-<br>
-* 节省引脚，适合大规模 SPI 网络
-<br>
-
-```verilog
-// 3-8 译码器 Verilog
-module cs_decoder(
-    input  [2:0] sel,    // 3-bit 选择
-    output reg [7:0] cs  // 8 个 CS 输出，低有效
-);
-
-always @(*) begin
-    cs = 8'b1111_1111;  // 默认全部无效
-    case(sel)
-        3'b000: cs[0] = 1'b0;
-        3'b001: cs[1] = 1'b0;
-        3'b010: cs[2] = 1'b0;
-        3'b011: cs[3] = 1'b0;
-        3'b100: cs[4] = 1'b0;
-        3'b101: cs[5] = 1'b0;
-        3'b110: cs[6] = 1'b0;
-        3'b111: cs[7] = 1'b0;
-    endcase
-end
-endmodule
+```mermaid
+sequenceDiagram
+    participant M as Master
+    participant CS1 as CS1 (Flash)
+    participant CS2 as CS2 (ADC)
+    participant SCK
+    participant MOSI
+    participant MISO
+    
+    M->>CS1: LOW
+    Note over M,CS1: tCSS 建立时间
+    M->>SCK: ↑ 启动时钟
+    M->>MOSI: Cmd/Addr
+    SCK->>MISO: Data valid
+    M->>SCK: 最后一个边沿
+    Note over M,CS1: tCSH 保持时间
+    M->>CS1: HIGH
+    
+    Note over M: 切换间隔 ≥ tCSD（片选间隔）
+    
+    M->>CS2: LOW
+    Note over M,CS2: tCSS
+    M->>SCK: ↑ 启动时钟
+    M->>MOSI: Cmd
+    SCK->>MISO: ADC Data
+    M->>SCK: 最后一个边沿
+    M->>CS2: HIGH
 ```
 
-<span class="blue">3-8 译码器用 3 根 GPIO 控制 8 个 CS，比直接用 8 个 GPIO 节省 5 个引脚。配合 SPI 总线（SCK+MOSI+MISO），总共只需 6 根线即可控制 8 个从机。</span>
+时序参数约束：<br>
+| 参数 | 典型值 | 含义 |
+|------|--------|------|
+| tCSS | 5~20ns | CS 变低到 SCK 第一个边沿 |
+| tCSH | 5~20ns | SCK 最后一个边沿到 CS 变高 |
+| tCSD | 50~100ns | 两个 CS 切换的间隔 |
+| tRDL | 0 | CS 变高到同一设备下次 CS 变低的间隔 |
+
+<span class="blue">关键认知：CS 高电平期间从设备必须将 MISO 置高阻，
 <br>
+主设备可以安全驱动下一个从设备。</span><br>
 
 ---
 
-## 本章小结
+### 代码：多从设备轮询
 
-| 概念 | 一句话总结 |
-| --- | --- |
-| 硬件 CS | SPI 控制器专用，自动切换，适合 2~4 从机 |
-| 软件 CS | GPIO 模拟，灵活，适合 4+ 从机 |
-| 菊花链 | 从机串联，共享 CS，数据级联传递 |
-| 3-8 译码器 | 3 根 GPIO 控制 8 个 CS，引脚扩展方案 |
-| 独立片选 | 每个从机独立 CS，最常用 |
+```c
+#include "stm32f4xx_hal.h"
+
+#define NUM_SLAVES  3
+
+GPIO_TypeDef *CS_PORTS[NUM_SLAVES] = {GPIOA, GPIOB, GPIOC};
+uint16_t CS_PINS[NUM_SLAVES] = {GPIO_PIN_4, GPIO_PIN_0, GPIO_PIN_13};
+
+void cs_select(uint8_t slave_id) {
+    for (uint8_t i = 0; i < NUM_SLAVES; i++) {
+        HAL_GPIO_WritePin(CS_PORTS[i], CS_PINS[i], GPIO_PIN_SET);
+    }
+    if (slave_id < NUM_SLAVES) {
+        HAL_GPIO_WritePin(CS_PORTS[slave_id], CS_PINS[slave_id], GPIO_PIN_RESET);
+        delay_us(1);  // tCSS，视速率调整
+    }
+}
+
+void cs_release(uint8_t slave_id) {
+    delay_us(1);  // tCSH
+    HAL_GPIO_WritePin(CS_PORTS[slave_id], CS_PINS[slave_id], GPIO_PIN_SET);
+    delay_us(5);  // tCSD，设备切换间隔
+}
+
+// 轮询读取 3 个 ADC 通道
+void poll_all_adc(uint16_t *results) {
+    for (uint8_t i = 0; i < NUM_SLAVES; i++) {
+        uint8_t tx[2] = {0x01, 0x80};  // 启动转换命令
+        uint8_t rx[2] = {0};
+        
+        cs_select(i);
+        HAL_SPI_TransmitReceive(&hspi1, tx, rx, 2, 100);
+        cs_release(i);
+        
+        results[i] = ((rx[0] & 0x03) << 8) | rx[1];
+    }
+}
+```
+
+<span class="blue">关键认知：多从设备切换的核心开销是 tCSD（片选间隔），
+<br>
+频繁切换时总线有效带宽会大幅下降。
+<br>
+大数据量传输建议连续完成一个设备再切下一个。</span><br>
 
 ---
 
-## 练习
-
-1. 设计一个 8 从机 SPI 网络：用 3-8 译码器 + 软件 CS 混合方案，画出连接图。
-2. 计算菊花链发送 3 字节到第 5 个从机需要多少个 SCK 周期。
-3. 为什么菊花链的所有从机必须同时应用配置？如果逐个应用会怎样？
+**学习路径提示**：<br>
+- <span class="badge-i">[I]</span> 读者：理解 GPIO CS 的灵活性和时序开销。
+<br>
+- <span class="badge-e">[E]</span> 读者：多从设备设计时务必检查每个器件的 MISO 是否为三态输出，
+<br>
+  否则会出现总线冲突。
