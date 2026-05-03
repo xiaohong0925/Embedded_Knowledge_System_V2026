@@ -185,3 +185,20 @@ APB桥接器负责把AHB的流水线事务转为APB的两周期事务。<br>
 **学习路径提示**：<br>
 - <span class="badge-b">[B]</span> 读者：理解片上总线就是SoC的"道路系统"，APB是通向低速外设的小路。读/写各需2个时钟周期。<br>
 - <span class="badge-i">[I]</span> 读者：关注APB3/4/5的信号演进，理解PSTRB和PPROT在TrustZone中的作用。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 总线定位 | APB 是 AMBA 低速外设总线，通过 APB Bridge 挂载于 AHB/AXI 之下 |
+| 信号极简 | PADDR、PWRITE、PSEL、PENABLE、PRDATA/PWDATA、PREADY |
+| 两周期模型 | Setup 阶段置 PSEL，Enable 阶段置 PENABLE，完成一次访问 |
+| 低功耗特性 | 外设时钟可门控，无传输时总线处于静态低功耗状态 |
+
+## 练习
+
+1. APB 为什么要采用两周期访问模型？单周期模型会带来什么实现风险？
+2. 对比 APB3 与 APB2 的信号差异：PREADY 和 PSLVERR 分别解决了什么痛点？
+3. 在 AHB-to-APB Bridge 中，如何将 AHB 的单周期地址相位映射为 APB 的两周期 Setup/Enable？

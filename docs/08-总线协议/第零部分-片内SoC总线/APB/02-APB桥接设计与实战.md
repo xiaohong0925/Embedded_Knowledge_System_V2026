@@ -229,3 +229,26 @@ endmodule
 **学习路径提示**：<br>
 - <span class="badge-i">[I]</span> 读者：掌握桥接器的核心职责——协议转换+时钟域隔离+突发拆分。<br>
 - 重点练习：根据给定寄存器映射，补全APB从机的case语句和位域逻辑。
+
+---
+
+## 历史演进与发展趋势
+
+APB（Advanced Peripheral Bus）的诞生是 ARM 对片上系统外设互连痛点的精准回应。1996 年 AMBA 1.0 首次提出 APB，定位为低速、低功耗外设的专用总线桥。在 ASB/AHB 主总线高速运转的背景下，UART、GPIO、Timer 等外设若直接挂接在高速总线上，不仅浪费功耗，还会因总线宽度不匹配导致面积膨胀。APB 通过两级桥接（APB Bridge）将高频 AHB 时钟域隔离，外设侧仅在有传输时激活时钟，其余时间处于静态低功耗状态。1999 年 AMBA 2.0 细化了 APB 信号定义，确立了 PCLK、PENABLE 两周期访问模型。2003 年 AMBA 3 引入 APB4，新增 PREADY 从设备等待信号与 PSLVERR 错误反馈，解决了早期 APB 无法插入等待周期和报告错误的局限。2010 年 AMBA 4 的 APB 进一步增强了 TrustZone 安全扩展支持。作为 AMBA 生态中寿命最长、应用最广的总线，APB 以极简的信号集（约 10 余根）和零额外逻辑开销，成为每一颗 SoC 芯片中不可或缺的基础设施。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| Bridge 设计 | APB Bridge 负责时钟域隔离、协议转换和地址映射 |
+| APB4 扩展 | PSTRB 写选通、PPROT 保护类型支持字节粒度和安全访问 |
+| 多从设备 | 通过 PSELx 独热译码实现单个 Bridge 管理多个 APB Slave |
+| 调试技巧 | 通过监测 PREADY 和 PSLVERR 定位外设寄存器访问异常 |
+
+## 练习
+
+1. APB4 的 PSTRB 信号如何与 PWDATA 配合实现字节选通写？画出 32-bit 总线上的半字写时序。
+2. 设计一个支持 8 个 Slave 的 APB 地址译码器：给出地址划分方案和 PSELx 逻辑表达式。
+3. 在 TrustZone 系统中，APB 的 PPROT[1] 信号如何与 AHB 的 HNONSEC 协同实现安全域隔离？

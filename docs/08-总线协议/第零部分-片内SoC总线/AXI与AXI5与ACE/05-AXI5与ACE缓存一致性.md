@@ -231,3 +231,20 @@ if (status & CCI_STATUS_SNOOP_ENABLED)
 <br>
 - 关注ACE与CHI的演进逻辑：广播→目录，Crossbar→Mesh，这是高端SoC的设计趋势。
 <br>
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| AXI5 演进 | 新增原子操作、MPAM 内存分域、Trace 标签，面向基础设施级互连 |
+| ACE 定位 | 在 AXI4 基础上扩展 Snoop 通道，实现多 Cluster 缓存一致性 |
+| CHI 升级 | AMBA 5 CHI 将请求/响应/数据分离为独立包格式，支持机架级互连 |
+| 一致性域 | Inner Shareable、Outer Shareable、Non-Shareable 三级域划分 |
+
+## 练习
+
+1. ACE 的 AC/CR/CD Snoop 通道如何与 AXI 原有五通道协同工作？画出 Cache Line 失效的完整序列图。
+2. AXI5 的原子操作相比 AXI4 的 Locked 传输在实现上有何优势？为什么服务器 CPU 需要这一特性？
+3. CHI 协议采用基于包的 Flit 传输而非 AXI 的信号级握手，这种设计如何支持更大规模的互连拓扑？
