@@ -327,14 +327,16 @@ nav:
               - APB为什么慢——设计哲学与限制分析: 08-总线协议/第零部分-片内SoC总线/APB/03-APB为什么慢——设计哲学与限制分析.md
               - APB往哪去——实战应用与桥接设计: 08-总线协议/第零部分-片内SoC总线/APB/04-APB往哪去——实战应用与桥接设计.md
           - TileLink:
-              - 基础认知与架构: 08-总线协议/第零部分-片内SoC总线/TileLink/01-TileLink基础认知与架构.md
-              - 通道与事务类型: 08-总线协议/第零部分-片内SoC总线/TileLink/02-TileLink通道与事务类型.md
-              - 缓存一致性机制: 08-总线协议/第零部分-片内SoC总线/TileLink/03-TileLink缓存一致性机制.md
-              - 实战与RISC-V生态: 08-总线协议/第零部分-片内SoC总线/TileLink/04-TileLink实战与RISC-V生态.md
+              - TileLink是什么——RISC-V 生态的开源片上总线: 08-总线协议/第零部分-片内SoC总线/TileLink/01-TileLink是什么——RISC-V 生态的开源片上总线.md
+              - TileLink怎么做——通道、事务与消息编码: 08-总线协议/第零部分-片内SoC总线/TileLink/02-TileLink怎么做——通道、事务与消息编码.md
+              - TileLink为什么能实现缓存一致性——目录式协议与代理机制: 08-总线协议/第零部分-片内SoC总线/TileLink/03-TileLink为什么能实现缓存一致性——目录式协议与代理机制.md
+              - TileLink怎么调——Chipyard 实战与性能分析: 08-总线协议/第零部分-片内SoC总线/TileLink/04-TileLink怎么调——Chipyard 实战与性能分析.md
+              - TileLink往哪去——生态演进与前沿方向: 08-总线协议/第零部分-片内SoC总线/TileLink/05-TileLink往哪去——生态演进与前沿方向.md
           - Wishbone:
-              - 基础认知与架构: 08-总线协议/第零部分-片内SoC总线/Wishbone/01-Wishbone基础认知与架构.md
-              - 传输时序与变体: 08-总线协议/第零部分-片内SoC总线/Wishbone/02-Wishbone传输时序与变体.md
-              - 实战与FPGA应用: 08-总线协议/第零部分-片内SoC总线/Wishbone/03-Wishbone实战与FPGA应用.md
+              - Wishbone是什么——OpenCores 极简开源总线: 08-总线协议/第零部分-片内SoC总线/Wishbone/01-Wishbone是什么——OpenCores 极简开源总线.md
+              - Wishbone怎么做——传输时序与块传输模式: 08-总线协议/第零部分-片内SoC总线/Wishbone/02-Wishbone怎么做——传输时序与块传输模式.md
+              - Wishbone为什么简单——设计哲学与限制: 08-总线协议/第零部分-片内SoC总线/Wishbone/03-Wishbone为什么简单——设计哲学与限制.md
+              - Wishbone往哪去——FPGA 实战与开源生态: 08-总线协议/第零部分-片内SoC总线/Wishbone/04-Wishbone往哪去——FPGA 实战与开源生态.md
       - 第一部分-基础外设通信总线:
           - 概览: 08-总线协议/第一部分-基础外设通信总线/README.md
           - I2C:
