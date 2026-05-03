@@ -307,14 +307,14 @@ nav:
       - 第零部分-片内SoC总线:
           - 概览: 08-总线协议/第零部分-片内SoC总线/README.md
           - AMBA 总线协议族（总览）:
-              - 基础认知: 08-总线协议/第零部分-片内SoC总线/AMBA总线协议族（总览）/01-基础认知.md
+              - AMBA是什么——ARM片上总线生态overview: 08-总线协议/第零部分-片内SoC总线/AMBA总线协议族（总览）/01-AMBA是什么——ARM片上总线生态overview.md
           - AXI 与 AXI5 与 ACE:
-              - 协议基础与架构: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/01-AXI协议基础与架构.md
-              - 五通道与握手机制: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/02-AXI五通道与握手机制.md
-              - 突发传输与乱序完成: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/03-AXI突发传输与乱序完成.md
-              - 性能优化与QoS: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/04-AXI性能优化与QoS.md
-              - 嵌入式专属实战: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/05-AXI嵌入式专属实战.md
-              - AXI5与ACE缓存一致性: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/06-AXI5与ACE缓存一致性.md
+              - AXI是什么——五通道架构与握手机制: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/01-AXI是什么——五通道架构与握手机制.md
+              - AXI怎么做——突发传输与地址计算: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/02-AXI怎么做——突发传输与地址计算.md
+              - AXI为什么能乱序完成——ID路由与QoS机制: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/03-AXI为什么能乱序完成——ID路由与QoS机制.md
+              - AXI怎么调——性能瓶颈分析与优化: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/04-AXI怎么调——性能瓶颈分析与优化.md
+              - AXI嵌入式实战——Zynq PS-PL AXI接口实例: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/05-AXI嵌入式实战——Zynq PS-PL AXI接口实例.md
+              - AXI5与ACE——缓存一致性与系统扩展: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/06-AXI5与ACE——缓存一致性与系统扩展.md
           - AHB:
               - 基础认知与架构: 08-总线协议/第零部分-片内SoC总线/AHB/01-AHB基础认知与架构.md
               - 传输时序与流水线: 08-总线协议/第零部分-片内SoC总线/AHB/02-AHB传输时序与流水线.md
