@@ -21,3 +21,6 @@ Thumbs.db
 # Temp files
 *.tmp
 *.log
+
+# Backup of old markdown files
+docs/07-应用层开发/_backup/
