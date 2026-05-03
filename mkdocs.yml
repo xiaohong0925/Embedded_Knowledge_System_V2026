@@ -361,18 +361,24 @@ nav:
       - 第二部分-高速外设扩展总线:
           - 概览: 08-总线协议/第二部分-高速外设扩展总线/README.md
           - SD与MMC与SDIO:
-              - 基础认知与协议: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/01-SD与MMC与SDIO基础认知与协议.md
-              - 命令与响应协议: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/02-SD卡命令与响应协议.md
-              - SDIO-WiFi模组实战: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/03-SDIO-WiFi模组实战.md
+              - SD基础认知与协议家族: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/01-SD基础认知与协议家族.md
+              - SD命令协议与状态机: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/02-SD命令协议与状态机.md
+              - SDIO扩展与WiFi模组: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/03-SDIO扩展与WiFi模组.md
+              - SD热插拔与电源管理: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/04-SD热插拔与电源管理.md
           - SATA与SAS:
-              - 基础认知与AHCI: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/01-SATA与SAS基础认知与AHCI.md
-              - AHCI与NCQ原理解析: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/02-SATA-AHCI与NCQ原理解析.md
+              - SATA基础认知与AHCI: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/01-SATA基础认知与AHCI.md
+              - NCQ原生命令队列: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/02-NCQ原生命令队列.md
+              - AHCI瓶颈与NVMe替代: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/03-AHCI瓶颈与NVMe替代.md
           - PCI与PCIe:
-              - 基础认知与TLP: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/01-PCI与PCIe基础认知与TLP.md
-              - TLP路由与MSI-X中断: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/02-PCIe-TLP路由与MSI-X中断.md
+              - PCIe基础认知与TLP: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/01-PCIe基础认知与TLP.md
+              - PCIe物理层与链路训练: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/02-PCIe物理层与链路训练.md
+              - PCIe配置空间与BAR: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/03-PCIe配置空间与BAR.md
+              - PCIe实战：NVMe与DMA: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/04-PCIe实战：NVMe与DMA.md
           - USB:
-              - 基础认知与描述符: 08-总线协议/第二部分-高速外设扩展总线/USB/01-USB基础认知与描述符.md
-              - 端点配置与描述符链: 08-总线协议/第二部分-高速外设扩展总线/USB/02-USB端点配置与描述符链.md
+              - USB基础认知与分层架构: 08-总线协议/第二部分-高速外设扩展总线/USB/01-USB基础认知与分层架构.md
+              - USB端点与描述符: 08-总线协议/第二部分-高速外设扩展总线/USB/02-USB端点与描述符.md
+              - USB枚举与电源管理: 08-总线协议/第二部分-高速外设扩展总线/USB/03-USB枚举与电源管理.md
+              - USB调试与Gadget: 08-总线协议/第二部分-高速外设扩展总线/USB/04-USB调试与Gadget.md
       - 第三部分-存储设备专用总线:
           - 概览: 08-总线协议/第三部分-存储设备专用总线/README.md
           - eMMC与UFS:
