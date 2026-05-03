@@ -339,161 +339,212 @@ nav:
           - 07-ROS嵌入式实战：工业机械臂: "07-应用层开发/机器人专题/07-ROS嵌入式实战：工业机械臂.md"
           - 08-ROS工程化与前沿趋势: "07-应用层开发/机器人专题/08-ROS工程化与前沿趋势.md"
       - 总览: 08-总线协议/README.md
-      - 第一部分-基础外设通信总线:
-          - 概览: 08-总线协议/第一部分-基础外设通信总线/README.md
-          - 1-Wire:
-              - 01-1-Wire基础认知与单线协议: 08-总线协议/第一部分-基础外设通信总线/1-Wire/01-1-Wire基础认知与单线协议.md
-              - 02-1-Wire时序与搜索算法: 08-总线协议/第一部分-基础外设通信总线/1-Wire/02-1-Wire时序与搜索算法.md
-              - 03-1-Wire实战与Linux生态: 08-总线协议/第一部分-基础外设通信总线/1-Wire/03-1-Wire实战与Linux生态.md
-          - I2C:
-              - 01-I2C基础认知与物理层: 08-总线协议/第一部分-基础外设通信总线/I2C/01-I2C基础认知与物理层.md
-              - 02-I2C时序与起始停止条件: 08-总线协议/第一部分-基础外设通信总线/I2C/02-I2C时序与起始停止条件.md
-              - 03-I2C寻址与数据传输: 08-总线协议/第一部分-基础外设通信总线/I2C/03-I2C寻址与数据传输.md
-              - 04-I2C故障排查与工具: 08-总线协议/第一部分-基础外设通信总线/I2C/04-I2C故障排查与工具.md
-          - MDIO:
-              - 01-MDIO基础认知与MII接口: 08-总线协议/第一部分-基础外设通信总线/MDIO/01-MDIO基础认知与MII接口.md
-              - 02-MDIO寄存器读写与PHY探测: 08-总线协议/第一部分-基础外设通信总线/MDIO/02-MDIO寄存器读写与PHY探测.md
-              - 03-MDIO实战与以太网生态: 08-总线协议/第一部分-基础外设通信总线/MDIO/03-MDIO实战与以太网生态.md
-          - MIPI-I3C:
-              - 01-MIPI-I3C基础认知: 08-总线协议/第一部分-基础外设通信总线/MIPI-I3C/01-MIPI-I3C基础认知.md
-              - 02-I3C HDR模式与高速传输: 08-总线协议/第一部分-基础外设通信总线/MIPI-I3C/02-I3C HDR模式与高速传输.md
-              - 03-I3C嵌入式实战与对比: 08-总线协议/第一部分-基础外设通信总线/MIPI-I3C/03-I3C嵌入式实战与对比.md
-          - SPI:
-              - 01-SPI基础认知与四线架构: 08-总线协议/第一部分-基础外设通信总线/SPI/01-SPI基础认知与四线架构.md
-              - 02-SPI时钟模式与配置: 08-总线协议/第一部分-基础外设通信总线/SPI/02-SPI时钟模式与配置.md
-              - 03-SPI片选与多从设备: 08-总线协议/第一部分-基础外设通信总线/SPI/03-SPI片选与多从设备.md
-              - 04-SPI Linux子系统与调试: 08-总线协议/第一部分-基础外设通信总线/SPI/04-SPI Linux子系统与调试.md
-              - 05-SPI实战：Flash与显示屏: 08-总线协议/第一部分-基础外设通信总线/SPI/05-SPI实战：Flash与显示屏.md
-          - UART:
-              - 01-UART基础认知与异步通信: 08-总线协议/第一部分-基础外设通信总线/UART/01-UART基础认知与异步通信.md
-              - 02-UART波特率与流控: 08-总线协议/第一部分-基础外设通信总线/UART/02-UART波特率与流控.md
-              - 03-UART Linux终端与调试: 08-总线协议/第一部分-基础外设通信总线/UART/03-UART Linux终端与调试.md
-              - 04-UART扩展与前沿: 08-总线协议/第一部分-基础外设通信总线/UART/04-UART扩展与前沿.md
-      - 第七部分-调试与跟踪专用总线:
-          - 概览: 08-总线协议/第七部分-调试与跟踪专用总线/README.md
-          - CoreSight与ETM:
-              - 01-CoreSight与ETM基础认知: 08-总线协议/第七部分-调试与跟踪专用总线/CoreSight与ETM/01-CoreSight与ETM基础认知.md
-              - 02-ETM跟踪配置与解码: 08-总线协议/第七部分-调试与跟踪专用总线/CoreSight与ETM/02-ETM跟踪配置与解码.md
-              - 03-ITM与DWT调试: 08-总线协议/第七部分-调试与跟踪专用总线/CoreSight与ETM/03-ITM与DWT调试.md
-              - 04-CoreSight嵌入式实战: 08-总线协议/第七部分-调试与跟踪专用总线/CoreSight与ETM/04-CoreSight嵌入式实战.md
-          - JTAG:
-              - 01-JTAG基础认知与TAP状态机: 08-总线协议/第七部分-调试与跟踪专用总线/JTAG/01-JTAG基础认知与TAP状态机.md
-              - 02-JTAG边界扫描实战: 08-总线协议/第七部分-调试与跟踪专用总线/JTAG/02-JTAG边界扫描实战.md
-              - 03-JTAG调试与Flash烧录: 08-总线协议/第七部分-调试与跟踪专用总线/JTAG/03-JTAG调试与Flash烧录.md
-              - 04-JTAG嵌入式实战: 08-总线协议/第七部分-调试与跟踪专用总线/JTAG/04-JTAG嵌入式实战.md
-          - SWD:
-              - 01-SWD基础认知与2-pin调试: 08-总线协议/第七部分-调试与跟踪专用总线/SWD/01-SWD基础认知与2-pin调试.md
-              - 02-SWD调试配置与OpenOCD: 08-总线协议/第七部分-调试与跟踪专用总线/SWD/02-SWD调试配置与OpenOCD.md
-              - 03-Cortex-M调试实战: 08-总线协议/第七部分-调试与跟踪专用总线/SWD/03-Cortex-M调试实战.md
-              - 04-SWD嵌入式实战: 08-总线协议/第七部分-调试与跟踪专用总线/SWD/04-SWD嵌入式实战.md
-      - 第三部分-存储设备专用总线:
-          - 概览: 08-总线协议/第三部分-存储设备专用总线/README.md
-          - QPI与OPI:
-              - 01-QPI与OPI基础认知与互联: 08-总线协议/第三部分-存储设备专用总线/QPI与OPI/01-QPI与OPI基础认知与互联.md
-              - 02-QPI电气特性与速率: 08-总线协议/第三部分-存储设备专用总线/QPI与OPI/02-QPI电气特性与速率.md
-              - 03-NUMA内存访问: 08-总线协议/第三部分-存储设备专用总线/QPI与OPI/03-NUMA内存访问.md
-              - 04-OPI与宽I-O-DRAM: 08-总线协议/第三部分-存储设备专用总线/QPI与OPI/04-OPI与宽I-O-DRAM.md
-          - eMMC与UFS:
-              - 01-eMMC与UFS基础认知与演进: 08-总线协议/第三部分-存储设备专用总线/eMMC与UFS/01-eMMC与UFS基础认知与演进.md
-              - 02-eMMC时序与HS400: 08-总线协议/第三部分-存储设备专用总线/eMMC与UFS/02-eMMC时序与HS400.md
-              - 03-UFS-M-PHY与UniPro: 08-总线协议/第三部分-存储设备专用总线/eMMC与UFS/03-UFS-M-PHY与UniPro.md
-              - 04-eMMC-UFS嵌入式实战与选型: 08-总线协议/第三部分-存储设备专用总线/eMMC与UFS/04-eMMC-UFS嵌入式实战与选型.md
-      - 第二部分-高速外设扩展总线:
-          - 概览: 08-总线协议/第二部分-高速外设扩展总线/README.md
-          - PCI与PCIe:
-              - 01-PCIe基础认知与TLP: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/01-PCIe基础认知与TLP.md
-              - 02-PCIe物理层与链路训练: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/02-PCIe物理层与链路训练.md
-              - 03-PCIe配置空间与BAR: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/03-PCIe配置空间与BAR.md
-              - 04-PCIe实战：NVMe与DMA: 08-总线协议/第二部分-高速外设扩展总线/PCI与PCIe/04-PCIe实战：NVMe与DMA.md
-          - SATA与SAS:
-              - 01-SATA基础认知与AHCI: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/01-SATA基础认知与AHCI.md
-              - 02-NCQ原生命令队列: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/02-NCQ原生命令队列.md
-              - 03-AHCI瓶颈与NVMe替代: 08-总线协议/第二部分-高速外设扩展总线/SATA与SAS/03-AHCI瓶颈与NVMe替代.md
-          - SD与MMC与SDIO:
-              - 01-SD基础认知与协议家族: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/01-SD基础认知与协议家族.md
-              - 02-SD命令协议与状态机: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/02-SD命令协议与状态机.md
-              - 03-SDIO扩展与WiFi模组: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/03-SDIO扩展与WiFi模组.md
-              - 04-SD热插拔与电源管理: 08-总线协议/第二部分-高速外设扩展总线/SD与MMC与SDIO/04-SD热插拔与电源管理.md
-          - USB:
-              - 01-USB基础认知与分层架构: 08-总线协议/第二部分-高速外设扩展总线/USB/01-USB基础认知与分层架构.md
-              - 02-USB端点与描述符: 08-总线协议/第二部分-高速外设扩展总线/USB/02-USB端点与描述符.md
-              - 03-USB枚举与电源管理: 08-总线协议/第二部分-高速外设扩展总线/USB/03-USB枚举与电源管理.md
-              - 04-USB调试与Gadget: 08-总线协议/第二部分-高速外设扩展总线/USB/04-USB调试与Gadget.md
-      - 第五部分-工业现场总线:
-          - 概览: 08-总线协议/第五部分-工业现场总线/README.md
-          - EtherCAT:
-              - 01-EtherCAT基础认知与飞读飞写: 08-总线协议/第五部分-工业现场总线/EtherCAT/01-EtherCAT基础认知与飞读飞写.md
-              - 02-ESC芯片与从站配置: 08-总线协议/第五部分-工业现场总线/EtherCAT/02-ESC芯片与从站配置.md
-              - 03-DC分布时钟实现: 08-总线协议/第五部分-工业现场总线/EtherCAT/03-DC分布时钟实现.md
-              - 04-EtherCAT嵌入式实战: 08-总线协议/第五部分-工业现场总线/EtherCAT/04-EtherCAT嵌入式实战.md
-          - Modbus:
-              - 01-Modbus基础认知与寄存器映射: 08-总线协议/第五部分-工业现场总线/Modbus/01-Modbus基础认知与寄存器映射.md
-              - 02-Modbus-RTU帧详解: 08-总线协议/第五部分-工业现场总线/Modbus/02-Modbus-RTU帧详解.md
-              - 03-Modbus-TCP与网关: 08-总线协议/第五部分-工业现场总线/Modbus/03-Modbus-TCP与网关.md
-              - 04-Modbus嵌入式实战: 08-总线协议/第五部分-工业现场总线/Modbus/04-Modbus嵌入式实战.md
-          - PROFIBUS:
-              - 01-PROFIBUS-DP基础认知与令牌环: 08-总线协议/第五部分-工业现场总线/PROFIBUS/01-PROFIBUS-DP基础认知与令牌环.md
-              - 02-DP-V1非周期通信: 08-总线协议/第五部分-工业现场总线/PROFIBUS/02-DP-V1非周期通信.md
-              - 03-PROFIBUS诊断与配置: 08-总线协议/第五部分-工业现场总线/PROFIBUS/03-PROFIBUS诊断与配置.md
-              - 04-PROFIBUS嵌入式实战: 08-总线协议/第五部分-工业现场总线/PROFIBUS/04-PROFIBUS嵌入式实战.md
-      - 第六部分-音视频专用总线:
-          - 概览: 08-总线协议/第六部分-音视频专用总线/README.md
-          - I2S与PCM:
-              - 01-I2S与PCM基础认知与数字音频: 08-总线协议/第六部分-音视频专用总线/I2S与PCM/01-I2S与PCM基础认知与数字音频.md
-              - 02-I2S时序与配置: 08-总线协议/第六部分-音视频专用总线/I2S与PCM/02-I2S时序与配置.md
-              - 03-TDM与PDM麦克风: 08-总线协议/第六部分-音视频专用总线/I2S与PCM/03-TDM与PDM麦克风.md
-              - 04-I2S嵌入式实战: 08-总线协议/第六部分-音视频专用总线/I2S与PCM/04-I2S嵌入式实战.md
-          - MIPI Alliance系列协议:
-              - 01-MIPI-Alliance系列协议基础认知: 08-总线协议/第六部分-音视频专用总线/MIPI Alliance系列协议/01-MIPI-Alliance系列协议基础认知.md
-              - 02-MIPI-DSI显示接口: 08-总线协议/第六部分-音视频专用总线/MIPI Alliance系列协议/02-MIPI-DSI显示接口.md
-              - 03-MIPI-CSI-2摄像头接口: 08-总线协议/第六部分-音视频专用总线/MIPI Alliance系列协议/03-MIPI-CSI-2摄像头接口.md
-              - 04-MIPI嵌入式实战: 08-总线协议/第六部分-音视频专用总线/MIPI Alliance系列协议/04-MIPI嵌入式实战.md
-      - 第四部分-车载与网络互联总线:
-          - 概览: 08-总线协议/第四部分-车载与网络互联总线/README.md
-          - CAN:
-              - 01-CAN总线基础认知与帧格式: 08-总线协议/第四部分-车载与网络互联总线/CAN/01-CAN总线基础认知与帧格式.md
-              - 02-CAN物理层与收发器: 08-总线协议/第四部分-车载与网络互联总线/CAN/02-CAN物理层与收发器.md
-              - 03-CAN-FD与诊断: 08-总线协议/第四部分-车载与网络互联总线/CAN/03-CAN-FD与诊断.md
-              - 04-CAN嵌入式实战: 08-总线协议/第四部分-车载与网络互联总线/CAN/04-CAN嵌入式实战.md
-          - LIN:
-              - 01-LIN总线基础认知与单主架构: 08-总线协议/第四部分-车载与网络互联总线/LIN/01-LIN总线基础认知与单主架构.md
-              - 02-LIN帧格式与校验和: 08-总线协议/第四部分-车载与网络互联总线/LIN/02-LIN帧格式与校验和.md
-              - 03-LIN调度表与诊断: 08-总线协议/第四部分-车载与网络互联总线/LIN/03-LIN调度表与诊断.md
-              - 04-LIN嵌入式实战: 08-总线协议/第四部分-车载与网络互联总线/LIN/04-LIN嵌入式实战.md
-          - TSN（时间敏感网络）:
-              - 01-TSN时间敏感网络基础认知: 08-总线协议/第四部分-车载与网络互联总线/TSN（时间敏感网络）/01-TSN时间敏感网络基础认知.md
-              - 02-Qbv门控调度实现: 08-总线协议/第四部分-车载与网络互联总线/TSN（时间敏感网络）/02-Qbv门控调度实现.md
-              - 03-gPTP时间同步: 08-总线协议/第四部分-车载与网络互联总线/TSN（时间敏感网络）/03-gPTP时间同步.md
-              - 04-TSN嵌入式实战: 08-总线协议/第四部分-车载与网络互联总线/TSN（时间敏感网络）/04-TSN嵌入式实战.md
-          - 车载以太网:
-              - 01-车载以太网基础认知与100BASE-T1: 08-总线协议/第四部分-车载与网络互联总线/车载以太网/01-车载以太网基础认知与100BASE-T1.md
-              - 02-1000BASE-T1与交换机: 08-总线协议/第四部分-车载与网络互联总线/车载以太网/02-1000BASE-T1与交换机.md
-              - 03-车载以太网实战: 08-总线协议/第四部分-车载与网络互联总线/车载以太网/03-车载以太网实战.md
-              - 04-TSN在车载中的应用: 08-总线协议/第四部分-车载与网络互联总线/车载以太网/04-TSN在车载中的应用.md
-      - 第零部分-片内SoC总线:
-          - 概览: 08-总线协议/第零部分-片内SoC总线/README.md
-          - AHB:
-              - 01-AHB基础认知与架构: 08-总线协议/第零部分-片内SoC总线/AHB/01-AHB基础认知与架构.md
-              - 02-AHB传输时序与流水线: 08-总线协议/第零部分-片内SoC总线/AHB/02-AHB传输时序与流水线.md
-              - 03-AHB仲裁与多主控制: 08-总线协议/第零部分-片内SoC总线/AHB/03-AHB仲裁与多主控制.md
-          - AMBA总线协议族（总览）:
-              - 01-AMBA总线协议族概述: 08-总线协议/第零部分-片内SoC总线/AMBA总线协议族（总览）/01-AMBA总线协议族概述.md
-          - APB:
-              - 01-APB基础认知与传输时序: 08-总线协议/第零部分-片内SoC总线/APB/01-APB基础认知与传输时序.md
-              - 02-APB桥接设计与实战: 08-总线协议/第零部分-片内SoC总线/APB/02-APB桥接设计与实战.md
-          - AXI与AXI5与ACE:
-              - 01-AXI协议基础与五通道架构: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/01-AXI协议基础与五通道架构.md
-              - 02-AXI突发传输与地址计算: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/02-AXI突发传输与地址计算.md
-              - 03-AXI乱序完成与QoS机制: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/03-AXI乱序完成与QoS机制.md
-              - 04-AXI嵌入式实战——Zynq PS-PL接口: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/04-AXI嵌入式实战——Zynq PS-PL接口.md
-              - 05-AXI5与ACE缓存一致性: 08-总线协议/第零部分-片内SoC总线/AXI与AXI5与ACE/05-AXI5与ACE缓存一致性.md
-          - TileLink:
-              - 01-TileLink基础认知与架构: 08-总线协议/第零部分-片内SoC总线/TileLink/01-TileLink基础认知与架构.md
-              - 02-TileLink通道与缓存一致性: 08-总线协议/第零部分-片内SoC总线/TileLink/02-TileLink通道与缓存一致性.md
-              - 03-TileLink实战与RISC-V生态: 08-总线协议/第零部分-片内SoC总线/TileLink/03-TileLink实战与RISC-V生态.md
-          - Wishbone:
-              - 01-Wishbone基础认知与架构: 08-总线协议/第零部分-片内SoC总线/Wishbone/01-Wishbone基础认知与架构.md
-              - 02-Wishbone实战与FPGA应用: 08-总线协议/第零部分-片内SoC总线/Wishbone/02-Wishbone实战与FPGA应用.md
+  - 8. 总线协议 [B→M]:
+    - 概览: 08-总线协议/README.md
+    - 基础外设通信总线:
+      - 概览: 08-总线协议/基础外设通信总线/README.md
+      - 1-Wire:
+        - 1-Wire基础认知与单线协议: 08-总线协议/基础外设通信总线/1-Wire/01-1-Wire基础认知与单线协议.md
+        - 1-Wire时序与搜索算法: 08-总线协议/基础外设通信总线/1-Wire/02-1-Wire时序与搜索算法.md
+        - 1-Wire实战与Linux生态: 08-总线协议/基础外设通信总线/1-Wire/03-1-Wire实战与Linux生态.md
+        - 1-Wire故障排查与高级特性: 08-总线协议/基础外设通信总线/1-Wire/04-1-Wire故障排查与高级特性.md
+        - 1-Wire历史演进与前沿: 08-总线协议/基础外设通信总线/1-Wire/05-1-Wire历史演进与前沿.md
+      - I2C:
+        - I2C基础认知与物理层: 08-总线协议/基础外设通信总线/I2C/01-I2C基础认知与物理层.md
+        - I2C时序与起始停止条件: 08-总线协议/基础外设通信总线/I2C/02-I2C时序与起始停止条件.md
+        - I2C寻址与数据传输: 08-总线协议/基础外设通信总线/I2C/03-I2C寻址与数据传输.md
+        - I2C故障排查与工具: 08-总线协议/基础外设通信总线/I2C/04-I2C故障排查与工具.md
+        - I2C历史演进与未来趋势: 08-总线协议/基础外设通信总线/I2C/05-I2C历史演进与未来趋势.md
+      - MDIO:
+        - MDIO基础认知与MII接口: 08-总线协议/基础外设通信总线/MDIO/01-MDIO基础认知与MII接口.md
+        - MDIO寄存器读写与PHY探测: 08-总线协议/基础外设通信总线/MDIO/02-MDIO寄存器读写与PHY探测.md
+        - MDIO实战与以太网生态: 08-总线协议/基础外设通信总线/MDIO/03-MDIO实战与以太网生态.md
+        - MDIO高级配置与故障排查: 08-总线协议/基础外设通信总线/MDIO/04-MDIO高级配置与故障排查.md
+        - MDIO历史演进: 08-总线协议/基础外设通信总线/MDIO/05-MDIO历史演进.md
+      - MIPI-I3C:
+        - MIPI-I3C基础认知: 08-总线协议/基础外设通信总线/MIPI-I3C/01-MIPI-I3C基础认知.md
+        - I3C HDR模式与高速传输: 08-总线协议/基础外设通信总线/MIPI-I3C/02-I3C HDR模式与高速传输.md
+        - I3C嵌入式实战与对比: 08-总线协议/基础外设通信总线/MIPI-I3C/03-I3C嵌入式实战与对比.md
+        - I3C高级特性与混合模式: 08-总线协议/基础外设通信总线/MIPI-I3C/04-I3C高级特性与混合模式.md
+        - I3C历史演进与生态: 08-总线协议/基础外设通信总线/MIPI-I3C/05-I3C历史演进与生态.md
+      - SPI:
+        - SPI基础认知与四线架构: 08-总线协议/基础外设通信总线/SPI/01-SPI基础认知与四线架构.md
+        - SPI时钟模式与配置: 08-总线协议/基础外设通信总线/SPI/02-SPI时钟模式与配置.md
+        - SPI片选与多从设备: 08-总线协议/基础外设通信总线/SPI/03-SPI片选与多从设备.md
+        - SPI Linux子系统与调试: 08-总线协议/基础外设通信总线/SPI/04-SPI Linux子系统与调试.md
+        - SPI实战：Flash与显示屏: 08-总线协议/基础外设通信总线/SPI/05-SPI实战：Flash与显示屏.md
+      - UART:
+        - UART基础认知与异步通信: 08-总线协议/基础外设通信总线/UART/01-UART基础认知与异步通信.md
+        - UART波特率与流控: 08-总线协议/基础外设通信总线/UART/02-UART波特率与流控.md
+        - UART Linux终端与调试: 08-总线协议/基础外设通信总线/UART/03-UART Linux终端与调试.md
+        - UART扩展与前沿: 08-总线协议/基础外设通信总线/UART/04-UART扩展与前沿.md
+        - UART历史演进与现代替代方案: 08-总线协议/基础外设通信总线/UART/05-UART历史演进与现代替代方案.md
+    - 存储设备专用总线:
+      - 概览: 08-总线协议/存储设备专用总线/README.md
+      - QPI与OPI:
+        - QPI与OPI基础认知与互联: 08-总线协议/存储设备专用总线/QPI与OPI/01-QPI与OPI基础认知与互联.md
+        - QPI电气特性与速率: 08-总线协议/存储设备专用总线/QPI与OPI/02-QPI电气特性与速率.md
+        - NUMA内存访问: 08-总线协议/存储设备专用总线/QPI与OPI/03-NUMA内存访问.md
+        - OPI与宽I-O-DRAM: 08-总线协议/存储设备专用总线/QPI与OPI/04-OPI与宽I-O-DRAM.md
+        - QPI-OPI前沿趋势: 08-总线协议/存储设备专用总线/QPI与OPI/05-QPI-OPI前沿趋势.md
+      - eMMC与UFS:
+        - eMMC与UFS基础认知与演进: 08-总线协议/存储设备专用总线/eMMC与UFS/01-eMMC与UFS基础认知与演进.md
+        - eMMC时序与HS400: 08-总线协议/存储设备专用总线/eMMC与UFS/02-eMMC时序与HS400.md
+        - UFS-M-PHY与UniPro: 08-总线协议/存储设备专用总线/eMMC与UFS/03-UFS-M-PHY与UniPro.md
+        - eMMC-UFS嵌入式实战与选型: 08-总线协议/存储设备专用总线/eMMC与UFS/04-eMMC-UFS嵌入式实战与选型.md
+        - eMMC-UFS历史演进与前沿: 08-总线协议/存储设备专用总线/eMMC与UFS/05-eMMC-UFS历史演进与前沿.md
+    - 工业现场总线:
+      - 概览: 08-总线协议/工业现场总线/README.md
+      - EtherCAT:
+        - EtherCAT基础认知与飞读飞写: 08-总线协议/工业现场总线/EtherCAT/01-EtherCAT基础认知与飞读飞写.md
+        - ESC芯片与从站配置: 08-总线协议/工业现场总线/EtherCAT/02-ESC芯片与从站配置.md
+        - DC分布时钟实现: 08-总线协议/工业现场总线/EtherCAT/03-DC分布时钟实现.md
+        - EtherCAT嵌入式实战: 08-总线协议/工业现场总线/EtherCAT/04-EtherCAT嵌入式实战.md
+        - EtherCAT历史演进与前瞻: 08-总线协议/工业现场总线/EtherCAT/05-EtherCAT历史演进与前瞻.md
+      - Modbus:
+        - Modbus基础认知与寄存器映射: 08-总线协议/工业现场总线/Modbus/01-Modbus基础认知与寄存器映射.md
+        - Modbus-RTU帧详解: 08-总线协议/工业现场总线/Modbus/02-Modbus-RTU帧详解.md
+        - Modbus-TCP与网关: 08-总线协议/工业现场总线/Modbus/03-Modbus-TCP与网关.md
+        - Modbus嵌入式实战: 08-总线协议/工业现场总线/Modbus/04-Modbus嵌入式实战.md
+        - Modbus历史演进与未来: 08-总线协议/工业现场总线/Modbus/05-Modbus历史演进与未来.md
+      - PROFIBUS:
+        - PROFIBUS-DP基础认知与令牌环: 08-总线协议/工业现场总线/PROFIBUS/01-PROFIBUS-DP基础认知与令牌环.md
+        - DP-V1非周期通信: 08-总线协议/工业现场总线/PROFIBUS/02-DP-V1非周期通信.md
+        - PROFIBUS诊断与配置: 08-总线协议/工业现场总线/PROFIBUS/03-PROFIBUS诊断与配置.md
+        - PROFIBUS嵌入式实战: 08-总线协议/工业现场总线/PROFIBUS/04-PROFIBUS嵌入式实战.md
+        - PROFIBUS历史演进与替代: 08-总线协议/工业现场总线/PROFIBUS/05-PROFIBUS历史演进与替代.md
+    - 片内SoC总线:
+      - 概览: 08-总线协议/片内SoC总线/README.md
+      - AHB:
+        - AHB基础认知与架构: 08-总线协议/片内SoC总线/AHB/01-AHB基础认知与架构.md
+        - AHB传输时序与流水线: 08-总线协议/片内SoC总线/AHB/02-AHB传输时序与流水线.md
+        - AHB仲裁与多主控制: 08-总线协议/片内SoC总线/AHB/03-AHB仲裁与多主控制.md
+        - AHB高级仲裁与QoS: 08-总线协议/片内SoC总线/AHB/04-AHB高级仲裁与QoS.md
+        - AHB历史演进: 08-总线协议/片内SoC总线/AHB/05-AHB历史演进.md
+      - AMBA总线协议族（总览）:
+        - AMBA总线协议族概述: 08-总线协议/片内SoC总线/AMBA总线协议族（总览）/01-AMBA总线协议族概述.md
+        - AMBA协议对比与选型: 08-总线协议/片内SoC总线/AMBA总线协议族（总览）/02-AMBA协议对比与选型.md
+        - AMBA嵌入式实战: 08-总线协议/片内SoC总线/AMBA总线协议族（总览）/03-AMBA嵌入式实战.md
+        - AMBA性能优化: 08-总线协议/片内SoC总线/AMBA总线协议族（总览）/04-AMBA性能优化.md
+        - AMBA历史演进: 08-总线协议/片内SoC总线/AMBA总线协议族（总览）/05-AMBA历史演进.md
+      - APB:
+        - APB基础认知与传输时序: 08-总线协议/片内SoC总线/APB/01-APB基础认知与传输时序.md
+        - APB桥接设计与实战: 08-总线协议/片内SoC总线/APB/02-APB桥接设计与实战.md
+        - APB高级桥接与低功耗: 08-总线协议/片内SoC总线/APB/03-APB高级桥接与低功耗.md
+        - APB嵌入式实战进阶: 08-总线协议/片内SoC总线/APB/04-APB嵌入式实战进阶.md
+        - APB历史演进: 08-总线协议/片内SoC总线/APB/05-APB历史演进.md
+      - AXI与AXI5与ACE:
+        - AXI协议基础与五通道架构: 08-总线协议/片内SoC总线/AXI与AXI5与ACE/01-AXI协议基础与五通道架构.md
+        - AXI突发传输与地址计算: 08-总线协议/片内SoC总线/AXI与AXI5与ACE/02-AXI突发传输与地址计算.md
+        - AXI乱序完成与QoS机制: 08-总线协议/片内SoC总线/AXI与AXI5与ACE/03-AXI乱序完成与QoS机制.md
+        - AXI嵌入式实战——Zynq PS-PL接口: 08-总线协议/片内SoC总线/AXI与AXI5与ACE/04-AXI嵌入式实战——Zynq PS-PL接口.md
+        - AXI5与ACE缓存一致性: 08-总线协议/片内SoC总线/AXI与AXI5与ACE/05-AXI5与ACE缓存一致性.md
+      - TileLink:
+        - TileLink基础认知与架构: 08-总线协议/片内SoC总线/TileLink/01-TileLink基础认知与架构.md
+        - TileLink通道与缓存一致性: 08-总线协议/片内SoC总线/TileLink/02-TileLink通道与缓存一致性.md
+        - TileLink实战与RISC-V生态: 08-总线协议/片内SoC总线/TileLink/03-TileLink实战与RISC-V生态.md
+        - TileLink高级特性与原子操作: 08-总线协议/片内SoC总线/TileLink/04-TileLink高级特性与原子操作.md
+        - TileLink历史演进与生态: 08-总线协议/片内SoC总线/TileLink/05-TileLink历史演进与生态.md
+      - Wishbone:
+        - Wishbone基础认知与架构: 08-总线协议/片内SoC总线/Wishbone/01-Wishbone基础认知与架构.md
+        - Wishbone实战与FPGA应用: 08-总线协议/片内SoC总线/Wishbone/02-Wishbone实战与FPGA应用.md
+        - Wishbone高级仲裁与跨时钟域: 08-总线协议/片内SoC总线/Wishbone/03-Wishbone高级仲裁与跨时钟域.md
+        - Wishbone嵌入式实战进阶: 08-总线协议/片内SoC总线/Wishbone/04-Wishbone嵌入式实战进阶.md
+        - Wishbone历史演进: 08-总线协议/片内SoC总线/Wishbone/05-Wishbone历史演进.md
+    - 调试与跟踪专用总线:
+      - 概览: 08-总线协议/调试与跟踪专用总线/README.md
+      - CoreSight与ETM:
+        - CoreSight与ETM基础认知: 08-总线协议/调试与跟踪专用总线/CoreSight与ETM/01-CoreSight与ETM基础认知.md
+        - ETM跟踪配置与解码: 08-总线协议/调试与跟踪专用总线/CoreSight与ETM/02-ETM跟踪配置与解码.md
+        - ITM与DWT调试: 08-总线协议/调试与跟踪专用总线/CoreSight与ETM/03-ITM与DWT调试.md
+        - CoreSight嵌入式实战: 08-总线协议/调试与跟踪专用总线/CoreSight与ETM/04-CoreSight嵌入式实战.md
+        - CoreSight历史演进: 08-总线协议/调试与跟踪专用总线/CoreSight与ETM/05-CoreSight历史演进.md
+      - JTAG:
+        - JTAG基础认知与TAP状态机: 08-总线协议/调试与跟踪专用总线/JTAG/01-JTAG基础认知与TAP状态机.md
+        - JTAG边界扫描实战: 08-总线协议/调试与跟踪专用总线/JTAG/02-JTAG边界扫描实战.md
+        - JTAG调试与Flash烧录: 08-总线协议/调试与跟踪专用总线/JTAG/03-JTAG调试与Flash烧录.md
+        - JTAG嵌入式实战: 08-总线协议/调试与跟踪专用总线/JTAG/04-JTAG嵌入式实战.md
+        - JTAG历史演进与现代替代: 08-总线协议/调试与跟踪专用总线/JTAG/05-JTAG历史演进与现代替代.md
+      - SWD:
+        - SWD基础认知与2-pin调试: 08-总线协议/调试与跟踪专用总线/SWD/01-SWD基础认知与2-pin调试.md
+        - SWD调试配置与OpenOCD: 08-总线协议/调试与跟踪专用总线/SWD/02-SWD调试配置与OpenOCD.md
+        - Cortex-M调试实战: 08-总线协议/调试与跟踪专用总线/SWD/03-Cortex-M调试实战.md
+        - SWD嵌入式实战: 08-总线协议/调试与跟踪专用总线/SWD/04-SWD嵌入式实战.md
+        - SWD历史演进: 08-总线协议/调试与跟踪专用总线/SWD/05-SWD历史演进.md
+    - 车载与网络互联总线:
+      - 概览: 08-总线协议/车载与网络互联总线/README.md
+      - CAN:
+        - CAN总线基础认知与帧格式: 08-总线协议/车载与网络互联总线/CAN/01-CAN总线基础认知与帧格式.md
+        - CAN物理层与收发器: 08-总线协议/车载与网络互联总线/CAN/02-CAN物理层与收发器.md
+        - CAN-FD与诊断: 08-总线协议/车载与网络互联总线/CAN/03-CAN-FD与诊断.md
+        - CAN嵌入式实战: 08-总线协议/车载与网络互联总线/CAN/04-CAN嵌入式实战.md
+        - CAN历史演进与CAN-XL: 08-总线协议/车载与网络互联总线/CAN/05-CAN历史演进与CAN-XL.md
+      - LIN:
+        - LIN总线基础认知与单主架构: 08-总线协议/车载与网络互联总线/LIN/01-LIN总线基础认知与单主架构.md
+        - LIN帧格式与校验和: 08-总线协议/车载与网络互联总线/LIN/02-LIN帧格式与校验和.md
+        - LIN调度表与诊断: 08-总线协议/车载与网络互联总线/LIN/03-LIN调度表与诊断.md
+        - LIN嵌入式实战: 08-总线协议/车载与网络互联总线/LIN/04-LIN嵌入式实战.md
+        - LIN历史演进与替代方案: 08-总线协议/车载与网络互联总线/LIN/05-LIN历史演进与替代方案.md
+      - TSN（时间敏感网络）:
+        - TSN时间敏感网络基础认知: 08-总线协议/车载与网络互联总线/TSN（时间敏感网络）/01-TSN时间敏感网络基础认知.md
+        - Qbv门控调度实现: 08-总线协议/车载与网络互联总线/TSN（时间敏感网络）/02-Qbv门控调度实现.md
+        - gPTP时间同步: 08-总线协议/车载与网络互联总线/TSN（时间敏感网络）/03-gPTP时间同步.md
+        - TSN嵌入式实战: 08-总线协议/车载与网络互联总线/TSN（时间敏感网络）/04-TSN嵌入式实战.md
+        - TSN历史演进与前沿: 08-总线协议/车载与网络互联总线/TSN（时间敏感网络）/05-TSN历史演进与前沿.md
+      - 车载以太网:
+        - 车载以太网基础认知与100BASE-T1: 08-总线协议/车载与网络互联总线/车载以太网/01-车载以太网基础认知与100BASE-T1.md
+        - 1000BASE-T1与交换机: 08-总线协议/车载与网络互联总线/车载以太网/02-1000BASE-T1与交换机.md
+        - 车载以太网实战: 08-总线协议/车载与网络互联总线/车载以太网/03-车载以太网实战.md
+        - TSN在车载中的应用: 08-总线协议/车载与网络互联总线/车载以太网/04-TSN在车载中的应用.md
+        - 车载以太网历史演进: 08-总线协议/车载与网络互联总线/车载以太网/05-车载以太网历史演进.md
+    - 音视频专用总线:
+      - 概览: 08-总线协议/音视频专用总线/README.md
+      - I2S与PCM:
+        - I2S与PCM基础认知与数字音频: 08-总线协议/音视频专用总线/I2S与PCM/01-I2S与PCM基础认知与数字音频.md
+        - I2S时序与配置: 08-总线协议/音视频专用总线/I2S与PCM/02-I2S时序与配置.md
+        - TDM与PDM麦克风: 08-总线协议/音视频专用总线/I2S与PCM/03-TDM与PDM麦克风.md
+        - I2S嵌入式实战: 08-总线协议/音视频专用总线/I2S与PCM/04-I2S嵌入式实战.md
+        - I2S历史演进与前沿: 08-总线协议/音视频专用总线/I2S与PCM/05-I2S历史演进与前沿.md
+      - MIPI Alliance系列协议:
+        - MIPI-Alliance系列协议基础认知: 08-总线协议/音视频专用总线/MIPI Alliance系列协议/01-MIPI-Alliance系列协议基础认知.md
+        - MIPI-DSI显示接口: 08-总线协议/音视频专用总线/MIPI Alliance系列协议/02-MIPI-DSI显示接口.md
+        - MIPI-CSI-2摄像头接口: 08-总线协议/音视频专用总线/MIPI Alliance系列协议/03-MIPI-CSI-2摄像头接口.md
+        - MIPI嵌入式实战: 08-总线协议/音视频专用总线/MIPI Alliance系列协议/04-MIPI嵌入式实战.md
+        - MIPI历史演进与生态: 08-总线协议/音视频专用总线/MIPI Alliance系列协议/05-MIPI历史演进与生态.md
+    - 高速外设扩展总线:
+      - 概览: 08-总线协议/高速外设扩展总线/README.md
+      - PCI与PCIe:
+        - 基础认知与架构演进: 08-总线协议/高速外设扩展总线/PCI与PCIe/01-基础认知与架构演进.md
+        - 物理层与电气规范: 08-总线协议/高速外设扩展总线/PCI与PCIe/02-物理层与电气规范.md
+        - 链路训练与LTSSM: 08-总线协议/高速外设扩展总线/PCI与PCIe/03-链路训练与LTSSM.md
+        - 数据链路层协议: 08-总线协议/高速外设扩展总线/PCI与PCIe/04-数据链路层协议.md
+        - 事务层详解: 08-总线协议/高速外设扩展总线/PCI与PCIe/05-事务层详解.md
+        - 配置空间与枚举: 08-总线协议/高速外设扩展总线/PCI与PCIe/06-配置空间与枚举.md
+        - 中断机制与MSI-X: 08-总线协议/高速外设扩展总线/PCI与PCIe/07-中断机制与MSI-X.md
+        - DMA与数据传输: 08-总线协议/高速外设扩展总线/PCI与PCIe/08-DMA与数据传输.md
+        - 错误处理与AER: 08-总线协议/高速外设扩展总线/PCI与PCIe/09-错误处理与AER.md
+        - 电源管理与热插拔: 08-总线协议/高速外设扩展总线/PCI与PCIe/10-电源管理与热插拔.md
+        - 实战：NVMe驱动分析: 08-总线协议/高速外设扩展总线/PCI与PCIe/11-实战：NVMe驱动分析.md
+        - 虚拟化与SR-IOV: 08-总线协议/高速外设扩展总线/PCI与PCIe/12-虚拟化与SR-IOV.md
+        - 前沿趋势：CXL与PCIe6.0: 08-总线协议/高速外设扩展总线/PCI与PCIe/13-前沿趋势：CXL与PCIe6.0.md
+      - SATA与SAS:
+        - SATA基础认知与AHCI: 08-总线协议/高速外设扩展总线/SATA与SAS/01-SATA基础认知与AHCI.md
+        - NCQ原生命令队列: 08-总线协议/高速外设扩展总线/SATA与SAS/02-NCQ原生命令队列.md
+        - AHCI瓶颈与NVMe替代: 08-总线协议/高速外设扩展总线/SATA与SAS/03-AHCI瓶颈与NVMe替代.md
+        - SATA高级特性与RAID: 08-总线协议/高速外设扩展总线/SATA与SAS/04-SATA高级特性与RAID.md
+        - SATA历史演进: 08-总线协议/高速外设扩展总线/SATA与SAS/05-SATA历史演进.md
+      - SD与MMC与SDIO:
+        - SD基础认知与协议家族: 08-总线协议/高速外设扩展总线/SD与MMC与SDIO/01-SD基础认知与协议家族.md
+        - SD命令协议与状态机: 08-总线协议/高速外设扩展总线/SD与MMC与SDIO/02-SD命令协议与状态机.md
+        - SDIO扩展与WiFi模组: 08-总线协议/高速外设扩展总线/SD与MMC与SDIO/03-SDIO扩展与WiFi模组.md
+        - SD热插拔与电源管理: 08-总线协议/高速外设扩展总线/SD与MMC与SDIO/04-SD热插拔与电源管理.md
+        - SD历史演进与未来: 08-总线协议/高速外设扩展总线/SD与MMC与SDIO/05-SD历史演进与未来.md
+      - USB:
+        - USB基础认知与分层架构: 08-总线协议/高速外设扩展总线/USB/01-USB基础认知与分层架构.md
+        - USB端点与描述符: 08-总线协议/高速外设扩展总线/USB/02-USB端点与描述符.md
+        - USB枚举与电源管理: 08-总线协议/高速外设扩展总线/USB/03-USB枚举与电源管理.md
+        - USB调试与Gadget: 08-总线协议/高速外设扩展总线/USB/04-USB调试与Gadget.md
+        - USB历史演进与USB4: 08-总线协议/高速外设扩展总线/USB/05-USB历史演进与USB4.md
 
   - 10. 专用技术与前沿趋势:
       - 概览: 10-专用技术与前沿趋势/README.md
