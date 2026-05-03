@@ -6,6 +6,13 @@
 
 ---
 
+### 为什么需要 1-Wire
+
+嵌入式系统中，<span class="red">某些场景对引脚数量的限制极端苛刻</span>——电子标签、温度探头、门禁卡等只需偶发通信，不值得占用两根甚至四根信号线。<br>
+1-Wire 用**一根线**同时完成供电和数据传输，通过寄生电容储能机制让从设备在无外部电源时也能工作。<br>
+这种极简架构在需要最低布线成本、最低接插件尺寸的领域中不可替代。
+
+
 ## Linux w1-gpio 驱动
 
 <span class="red">w1-gpio 驱动利用 GPIO 的 open-drain 模式模拟 1-Wire 时序，将总线上的每个设备自动注册为独立 sysfs 节点。</span>
@@ -34,6 +41,15 @@ w1-gpio 驱动会自动探测总线上的 1-Wire 设备，并在 `/sys/bus/w1/de
 CONFIG_W1=y                    # 1-Wire 核心
 CONFIG_W1_MASTER_GPIO=y        # GPIO 主控
 CONFIG_W1_SLAVE_THERM=y        # 温度传感器从设备
+```
+
+```mermaid
+flowchart TD
+    Master["MCU (1-Wire Master)"] --"DQ 信号线"--> Bus["1-Wire Bus 总线"]
+    Bus --> S1["从设备 A: DS18B20<br>温度传感器"]
+    Bus --> S2["从设备 B: DS1990<br>iButton"]
+    Bus --> S3["从设备 C: DS2431<br>EEPROM"]
+    Master --"4.7kΩ 上拉电阻<br>寄生供电"--> VCC["VCC 供电"]
 ```
 
 ---
@@ -173,3 +189,26 @@ GPIO 内部上拉电阻通常为 20-50kΩ，阻值过大导致总线高电平建
 - 长距离传输需关注总线电容，有源上拉是解决之道。
 - 1-Wire 适用于极简布线场景，速率和多设备支持不如 I2C/SPI。
 - w1-gpio 驱动的内核配置需开启 CONFIG_W1、CONFIG_W1_MASTER_GPIO 和对应从设备驱动。
+
+---
+
+## 历史演进与发展趋势
+
+1-Wire 总线由 Dallas Semiconductor（现 Maxim Integrated）于 1990 年推出，初衷是为 iButton 电子密钥提供极简的物理连接方式。单线通信的概念在当时极具颠覆性——仅用一根信号线即可完成供电和数据传输，大幅降低了接插件成本。1993 年，Dallas 发布了 DS1990 iButton 系列，将 1-Wire 推向工业和门禁市场。2000 年后，随着嵌入式温度传感器 DS18B20 的普及，1-Wire 进入消费电子领域。2007 年 Maxim 收购 Dallas 后持续维护协议规范。现代 1-Wire 生态中，OWFS（1-Wire File System）项目为 Linux 提供了完善的软件支持，使开发者能像操作文件一样读写 1-Wire 设备。尽管高速场景已被 I2C/SPI 取代，1-Wire 在低成本温度监测和电子标签领域仍不可替代。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 物理层 | 单线（DQ）+ 地线，寄生供电或外部供电，开漏输出 + 4.7kΩ 上拉 |
+| 通信原理 | 复位脉冲 + 存在脉冲，写 1/写 0 时隙通过拉低时长区分 |
+| 搜索算法 | 64-bit ROM ID 二进制搜索，利用冲突位逐步缩小范围 |
+| 典型应用 | 温度传感器 DS18B20、iButton 电子标签、OWFS Linux 文件系统 |
+
+## 练习
+
+1. 1-Wire 总线上的从设备如何在不使用独立 VCC 引脚的情况下获得工作电源？请解释寄生供电（Parasite Power）的工作原理。
+2. 1-Wire 搜索算法（Search ROM）如何在不知道任何从设备 ROM ID 的情况下，逐步枚举出总线上的所有设备？请描述二进制搜索的过程。
+3. 在 Linux 系统中使用 OWFS 挂载 1-Wire 总线后，`/mnt/1wire/` 目录下的子目录和文件分别代表什么？如何用 `cat` 命令读取温度传感器的当前温度？

@@ -9,6 +9,14 @@
 
 ---
 
+### 为什么需要 PCIe
+
+<span class="red">传统 PCI/ISA 并行总线的引脚数量随带宽线性增长</span>，2000 年代已无法满足高速外设的需求。<br>
+并行信号间的串扰、时钟偏移和引脚数量爆炸使并行总线走到尽头。<br>
+PCIe（PCI Express）用 **高速串行差分对** 替代并行总线，每对 Lane 独立传输，<br>
+通过增加 Lane 数量（x1/x4/x8/x16）弹性扩展带宽，同时保持向后兼容的协议分层。
+
+
 ## NVMe SSD PCIe接口形态
 
 <span class="red">核心概念</span> NVMe SSD 有多种物理形态，嵌入式领域最常见的是 M.2 和 U.2，数据中心正在向 EDSFF（E1.S/E1.L/E3.S）过渡。
@@ -233,3 +241,21 @@ CXL.mem 通过三种机制解决这一问题：<br>
 <br>
 可能需要类似 CXL 的缓存一致性互连，而不是简单的 PCIe DMA。<br>
 Intel 的 UCIe（Universal Chiplet Interconnect Express）和 CXL 正在向 chiplet 级别渗透。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 分层架构 | 事务层（TLP）+ 数据链路层（DLLP）+ 物理层（LTSSM） |
+| 链路训练 | Detect → Polling → Configuration → L0，TS1/TS2 有序集交换 |
+| 配置空间 | Type 0（Endpoint）/ Type 1（Switch），256B/4KB 头部 + BAR |
+| DMA 机制 | Bus Mastering、MSI/MSI-X 中断、IOMMU 地址翻译保护 |
+| 演进 | Gen1 2.5GT/s → Gen5 32GT/s → Gen6 64GT/s PAM4，CXL 共存 |
+
+## 练习
+
+1. PCIe 的 TLP（Transaction Layer Packet）头部包含哪些关键字段？请解释 Requester ID、Tag 和 Length 字段的作用。
+2. PCIe 链路训练（Link Training）的目的是什么？TS1/TS2 有序集（Ordered Sets）在链路建立过程中分别传输哪些信息？
+3. BAR（Base Address Register）的作用是什么？为什么需要 6 个 BAR？Type 0 和 Type 1 配置空间头部有什么区别？

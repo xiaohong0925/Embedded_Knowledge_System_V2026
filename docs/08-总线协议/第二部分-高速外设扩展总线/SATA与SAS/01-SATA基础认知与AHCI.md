@@ -159,3 +159,20 @@ SATA 在嵌入式领域仍有一席之地，因为成本低、兼容性广、功
 只有 AI 推理、数据库缓存这类需要高并发随机 I/O 的场景，NVMe 才是刚需。
 <br>
 eMMC 和 NVMe BGA 封装的中间地带，还有 UFS（主要用于手机，嵌入式较少见）。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 物理层 | 7 针细线，差分信号，点对点拓扑替代 PATA 并行总线 |
+| AHCI 接口 | 统一的主机控制器驱动模型，Port Multiplier 扩展多设备 |
+| NCQ 优化 | Tagged Command Queueing，机械硬盘按磁头位置重排序请求 |
+| NVMe 替代 | PCIe 原生接口、多队列并行、μs 级延迟，全面超越 AHCI |
+
+## 练习
+
+1. AHCI 接口相比 IDE 模式的 ATA 接口有哪些核心改进？Port Multiplier 和 NCQ 分别解决了什么问题？
+2. NCQ（Native Command Queueing）如何优化机械硬盘的访问延迟？请描述 Tagged Command Queueing 的工作流程和调度策略。
+3. 为什么 NVMe 协议在 SSD 时代全面替代了 AHCI？从队列深度、延迟路径和中断机制三个维度对比两者的差异。

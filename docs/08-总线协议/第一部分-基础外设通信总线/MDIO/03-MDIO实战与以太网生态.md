@@ -6,6 +6,14 @@
 
 ---
 
+### 为什么需要 MDIO
+
+以太网 PHY 芯片包含大量可配置寄存器——自协商使能、速率选择、环回测试、LED 控制等。<br>
+<span class="red">如果没有统一的管理接口</span>，每个厂商都需要私有的 GPIO 序列来配置 PHY，驱动开发沦为重复的体力活。<br>
+MDIO（Management Data Input/Output）作为 IEEE 802.3 标准的一部分，用 **两根线（MDC 时钟 + MDIO 数据）** 统一了所有 PHY 的寄存器访问方式，<br>
+使 MAC 层驱动可以通用地探测、配置和监控任何兼容 PHY。
+
+
 ## 设备树 phy 节点
 
 <span class="red">设备树通过 phy-handle 属性将 MAC 节点与 PHY 节点关联，mdio 子节点描述总线上的 PHY 地址和配置。</span>
@@ -48,6 +56,25 @@ MAC 与 PHY 之间无需 MDIO 管理（如 SFP 光模块直连），使用 fixed
 ```
 
 <span class="blue">易错点：fixed-link 模式下内核不会 probe PHY 驱动，也不会执行自动协商，所有链路参数完全依赖设备树声明。若实际链路不支持声明的参数，网络将无法通信。</span>
+
+```mermaid
+sequenceDiagram
+    participant MAC as "MAC 控制器"
+    participant MDC as "MDC 时钟线"
+    participant MDIO as "MDIO 数据线"
+    participant PHY as "PHY 芯片"
+    MAC->>MDC: 提供 MDC 时钟 (≤2.5MHz)
+    MAC->>MDIO: 发送 Preamble (32个1)
+    MAC->>MDIO: 发送 Opcode (01=写 / 10=读)
+    MAC->>MDIO: 发送 PHY 地址 (5bit)
+    MAC->>MDIO: 发送寄存器地址 (5bit)
+    alt 读操作
+        MAC->>MDIO: 发送 Turn-around (Z)
+        PHY-->>MDIO: 返回 16bit 寄存器数据
+    else 写操作
+        MAC->>MDIO: 发送 16bit 写入数据
+    end
+```
 
 ---
 
@@ -198,3 +225,20 @@ PHY 中断可配置触发事件，常见选项包括：
 - Strapping 引脚在上电时决定 PHY 地址和模式，必须匹配设备树配置。
 - PHY 中断优于轮询，但轮询是可靠的 fallback 方案。
 - 双工不匹配和 RGMII 延迟配置错误是现场最常见的以太网调试问题。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 接口定义 | MDC（时钟，≤2.5MHz）+ MDIO（双向数据），配合 MII/RMII/RGMII |
+| 帧格式 | Preamble + Start + Opcode + PHY Addr + Reg Addr + Turn-around + Data |
+| 寄存器空间 | Clause 22（5-bit 地址，32 个寄存器）/ Clause 45（16-bit 地址扩展） |
+| Linux 生态 | mdio_bus 子系统、phy_device 结构体、Device Tree phy-handle 绑定 |
+
+## 练习
+
+1. MDIO 接口使用哪两根信号线？MDC 和 MDIO 的方向分别是什么？MDIO 的数据帧格式中，Opcode 字段的 01 和 10 分别代表什么操作？
+2. 为什么 MII 接口有 16 根数据线而 RMII 只有 10 根？RGMII 又是如何通过双边沿采样将数据线进一步减少到 12 根的？请对比三者的应用场景。
+3. 在 Linux 内核中，`mdio_bus` 子系统如何将 PHY 设备注册为 `struct phy_device`？`phydev->drv` 指针在什么时机被填充？Device Tree 中的 `phy-handle` 属性起什么作用？

@@ -6,6 +6,14 @@
 
 ---
 
+### 为什么需要 UART
+
+<span class="red">嵌入式系统调试和低速异步通信</span>是最常见的开发需求之一。<br>
+同步总线（I2C/SPI）需要共享时钟信号，长距离传输时时钟偏移导致数据错误。<br>
+UART（Universal Asynchronous Receiver/Transmitter）仅需 **两根线（TX+RX）** 即可实现全双工通信，<br>
+无需时钟线、无需地址寻址、协议极简，是调试串口、GPS 模组、蓝牙透传模块的首选接口。
+
+
 ## Linux UART 设备节点
 
 <span class="red">Linux 中 UART 对应三类设备节点：物理串口 /dev/ttyS*、USB 转串口 /dev/ttyUSB*、USB CDC-ACM 虚拟串口 /dev/ttyACM*。</span>
@@ -42,6 +50,17 @@ sudo usermod -a -G dialout $USER
 
 <span class="blue">易错点：加入 dialout 组后需要重新登录才会生效，直接执行 `newgrp dialout` 可立即生效但仅对当前 shell 有效。</span>
 
+```mermaid
+sequenceDiagram
+    participant TX as "发送端 TX"
+    participant RX as "接收端 RX"
+    TX->>RX: 起始位 (低电平)
+    TX->>RX: 数据位 D0-D7 (LSB first)
+    TX->>RX: 校验位 (可选)
+    TX->>RX: 停止位 (高电平)
+    Note over TX,RX: 双方波特率必须一致<br>无共享时钟，异步通信
+```
+
 ---
 
 ## stty 命令完整输出解读
@@ -51,6 +70,7 @@ sudo usermod -a -G dialout $USER
 ### 查看当前配置
 
 ```bash
+# 命令说明
 $ stty -F /dev/ttyUSB0 -a
 speed 115200 baud; rows 0; columns 0; line = 0;
 intr = ^C; quit = ^\; erase = ^?; kill = ^U;
@@ -219,3 +239,27 @@ aliases {
 - bootconsole 是内核调试的生命线，设备树 chosen 节点必须正确配置。
 - 波特率、流控、DMA 是三大高频故障点，排查时从物理层逐层向上。
 - 串口控制台不仅是调试工具，更是现场运维的唯一入口，配置时应保留硬件和软件两套回退方案。
+
+---
+
+## 历史演进与发展趋势
+
+UART（Universal Asynchronous Receiver/Transmitter）的历史可追溯至 1960 年代的电传打字机（Teletype）接口，是计算机串行通信的鼻祖。1970 年代，RS-232 标准（EIA-232）定义了 UART 的电气规范，成为调制解调器和终端的标准连接方式。1980 年代，8250/16450/16550 等 UART 芯片使 PC 串口标准化。1990 年代 USB 兴起后，传统 RS-232 端口逐渐从 PC 消失，但 FT232、CP2102 等 USB-to-UART 桥接芯片让 UART 在嵌入式领域焕发新生。2000 年后，UART 成为嵌入式调试的标配——几乎每个 MCU 的启动日志都通过 UART 输出。2010 年后，蓝牙模块（HC-05）、GPS 模组、LoRa 无线模块仍沿用 UART 接口。未来，虽然高速场景被 USB 取代，但 UART 凭借极简的 2 线设计和无需时钟同步的优势，仍将是嵌入式调试和低速外设通信的核心接口。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 异步通信 | TX + RX 双线，无共享时钟，依赖双方一致的波特率 |
+| 帧格式 | 起始位(低) + 数据位(5-9bit) + 校验位(可选) + 停止位(高) |
+| 流控 | RTS/CTS 硬件流控 vs XON/XOFF 软件流控 |
+| Linux 终端 | tty 子系统、termios 配置、stty 命令行工具 |
+| 扩展 | RS-485 半双工差分、IrDA 红外、USB-to-UART 桥接 |
+
+## 练习
+
+1. UART 通信中，为什么波特率的误差不能超过约 2%？如果发送端和接收端的波特率相差 5%，会发生什么类型的错误？
+2. RTS/CTS 硬件流控与 XON/XOFF 软件流控有什么区别？在高吞吐量场景下，为什么硬件流控更可靠？
+3. 在 Linux 中，`/dev/ttyUSB0` 和 `/dev/ttyS0` 分别对应什么类型的 UART 设备？`stty` 命令如何设置波特率为 115200、8 位数据、无校验、1 位停止位？

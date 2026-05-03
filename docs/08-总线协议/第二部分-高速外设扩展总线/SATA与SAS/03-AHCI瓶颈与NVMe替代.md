@@ -9,6 +9,13 @@
 
 ---
 
+### 为什么需要 SATA
+
+<span class="red">并行 ATA（PATA/IDE）的 40 针排线粗硬、占用机箱空间、信号串扰严重</span>，2000 年代已难以支持更高传输速率。<br>
+SATA（Serial ATA）用 **7 针细线** 替代 PATA 的 40 针排线，点对点连接取代共享总线，<br>
+支持热插拔和 NCQ 原生命令队列，是机械硬盘时代的最优存储接口方案。
+
+
 ## AHCI瓶颈分析
 
 <span class="red">核心概念</span> AHCI 的核心瓶颈不是带宽，而是并发架构：整个控制器只有 1 个 Submission Queue 和 1 个 Completion Queue，队列深度最多 32。
@@ -230,3 +237,26 @@ Num Err Log Entries         : 3
 达到 100% 不代表立刻损坏，而是说明已消耗完厂商保修周期内的额定写入量。
 <br>
 企业级 SSD 这个值到 120-150% 还能正常工作，但数据可靠性不再受官方保证。
+
+---
+
+## 历史演进与发展趋势
+
+SATA（Serial ATA）由 Intel、APT、Dell、IBM、Maxtor 和 Seagate 于 2000 年联合制定，替代了 1986 年诞生的并行 ATA（PATA/IDE）接口。SATA 1.0 提供 1.5Gbps，2004 年 SATA 2.0 翻倍至 3Gbps 并引入 NCQ（Native Command Queuing），2009 年 SATA 3.0 达 6Gbps。AHCI（Advanced Host Controller Interface）作为 SATA 的软件接口标准于 2004 年发布，统一了不同厂商的驱动模型。然而，SATA/AHCI 的设计根植于机械硬盘时代——单队列、高延迟、CPU 中断开销大。2011 年 NVMe 协议基于 PCIe 发布，专为 NAND Flash 的并行特性设计，多队列架构使 IOPS 提升数十倍。2015 年后，消费级 PC 和服务器全面转向 NVMe SSD，SATA 逐渐退居大容量冷存储和入门级设备的边缘市场。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 物理层 | 7 针细线，差分信号，点对点拓扑替代 PATA 并行总线 |
+| AHCI 接口 | 统一的主机控制器驱动模型，Port Multiplier 扩展多设备 |
+| NCQ 优化 | Tagged Command Queueing，机械硬盘按磁头位置重排序请求 |
+| NVMe 替代 | PCIe 原生接口、多队列并行、μs 级延迟，全面超越 AHCI |
+
+## 练习
+
+1. AHCI 接口相比 IDE 模式的 ATA 接口有哪些核心改进？Port Multiplier 和 NCQ 分别解决了什么问题？
+2. NCQ（Native Command Queueing）如何优化机械硬盘的访问延迟？请描述 Tagged Command Queueing 的工作流程和调度策略。
+3. 为什么 NVMe 协议在 SSD 时代全面替代了 AHCI？从队列深度、延迟路径和中断机制三个维度对比两者的差异。

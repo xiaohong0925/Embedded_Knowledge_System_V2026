@@ -205,3 +205,21 @@ CC引脚是Type-C的灵魂：
 在嵌入式领域，Type-C + USB4正在取代传统的HDMI + DC电源 + USB数据的多接口设计，
 <br>
 使轻薄设备只需一个端口就能连接所有外设和显示器。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 分层架构 | 物理层 + 链路层 + 协议层 + 应用层（类驱动） |
+| 描述符体系 | 设备 → 配置 → 接口 → 端点，四级描述符自描述设备能力 |
+| 枚举流程 | 总线复位 → 分配地址 → 获取描述符 → 加载驱动 → 配置完成 |
+| 电源管理 | 低功耗模式（Suspend/Resume）、Vbus 供电协商、BC 1.2 快充 |
+| Gadget 模式 | ConfigFS 动态组合 UAC/MSC/CDC-ACM/RNDIS 功能 |
+
+## 练习
+
+1. USB 描述符（Descriptor）的层级结构是怎样的？设备描述符、配置描述符、接口描述符和端点描述符之间是什么关系？
+2. USB 枚举（Enumeration）的完整流程是什么？主机如何通过 SET_ADDRESS、GET_DESCRIPTOR 等标准请求识别并配置新插入的设备？
+3. USB Gadget 模式与 Host 模式的本质区别是什么？在嵌入式 Linux 中，ConfigFS 如何动态配置 USB Gadget 的功能组合（如 UAC + MSC + CDC-ACM）？

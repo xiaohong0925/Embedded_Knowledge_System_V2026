@@ -6,6 +6,14 @@
 
 ---
 
+### 为什么需要 MDIO
+
+以太网 PHY 芯片包含大量可配置寄存器——自协商使能、速率选择、环回测试、LED 控制等。<br>
+<span class="red">如果没有统一的管理接口</span>，每个厂商都需要私有的 GPIO 序列来配置 PHY，驱动开发沦为重复的体力活。<br>
+MDIO（Management Data Input/Output）作为 IEEE 802.3 标准的一部分，用 **两根线（MDC 时钟 + MDIO 数据）** 统一了所有 PHY 的寄存器访问方式，<br>
+使 MAC 层驱动可以通用地探测、配置和监控任何兼容 PHY。
+
+
 ## Clause 22 帧格式
 
 <span class="red">一次完整的 MDIO 读写包含 64 个时钟周期：32 位前导码 + 2 位起始码 + 2 位操作码 + 5 位 PHY 地址 + 5 位寄存器地址 + 2 位周转时间 + 16 位数据。</span>
@@ -75,6 +83,7 @@ $ mdio bus0 1
 ### ethtool -m 输出解读
 
 ```bash
+# 命令说明
 $ ethtool -m eth0
 	Settings for eth0:
 		Supported ports: [ TP MII ]
@@ -173,6 +182,7 @@ static int check_link(struct phy_device *phydev)
 ### mdiobus 结构体
 
 ```c
+// 功能说明
 struct mii_bus {
     struct device *parent;
     const char *name;
@@ -207,3 +217,26 @@ u16 reg_val = (u16)val;  // 取低 16 位
 - 自动协商通过 FLP 交换能力，强制模式必须与链路伙伴严格匹配。
 - 内核驱动通过 mdiobus_read/write 访问 PHY，注意返回值错误码检查。
 - 双工不匹配是现场最常见故障，表现为小流量正常、大流量丢包。
+
+---
+
+## 历史演进与发展趋势
+
+MDIO（Management Data Input/Output）伴随 IEEE 802.3u 快速以太网标准于 1995 年诞生，与 MII（Media Independent Interface）一起解决了 MAC 层与 PHY 层的寄存器访问问题。2000 年前后，随着千兆以太网普及，GMII/RGMII 等简化接口相继推出，MDIO 的时钟频率从 2.5MHz 提升到 25MHz（Clause 45）。2005 年后，10G/40G/100G 以太网引入更复杂的 PCS/PMA 层，MDIO 的寄存器空间从 5 位扩展到 16 位。Linux 内核从 2.6 版本开始内置 `mdio_bus` 子系统，2015 年后 Device Tree 成为描述 PHY 连接的标准方式。现代交换机芯片集成数十个 PHY，MDIO 多路复用器和 GPIO-bitbang 方案成为常态，而 netlink-based mdio 工具正在替代传统 ioctl 接口。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 接口定义 | MDC（时钟，≤2.5MHz）+ MDIO（双向数据），配合 MII/RMII/RGMII |
+| 帧格式 | Preamble + Start + Opcode + PHY Addr + Reg Addr + Turn-around + Data |
+| 寄存器空间 | Clause 22（5-bit 地址，32 个寄存器）/ Clause 45（16-bit 地址扩展） |
+| Linux 生态 | mdio_bus 子系统、phy_device 结构体、Device Tree phy-handle 绑定 |
+
+## 练习
+
+1. MDIO 接口使用哪两根信号线？MDC 和 MDIO 的方向分别是什么？MDIO 的数据帧格式中，Opcode 字段的 01 和 10 分别代表什么操作？
+2. 为什么 MII 接口有 16 根数据线而 RMII 只有 10 根？RGMII 又是如何通过双边沿采样将数据线进一步减少到 12 根的？请对比三者的应用场景。
+3. 在 Linux 内核中，`mdio_bus` 子系统如何将 PHY 设备注册为 `struct phy_device`？`phydev->drv` 指针在什么时机被填充？Device Tree 中的 `phy-handle` 属性起什么作用？

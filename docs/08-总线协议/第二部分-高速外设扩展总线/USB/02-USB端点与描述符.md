@@ -9,6 +9,14 @@
 
 ---
 
+### 为什么需要 USB
+
+<span class="red">在 USB 出现之前，每种外设都有专属接口</span>：键盘用 PS/2、鼠标用 RS-232、打印机用并口、摄像头用专有接口。<br>
+接口碎片化导致主板布满各种端口，驱动开发也是重复的体力活。<br>
+USB 的设计理念是**万能插座**：无论外设功能多么不同，物理上都是同一个插头，协议上都走相同的枚举流程。<br>
+这种通用性将接口复杂性转移到协议层，由主机控制器消化，外设端只需实现最简单的端点响应逻辑。
+
+
 ## 端点类型：Control/Bulk/Interrupt/Isochronous
 
 <span class="red">核心概念</span> USB 定义了四种端点类型，分别对应不同的传输语义和带宽保证，没有哪种类型的端点能在所有场景下通吃。
@@ -277,3 +285,27 @@ out:
 <br>
 在嵌入式 Linux 上，libusb 依赖内核的 usbfs（/dev/bus/usb/BBB/DDD），
 确保内核启用了 CONFIG_USB_DEVICEFS。
+
+---
+
+## 历史演进与发展趋势
+
+USB 由 Intel、Microsoft、IBM、Compaq 等七家公司于 1994 年联合发起，1996 年发布 USB 1.0（1.5Mbps/12Mbps）。1998 年 USB 1.1 修复了早期兼容性问题，2000 年 USB 2.0 将高速模式提升至 480Mbps，确立了 USB 作为通用外设接口的地位。2008 年 USB 3.0（后称 USB 3.1 Gen1）引入 5Gbps SuperSpeed 和全双工差分对，2013 年 USB 3.1 Gen2 达 10Gbps，2017 年 USB 3.2 支持双通道 20Gbps。2014 年 USB Type-C 连接器发布，24 针可翻转设计统一了所有 USB 形态。2019 年 USB4 基于 Thunderbolt 3 协议，支持 40Gbps 和隧道化 PCIe/DisplayPort 传输。2022 年 USB4 v2.0 达 80Gbps，引入不对称带宽分配。现代嵌入式开发中，USB OTG/Device 模式使 MCU 可以模拟 U 盘、串口、网卡等外设，USB 已成为事实上唯一的通用高速外设接口。
+
+---
+
+## 本章小结
+
+| 要点 | 内容 |
+|------|------|
+| 分层架构 | 物理层 + 链路层 + 协议层 + 应用层（类驱动） |
+| 描述符体系 | 设备 → 配置 → 接口 → 端点，四级描述符自描述设备能力 |
+| 枚举流程 | 总线复位 → 分配地址 → 获取描述符 → 加载驱动 → 配置完成 |
+| 电源管理 | 低功耗模式（Suspend/Resume）、Vbus 供电协商、BC 1.2 快充 |
+| Gadget 模式 | ConfigFS 动态组合 UAC/MSC/CDC-ACM/RNDIS 功能 |
+
+## 练习
+
+1. USB 描述符（Descriptor）的层级结构是怎样的？设备描述符、配置描述符、接口描述符和端点描述符之间是什么关系？
+2. USB 枚举（Enumeration）的完整流程是什么？主机如何通过 SET_ADDRESS、GET_DESCRIPTOR 等标准请求识别并配置新插入的设备？
+3. USB Gadget 模式与 Host 模式的本质区别是什么？在嵌入式 Linux 中，ConfigFS 如何动态配置 USB Gadget 的功能组合（如 UAC + MSC + CDC-ACM）？
