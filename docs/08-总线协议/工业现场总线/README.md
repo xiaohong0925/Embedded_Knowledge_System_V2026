@@ -1,59 +1,73 @@
-# 第五部分：工业现场总线
+# 工业现场总线
 
-<span class="badge-i">[I]</span> <span class="badge-e">[E]</span>
+<span class="badge-b">[Beginner]</span>
 
-
-> **难度等级**：I → E
-> 
-> 本部分覆盖<span class="red">工业自动化领域</span>的经典现场总线。
-> 
-003e 从 Modbus 的寄存器映射到 PROFIBUS 的令牌环，从 EtherCAT 的"飞读飞写"到工业以太网的融合，
-003e 这些协议定义了工厂车间的"数据高速公路"。
+<span class="red">工业现场总线</span> 是嵌入式Linux系统中 工业自动化与过程控制 的重要组成部分。
 
 ---
 
-## 本部分大章概览
+## <strong>模块概览</strong>
 
-| 大章 | 难度 | 核心内容 | 典型场景 |
-| --- | --- | --- | --- |
-| Modbus | B → I | RTU/ASCII/TCP、寄存器映射、CRC | PLC、传感器、变频器 |
-| PROFIBUS | I → E | DP/V0/V1、令牌环、GSD | 西门子生态、过程控制 |
-| EtherCAT | E → M | EtherCAT帧结构、从站ESC、分布时钟 | 伺服控制、机器人 |
+<span class="green">工业现场总线</span> 涵盖以下总线类型：
 
----
-
-## 学习路径建议
-
-**路径 A（快速入门）**：
-Modbus → Modbus TCP
-
-**路径 B（西门子生态）**：
-Modbus → PROFIBUS DP → PROFINET
-
-**路径 C（高性能运动控制）**：
-Modbus → EtherCAT → CiA402
+- <span class="green">EtherCAT</span> — 实时以太网，纳秒级同步<br>
+- <span class="green">Modbus</span> — 简单可靠的串行协议<br>
+- <span class="green">PROFIBUS</span> — 过程自动化标准
 
 ---
 
-## 选型速查表
+## <strong>BIEM 学习路径</strong>
 
-| 场景 | 推荐总线 | 原因 |
-| --- | --- | --- |
-| 简单传感器/仪表 | Modbus RTU | 最简单，RS-485即可 |
-| 跨车间通信 | Modbus TCP | 走以太网，距离不受限 |
-| 西门子 PLC 系统 | PROFIBUS DP | 原生支持，GSD 配置 |
-| 高速伺服同步 | EtherCAT | 1000 轴同步，μs 级周期 |
-| 机器人多轴控制 | EtherCAT + CiA402 | DS402 伺服协议栈 |
+| 级别 | 目标 | 推荐文件 |
+|------|------|----------|
+| <span class="badge-b">B</span> | 建立直觉，看懂总线在干什么 | `01-*` 基础认知文件 |
+| <span class="badge-i">I</span> | 理解实现机制，能跟读时序/协议 | `02-03*` 原理解析文件 |
+| <span class="badge-e">E</span> | 掌握设计权衡，能调试排错 | `04-*` 实战与故障排查 |
+| <span class="badge-m">M</span> | 洞察演进趋势，参与标准制定 | `05-*` 历史演进与前沿 |
 
 ---
 
-## 速率对比
+## <strong>总线选型速查表</strong>
 
-| 总线 | 速率 | 拓扑 | 介质 |
-| --- | --- | --- | --- |
-| Modbus RTU | 115.2 Kbps | 主从总线 | RS-485 |
-| Modbus TCP | 100 Mbps | 主从星型 | 以太网 |
-| PROFIBUS DP | 12 Mbps | 令牌环总线 | RS-485 |
-| EtherCAT | 100 Mbps | 菊花链 | 以太网 |
-| PROFINET IRT | 100 Mbps | 星型/环型 | 以太网 |
+| 总线 | 速率 | 距离 | 拓扑 | 适用场景 |
+|------|------|------|------|----------|
+| EtherCAT | 100M-1G | <100m | 菊花链 | 运动控制、机器人、CNC |
+| Modbus | 19.2k-115.2k | <1.2km | 主从 | PLC、传感器、仪表 |
+| PROFIBUS | 9.6k-12M | <1.2km | 主从 | 过程自动化、工厂控制 |
 
+---
+
+## <strong>认知流导航</strong>
+
+```mermaid
+graph LR
+    A[基础认知] --> B[原理解析]
+    B --> C[技术教学]
+    C --> D[软硬件实战]
+    D --> E[历史演进]
+    E --> F[小结与练习]
+```
+
+---
+
+## <strong>小结与练习</strong>
+
+| 要点 | 说明 |
+|------|------|
+| 核心概念 | 工业现场总线 的协议分层与选型原则 |
+| 关键技能 | 根据场景选择合适总线、读懂时序图 |
+| 常见误区 | 忽视电气特性、混淆主从模式 |
+
+**练习**
+
+1. 比较 工业现场总线 中两种总线的速率、距离和适用场景差异。
+2. 如何在嵌入式系统中同时管理多条 工业现场总线？
+3. 分析 工业现场总线 中某条总线的历史演进与未来趋势。
+
+---
+
+## 学习路径
+
+- **小白**：从 `01-*` 基础认知开始，理解每条总线的核心用途。
+- **高手**：深入 `02-03*` 原理解析，掌握时序与协议细节。
+- **专家**：研究 `04-*` 实战案例与 `05-*` 历史演进，参与社区贡献。
