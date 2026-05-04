@@ -161,18 +161,6 @@
 * <span class="blue">蓝色</span> — 关键结论，直接影响决策<br>
 * <span class="orange">橙色</span> — 列表标题，结构化索引<br>
 
----
-
-## 快速导航
-
-* [1. 硬件层](01-硬件层/README.md)
-* [2. Bootloader与启动](02-Bootloader与启动/README.md)
-* [3. Linux内核与驱动](03-Linux内核与驱动/README.md)
-* [4. 系统构建与部署](04-系统构建与部署/01-系统构建基础认知.md)
-* [5. 驱动开发](05-驱动开发/README.md)
-* [6. 内核调试与性能优化](06-内核调试/README.md)
-* [7. 应用层开发](07-应用层开发/README.md)
-* [8. 总线协议](08-总线协议/README.md)
 
 ---
 
