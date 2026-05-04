@@ -65,6 +65,14 @@ echo 1 > /sys/kernel/debug/pcie_inject/correctable
 
 ---
 
+
+```mermaid
+graph LR
+    A[高级错误报告核心] --> B[原理解析]
+    B --> C[实战应用]
+    C --> D[历史演进]
+```
+
 ## <strong>历史演进</strong>
 
 - <span class="green">PCIe 1.1</span> — 引入基础 AER<br>

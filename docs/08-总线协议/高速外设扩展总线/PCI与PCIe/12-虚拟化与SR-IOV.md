@@ -75,6 +75,14 @@ Domain 2 (Guest)  ← VF 1
 
 ---
 
+
+```mermaid
+graph LR
+    A[虚拟化与SR-IOV核心] --> B[原理解析]
+    B --> C[实战应用]
+    C --> D[历史演进]
+```
+
 ## <strong>历史演进</strong>
 
 - <span class="green">2007 年 SR-IOV 规范</span> — PCI-SIG 发布，定义 PF/VF 模型<br>

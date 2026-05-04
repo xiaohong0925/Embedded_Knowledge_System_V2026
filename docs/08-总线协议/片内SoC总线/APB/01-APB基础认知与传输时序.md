@@ -112,7 +112,7 @@ PPROT的3位分别定义访问属性：<br>
 
 PSTRB字节掩码示例：<br>
 
-```
+```c
 32位写数据：0x1234_5678
 PSTRB = 4'b1101 → 写入 byte3, byte2, byte0；byte1保持不变
 PSTRB = 4'b0001 → 仅写入 byte0 = 0x78

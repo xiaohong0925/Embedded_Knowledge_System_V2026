@@ -60,7 +60,7 @@ flowchart TD
 
 ### 目录结构
 
-```
+```c
 /sys/bus/w1/devices/
 ├── w1_bus_master1/          # 总线控制器
 ├── 28-0000072431ff/         # DS18B20 (Family=0x28)

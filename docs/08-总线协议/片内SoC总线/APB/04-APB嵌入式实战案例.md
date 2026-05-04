@@ -53,6 +53,14 @@ writel(0x03, base + 0x0C);              // LCR: 8N1
 
 ---
 
+
+```mermaid
+graph LR
+    A[APB嵌入式实战案例核心] --> B[原理解析]
+    B --> C[实战应用]
+    C --> D[历史演进]
+```
+
 ## <strong>小结与练习</strong>
 
 **练习**

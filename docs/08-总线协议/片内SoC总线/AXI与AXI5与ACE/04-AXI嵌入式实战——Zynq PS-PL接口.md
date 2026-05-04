@@ -248,7 +248,7 @@ fio dma-test.fio
 
 #### 问题场景
 
-```
+```c
 CPU writes data to DDR @0x1000
 PL DMA reads from DDR @0x1000 via HP port
 Result: DMA reads stale data (from DDR, not from CPU cache)

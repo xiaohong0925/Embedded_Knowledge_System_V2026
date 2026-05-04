@@ -75,7 +75,7 @@ Terminal/IDE"]
 * Payload：1/2/4 Byte，由 bit[3:0] 决定（0x1=1B, 0x2=2B, 0x4=4B）。
 * ITM 端口 0 通常用于 printf 输出，端口 31 用于 RTOS 事件追踪。
 
-```
+```c
 示例：向端口 0 发送 4 Byte 数据 0x12345678
 Header = 0b00000100 = 0x04  (端口0, 4 Byte)
 Payload = 0x78 0x56 0x34 0x12  (小端序)

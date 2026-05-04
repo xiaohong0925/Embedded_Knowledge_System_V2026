@@ -60,7 +60,7 @@ Ident_Number       = 0x81D8            ; 设备标识号
 * Module 段描述从站支持的 I/O 模块类型与参数。<br>
 * 每个 Module 行定义一个可插槽位的功能。<br>
 
-```
+```c
 ; GSD 模块段示例
 Module = "2DI DC24V" 0x11,0x81
     EndModule

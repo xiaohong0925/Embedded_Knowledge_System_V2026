@@ -123,7 +123,7 @@ ARM CMSDK（Cortex-M System Design Kit）提供全套APB外设RTL：<br>
 
 CMSDK APB UART寄存器映射（典型实现）：<br>
 
-```
+```c
 Base + 0x00: DATA    (R/W)  发送/接收数据
 Base + 0x04: STATE   (R)    TXFIFO/RXFIFO空满状态
 Base + 0x08: CTRL    (R/W)  TX/RX使能、中断使能

@@ -72,6 +72,14 @@ endmodule
 
 ---
 
+
+```mermaid
+graph LR
+    A[Wishbone逻辑级与时序分析核心] --> B[原理解析]
+    B --> C[实战应用]
+    C --> D[历史演进]
+```
+
 ## <strong>历史演进</strong>
 
 - <span class="green">1997 年 WISHBONE 1.0</span> — OpenCores 发布，8/16/32位支持<br>
