@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{# ============================================ #}
+{#  嵌入式 Linux 知识体系 V2026 - 首页覆盖模板   #}
+{#  只修改 content 区域，其他全部继承默认       #}
+{# ============================================ #}
+
+{# 判断是否为首页（兼容多种 mkdocs 版本） #}
+{% set is_homepage = (page.url == "") or (page.url == ".") or (page.url == "index.html") or (page.is_homepage | default(False)) %}
+
+{% block content %}
+  {% if is_homepage %}
+    {# 首页：用 iframe 全屏嵌入 React 极客风首页 #}
+    <div style="margin: -24px -32px -40px -32px; position: relative; z-index: 1;">
+      <iframe
+        id="homepage-frame"
+        src="{{ 'homepage/index.html' | url }}"
+        style="width: 100%; height: calc(100vh - 48px); border: none; display: block;"
+        title="嵌入式 Linux 知识体系极客风格首页"
+        loading="eager"
+        allow="fullscreen"
+      ></iframe>
+    </div>
+
+    {# 暗色模式同步脚本 #}
+    <script>
+      (function() {
+        var iframe = document.getElementById('homepage-frame');
+        if (!iframe) return;
+        var sendTheme = function() {
+          var scheme = document.documentElement.getAttribute('data-md-color-scheme');
+          try {
+            iframe.contentWindow.postMessage({ type: 'theme', scheme: scheme || 'default' }, '*');
+          } catch(e) {}
+        };
+        iframe.addEventListener('load', sendTheme);
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            if (m.attributeName === 'data-md-color-scheme') sendTheme();
+          });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+      })();
+    </script>
+
+    {# noscript 回退：显示原始 index.md 内容 #}
+    <noscript>
+      <div class="md-content" style="padding: 24px 32px;">
+        {{ super() }}
+      </div>
+    </noscript>
+
+  {% else %}
+    {# 非首页：完全保持默认 mkdocs-material 渲染 #}
+    {{ super() }}
+  {% endif %}
+{% endblock %}

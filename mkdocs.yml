@@ -5,6 +5,7 @@ repo_name: GitHub
 copyright: Copyright &copy; 2026 登月者0432
 theme:
   name: material
+#  custom_dir: overrides
   language: zh
   palette:
     - media: '(prefers-color-scheme: light)'
