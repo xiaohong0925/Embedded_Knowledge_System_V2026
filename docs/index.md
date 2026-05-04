@@ -131,14 +131,14 @@
 
 | 子项 | AI完成情况 | 是否人工复检 | 最后修改日期 |
 |------|-----------|------------|------------|
-| 片内SoC总线 (AMBA/AXI/AHB/APB/TileLink/Wishbone) [B→I] | 建设中 | 否 | 2026-05-03 |
-| 基础外设通信总线 (I2C/SPI/UART/1-Wire/MDIO/MIPI-I3C) [B→I] | 建设中 | 否 | 2026-05-03 |
-| 高速外设扩展总线 (SD/SATA/PCIe/USB) [I→E] | 建设中 | 否 | 2026-05-03 |
-| 存储设备专用总线 (eMMC/UFS/QPI/OPI) [I→E] | 建设中 | 否 | 2026-05-03 |
-| 车载与网络互联总线 (CAN/LIN/TSN/车载以太网) [I→E] | 建设中 | 否 | 2026-05-03 |
-| 工业现场总线 (Modbus/PROFIBUS/EtherCAT) [I→E] | 建设中 | 否 | 2026-05-03 |
-| 音视频专用总线 (I2S/PCM/MIPI Alliance) [I→E] | 建设中 | 否 | 2026-05-03 |
-| 调试与跟踪专用总线 (CoreSight/JTAG/SWD) [I→M] | 建设中 | 否 | 2026-05-03 |
+| 片内SoC总线 (AMBA/AXI/AHB/APB/TileLink/Wishbone) [B→I] | AI已完成(30文件) | 否 | 2026-05-04 |
+| 基础外设通信总线 (I2C/SPI/UART/1-Wire/MDIO/MIPI-I3C) [B→I] | AI已完成(30文件) | 否 | 2026-05-04 |
+| 高速外设扩展总线 (SD/SATA/PCIe/USB) [I→E] | AI已完成(28文件) | 否 | 2026-05-04 |
+| 存储设备专用总线 (eMMC/UFS/QPI/OPI) [I→E] | AI已完成(10文件) | 否 | 2026-05-04 |
+| 车载与网络互联总线 (CAN/LIN/TSN/车载以太网) [I→E] | AI已完成(20文件) | 否 | 2026-05-04 |
+| 工业现场总线 (Modbus/PROFIBUS/EtherCAT) [I→E] | AI已完成(15文件) | 否 | 2026-05-04 |
+| 音视频专用总线 (I2S/PCM/MIPI Alliance) [I→E] | AI已完成(10文件) | 否 | 2026-05-04 |
+| 调试与跟踪专用总线 (CoreSight/JTAG/SWD) [I→M] | AI已完成(15文件) | 否 | 2026-05-04 |
 
 </details>
 
