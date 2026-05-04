@@ -8,6 +8,8 @@
 <br>
 理解每种高速总线的协议层次、速度等级、电源管理和Linux驱动架构，是设计高性能嵌入式平台的前提。
 <br>
+本类别覆盖四种核心总线：SD/MMC/SDIO、SATA、PCIe和USB。
+<br>
 
 ---
 
@@ -68,10 +70,12 @@ graph LR
 |------|----------|----------|----------|
 | 工业平板存储扩展 | SD | eMMC | SD可插拔，eMMC板载焊接 |
 | 边缘计算服务器 | PCIe NVMe | SATA SSD | PCIe性能高5-10倍 |
-| 车载信息娱乐 | USB | PCIe | USB连接器更可靠 |
-| 网络设备扩展 | PCIe | USB | PCIe低延迟，支持SR-IOV |
-| 无人机图传 | USB3 | PCIe | USB更轻，线缆灵活 |
-| 医疗成像设备 | PCIe | USB4 | PCIe确定性延迟 |
+| 车载信息娱乐 | USB | PCIe | USB连接器更可靠，支持热插拔 |
+| 网络设备扩展 | PCIe | USB | PCIe低延迟，支持SR-IOV虚拟化 |
+| 无人机图传 | USB3 | PCIe | USB线缆更轻更灵活 |
+| 医疗成像设备 | PCIe | USB4 | PCIe确定性延迟，实时性更好 |
+| 工业相机 | USB3 Vision | GigE Vision | USB供电+数据一体化 |
+| 存储服务器 | PCIe NVMe | SATA SSD | 高并发IOPS需求 |
 
 <span class="blue">关键认知：嵌入式高速总线的选型不是"选最快的"，而是"选最合适的"——在带宽需求、功耗预算、连接器可靠性和供应链可用性之间取得平衡。
 </span><br>
@@ -97,6 +101,53 @@ flowchart LR
     style A fill:#f96,stroke:#333
 ```
 
+### <strong>SD与SDIO的特殊定位</strong>
+
+<span class="green">SD</span>卡是嵌入式系统中唯一支持用户可插拔的存储介质。
+<br>
+而<span class="green">SDIO</span>将SD接口扩展为非存储外设（如WiFi、蓝牙、GPS）的连接通道，利用SD的物理层和协议层传输非存储数据。
+<br>
+SDIO的优势在于：一个物理插槽既可以做存储扩展，也可以做无线通信，灵活性极高。
+<br>
+
+| 模式 | 数据宽度 | 最大速率 | 适用场景 |
+|------|----------|----------|----------|
+| SD 1-bit | 1 | 25MB/s | 低速外设 |
+| SD 4-bit | 4 | 100MB/s | 标准存储 |
+| SDIO 1-bit | 1 | 25MB/s | WiFi模块 |
+| SDIO 4-bit | 4 | 100MB/s | 高速WiFi/蓝牙 |
+| UHS-I | 4 | 104MB/s | 高速存储 |
+| UHS-II | 8 | 312MB/s | 专业存储 |
+
+---
+
+## <strong>为什么SATA正在被淘汰</strong>
+
+SATA作为硬盘接口的标准，在嵌入式领域正被NVMe（PCIe SSD）快速取代。
+<br>
+原因如下：
+<br>
+- <strong>性能差距</strong>：SATA 6Gbps的理论带宽为600MB/s，而PCIe 3.0 x4 NVMe可达3.5GB/s，差距近6倍
+<br>
+- <strong>协议开销</strong>：SATA基于AHCI，每次I/O都需要CPU介入；NVMe支持最多64K个队列，无需CPU轮询
+<br>
+- <strong>物理尺寸</strong>：M.2 NVMe比2.5寸SATA更适合紧凑型嵌入式设备
+<br>
+- <strong>功耗</strong>：NVMe在低功耗模式（L1.2）下的功耗已低于SATA
+<br>
+
+| 指标 | SATA 6G SSD | PCIe 3.0 x4 NVMe | PCIe 4.0 x4 NVMe |
+|------|-------------|-------------------|------------------|
+| 顺序读 | 550MB/s | 3,500MB/s | 7,000MB/s |
+| 顺序写 | 520MB/s | 3,000MB/s | 5,500MB/s |
+| 随机读IOPS | 90K | 500K | 1,000K |
+| 延迟 | 100μs | 10μs | 10μs |
+| 功耗（活跃） | 2-4W | 3-7W | 5-10W |
+| 物理尺寸 | 2.5寸/100mm | M.2 2280/80mm | M.2 2280/80mm |
+
+<span class="blue">关键认知：SATA在嵌入式领域的保留价值仅在"低成本大容量存储"场景——对于需要2TB+存储且预算有限的边缘服务器，SATA SSD仍有价格优势。
+</span><br>
+
 ---
 
 ## <strong>小结</strong>
@@ -109,7 +160,8 @@ flowchart LR
 | PCIe优势 | 板级扩展、DMA、低延迟、SR-IOV |
 | USB优势 | 即插即用、热插拔、供电、生态庞大 |
 | SD优势 | 可插拔、低成本、存储卡标准化 |
-| SATA现状 | 被NVMe替代，但在工业领域仍有存量 |
+| SDIO优势 | 同一插槽支持存储和通信 |
+| SATA现状 | 被NVMe替代，但在低成本大容量场景保留 |
 
 ## <strong>练习</strong>
 
@@ -131,5 +183,4 @@ flowchart LR
 <br>
 - <span class="badge-e">[Expert]</span> 深入研究PCIe配置空间、BAR映射、MSI-X中断和SR-IOV虚拟化。
 <br>
-- <span class="purple">扩展阅读：SD Specifications Part 1 Physical Layer Simplified Spec v8.0、PCI Express Base Specification 5.0、USB 3.2 Specification、Serial ATA International Organization规范。
-</span><br>
+- <span class="purple">扩展阅读：SD Specifications Part 1 Physical Layer Simplified Spec v8.0、PCI Express Base Specification 5.0、USB 3.2 Specification、Serial ATA International Organization规范、NVMe Specification v1.4。</span><br>

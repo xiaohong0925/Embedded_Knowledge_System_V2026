@@ -26,17 +26,21 @@
 ### <strong>SQ/CQ 机制</strong>
 
 ```
-Host                          Controller
-  │                             │
-  │── 写入命令到 SQ ───────────▶│
-  │── 写 Doorbell（Tail Doorbell）▶│
-  │                             │ 处理命令
-  │                             │── 完成命令 ───▶ CQ
-  │◀── MSI-X 中断 ─────────────│
-  │── 读 CQ Head Doorbell ◀────│
+```mermaid
+sequenceDiagram
+    participant H as Host
+    participant C as Controller
+    H->>C: 写入命令到 SQ
+    H->>C: 写 Tail Doorbell
+    activate C
+    C->>C: 处理命令
+    C-->>H: 完成命令写入 CQ
+    C-->>H: MSI-X 中断
+    deactivate C
+    H->>C: 读 CQ Head Doorbell
 ```
 
-<span class="red">每个 CPU 核心可拥有独立的 SQ/CQ 对</span>，消除锁竞争。
+每个 CPU 核心可拥有独立的 SQ/CQ 对</span>，消除锁竞争。
 
 ### <strong>嵌入式 NVMe 控制器</strong>
 

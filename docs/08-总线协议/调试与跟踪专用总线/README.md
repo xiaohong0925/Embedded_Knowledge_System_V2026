@@ -8,6 +8,8 @@
 <br>
 理解调试接口的协议细节、工具生态和选型约束，是高效嵌入式开发的必备技能。
 <br>
+本类别覆盖六种核心总线：JTAG、SWD、cJTAG、CoreSight、ETM和ITM。
+<br>
 
 ---
 
@@ -37,9 +39,9 @@
 | 厂商支持 | 全行业 | ARM生态 | TI生态 |
 | 典型芯片 | FPGA, 复杂SoC | Cortex-M MCU | 低引脚MCU |
 | 开源工具 | OpenOCD | OpenOCD, pyOCD | OpenOCD |
+| 引脚成本 | 高（5线） | 低（2线） | 低（2线） |
 
-<span class="blue">关键认知：调试接口的选型核心不是"功能最强"，而是"引脚最少够用"——对于32引脚的Cortex-M4，SWD是最佳选择；对于BGA封装的FPGA，JTAG是唯一选择。
-</span><br>
+<span class="blue">关键认知：调试接口的选型核心不是"功能最强"，而是"引脚最少够用"——对于32引脚的Cortex-M4，SWD是最佳选择；对于BGA封装的FPGA，JTAG是唯一选择。</span><br>
 
 ### <strong>CoreSight生态系统</strong>
 
@@ -59,25 +61,21 @@ flowchart LR
 
 ## <strong>为什么调试总线越来越重要</strong>
 
-随着芯片复杂度指数级增长，调试和跟踪能力成为芯片设计的核心竞争力：
-<br>
-- 现代SoC包含数十个CPU核心、数百个IP模块，没有片上跟踪根本无法定位问题
-<br>
-- 软件定义汽车要求OTA更新后的故障诊断，需要远程调试能力
-<br>
-- 功能安全标准（ISO 26262）要求芯片提供故障注入和诊断接口
-<br>
+随着芯片复杂度指数级增长，调试和跟踪能力成为芯片设计的核心竞争力：<br>
+- 现代SoC包含数十个CPU核心、数百个IP模块，没有片上跟踪根本无法定位问题<br>
+- 软件定义汽车要求OTA更新后的故障诊断，需要远程调试能力<br>
+- 功能安全标准（ISO 26262）要求芯片提供故障注入和诊断接口<br>
 
 | 调试需求 | 传统方案 | 现代方案 | 演进原因 |
 |----------|----------|----------|----------|
 | 单步调试 | JTAG halt | SWD + 非侵入式 | 不影响实时性 |
-| 代码覆盖 | 插桩 | ETM指令追踪 | 零开销 |
+| 代码覆盖 | 软件插桩 | ETM指令追踪 | 零开销 |
 | 数据观察 | 断点 | DWT数据观察点 | 硬件触发 |
 | 性能分析 | 软件计时 | ITM时间戳 | 纳秒级精度 |
 | 远程诊断 | 无 | CoreSight + 云端 | 软件定义 |
+| 安全调试 | JTAG密码 | 生命周期管理 | 防破解 |
 
-<span class="blue">关键认知：调试总线从"开发工具"演进到"系统基础设施"——现代芯片必须内建调试能力，否则无法满足功能安全和远程运维的要求。
-</span><br>
+<span class="blue">关键认知：调试总线从"开发工具"演进到"系统基础设施"——现代芯片必须内建调试能力，否则无法满足功能安全和远程运维的要求。</span><br>
 
 ---
 
@@ -109,9 +107,6 @@ flowchart LR
 
 ## <strong>学习路径</strong>
 
-- <span class="badge-i">[Intermediate]</span> 从JTAG的TAP状态机入手，用OpenOCD实践芯片编程和边界扫描测试。
-<br>
-- <span class="badge-m">[Master]</span> 深入研究CoreSight组件（ETM、ITM、DWT、TPIU）的配置和使用，掌握非侵入式跟踪分析。
-<br>
-- <span class="purple">扩展阅读：IEEE 1149.1-2013标准、ARM CoreSight Technology System Design Guide、ARM ETM Architecture Specification v4.0、OpenOCD User Guide。
-</span><br>
+- <span class="badge-i">[Intermediate]</span> 从JTAG的TAP状态机入手，用OpenOCD实践芯片编程和边界扫描测试。<br>
+- <span class="badge-m">[Master]</span> 深入研究CoreSight组件（ETM、ITM、DWT、TPIU）的配置和使用，掌握非侵入式跟踪分析。<br>
+- <span class="purple">扩展阅读：IEEE 1149.1-2013标准、ARM CoreSight Technology System Design Guide、ARM ETM Architecture Specification v4.0、OpenOCD User Guide。</span><br>

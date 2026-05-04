@@ -8,6 +8,8 @@
 <br>
 理解存储总线的协议层次、时序约束、性能优化和可靠性设计，是构建高性能嵌入式存储方案的基础。
 <br>
+本类别覆盖四种核心总线：eMMC、UFS、QPI和OPI。
+<br>
 
 ---
 
@@ -63,6 +65,8 @@ graph LR
 QPI的每个链路包含20个差分对（20lane），每个方向10lane，支持全双工传输。
 <br>
 在嵌入式领域，QPI主要出现在高端x86嵌入式平台（如Xeon D系列），用于多处理器配置。
+<br>
+QPI的设计目标是替代传统的FSB（Front Side Bus），通过点对点架构消除总线瓶颈，每个CPU拥有独立的内存控制器，通过QPI实现缓存一致性（MESIF协议）。
 
 ### <strong>OPI（On-Package Interconnect）</strong>
 
@@ -70,6 +74,7 @@ QPI的每个链路包含20个差分对（20lane），每个方向10lane，支持
 <br>
 在嵌入式x86平台（如Atom、Core i低功耗系列）中，OPI是SoC与片外DRAM的唯一通道。
 <br>
+OPI的引脚数比标准DDR少，适合引脚受限的嵌入式SoC封装，但速率与标准DDR相当。
 
 | 总线 | 应用领域 | 嵌入式相关性 | 现状 |
 |------|----------|-------------|------|
@@ -80,12 +85,40 @@ QPI的每个链路包含20个差分对（20lane），每个方向10lane，支持
 
 ---
 
+## <strong>eMMC的可靠性设计</strong>
+
+eMMC不仅是一个存储接口，更是一个完整的存储管理系统。
+<br>
+与Raw NAND不同，eMMC控制器内置了：
+<br>
+- <strong>坏块管理</strong>：自动映射坏块到备用块
+<br>
+- <strong>磨损均衡</strong>：均匀分布写入操作，延长Flash寿命
+<br>
+- <strong>ECC纠错</strong>：BCH或LDPC纠错码，保障数据完整性
+<br>
+- <strong>断电保护</strong>：电容缓冲，确保突然断电时数据不丢失
+<br>
+
+| 可靠性机制 | 实现方式 | 用户可见性 |
+|------------|----------|-----------|
+| 坏块管理 | 控制器内部映射表 | 不可见 |
+| 磨损均衡 | 动态/静态均衡算法 | 不可见 |
+| ECC | BCH（传统）/ LDPC（高端） | 不可见（仅统计） |
+| 断电保护 | 板载电容 + 原子写入 | 不可见 |
+| 健康监控 | EXT_CSD寿命计数器 | 可见（CMD6读取） |
+
+<span class="blue">关键认知：eMMC的可靠性设计是"黑盒"——用户无需关心NAND的物理特性，控制器自动处理所有复杂性。这种抽象是eMMC在嵌入式领域成功的关键。
+</span><br>
+
+---
+
 ## <strong>小结</strong>
 
 | 要点 | 内容 |
 |------|------|
 | 存储总线演进 | Raw NAND → eMMC → UFS |
-| eMMC优势 | 成本低、生态成熟、引脚少 |
+| eMMC优势 | 成本低、生态成熟、引脚少、可靠性黑盒 |
 | UFS优势 | 全双工、高速率、低功耗 |
 | QPI定位 | 服务器CPU互联，嵌入式场景有限 |
 | OPI定位 | x86 SoC片外DRAM接口 |
@@ -111,5 +144,5 @@ QPI的每个链路包含20个差分对（20lane），每个方向10lane，支持
 <br>
 - <span class="badge-e">[Expert]</span> 深入研究UFS的UniPro协议栈、M-PHY物理层和SCSI命令集，理解全双工数据流。
 <br>
-- <span class="purple">扩展阅读：JEDEC eMMC Standard v5.1、JEDEC UFS Standard v4.0、MIPI M-PHY Specification v5.0、MIPI UniPro Specification v2.0。
+- <span class="purple">扩展阅读：JEDEC eMMC Standard v5.1、JEDEC UFS Standard v4.0、MIPI M-PHY Specification v5.0、MIPI UniPro Specification v2.0、JEDEC LPDDR5 Standard。
 </span><br>
