@@ -1,73 +1,109 @@
 # 音视频专用总线
 
-<span class="badge-b">[Beginner]</span>
+<span class="badge-i">[Intermediate]</span> <span class="badge-e">[Expert]</span>
 
-<span class="red">音视频专用总线</span> 是嵌入式Linux系统中 多媒体数据采集与显示 的重要组成部分。
-
----
-
-## <strong>模块概览</strong>
-
-<span class="green">音视频专用总线</span> 涵盖以下总线类型：
-
-- <span class="green">I2S/PCM</span> — 数字音频接口<br>
-- <span class="green">MIPI DSI</span> — 显示串行接口<br>
-- <span class="green">MIPI CSI-2</span> — 摄像头串行接口
+<span class="red">音视频专用总线</span>是移动设备和嵌入式系统中用于多媒体数据传输的专用接口。
+<br>
+从I2S的数字音频时序到MIPI DSI的显示屏接口，从MIPI CSI-2的摄像头连接到PCM的语音通话，这些协议定义了我们"看到"和"听到"的数字世界。
+<br>
+理解音视频总线的时钟同步、数据格式和带宽计算，是设计多媒体嵌入式平台的基础。
+<br>
 
 ---
 
-## <strong>BIEM 学习路径</strong>
+## <strong>本类别总线总览</strong>
 
-| 级别 | 目标 | 推荐文件 |
-|------|------|----------|
-| <span class="badge-b">B</span> | 建立直觉，看懂总线在干什么 | `01-*` 基础认知文件 |
-| <span class="badge-i">I</span> | 理解实现机制，能跟读时序/协议 | `02-03*` 原理解析文件 |
-| <span class="badge-e">E</span> | 掌握设计权衡，能调试排错 | `04-*` 实战与故障排查 |
-| <span class="badge-m">M</span> | 洞察演进趋势，参与标准制定 | `05-*` 历史演进与前沿 |
-
----
-
-## <strong>总线选型速查表</strong>
-
-| 总线 | 速率 | 距离 | 拓扑 | 适用场景 |
-|------|------|------|------|----------|
-| I2S | 最高3.1M | <0.3m | 点对点 | 音频ADC/DAC、Codec |
-| MIPI DSI | 1-4.5Gbps/lane | <0.3m | 点对点 | 手机/平板显示屏 |
-| MIPI CSI-2 | 1-4.5Gbps/lane | <0.3m | 点对点 | 手机/车载摄像头 |
+| 总线 | 类型 | 最大速率 | 信号线 | 典型应用 |
+|------|------|----------|--------|----------|
+| I2S | 数字音频 | 采样率×位深×通道数 | 3+（BCLK+WS+SD） | DAC、ADC、音频Codec |
+| PCM | 语音数字 | 2.048Mbps（E1） | 4（BCLK+FS+DX+DR） | 语音编解码、电话系统 |
+| TDM | 时分复用音频 | 采样率×位深×N通道 | 3+ | 多通道音频系统 |
+| PDM | 脉冲密度调制 | MHz级 | 1-2 | MEMS麦克风 |
+| MIPI DSI | 显示接口 | 4.5Gbps/lane | 4lane+时钟 | 手机显示屏、车载仪表 |
+| MIPI CSI-2 | 摄像头接口 | 4.5Gbps/lane | 4lane+时钟 | 手机摄像头、ADAS |
 
 ---
 
-## <strong>认知流导航</strong>
+## <strong>多媒体接口选择</strong>
 
-```mermaid
-graph LR
-    A[基础认知] --> B[原理解析]
-    B --> C[技术教学]
-    C --> D[软硬件实战]
-    D --> E[历史演进]
-    E --> F[小结与练习]
-```
+### <strong>音频接口：I2S vs PCM vs TDM vs PDM</strong>
+
+| 接口 | 通道数 | 位深 | 时钟同步 | 典型场景 |
+|------|--------|------|----------|----------|
+| I2S | 2（立体声） | 16/24/32bit | 独立BCLK | Hi-Fi音频、蓝牙 |
+| PCM | 1-2 | 8/16bit | 独立BCLK | 语音通话、电话 |
+| TDM | 2-16+ | 16/24/32bit | 共享BCLK | 会议系统、车载多通道 |
+| PDM | 1-2 | 1bit（过采样） | 共享CLK | MEMS麦克风阵列 |
+
+<span class="blue">关键认知：音频接口的选择核心是"通道数 vs 位深 vs 布线复杂度"——I2S适合立体声，TDM适合多通道，PDM适合低成本麦克风阵列。它们的物理层差异很小，主要区别在于帧格式和时钟分配。
+</span><br>
+
+### <strong>视频接口：MIPI DSI vs MIPI CSI-2</strong>
+
+MIPI Alliance定义了移动设备中摄像头和显示屏的标准接口：
+<br>
+- <span class="green">MIPI DSI</span>（Display Serial Interface）：从SoC到显示屏的串行接口，支持命令模式和视频模式
+<br>
+- <span class="green">MIPI CSI-2</span>（Camera Serial Interface 2）：从摄像头到SoC的串行接口，支持RAW、YUV和压缩格式
+<br>
+
+| 特性 | MIPI DSI | MIPI CSI-2 |
+|------|----------|------------|
+| 方向 | SoC → 显示屏 | 摄像头 → SoC |
+| 物理层 | D-PHY v1.2/C-PHY | D-PHY v1.2/C-PHY |
+| 最大速率 | 4.5Gbps/lane | 4.5Gbps/lane |
+| 典型lane数 | 2-4 | 2-4 |
+| 低功耗模式 | 支持 | 支持 |
+| 传输类型 | 命令+视频流 | 图像数据包 |
 
 ---
 
-## <strong>小结与练习</strong>
+## <strong>为什么MIPI dominates移动多媒体</strong>
 
-| 要点 | 说明 |
+MIPI Alliance的接口标准在移动设备中占据统治地位，原因有三：
+<br>
+- <strong>引脚效率</strong>：4lane MIPI DSI即可驱动2K显示屏，而传统RGB并行接口需要24+根线
+<br>
+- <strong>功耗优化</strong>：MIPI D-PHY支持低功耗模式（LP Mode），静态功耗仅为高速模式的1/100
+<br>
+- <strong>生态锁定</strong>：全球主流SoC（高通、联发科、三星）、显示屏和摄像头模组都支持MIPI
+<br>
+
+<span class="blue">关键认知：MIPI的成功不是技术最优，而是"移动场景最优"——在引脚受限、功耗敏感、空间紧凑的移动设备中，MIPI的串行+低功耗设计是工程最优解。
+</span><br>
+
+---
+
+## <strong>小结</strong>
+
+| 要点 | 内容 |
 |------|------|
-| 核心概念 | 音视频专用总线 的协议分层与选型原则 |
-| 关键技能 | 根据场景选择合适总线、读懂时序图 |
-| 常见误区 | 忽视电气特性、混淆主从模式 |
+| 音频总线 | I2S（立体声）、PCM（语音）、TDM（多通道）、PDM（麦克风） |
+| 视频总线 | MIPI DSI（显示）、MIPI CSI-2（摄像头） |
+| 选型核心 | 通道数 vs 位深 vs 布线复杂度 |
+| MIPI优势 | 引脚少、功耗低、移动生态庞大 |
+| 音频计算 | 带宽 = 采样率 × 位深 × 通道数 |
+| 视频计算 | 带宽 = 分辨率 × 刷新率 × 色深 × 压缩比 |
 
-**练习**
+## <strong>练习</strong>
 
-1. 比较 音视频专用总线 中两种总线的速率、距离和适用场景差异。
-2. 如何在嵌入式系统中同时管理多条 音视频专用总线？
-3. 分析 音视频专用总线 中某条总线的历史演进与未来趋势。
+1. 计算一个1920×1080@60fps的显示屏通过MIPI DSI 4lane传输所需的带宽。假设色深为24bit，MIPI DSI使用D-PHY v1.2（1.5Gbps/lane），是否满足需求？
+2. 设计一个8通道会议系统的音频接口方案。比较TDM和I2S两种方案在布线复杂度和时钟同步方面的差异。
+3. 为什么PDM麦克风（1bit过采样）可以通过简单的低通滤波器重建高保真音频？从Σ-Δ调制原理角度解释。
+
+| 题目 | 考查点 | 难度 |
+|------|--------|------|
+| 1 | MIPI DSI带宽计算 | Intermediate |
+| 2 | TDM vs I2S多通道设计 | Intermediate |
+| 3 | PDM/Σ-Δ调制原理 | Expert |
 
 ---
 
-## 学习路径
+## <strong>学习路径</strong>
 
-- **小白**：从 `01-*` 基础认知开始，理解每条总线的核心用途。
-- **高手**：深入 `02-03*` 原理解析，掌握时序与协议细节。
-- **专家**：研究 `04-*` 实战案例与 `05-*` 历史演进，参与社区贡献。
+- <span class="badge-i">[Intermediate]</span> 从I2S的BCLK/WS/SD时序入手，理解音频采样率和位深对带宽的影响。
+<br>
+- <span class="badge-e">[Expert]</span> 深入研究MIPI D-PHY的HS/LP模式切换、CSI-2的虚拟通道和DSI的命令模式协议。
+<br>
+- <span class="purple">扩展阅读：I2S Specification from Philips Semiconductor、MIPI DSI Specification v2.0、MIPI CSI-2 Specification v3.0、MIPI D-PHY Specification v2.5。
+</span><br>

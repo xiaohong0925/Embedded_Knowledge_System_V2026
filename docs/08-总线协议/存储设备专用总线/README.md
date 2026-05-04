@@ -1,75 +1,115 @@
 # 存储设备专用总线
 
-<span class="badge-b">[Beginner]</span>
+<span class="badge-i">[Intermediate]</span> <span class="badge-e">[Expert]</span>
 
-<span class="red">存储设备专用总线</span> 是嵌入式Linux系统中 嵌入式存储器互联 的重要组成部分。
-
----
-
-## <strong>模块概览</strong>
-
-<span class="green">存储设备专用总线</span> 涵盖以下总线类型：
-
-- <span class="green">eMMC</span> — 嵌入式MMC，NAND闪存标准<br>
-- <span class="green">UFS</span> — 通用闪存存储，eMMC继任者<br>
-- <span class="green">QPI</span> — Intel处理器互联<br>
-- <span class="green">OPI</span> — 片上外设互联
+<span class="red">存储设备专用总线</span>是连接嵌入式系统与持久化存储介质的核心通道。
+<br>
+从eMMC的并行NAND接口到UFS的串行M-PHY，从QPI的处理器间互联到OPI的片外内存扩展，存储总线决定了系统的启动速度、应用加载时间和数据吞吐能力。
+<br>
+理解存储总线的协议层次、时序约束、性能优化和可靠性设计，是构建高性能嵌入式存储方案的基础。
+<br>
 
 ---
 
-## <strong>BIEM 学习路径</strong>
+## <strong>本类别总线总览</strong>
 
-| 级别 | 目标 | 推荐文件 |
-|------|------|----------|
-| <span class="badge-b">B</span> | 建立直觉，看懂总线在干什么 | `01-*` 基础认知文件 |
-| <span class="badge-i">I</span> | 理解实现机制，能跟读时序/协议 | `02-03*` 原理解析文件 |
-| <span class="badge-e">E</span> | 掌握设计权衡，能调试排错 | `04-*` 实战与故障排查 |
-| <span class="badge-m">M</span> | 洞察演进趋势，参与标准制定 | `05-*` 历史演进与前沿 |
-
----
-
-## <strong>总线选型速查表</strong>
-
-| 总线 | 速率 | 距离 | 拓扑 | 适用场景 |
-|------|------|------|------|----------|
-| eMMC | 400M-2GB/s | 板上 | 点对点 | 手机、平板、IoT设备 |
-| UFS | 11.6G-46.4Gbps | 板上 | 点对点 | 高端手机、汽车存储 |
-| QPI | 6.4-9.6GT/s | <0.2m | 点对点 | Intel服务器处理器互联 |
-| OPI | 可变 | 片上 | 点对点 | SoC内部外设互联 |
+| 总线 | 类型 | 最大速率 | 接口引脚 | 典型容量 | 应用场景 |
+|------|------|----------|----------|----------|----------|
+| eMMC | 并行NAND | HS400 400MB/s | 11（8数据+3控制） | 8GB-256GB | 手机、平板、车载信息娱乐 |
+| UFS | 串行M-PHY | UFS 4.0 4GB/s | 6（2差分数据+2差分时钟+复位+供电） | 128GB-1TB | 旗舰手机、高端车载 |
+| QPI | 处理器互联 | 9.6GT/s | 84（20lane×4+控制） | — | 服务器CPU互联 |
+| OPI | 片外内存 | 与DDR4可比 | 与DDR4可比 | — | 嵌入式SoC片外DRAM |
 
 ---
 
-## <strong>认知流导航</strong>
+## <strong>存储总线演进路线</strong>
 
 ```mermaid
 graph LR
-    A[基础认知] --> B[原理解析]
-    B --> C[技术教学]
-    C --> D[软硬件实战]
-    D --> E[历史演进]
-    E --> F[小结与练习]
+    A["NAND Raw Interface<br/>早期直接控制"] --> B["eMMC 4.3<br/>标准化NAND管理"]
+    B --> C["eMMC 5.1 HS400<br/>400MB/s并行"]
+    C --> D["UFS 2.1<br/>串行M-PHY<br/>1.2GB/s"]
+    D --> E["UFS 3.1<br/>2.9GB/s"]
+    E --> F["UFS 4.0<br/>4GB/s<br/>M-PHY v5.0"]
+    
+    style F fill:#f96,stroke:#333
 ```
 
+### <strong>eMMC到UFS的代际对比</strong>
+
+| 特性 | eMMC 5.1 | UFS 3.1 | UFS 4.0 |
+|------|----------|---------|---------|
+| 接口类型 | 并行8位 | 串行2lane | 串行2lane |
+| 物理层 | HS400 | M-PHY v3.1 | M-PHY v5.0 |
+| 协议层 | — | UniPro v1.8 | UniPro v2.0 |
+| 顺序读 | 400MB/s | 2,100MB/s | 4,200MB/s |
+| 顺序写 | 200MB/s | 1,200MB/s | 2,800MB/s |
+| 随机读IOPS | 15K | 100K | 280K |
+| 全双工 | 否（半双工） | 是 | 是 |
+| 功耗 | 较高 | 中 | 低（M-PHY低功耗模式） |
+| 成本 | 低 | 中 | 高 |
+
+<span class="blue">关键认知：eMMC到UFS的演进本质是"并行到串行"的范式转移——串行接口虽然 lane 数少，但可以通过提高频率和全双工操作获得更高带宽，同时降低引脚数和PCB布线难度。
+</span><br>
+
 ---
 
-## <strong>小结与练习</strong>
+## <strong>QPI与OPI：处理器级存储互联</strong>
 
-| 要点 | 说明 |
+### <strong>QPI（QuickPath Interconnect）</strong>
+
+<span class="green">QPI</span>是Intel处理器间的高速点对点互联总线，用于多路服务器中的CPU互联和内存一致性维护。
+<br>
+QPI的每个链路包含20个差分对（20lane），每个方向10lane，支持全双工传输。
+<br>
+在嵌入式领域，QPI主要出现在高端x86嵌入式平台（如Xeon D系列），用于多处理器配置。
+
+### <strong>OPI（On-Package Interconnect）</strong>
+
+<span class="green">OPI</span>是Intel用于SoC的片外内存接口，本质上是精简版的DDR接口，用于连接LPDDR4/5内存颗粒。
+<br>
+在嵌入式x86平台（如Atom、Core i低功耗系列）中，OPI是SoC与片外DRAM的唯一通道。
+<br>
+
+| 总线 | 应用领域 | 嵌入式相关性 | 现状 |
+|------|----------|-------------|------|
+| QPI | 服务器多CPU互联 | 低（仅高端x86） | 被UPI替代 |
+| OPI | SoC片外DRAM | 中（x86嵌入式） | 被DDR5/LPDDR5接口替代 |
+| eMMC | 移动/嵌入式存储 | 极高 | 主流 |
+| UFS | 旗舰移动存储 | 高 | 快速增长 |
+
+---
+
+## <strong>小结</strong>
+
+| 要点 | 内容 |
 |------|------|
-| 核心概念 | 存储设备专用总线 的协议分层与选型原则 |
-| 关键技能 | 根据场景选择合适总线、读懂时序图 |
-| 常见误区 | 忽视电气特性、混淆主从模式 |
+| 存储总线演进 | Raw NAND → eMMC → UFS |
+| eMMC优势 | 成本低、生态成熟、引脚少 |
+| UFS优势 | 全双工、高速率、低功耗 |
+| QPI定位 | 服务器CPU互联，嵌入式场景有限 |
+| OPI定位 | x86 SoC片外DRAM接口 |
+| 选型核心 | 容量需求 vs 性能需求 vs 成本预算 |
 
-**练习**
+## <strong>练习</strong>
 
-1. 比较 存储设备专用总线 中两种总线的速率、距离和适用场景差异。
-2. 如何在嵌入式系统中同时管理多条 存储设备专用总线？
-3. 分析 存储设备专用总线 中某条总线的历史演进与未来趋势。
+1. 为什么UFS的全双工特性在移动场景中比eMMC的半双工更有价值？从应用启动（读取代码）和拍照（同时写入）两个场景分析。
+2. 在汽车电子中，为什么eMMC比UFS更常见？从温度范围、供应链稳定性和成本三个维度分析。
+3. 比较QPI和PCIe在"处理器互联"场景中的差异。为什么Intel选择QPI而非PCIe作为CPU间互联总线？
+
+| 题目 | 考查点 | 难度 |
+|------|--------|------|
+| 1 | UFS全双工优势分析 | Intermediate |
+| 2 | 车载存储选型因素 | Intermediate |
+| 3 | QPI vs PCIe架构差异 | Expert |
 
 ---
 
-## 学习路径
+## <strong>学习路径</strong>
 
-- **小白**：从 `01-*` 基础认知开始，理解每条总线的核心用途。
-- **高手**：深入 `02-03*` 原理解析，掌握时序与协议细节。
-- **专家**：研究 `04-*` 实战案例与 `05-*` 历史演进，参与社区贡献。
+- <span class="badge-i">[Intermediate]</span> 从eMMC的HS400时序入手，理解命令/响应协议和EXT_CSD寄存器配置。
+<br>
+- <span class="badge-e">[Expert]</span> 深入研究UFS的UniPro协议栈、M-PHY物理层和SCSI命令集，理解全双工数据流。
+<br>
+- <span class="purple">扩展阅读：JEDEC eMMC Standard v5.1、JEDEC UFS Standard v4.0、MIPI M-PHY Specification v5.0、MIPI UniPro Specification v2.0。
+</span><br>

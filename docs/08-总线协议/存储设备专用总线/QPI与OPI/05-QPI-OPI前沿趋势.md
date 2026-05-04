@@ -1,85 +1,43 @@
-# QPI-OPI前沿趋势
+# QPI与OPI前沿趋势
 
 <span class="badge-e">[Expert]</span>
 
-<span class="red">QPI-OPI前沿趋势</span> 是嵌入式系统中QPI-OPI总线的核心主题。
+<span class="red">QPI（QuickPath Interconnect）</span> 和 <span class="red">OPI（On-Package Interface）</span> 是 Intel 处理器互连技术，在嵌入式服务器领域有重要影响。
 
 ---
 
-## <strong>基础认知</strong>
+## <strong>前沿趋势</strong>
 
-<span class="green">QPI-OPI</span> 总线的基础概念与在嵌入式系统中的定位。
+### <strong>Intel UPI 替代 QPI</strong>
 
-### <strong>核心定义</strong>
+| 特性 | QPI | UPI |
+|------|-----|-----|
+| 速率 | 6.4-9.6GT/s | 10.4-16GT/s |
+| 用途 | 处理器互联 | 处理器+加速器互联 |
+| 缓存一致性 | 支持 | 支持（CXL.cache扩展） |
 
-- 前沿趋势 的基本定义
-- 与其他总线技术的对比
+<span class="blue">UPI 本质上是 QPI 的演进版本</span>，支持更多节点和更高带宽。
 
----
+### <strong>ARM CHI 与 CCIX 竞争</strong>
 
-## <strong>原理解析</strong>
+| 技术 | 主导者 | 特点 |
+|------|--------|------|
+| CHI | ARM | AMBA 5 Coherent Hub Interface，ARM生态标准 |
+| CCIX | AMD/Qualcomm | 缓存一致性加速器互联 |
+| CXL | Intel | 内存扩展+缓存一致性，正在统一市场 |
 
-<span class="blue">深入理解 前沿趋势 的工作原理与设计思想。</span>
+<span class="red">CXL 正在整合 CCIX 和 CHI 的市场</span>，成为事实上的统一标准。
 
-### <strong>工作机制</strong>
+### <strong>CXL对QPI/OPI的影响</strong>
 
-- 前沿趋势 的内部工作原理
-- 关键设计决策分析
-
----
-
-## <strong>技术教学</strong>
-
-<span class="green">操作与理论相结合。</span>
-
-### <strong>基础操作</strong>
-
-```bash
-# 示例命令（需根据具体总线补充）
-```
-
----
-
-## <strong>软硬件实战</strong>
-
-<span class="blue">嵌入式专属实战场景。</span>
-
-### <strong>场景一</strong>
-
-- 实战描述
-
-### <strong>场景二</strong>
-
-- 实战描述
-
----
-
-## <strong>历史演进</strong>
-
-<span class="red">QPI-OPI 总线的发展历程与未来趋势。</span>
-
-- 早期版本 → 当前主流 → 未来方向
+<span class="blue">CXL.mem 替代了传统处理器直连内存的模型</span>，允许通过外部内存池动态分配。
 
 ---
 
 ## 小结与练习
 
-| 要点 | 说明 |
-|------|------|
-| 核心概念 | 前沿趋势 |
-| 关键技能 | 掌握 QPI-OPI 的 前沿趋势 |
-| 常见误区 | 需补充 |
-
 **练习**
 
-1. 简述 前沿趋势 的核心原理。
-2. 在嵌入式系统中如何配置 前沿趋势？
-3. 分析 前沿趋势 与其他方案的优缺点。
-
----
-
-## 学习路径
-
-- **小白**：先理解基础认知部分，动手跑通示例。
-- **高手**：深入原理解析，掌握故障排查技巧。
-- **专家**：研究前沿趋势，参与社区贡献。
+1. 比较 UPI 和 CXL.cache 在缓存一致性实现上的异同。
+2. 分析为什么 ARM 服务器生态选择 CHI 而非直接采用 CXL。
+3. 预测 2028 年处理器互联标准的格局。

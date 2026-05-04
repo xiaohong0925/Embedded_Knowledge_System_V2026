@@ -1,75 +1,98 @@
 # 车载与网络互联总线
 
-<span class="badge-b">[Beginner]</span>
+<span class="badge-i">[Intermediate]</span> <span class="badge-e">[Expert]</span>
 
-<span class="red">车载与网络互联总线</span> 是嵌入式Linux系统中 汽车电子与实时网络 的重要组成部分。
-
----
-
-## <strong>模块概览</strong>
-
-<span class="green">车载与网络互联总线</span> 涵盖以下总线类型：
-
-- <span class="green">CAN</span> — 控制器局域网，汽车标准<br>
-- <span class="green">LIN</span> — 低成本车身网络<br>
-- <span class="green">TSN</span> — 时间敏感网络，确定性以太网<br>
-- <span class="green">车载以太网</span> — 100BASE-T1/1000BASE-T1
+<span class="red">车载与网络互联总线</span>是汽车电子电气架构的核心通信基础设施。
+<br>
+从CAN的差分仲裁到LIN的低成本车身控制，从TSN的时间敏感调度到车载以太网的多媒体传输，这些协议定义了现代车辆的"神经系统"。
+<br>
+理解车载总线的分层架构、功能安全等级和演进方向，是设计下一代智能汽车电子架构的前提。
+<br>
 
 ---
 
-## <strong>BIEM 学习路径</strong>
+## <strong>本类别总线总览</strong>
 
-| 级别 | 目标 | 推荐文件 |
-|------|------|----------|
-| <span class="badge-b">B</span> | 建立直觉，看懂总线在干什么 | `01-*` 基础认知文件 |
-| <span class="badge-i">I</span> | 理解实现机制，能跟读时序/协议 | `02-03*` 原理解析文件 |
-| <span class="badge-e">E</span> | 掌握设计权衡，能调试排错 | `04-*` 实战与故障排查 |
-| <span class="badge-m">M</span> | 洞察演进趋势，参与标准制定 | `05-*` 历史演进与前沿 |
-
----
-
-## <strong>总线选型速查表</strong>
-
-| 总线 | 速率 | 距离 | 拓扑 | 适用场景 |
-|------|------|------|------|----------|
-| CAN | 125k-1M | <40m | 多主总线 | 动力总成、底盘控制 |
-| LIN | 20k | <40m | 单主多从 | 车门、座椅、灯光 |
-| TSN | 100M-10G | <100m | 交换 | 工业控制、AVB、ADAS |
-| 车载以太网 | 100M-1G | <15m | 点对点/交换 | ADAS、信息娱乐、OTA |
+| 总线 | 最大速率 | 拓扑 | 确定性 | 安全等级 | 典型应用 |
+|------|----------|------|--------|----------|----------|
+| CAN | 1Mbps | 多主总线 | 高 | ASIL-B/D | 动力、底盘、安全 |
+| CAN-FD | 5Mbps | 多主总线 | 高 | ASIL-B/D | 新一代车辆网络 |
+| LIN | 20kbps | 单主总线 | 中 | QM | 车门、座椅、灯光 |
+| 车载以太网 | 1Gbps | 星型/Switch | 中 | ASIL-B | ADAS、信息娱乐 |
+| TSN | 1Gbps+ | 星型/Switch | 极高 | ASIL-D | 确定性骨干网络 |
 
 ---
 
-## <strong>认知流导航</strong>
+## <strong>汽车电子架构演进</strong>
 
 ```mermaid
 graph LR
-    A[基础认知] --> B[原理解析]
-    B --> C[技术教学]
-    C --> D[软硬件实战]
-    D --> E[历史演进]
-    E --> F[小结与练习]
+    A["分布式架构<br/>1980s-2000s<br/>70-100个ECU<br/>CAN/LIN网状"] --> B["域集中架构<br/>2010s-2020s<br/>5-10个域控制器<br/>CAN FD + 以太网"]
+    B --> C["区域架构<br/>2020s+<br/>3-5个区域控制器<br/>TSN骨干 + LIN边缘"]
+    C --> D["中央计算架构<br/>2030s<br/>1-2个中央计算平台<br/>PCIe/TSN骨干"]
+    
+    style D fill:#f96,stroke:#333
 ```
 
+### <strong>各代架构的总线组合</strong>
+
+| 架构代际 | 骨干网络 | 域内网络 | 边缘网络 | ECU数量 |
+|----------|----------|----------|----------|---------|
+| 分布式 | CAN 500kbps | CAN 125kbps | LIN 19.2kbps | 70-100 |
+| 域集中 | 车载以太网 100Mbps | CAN FD 2Mbps | LIN 19.2kbps | 30-50 |
+| 区域架构 | TSN 1Gbps | CAN FD 5Mbps | LIN 19.2kbps | 10-20 |
+| 中央计算 | TSN 10Gbps+ | PCIe/TSN | LIN 19.2kbps | 5-10 |
+
+<span class="blue">关键认知：汽车电子架构的演进趋势是"集中化"——计算能力从分布式ECU向中央计算平台集中，总线速率从Mbps向Gbps演进，但LIN作为低成本边缘总线始终保留。
+</span><br>
+
 ---
 
-## <strong>小结与练习</strong>
+## <strong>总线选型与功能安全</strong>
 
-| 要点 | 说明 |
+### <strong>为什么不同安全等级需要不同总线</strong>
+
+| ASIL等级 | 适用总线 | 典型应用 | 安全机制 |
+|----------|----------|----------|----------|
+| ASIL-D | CAN/CAN-FD + TSN | 制动、转向、安全气囊 | CRC、ACK、冗余通道 |
+| ASIL-B | CAN-FD + 车载以太网 | 车身控制、灯光 | CRC、错误计数器 |
+| QM | LIN + 车载以太网 | 信息娱乐、氛围灯 | 简单校验或无 |
+
+<span class="blue">关键认知：LIN的QM等级不是"不安全"，而是"安全要求低"——车门、座椅的故障不会导致生命危险，因此不需要复杂的错误检测和冗余机制。这种分级设计大幅降低了成本。
+</span><br>
+
+---
+
+## <strong>小结</strong>
+
+| 要点 | 内容 |
 |------|------|
-| 核心概念 | 车载与网络互联总线 的协议分层与选型原则 |
-| 关键技能 | 根据场景选择合适总线、读懂时序图 |
-| 常见误区 | 忽视电气特性、混淆主从模式 |
+| 核心总线 | CAN、CAN-FD、LIN、车载以太网、TSN |
+| 架构演进 | 分布式 → 域集中 → 区域架构 → 中央计算 |
+| 骨干趋势 | CAN 1Mbps → CAN FD 5Mbps → TSN 10Gbps |
+| 边缘保留 | LIN 19.2kbps始终存在（成本优势） |
+| 安全匹配 | ASIL-D用CAN+TSN，QM用LIN |
+| 选型核心 | 安全等级 vs 带宽需求 vs 成本约束 |
 
-**练习**
+## <strong>练习</strong>
 
-1. 比较 车载与网络互联总线 中两种总线的速率、距离和适用场景差异。
-2. 如何在嵌入式系统中同时管理多条 车载与网络互联总线？
-3. 分析 车载与网络互联总线 中某条总线的历史演进与未来趋势。
+1. 在一个区域架构中，区域控制器需要同时连接TSN骨干（1Gbps）、CAN FD子网（5Mbps）和LIN子网（19.2kbps）。设计网关的帧转发策略，说明如何保障TSN时间敏感流的确定性。
+2. 为什么CAN-FD没有完全取代CAN？从硬件兼容性、供应链和改造成本三个角度分析。
+3. 比较车载以太网的100BASE-T1和传统以太网100BASE-TX在物理层上的差异。为什么汽车需要专用的物理层标准？
+
+| 题目 | 考查点 | 难度 |
+|------|--------|------|
+| 1 | 多协议网关设计，TSN流量整形 | Expert |
+| 2 | CAN vs CAN-FD生态分析 | Intermediate |
+| 3 | 车载以太网物理层特殊性 | Intermediate |
 
 ---
 
-## 学习路径
+## <strong>学习路径</strong>
 
-- **小白**：从 `01-*` 基础认知开始，理解每条总线的核心用途。
-- **高手**：深入 `02-03*` 原理解析，掌握时序与协议细节。
-- **专家**：研究 `04-*` 实战案例与 `05-*` 历史演进，参与社区贡献。
+- <span class="badge-i">[Intermediate]</span> 从CAN帧格式和位仲裁入手，理解CAN-FD的灵活数据速率和错误处理机制。
+<br>
+- <span class="badge-e">[Expert]</span> 深入研究TSN的Qbv门控调度、gPTP时间同步和车载网络的分层安全架构。
+<br>
+- <span class="purple">扩展阅读：ISO 11898（CAN标准）、ISO 17987（LIN标准）、IEEE 802.1Qbv/AS（TSN）、OPEN Alliance TC1（车载以太网）、AUTOSAR通信栈规范。
+</span><br>
