@@ -169,6 +169,8 @@ BlueField DPU本身就是嵌入式SR-IOV的典型实现：一个ARM SoC集成了
 例如，智驾域（ASIL-D）和座舱域（QM）共享同一PCIe SSD时，通过SR-IOV将SSD划分为两个VF，分别直通给各自的VM，避免座舱娱乐应用的崩溃影响驾驶数据记录。
 <br>
 但车载环境的温度范围（-40°C至125°C）和振动对PCIe连接器的可靠性提出挑战，SR-IOV的热插拔和错误恢复机制必须满足ISO 26262的故障处理要求。
+<br>
+在车载以太网网关（Automotive Gateway）中，SR-IOV可将单个物理CAN-FD或以太网MAC控制器虚拟化为多个VF，分别服务于信息娱乐域、ADAS域和动力系统域，实现不同ASIL等级软件栈的硬件级网络隔离。
 
 ---
 
