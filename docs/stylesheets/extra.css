@@ -496,3 +496,88 @@ span.badge-m {
     text-align: center;
     white-space: nowrap;
 }
+
+/* ========================================
+   首页折叠模块样式（与表格模块行统一）
+   ======================================== */
+
+/* details 容器去边框，像表格行 */
+.md-typeset details {
+    border: none;
+    box-shadow: none;
+    margin: 0.4rem 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* summary 样式：模仿原表格模块行（浅蓝底+左边条） */
+.md-typeset details > summary {
+    font-weight: 700;
+    font-size: 0.95rem;
+    background-color: #e3f2fd;
+    border-left: 3px solid var(--md-primary-fg-color);
+    padding: 0.6rem 1rem;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* summary 里的标签垂直居中 */
+.md-typeset details > summary .tag,
+.md-typeset details > summary .badge-b,
+.md-typeset details > summary .badge-i,
+.md-typeset details > summary .badge-e,
+.md-typeset details > summary .badge-m {
+    vertical-align: middle;
+    margin-left: 0.3rem;
+    flex-shrink: 0;
+}
+
+/* summary 右侧元信息（最后更新等） */
+.md-typeset details > summary .meta {
+    font-weight: 400;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* 展开后的内容区：内嵌表格去阴影，避免嵌套感太重 */
+.md-typeset details > table {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: none;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    font-size: 0.85rem;
+}
+
+.md-typeset details > table th {
+    background-color: rgba(0,0,0,0.03);
+    padding: 0.5rem 0.75rem;
+}
+
+.md-typeset details > table td {
+    padding: 0.4rem 0.75rem;
+}
+
+/* 暗色模式 */
+[data-md-color-scheme="slate"] .md-typeset details > summary {
+    background-color: #1e3a5f;
+    border-left-color: var(--md-primary-fg-color);
+}
+
+[data-md-color-scheme="slate"] .md-typeset details > table {
+    border-color: #333;
+}
+
+[data-md-color-scheme="slate"] .md-typeset details > table th {
+    background-color: rgba(255,255,255,0.04);
+}
+
+/* 去掉 details 默认的蓝色左边框（Material 默认） */
+.md-typeset details {
+    border-left: none;
+}
