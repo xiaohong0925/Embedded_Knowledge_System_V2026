@@ -128,7 +128,7 @@
     | 9.7 工业现场总线（EtherCAT/CANopen/Modbus等）[E→M] | [工业总线](09-总线协议/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
     | 9.8 调试与跟踪专用总线（JTAG/SWD/CoreSight等）[I→E] | [调试总线](09-总线协议/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
 
-??? details "10. 专用技术与前沿趋势 <span class="badge-e">E</span><span class="badge-m">M</span> ★ <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：2026年5月6日</span>"
+??? details "10. 专用技术与前沿趋势 <span class="badge-e">E</span><span class="badge-m">M</span> ★ <span class="tag tag-15">建设中</span> <span class="meta">最后更新：2026年5月7日</span>"
     | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
     |------|---------|---------|------------|------------|
     | 10.0 模块概览与学习路径 [E] | [前沿趋势](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-done">建设完成</span> | 否 | 2026年5月7日 |
