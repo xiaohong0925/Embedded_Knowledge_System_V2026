@@ -131,13 +131,13 @@
 ??? details "10. 专用技术与前沿趋势 <span class="badge-e">E</span><span class="badge-m">M</span> ★ <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：2026年5月6日</span>"
     | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
     |------|---------|---------|------------|------------|
-    | 10.0 模块概览与学习路径 [E] | [前沿趋势](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
+    | 10.0 模块概览与学习路径 [E] | [前沿趋势](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-done">建设完成</span> | 否 | 2026年5月7日 |
     | 10.1 边缘 AI 推理 [E→M] | [边缘AI](10-专用技术与前沿趋势/01-边缘AI推理/README.md) | <span class="tag tag-l3">L3阶段</span> | 是 | 2026年5月4日 |
-    | 10.2 异构多核通信 [E→M] | [异构多核](10-专用技术与前沿趋势/02-异构多核通信/README.md) | <span class="tag tag-wip">L3阶段</span> | 否 | 2026年5月6日 |
+    | 10.2 异构多核通信 [E→M] | [异构多核](10-专用技术与前沿趋势/02-异构多核通信/README.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月6日 |
     | 10.3 虚拟化混合关键系统 [E→M] | [虚拟化](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
     | 10.4 RISC-V 生态与开放 ISA 实践 [E→M] | [RISC-V](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
+    | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
+    | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](10-专用技术与前沿趋势/模块概览与学习路径.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
 
 ---
 

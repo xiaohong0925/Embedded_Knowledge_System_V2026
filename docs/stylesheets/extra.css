@@ -581,3 +581,8 @@ span.badge-m {
 .md-typeset details {
     border-left: none;
 }
+
+/* 右侧目录只显示二级标题，隐藏三级及以下 */
+.md-sidebar--secondary .md-nav[data-md-component="toc"] > .md-nav__list > .md-nav__item > .md-nav__list {
+    display: none;
+}
