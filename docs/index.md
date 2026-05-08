@@ -9,18 +9,17 @@
 
 ---
 
-??? details "1. 硬件层 <span class="badge-b">B</span><span class="badge-e">E</span> <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：/</span>"
-    | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
-    |------|---------|---------|------------|------------|
-    | 1.0 原理图阅读与板级硬件基础 [B] | [硬件层](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.1 CPU 架构（ARMv7/v8, RISC-V, MIPS）[B→E] | [CPU架构](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.2 时钟、电源与复位管理（PMIC, DVFS, PVT, 看门狗）[B→E] | [时钟电源](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.3 DDR/LPDDR 运行内存硬件 [B→E] | [内存](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.4 存储设备（NOR/NAND, eMMC/UFS, SD, 选型规范）[B→E] | [存储设备](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.5 总线与接口（低速外设、高速总线、工业总线）[B→E] | [总线协议](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.6 硬件加速器（GPU, NPU, Crypto, DSP）[B→E] | [硬件加速器](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.7 硬件调试 & 安全模块（JTAG/SWD, CoreSight, TrustZone, TPM/HSM）[B→E] | [硬件调试](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 1.8 传感器/执行器接口（IIO硬件规范、工业总线硬件层）[B→E] | [传感器接口](01-硬件层/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
+??? details "1. 系统启动与运行 <span class="badge-b">B</span><span class="badge-e">E</span> <span class="tag tag-done">完成</span> <span class="meta">最后更新：2026年5月8日</span>"
+    | 章节 | 核心问题 | 关键产出 | 状态 |
+    |:---|:---|:---|:---:|
+    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> |
+    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> |
+    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-done">完成</span> |
+    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-done">完成</span> |
+    | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-done">完成</span> |
+    | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | LED亮灭，理解驱动概念 | <span class="tag tag-done">完成</span> |
+    
+    **[→ 进入第一部目录](01-系统启动与运行/README.md)**
 
 ??? details "2. Bootloader与启动 <span class="badge-b">B</span><span class="badge-e">E</span> <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：/</span>"
     | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
