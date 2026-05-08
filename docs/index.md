@@ -9,28 +9,25 @@
 
 ---
 
-??? details "1. 系统启动与运行 <span class="badge-b">B</span><span class="badge-e">E</span> <span class="tag tag-done">完成</span> <span class="meta">最后更新：2026年5月8日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 |
-    |:---|:---|:---|:---:|
-    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> |
-    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> |
-    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-done">完成</span> |
-    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-done">完成</span> |
-    | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-done">完成</span> |
-    | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | LED亮灭，理解驱动概念 | <span class="tag tag-done">完成</span> |
-    
+??? details "第一部 系统启动与运行  <span class="tag tag-done">完成</span> <span class="meta">最后更新：2026年5月8日</span>"
+    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
+    |:---|:---|:--- |:--- |:---|:---:|
+    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> | 否 | / |
+    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> | 否 | / |
+    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-done">完成</span> | 否 | / |
+    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-done">完成</span> | 否 | / |
+    | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-done">完成</span> | 否 | / |
+    | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | LED亮灭，理解驱动概念 | <span class="tag tag-done">完成</span> | 否 | / |
+
     **[→ 进入第一部目录](01-系统启动与运行/README.md)**
 
-??? details "2. Bootloader与启动 <span class="badge-b">B</span><span class="badge-e">E</span> <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：/</span>"
-    | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
-    |------|---------|---------|------------|------------|
-    | 2.0 模块概览与学习路径 [B] | [Bootloader](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.1 U-Boot 移植与定制 [B→E] | [U-Boot](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.2 安全启动链 [I→E] | [安全启动](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.3 启动排错与快速启动 [I→E] | [快速启动](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.4 网络引导 [I] | [网络引导](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.5 A/B 分区 & 回滚策略 [I→E] | [A/B回滚](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 2.6 U-Boot 命令与脚本开发 [B→I] | [U-Boot脚本](02-Bootloader与启动/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
+??? details "第二部 核心机制深度解析  <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：2026年5月8日</span>"
+    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
+    |:---|:---|:--- |:--- |:---|:---:|
+    | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | 理解BootROM→SPL→U-Boot→Kernel→init的完整链路 | <span class="tag tag-wip">建设中</span> | 否 | / |
+    | 第8章 进程与调度 | 内核如何管理任务与分配CPU？ | 掌握task_struct、CFS、RT调度、cgroups与EAS | <span class="tag tag-wip">建设中</span> | 否 | / |
+
+    **[→ 进入第二部目录](02-核心机制深度解析/README.md)**
 
 ??? details "3. Linux内核深度解析 <span class="badge-i">I</span><span class="badge-m">M</span> <span class="tag tag-wip">建设中</span> <span class="meta">最后更新：2026年5月4日</span>"
     | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
