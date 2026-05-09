@@ -248,84 +248,64 @@ span.badge-m {
 }
 
 /* ========================================
-   三栏布局自适应优化
-   左侧目录靠最左、右侧目录靠最右、中间正文拉满
+   三栏布局：只在桌面宽屏生效，移动端完全交给 Material 默认
    ======================================== */
 
-/* 1. 整体容器宽度：释放限制，让三栏可以撑满 */
-.md-grid {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+/* 0. 图片全局自适应（防止任何情况下图片撑破容器） */
+.md-typeset img,
+.md-typeset svg {
+    max-width: 100%;
+    height: auto;
 }
 
-/* 2. 主内容区 */
-.md-main__inner {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 8px;
+/* 1. 大屏桌面端（≥1220px）：三栏拉满 */
+@media screen and (min-width: 1220px) {
+    .md-grid {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .md-main__inner {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 8px;
+    }
+
+    .md-sidebar--primary {
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 280px !important;
+        left: 0 !important;
+        margin-left: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .md-sidebar--secondary {
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 260px !important;
+        right: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .md-content {
+        flex: 1 1 auto !important;
+        max-width: none !important;
+        margin-left: 12px !important;
+        margin-right: 12px !important;
+    }
+
+    .md-content__inner {
+        max-width: none !important;
+    }
 }
 
-/* 3. 左侧导航栏 */
-.md-sidebar--primary {
-    width: 260px !important;
-    min-width: 260px !important;
-    max-width: 280px !important;
-    left: 0 !important;
-    margin-left: 0 !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-}
-
-/* 4. 右侧目录栏：加宽 */
-.md-sidebar--secondary {
-    width: 240px !important;
-    min-width: 240px !important;
-    max-width: 260px !important;
-    right: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-}
-
-/* TOC 目录优化 */
-.md-nav--secondary .md-nav__list {
-    font-size: 0.75rem;
-    line-height: 1.5;
-}
-
-.md-nav--secondary .md-nav__item {
-    padding-left: 0;
-}
-
-.md-nav--secondary .md-nav__link {
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* TOC 层级缩进 */
-.md-nav--secondary .md-nav__item .md-nav__list {
-    padding-left: 0.75rem;
-}
-
-/* 5. 中间正文区域：拉满 */
-.md-content {
-    flex: 1 1 auto !important;
-    max-width: none !important;
-    margin-left: 12px !important;
-    margin-right: 12px !important;
-}
-
-/* 正文内部最大宽度放开 */
-.md-content__inner {
-    max-width: none !important;
-}
-
-/* 6. 大屏时进一步加宽左右栏 */
+/* 2. 超大屏进一步加宽 */
 @media screen and (min-width: 1600px) {
     .md-sidebar--primary {
         width: 300px !important;
@@ -337,32 +317,52 @@ span.badge-m {
     }
 }
 
-/* 7. 中等屏幕适配 */
-@media screen and (min-width: 1200px) and (max-width: 1599px) {
-    .md-sidebar--primary {
-        width: 250px !important;
-        min-width: 250px !important;
+/* 3. 平板/小桌面（960px-1219px）：只放宽正文，不动侧边栏 */
+@media screen and (min-width: 960px) and (max-width: 1219px) {
+    .md-grid {
+        max-width: 100% !important;
     }
-    .md-sidebar--secondary {
-        width: 220px !important;
-        min-width: 220px !important;
+    .md-main__inner {
+        max-width: 100% !important;
+    }
+    .md-content,
+    .md-content__inner {
+        max-width: none !important;
     }
 }
 
-/* 8. 小屏时保留 Material 默认折叠行为 */
-@media screen and (max-width: 960px) {
-    .md-grid {
+/* 4. 移动端（<960px）：彻底重置，全部交给 Material 默认行为 */
+@media screen and (max-width: 959px) {
+    .md-grid,
+    .md-main__inner,
+    .md-content,
+    .md-content__inner {
         max-width: none !important;
-        margin: 0 auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         padding-left: 16px !important;
         padding-right: 16px !important;
     }
-    .md-main__inner {
-        padding: 0;
-    }
-    .md-content {
+
+    /* 清除所有对侧边栏的强制覆盖，让主题自己决定显示/隐藏 */
+    .md-sidebar--primary,
+    .md-sidebar--secondary {
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+        left: auto !important;
+        right: auto !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    /* 移动端表格横向滚动，避免撑破屏幕 */
+    .md-typeset table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
     }
 }
 
