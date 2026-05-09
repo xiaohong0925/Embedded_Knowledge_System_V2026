@@ -331,7 +331,7 @@ span.badge-m {
     }
 }
 
-/* 4. 移动端（<960px）：彻底重置，全部交给 Material 默认行为 */
+/* 4. 移动端（<960px）：只重置正文和右侧目录，左侧导航抽屉完全交给 Material 默认 */
 @media screen and (max-width: 959px) {
     .md-grid,
     .md-main__inner,
@@ -344,8 +344,7 @@ span.badge-m {
         padding-right: 16px !important;
     }
 
-    /* 清除所有对侧边栏的强制覆盖，让主题自己决定显示/隐藏 */
-    .md-sidebar--primary,
+    /* 只重置右侧目录栏，移动端本来就不需要它 */
     .md-sidebar--secondary {
         width: auto !important;
         min-width: auto !important;
