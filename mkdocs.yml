@@ -66,6 +66,11 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
+  - pymdownx.betterem
+  - pymdownx.caret          # 支持 ^上标^ 写法
+  - pymdownx.mark
+  - pymdownx.tilde
+  - footnotes               # 核心：启用脚注
   - footnotes
   - def_list
   - abbr
