@@ -9,11 +9,11 @@
 
 ---
 
-??? details "第一部 系统启动与运行  <span class="tag tag-wip">建设中</span> <span class="meta">最后更新： 2026年5月12日</span>"
+??? details "第一部 系统启动与运行  <span class="tag tag-wip">建设中</span> <span class="meta">最后更新： 2026年5月14日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
-    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> | 是 | 2026年5月12日 |
-    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-wip">计划中</span> | 否 | / |
+    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> | 是 | 2026年5月13日 |
+    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> | 是 | 2026年5月14日 |
     | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-wip">计划中</span> | 否 | / |
     | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-wip">计划中</span> | 否 | / |
     | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-wip">计划中</span> | 否 | / |
