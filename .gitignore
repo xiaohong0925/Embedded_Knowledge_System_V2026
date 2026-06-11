@@ -24,3 +24,5 @@ Thumbs.db
 
 # Backup of old markdown files
 docs/07-应用层开发/_backup/
+
+tmp_skills/*
