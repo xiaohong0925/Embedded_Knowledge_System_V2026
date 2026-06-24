@@ -13,8 +13,8 @@
     |:---|:---|:--- |:--- |:---|:---:|
     | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> | 是 | 2026年5月13日 |
     | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> | 是 | 2026年5月14日 |
-    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag1 tag-done">完成</span> | 是 | 2026年5月22日 |
-    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag1 tag-done">完成</span> | 是 | 2026年6月15日 |
+    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-done">完成</span> | 是 | 2026年5月22日 |
+    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-done">完成</span> | 是 | 2026年6月15日 |
     | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
     | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | LED亮灭，理解驱动概念 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
 
