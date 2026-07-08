@@ -1,0 +1,135 @@
+name: EKL Quality Gate
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: L1 结构检查（阻断级）
+  # ─────────────────────────────────────────────
+  lint-l1:
+    name: L1 Structural Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install markdownlint-cli2
+
+      - name: Run EKL Audit (L1 only)
+        run: |
+          python tools/audit.py --json reports/ci-l1.json --markdown reports/ci-l1.md
+
+      - name: Check L1 threshold
+        run: |
+          L1_COUNT=$(python -c "import json; d=json.load(open('reports/ci-l1.json')); print(d['total_l1'])")
+          echo "L1 issues found: $L1_COUNT"
+          if [ "$L1_COUNT" -gt 0 ]; then
+            echo "❌ L1 structural errors found. Blocking merge."
+            cat reports/ci-l1.md | head -100
+            exit 1
+          fi
+          echo "✅ No L1 errors."
+
+      - name: Upload L1 report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: l1-report
+          path: reports/ci-l1.md
+
+  # ─────────────────────────────────────────────
+  # Job 2: MkDocs 构建验证
+  # ─────────────────────────────────────────────
+  build:
+    name: MkDocs Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MkDocs
+        run: |
+          pip install mkdocs-material
+
+      - name: Build site
+        run: |
+          mkdocs build --strict
+        # --strict: 任何 warning 视为 error
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-build
+          path: site/
+
+  # ─────────────────────────────────────────────
+  # Job 3: 链接检查
+  # ─────────────────────────────────────────────
+  link-check:
+    name: Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Lychee link checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --config .lychee.toml docs/
+          fail: true
+        # 死链/错链直接阻断
+
+  # ─────────────────────────────────────────────
+  # Job 4: L2 提醒级检查（不阻断，仅记录）
+  # ─────────────────────────────────────────────
+  lint-l2:
+    name: L2 Warning Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run EKL Audit (full)
+        run: |
+          python tools/audit.py --json reports/ci-full.json --markdown reports/ci-full.md
+
+      - name: Post L2 summary
+        run: |
+          L2_COUNT=$(python -c "import json; d=json.load(open('reports/ci-full.json')); print(d['total_l2'])")
+          echo "⚠️ L2 warnings: $L2_COUNT (non-blocking)"
+          # 未来可接 GitHub API 发 PR comment
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-quality-report
+          path: reports/ci-full.md
