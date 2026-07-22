@@ -1,52 +1,109 @@
 # 第15章：电源管理
 
 > 所属：第 二 部 核心机制深度解析
+>
 > BIEM：[I→E] | 核心问题：电去哪了？
 
 ## 核心问题
 
 电去哪了？
 
-## 本章简介
+## 为什么需要这一章
 
-独特设计：从”系统级功耗分析”视角出发，展示电源管理各子系统的协同工作关系。有经验工程师知道cpufreq可以降低CPU频率来省电、知道echo mem > /sys/power/state可以suspend、知道设备的Runtime PM可以自动休眠。
+有经验的工程师知道 cpufreq 可以降频省电、知道 `echo mem > /sys/power/state` 可以 suspend、知道设备的 Runtime PM 可以自动休眠。但面对"suspend-to-RAM 后仍然耗电 200mA""Runtime PM 引用计数泄漏导致设备无法唤醒""不同 governor 的选择依据""thermal 如何在过热时自动降频"这些问题时，缺乏源码级的理解就只能靠猜。
 
-但面对”suspend-to-RAM后仍然耗电200mA”“Runtime PM的get/put引用计数泄漏导致设备无法唤醒”“不同cpufreq governor的选择依据”“thermal框架如何在温度过高时自动降频”这些实际问题时，需要源码级的理解。
+本章要建立的核心认知是：电源管理不是"一个开关"——**它是 Runtime PM、cpuidle、cpufreq、thermal、EAS 多个子系统的协同工作**。真正有效的功耗优化，需要理解这些子系统如何交互、如何形成完整的功耗-性能-温度闭环控制。
 
-本章的核心认知是：电源管理不是”一个开关”——它是多个子系统（Runtime PM、cpuidle、cpufreq、thermal、EAS）的协同工作。真正有效的功耗优化需要理解这些子系统如何交互、如何形成完整的功耗-性能-温度闭环控制。...
+## 本章主线：一度电的消耗路径与对应的省电手段
 
+排查功耗问题的第一步永远是"电花在了哪里"。本章沿一度电的消耗路径组织：CPU 干活时的电（cpufreq/DVFS）、CPU 闲着时的电（cpuidle）、外设闲着时的电（Runtime PM）、整机闲着时的电（Suspend）；最后由 Thermal 构成温度闭环、由 15.6 把五个子系统拧成一套协同机制：
 
-## 子节清单
+```
+一度电的消耗路径与对应的省电手段
+ │
+ ├─ CPU 在干活 → 15.2 cpufreq / 15.3 DVFS：降频降压，功耗 ∝ 电压²×频率
+ │               15.3.2 EAS：把任务放到更省电的核上跑
+ │
+ ├─ CPU 没事干 → 15.2 cpuidle：进 C-state，睡多深取决于下一次唤醒预测
+ │
+ ├─ 外设闲着   → 15.1 Runtime PM / genpd：引用计数归零即休眠
+ │
+ ├─ 整机闲着   → 15.5 Suspend：suspend-to-RAM，醒来靠唤醒源
+ │
+ ▼ 闭环
+15.4 Thermal：温度超阈值反向限制 cpufreq ──> 15.6 五子系统协同 ──> 15.7 实战
+```
 
-- [从待机耗电案例引入](15.1.1_从待机耗电案例引入.md)
-- [Runtime PM的引用计数模型](15.1.2_Runtime_PM的引用计数模型.md)
-- [genpd与power domain](15.1.3_genpd与power_domain.md)
-- [cpuidle与C-state](15.2.1_cpuidle与C-state.md)
-- [cpufreq与P-state](15.2.2_cpufreq与P-state.md)
-- [schedutil深入与CPU调优](15.2.3_schedutil深入与CPU调优.md)
-- [cpuidle与cpufreq的协同](15.2.4_cpuidle与cpufreq的协同.md)
-- [DVFS功耗模型](15.3.1_DVFS功耗模型.md)
-- [EAS能效调度](15.3.2_EAS能效调度.md)
-- [Thermal框架架构](15.4.1_Thermal框架架构.md)
-- [Thermal Governor与设备树配置](15.4.2_Thermal_Governor与设备树配置.md)
-- [Thermal与cpufreq的协同](15.4.3_Thermal与cpufreq的协同.md)
-- [suspend-to-RAM与suspend-to-disk](15.5.1_suspend-to-RAM与suspend-to-disk.md)
-- [唤醒源与Wakelock](15.5.2_唤醒源与Wakelock.md)
-- [五子系统协同与闭环控制](15.6.1_五子系统协同与闭环控制.md)
-- [综合实战功耗排查](15.7.1_综合实战功耗排查.md)
+| 小节 | 路径这一站要回答的问题 | 为什么必须深入这些细节 | 对应的典型故障/场景 |
+|------|----------------------|----------------------|--------------------|
+| **15.1 Runtime PM** | 外设不用的时候，电怎么断？ | 引用计数模型（get/put 必须严格配对）、autosuspend 延迟、genpd 的电源域层次——这三样决定了设备能不能睡着、能不能醒得来 | 待机功耗高、设备休眠后无法唤醒 |
+| **15.2 cpuidle/cpufreq** | CPU 闲着时睡多深、干活时跑多快？ | C-state 越深越省电但唤醒越慢，P-state 降频同时降压才有大收益；schedutil 直接从调度器取负载信息，是当前推荐的 governor | 进不了深 C-state、CPU 一直停在高频 |
+| **15.3 DVFS/EAS** | 为什么降频 25% 可能省 40% 的电？调度器怎么帮省电？ | 功耗 ∝ 电压²×频率是 DVFS 的物理基础；Energy Model 为每个性能域提供功耗表，EAS 据此把任务放到能效最优的核 | big.LITTLE 上任务被放到错误的核 |
+| **15.4 Thermal** | 温度超限时，系统怎么自救？ | Thermal Zone 的 trip 点分级（passive/active/critical）、Cooling Device（cpufreq 限频）、Governor（step_wise/power_allocator）三者构成温度控制回路 | 性能莫名下降、过热关机 |
+| **15.5 Suspend** | 整机休眠时，电断到什么程度、靠什么醒来？ | suspend-to-RAM 保持内存自刷新、其余断电；唤醒源与 Wakelock 决定谁能把系统叫醒、谁能让系统别睡 | suspend 后仍耗电 200mA、无法被唤醒 |
+| **15.6 五子系统协同** | 各子系统之间怎么不打架？ | Runtime PM、cpuidle、cpufreq、thermal、EAS 共享同一批硬件状态，闭环控制保证省电不伤性能、限频不失控 | 单项优化做了但整体功耗没降 |
+| **15.7 综合实战** | 一台真实设备的功耗怎么从 50mA 降到 3mA？ | 把"找耗电大户→定位子系统→配置→验证"的迭代流程完整走一遍 | 穿戴/电池设备的待机功耗优化 |
+
+> 💡 读每一节之前，先回到这张表确认"这一站管的是哪一份电"。功耗优化是"找耗电大户"的迭代过程，主线表就是你的排查顺序。
+
+## 阅读路线
+
+本章沿功耗消耗路径组织，建议顺序阅读。每节内部遵循统一结构：问题场景 → 机制深入 → 设计考量 → 排错指南。
+
+| 顺序 | 小节 | 回答的问题 | BIEM |
+|------|------|-----------|------|
+| 15.1.1 | [从待机耗电案例引入](15.1.1_从待机耗电案例引入.md) | 待机耗电的电花在了哪里 | [I] |
+| 15.1.2 | [Runtime PM的引用计数模型](15.1.2_Runtime_PM的引用计数模型.md) | 设备何时睡、何时醒 | [I] |
+| 15.1.3 | [genpd与power_domain](15.1.3_genpd与power_domain.md) | 成组设备的电源怎么统一管 | [E] |
+| 15.2.1 | [cpuidle与C-state](15.2.1_cpuidle与C-state.md) | CPU 空闲时能睡多深 | [E] |
+| 15.2.2 | [cpufreq与P-state](15.2.2_cpufreq与P-state.md) | 干活时的频率由谁定 | [E] |
+| 15.2.3 | [schedutil深入与CPU调优](15.2.3_schedutil深入与CPU调优.md) | 推荐 governor 的工作原理 | [E] |
+| 15.2.4 | [cpuidle与cpufreq的协同](15.2.4_cpuidle与cpufreq的协同.md) | 睡与跑两个决策如何配合 | [E] |
+| 15.3.1 | [DVFS功耗模型](15.3.1_DVFS功耗模型.md) | 降频降压为什么超线性省电 | [E] |
+| 15.3.2 | [EAS能效调度](15.3.2_EAS能效调度.md) | 调度器如何按能耗选核 | [E] |
+| 15.4.1 | [Thermal框架架构](15.4.1_Thermal框架架构.md) | 温度管理的三个角色 | [E] |
+| 15.4.2 | [Thermal Governor与设备树配置](15.4.2_Thermal_Governor与设备树配置.md) | trip 点与 governor 怎么配 | [E] |
+| 15.4.3 | [Thermal与cpufreq的协同](15.4.3_Thermal与cpufreq的协同.md) | 限频作为降温手段如何生效 | [E] |
+| 15.5.1 | [suspend-to-RAM与suspend-to-disk](15.5.1_suspend-to-RAM与suspend-to-disk.md) | 两种整机休眠的取舍 | [E] |
+| 15.5.2 | [唤醒源与Wakelock](15.5.2_唤醒源与Wakelock.md) | 谁能唤醒、谁能阻止休眠 | [E] |
+| 15.6.1 | [五子系统协同与闭环控制](15.6.1_五子系统协同与闭环控制.md) | 功耗-性能-温度闭环怎么形成 | [E] |
+| 15.7.1 | [综合实战功耗排查](15.7.1_综合实战功耗排查.md) | 找耗电大户的完整迭代流程 | [E] |
+
+读完全章后，用末尾的 [知识图谱与查漏补缺](15.99_知识图谱与查漏补缺.md) 自检。
+
+## 排错索引：从症状反查小节
+
+本章的排错价值可以直接按症状反查：
+
+```
+待机功耗远高于目标          → 15.1.1 / 15.7.1，用 powertop 找耗电大户
+suspend-to-RAM 后仍耗电大   → 15.5.1 / 15.1.3，查 power domain 与各设备 runtime_status
+设备休眠后无法访问          → 15.1.2，查 get/put 引用计数是否在错误路径漏 put
+CPU 一直停在高频            → 15.2.2 / 15.2.3，查 governor 与频率统计
+进不了深 C-state            → 15.2.1 / 15.2.4，查唤醒源与 timer 干扰
+性能莫名下降                → 15.4.1 / 15.4.3，查是否触发 thermal 限频
+suspend 后唤不醒            → 15.5.2，查唤醒源配置与 Wakelock 持有情况
+```
 
 ## 学习目标
 
-掌握Runtime PM、cpuidle/cpufreq、Thermal、Suspend
+能把一台设备的整机功耗拆解到 CPU、外设、整机休眠三个维度，定位耗电大户，并配置 Runtime PM/cpuidle/cpufreq/thermal 形成可验证的功耗-性能-温度闭环。
 
 ## 前置知识
 
-- 第14章
+- 第 8 章（进程与调度）：EAS 与调度器负载信息
+- 第 10 章（中断与时间）：tickless 与唤醒事件
+- 第 11 章（设备模型）：dev_pm_ops 与电源域的注册
+- 第 12 章（文件系统）：suspend 时的脏页同步
 
-## 后续衔接
+## 与前后章的关联
 
-第16章内核版本设计
+- **第 8 章 进程与调度**：EAS 与 Energy Model 的协同使调度器做出功耗感知决策，schedutil 直接从调度器取负载
+- **第 9 章 内存管理**：suspend-to-RAM 需要内存控制器进入自刷新状态保持数据
+- **第 10 章 中断与时间**：tickless 与 cpuidle 深度耦合——无 tick 中断允许 CPU 进入更深的 C-state
+- **第 11 章 设备模型**：Runtime PM 依赖 dev_pm_ops（在 probe 中注册），电源域层次与设备模型层次对应
+- **第 12 章 文件系统**：系统 suspend 时需要同步 dirty pages，页缓存回写机制是可靠 suspend 的前提
 
 ---
 
-*本章为第 二 部第 15 章，共 16 个 .md 文件。建议按顺序阅读，遇到困难时可先阅读末尾的 "知识图谱与查漏补缺" 小节。*
+*本章为第 二 部第 15 章，共 16 个小节文件。建议按功耗消耗路径顺序阅读，读完全章后用"知识图谱与查漏补缺"自检。*
