@@ -96,6 +96,8 @@ suspend 后唤不醒            → 15.5.2，查唤醒源配置与 Wakelock 持�
 - 第 11 章（设备模型）：dev_pm_ops 与电源域的注册
 - 第 12 章（文件系统）：suspend 时的脏页同步
 
+> 💡 本章的实验依赖 `cpufreq` 的 sysfs 接口（`/sys/devices/system/cpu/cpu0/cpufreq/` 下的 `scaling_governor`、`scaling_cur_freq` 等文件）。如不熟悉，先在开发板上 `ls` 并 `cat` 一遍这个目录，建立直观认识。
+
 ## 与前后章的关联
 
 - **第 8 章 进程与调度**：EAS 与 Energy Model 的协同使调度器做出功耗感知决策，schedutil 直接从调度器取负载

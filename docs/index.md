@@ -24,14 +24,14 @@
 
     **[→ 进入第一部目录](01-系统启动与运行/README.md)**
 
-??? details "第二部 核心机制深度解析  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年7月24日</span>"
+??? details "第二部 核心机制深度解析  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月6日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
     | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | 理解BootROM→SPL→U-Boot→Kernel→init的完整链路 | <span class="tag tag-done">完成</span> | 风格重写+验收 | 2026年7月23日 |
     | 第8章 进程与调度 | 内核如何管理任务与分配CPU？ | 掌握task_struct、CFS、RT调度、cgroups与EAS | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
     | 第9章 内存管理 | 内核如何管理物理与虚拟内存？ | 掌握伙伴系统、SLUB、CMA、OOM | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
     | 第10章 中断与时间 | 硬件中断如何变成软件事件？ | 掌握GIC、顶半部/底半部、hrtimer、tickless | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
-    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform | <span class="tag tag-done">完成</span> | 风格重写+验收 | 2026年7月24日 |
+    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform；结构重组（新增11.0导学+11.1其然台阶8篇、机制文重编号11.2-11.6）+10张流程图补齐 | <span class="tag tag-done">完成</span> | 待人工复检 | 2026年8月6日 |
     | 第12章 文件系统 | 内核如何管理和访问文件？ | 掌握VFS、页缓存、ext4/f2fs/UBIFS、MTD/UBI、掉电保护 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
     | 第13章 并发与同步 | 内核如何处理多核并发？ | 掌握spinlock/mutex、RCU、原子操作、lockdep/KASAN | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
     | 第14章 网络子系统 | 内核如何处理网络数据包？ | 掌握sk_buff、Netfilter、NAPI、XDP/eBPF | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
@@ -66,7 +66,7 @@
 
     **[→ 进入第四部目录](04-系统思维与全链路实战/README.md)**
 
-??? details "第五部 前沿技术与行业视野 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年7月2日</span>"
+??? details "第五部 前沿技术与行业视野 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月6日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
     | 第31章 嵌入式Linux行业全景 | 行业格局是怎样的？ | 全面了解行业格局与发展方向 | <span class="tag tag-done">完成</span> | 否 | 2026年5月9日 |
@@ -76,7 +76,7 @@
     | 第35章 虚拟化与混合关键性 | 怎么在一颗芯片上跑多个系统？ | 理解Jailhouse/Xen、混合关键性设计 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
     | 第36章 安全与合规：从可选到强制 | 嵌入式安全合规怎么落地？ | 掌握安全启动、加密、合规认证流程 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
     | 第37章 长期维护：10年的承诺 | 怎么维护一个系统10年？ | 理解LTS策略、CVE管理、技术债控制 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
-    | 第38章 技术路线规划：你的下一步 | 嵌入式工程师的职业下一步是什么？ | 制定个人技术路线和职业发展规划 | <span class="tag tag-done">完成</span> | 否 | 2026年7月9日 |
+    | 第38章 技术路线规划：你的下一步 | 嵌入式工程师的职业下一步是什么？ | 制定个人技术路线和职业发展规划；脚注体系修复（85条定义转编号列表、212处引用转[N]标记） | <span class="tag tag-done">完成</span> | 待人工复检 | 2026年8月6日 |
     | 第39章 具身智能与机器人革命（附加） | 嵌入式Linux在机器人领域如何应用？ | 理解市场格局、技术栈、入局路径 | <span class="tag tag-done">完成</span> | 重写拆分 | 2026年6月18日 |
     | 第40章 赛博义体与碳硅融合（附加） | BCI/外骨骼与嵌入式Linux的关系？ | 理解人类增强技术边界与入局布局 | <span class="tag tag-done">完成</span> | 重写拆分 | 2026年6月18日 |
 

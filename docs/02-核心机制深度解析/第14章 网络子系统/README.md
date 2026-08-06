@@ -100,6 +100,8 @@ Recv-Q 堆积                → 14.3.3，应用读得慢或 socket 缓冲区太
 - 第 10 章（中断与时间）：中断、softirq 与 NAPI 的执行上下文
 - 第 13 章（并发与同步）：SKB 引用计数与多核路径的并发机制
 
+> 💡 本章的实验与排错大量使用 `ip`、`ping`、`tcpdump` 等通用命令（如 `ip addr`、`tcpdump -i eth0`），本书不展开它们的基本用法。如不熟练，先执行 `man ip` 和 `man tcpdump`。
+
 ## 与前后章的关联
 
 - **第 9 章 内存管理**：SKB 的分配使用 kmem_cache，大流量下 SKB 分配可能成为瓶颈

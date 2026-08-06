@@ -97,6 +97,8 @@ kmalloc 失败但 MemFree 充足  → 9.3，cat /proc/slabinfo 查缓存占用�
 
 - 第 8 章 进程与调度：task_struct 的 mm 指针与进程地址空间概念
 
+> 💡 本章的实验与排错大量使用 `free`、`vmstat` 等通用命令（如 `free -h`、`vmstat 1`），本书不展开它们的基本用法。如不熟练，先执行 `man vmstat`，或参考《Linux命令行与Shell脚本编程大全》相关章节。
+
 ## 与前后章的关联
 
 - **第 7 章 启动链深度解析**：start_kernel 中 mm_init() 建立页表与 Buddy 系统，是本章所有分配的运行时基础
