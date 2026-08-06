@@ -38,6 +38,8 @@ plugins:
         - zh
         - en
       separator: '[\s\u200b\-]'
+hooks:
+  - tools/url_slug_hook.py
 extra_css:
   - stylesheets/extra.css
 extra_javascript:

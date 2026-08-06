@@ -255,6 +255,30 @@ embedded-linux-v2026/
 
 ---
 
+## 本地站点构建（MkDocs）
+
+依赖（托管 Python 环境）：
+
+```text
+pip install mkdocs mkdocs-material pyyaml pypinyin
+```
+
+常用命令：
+
+```text
+python -m mkdocs serve   # 本地预览
+python -m mkdocs build   # 构建到 site/，WARNING 应保持为 0
+```
+
+站点层自定义（2026-08-06 起生效，改 mkdocs.yml 前先读这段）：
+
+| 配置 | 位置 | 作用 |
+|:---|:---|:---|
+| `toc.slugify: slugify_unicode` | `mkdocs.yml` | 中文标题锚点保留汉字；默认 slugify 会把汉字剥光只剩数字，导致中文锚点链接全部失效 |
+| `hooks: tools/url_slug_hook.py` | `mkdocs.yml` + `tools/url_slug_hook.py` | 构建期把中文输出路径转写为短英文 URL，如 `/02-core-mechanism/ch11-device-model/11.1.1-platform-soc/`；规则：目录名查 `DIR_MAP` 英文对照表 → 小节文件保留编号前缀和英文单词 → 拼音兜底。**新增中文目录时必须在 `DIR_MAP` 补一行**，否则会落入拼音兜底 |
+
+---
+
 ## 许可证
 
 本作品采用 [Creative Commons Attribution-ShareAlike 4.0 International](./LICENSE) 许可协议。
