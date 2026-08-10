@@ -87,6 +87,7 @@
 - **10.7.1 修复**：MAX_SAMPLES=1000000 与输出 samples=2857142 自相矛盾（随模块删除消解）；总结表"I2C 延后到 tasklet"错误（tasklet 不能睡眠）改为 workqueue/线程化中断。
 - **新增源码缓存**：`kernel_time_timer.c`、`kernel_time_timer_list.c`、`kernel_time_tick-sched.h`、`kernel_time_tick-internal.h`、`include_trace_events_timer.h` 等（清单见第 3 节缓存目录）。
 - index.md 第 10 章行已更新为「AI复检完成 / 2026年8月10日」。
+- **后续拆分（2026-08-10 应用户要求）**：10.7.1 拆为两节——`10.7.1_实战GPIO中断延迟排查.md`（带练A + 新增修复前后中断路径对比 mermaid 图）和 `10.7.2_实战音频爆音排查与排错方法论.md`（带练B + 方法论/工具速查/症状对照）。旧文件 `10.7.1_综合实战从GPIO延迟到音频爆音.md` 已删除，mkdocs.yml、README.md、10.6.4 下一步指针均已同步。全章现 31 节。
 
 ## 11. 当前任务
 
