@@ -359,7 +359,7 @@ def gen_1199_seq():
     msgs = [
         (1.4, 4.0, 10.25, "insmod → platform_driver_register()", BLUE),
         (4.0, 4.0, 10.0, "driver_register() → bus_add_driver() → driver_attach()", None),
-        (4.0, 6.4, 9.4, "bus_match() → platform_match()", BLUE),
+        (4.0, 6.4, 9.4, "driver_match_device() → platform_match()", BLUE),
         (6.4, 6.4, 8.8, "of_driver_match_device()", None),
         (6.4, 8.8, 8.2, "really_probe() → drv->probe()", "#2e7d32"),
         (8.8, 11.1, 7.4, "sysfs_create_group()：/sys 属性就绪", "#2e7d32"),
