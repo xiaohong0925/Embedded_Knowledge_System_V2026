@@ -142,7 +142,7 @@ static irqreturn_t ts502_irq_thread(int irq, void *dev_id)
 ```bash
 cat /proc/interrupts | grep -E "CPU|ts502"
             CPU0       CPU1       CPU2       CPU3
-  89:      14237          0          0          0  gpio1     5  Edge      ts502
+  89:      14237          0          0          0  gpio1     5  Level     ts502
 ```
 
 三个读法：

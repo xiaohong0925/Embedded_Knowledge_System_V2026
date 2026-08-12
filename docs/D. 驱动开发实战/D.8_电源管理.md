@@ -90,7 +90,7 @@ static struct i2c_driver ts502_driver = {
 | 复位值即预期 | 驱动从没改过，或复位值恰好正确 | 不管 | CHIP_ID（只读） |
 | 硬件状态机内容 | FIFO 数据、内部计数器 | **显式决策**，不许默认 | FIFO 内容：丢弃（陈旧数据无意义） |
 
-最容易漏的是第三类——FIFO 里存着休眠前的采样，resume 后业务读到的"新数据"其实是几小时前的。TS502 的决策是 resume 时软清 FIFO（写 CTRL 复位 FIFO 位），并在驱动注释里写明这个决策。**决策内容可以讨论，不做决策不可以**。
+最容易漏的是第三类——FIFO 里存着休眠前的采样，resume 后业务读到的"新数据"其实是几小时前的。TS502 的决策是 resume 时清空驱动侧 kfifo（芯片没有 FIFO 复位位，残留的少量陈旧样本随首次批量读自然流出），并在驱动注释里写明这个决策。**决策内容可以讨论，不做决策不可以**。
 
 ---
 
@@ -119,7 +119,7 @@ cat /sys/class/wakeup/wakeup*/name          # ts502 对应的 wakeup 设备应�
 echo mem > /sys/power/state                 # 进休眠（串口另一个终端执行）
 # …… 触发 TS502 报警，系统被唤醒 ……
 cat /sys/power/wakeup_count                 # 计数 +1：唤醒事件被记录
-pm_debug_messages? 不必，dmesg | grep -i wake
+dmesg | grep -i wake                        # 唤醒源排查：确认是 ts502 叫醒的
 ```
 
 `wakeup_count` 是验收标准：休眠前记一个数，INT 唤醒后再看，**计数没涨说明唤醒路径没走通**——查 device_init_wakeup 是否调用、enable_irq_wake 是否对称、INT_MASK 在 suspend 后是否还允许报警中断输出。

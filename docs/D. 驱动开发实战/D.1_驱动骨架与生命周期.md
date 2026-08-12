@@ -31,7 +31,7 @@ Part 1 的九篇共用一颗虚构芯片：**TS502**，I2C 接口的复合传感
 | 0x05 | CTRL | RW | 0x00 | bit0 采样使能，bit1 FIFO 使能，bit[3:2] 采样率（0:1Hz 1:10Hz 2:100Hz） |
 | 0x06 | INT_STATUS | RW1C | 0x00 | bit0 数据就绪，bit1 FIFO 半满，写 1 清零 |
 | 0x07 | INT_MASK | RW | 0x00 | 对应位置 1 允许该中断从 INT 引脚输出 |
-| 0x08 | PWM_ALARM | RW | 0x00 | 报警阈值（°C），超温时 ALARM 脚输出 PWM |
+| 0x08 | PWM_ALARM | RW | 0x00 | 报警阈值（°C，有效范围 0~125），超温时 ALARM 脚输出 PWM |
 
 **上电时序**：VDD 稳定后 5ms 内不得发起 I2C 通信（probe 里需要 `msleep(5)` 或依赖电源时序）。
 
@@ -289,7 +289,7 @@ devm 版把释放义务转移给内核：probe 失败或 remove 之后，内核�
 
 产品驱动的结论是**全 devm**：goto 链每多一步就多一处写错的机会，而 devm 的代价只是放弃对释放顺序的精细控制——这个控制绝大多数驱动用不上。两种场景除外：一是需要自定义释放函数的资源，用 `devm_add_action_or_reset()` 挂上自己的清理函数；二是 enable 类状态切换（clk/regulator 的 enable），devm 不托管，仍需手动配对（11.3.3 已划清这条托管分界线）。
 
-> 💡 最危险的不是全 goto 或全 devm，是**混用**：同一资源 devm 申请、remove 里又手动释放一次，double free 当场 oops（D 扩展实践案例 4 就是这类事故）。团队规范里写死：一个驱动里资源要么全 devm，要么全手动，禁止按资源类型混搭。
+> 💡 最危险的不是全 goto 或全 devm，是**混用**：同一资源 devm 申请、remove 里又手动释放一次，double free 当场 oops——这是真实产品驱动里反复出现的事故类型。团队规范里写死：一个驱动里资源要么全 devm，要么全手动，禁止按资源类型混搭。
 
 ---
 

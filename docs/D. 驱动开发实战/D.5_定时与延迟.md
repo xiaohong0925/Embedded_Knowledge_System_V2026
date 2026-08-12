@@ -130,7 +130,7 @@ D.1 骨架里那句 `msleep(5)`（手册上电时序）就是这套规则的实�
 
 ## <span class="blue"> 销毁纪律：remove 里的顺序 [E]
 
-定时器与 workqueue 都是**异步回调**——remove 返回后回调还可能被触发，访问已释放的 `ts502_data` 就是 use-after-free（D 扩展实践案例 4 的事故原型）。销毁必须"sync"，且顺序固定：
+定时器与 workqueue 都是**异步回调**——remove 返回后回调还可能被触发，访问已释放的 `ts502_data` 就是 use-after-free（rmmod 后随机 oops 的经典根因）。销毁必须"sync"，且顺序固定：
 
 ```c
 static void ts502_remove(struct i2c_client *client)
