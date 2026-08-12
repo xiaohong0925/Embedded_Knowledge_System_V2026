@@ -32,7 +32,7 @@
     | 第9章 内存管理 | 内核如何管理物理与虚拟内存？ | 掌握伙伴系统、SLUB、CMA、OOM | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
     | 第10章 中断与时间 | 硬件中断如何变成软件事件？ | 掌握GIC、顶半部/底半部、hrtimer、tickless；AI复检（30节全量：虚构内核代码换v6.6真实实现、10.5.3时间轮改4.8后扁平数组、跨节重复收敛、PREEMPT_RT主线时间线更正） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月10日 |
     | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform；结构重组（新增11.0导学+11.1其然台阶8篇、机制文重编号11.2-11.6）+10张流程图补齐 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月10日 |
-    | 第12章 文件系统 | 内核如何管理和访问文件？ | 掌握VFS、页缓存、ext4/f2fs/UBIFS、MTD/UBI、掉电保护 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
+    | 第12章 文件系统 | 内核如何管理和访问文件？ | 掌握VFS、页缓存、ext4/f2fs/UBIFS、MTD/UBI、掉电保护；新增12.1.4字符设备与file_operations、12.3.4补overlayfs、12.3.5补iostat/blktrace落点 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月12日 |
     | 第13章 并发与同步 | 内核如何处理多核并发？ | 掌握spinlock/mutex、RCU、原子操作、lockdep/KASAN；AI复检（23节全量：虚构实现换v6.6真实源码核对、PI三处P0修正、13.7.1拆分为排查实战+RCU迁移实战两节、13.99去全局孤儿编号、4+1张待补图占位） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月11日 |
     | 第14章 网络子系统 | 内核如何处理网络数据包？ | 掌握sk_buff、Netfilter、NAPI、XDP/eBPF | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
     | 第15章 电源管理 | 嵌入式设备如何省电？ | 掌握Runtime PM、cpuidle/cpufreq、Thermal、Suspend | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |

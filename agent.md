@@ -1,7 +1,7 @@
 # agent.md — AI 复检工作手册
 
 > 用途：跨会话/上下文压缩后快速恢复工作状态。新会话开始 AI 复检任务前，先读本文件。
-> 最近更新：2026-08-10（第 11 章复检闭环，转入第 10 章）
+> 最近更新：2026-08-12（第 12 章复检进行中，新增第 3 节第 4 步「补图检查」与第 4 节镜像兜底）
 
 ---
 
@@ -28,16 +28,20 @@
    - 相邻小节是否重复讲同一结论/同一操作（措辞近似的重复最刺眼）；
    - 指针类表述是否指对位置（"下一节/上文/前文"是否真在那里）；
    - 「下一步」预告是否与下一节实际标题、内容一致。
-4. **风格检查**：对照 `plan.md` R1–R22 + 下方第 5 节补充约定。
-5. **修复**：用 Edit 精准修改，小修为主；重复内容按第 6 节收敛模式处理。
-6. **构建验证**：`python -m mkdocs build 2>&1 | grep -c WARNING` 必须为 **0**（grep 计数为 0 时退出码为 1，属正常）。
-7. **汇报**：逐节给"改/不改 + 原因"判定，列修改点表格；不夸大、不掩盖。
+4. **补图检查**（2026-08-12 用户要求新增）：评估该节是否需要图辅助理解，按需三选一：
+   - **ASCII 图**：层级/流程简单、纯文本能表达清楚的，直接在正文用代码块画（如调用链树、字段布局）；
+   - **mermaid 图**：有时序/状态/分支结构的，直接补 mermaid（flowchart/sequenceDiagram/stateDiagram-v2）；
+   - **生图占位**：需要精细视觉表达（硬件布局、缓存行结构、多版本共存这类空间关系）时，插入 HTML 注释占位块，含完整生图提示词（图名、风格、元素、布局、配色、比例），格式：`<!-- 【待补图】images/<节号>-<名称>.png（优先级：★必要/△可选）\n图名：…\n生图提示词：… -->`。用户人工复检时把提示词交给生图 AI 作图。占位块清单要进批次汇报和章存档。
+5. **风格检查**：对照 `plan.md` R1–R22 + 下方第 5 节补充约定。
+6. **修复**：用 Edit 精准修改，小修为主；重复内容按第 6 节收敛模式处理。
+7. **构建验证**：`python -m mkdocs build 2>&1 | grep -c WARNING` 必须为 **0**（grep 计数为 0 时退出码为 1，属正常）。
+8. **汇报**：逐节给"改/不改 + 原因"判定，列修改点表格；不夸大、不掩盖。
 
 ## 4. v6.6 源码核对基础设施
 
 - 本地缓存：`help-docs/kernel-src-v6.6/`，文件名为原路径 `/` 换 `_`（如 `drivers_base_dd.c`、`include_linux_of.h`）。
-- 缺失时下载：`curl --retry 3 https://raw.githubusercontent.com/torvalds/linux/v6.6/<路径> -o help-docs/kernel-src-v6.6/<路径换下划线>`；网络偶发超时，加重试即可。
-- 已缓存：`drivers/base/` 全套（dd.c、platform.c、core.c、bus.c 等）、`drivers/of/`（platform.c、base.c）、`include/linux/of.h`、`include/linux/platform_device.h`、`lib/kobject*.c`、`arch/arm64/boot/dts/rockchip/rk3568.dtsi`、`rk356x.dtsi`、`drivers/tty/serial/8250/8250_of.c`。
+- 缺失时下载：先 `curl https://raw.githubusercontent.com/torvalds/linux/v6.6/<路径>`；**GitHub 429 限流时改走 jsdelivr 镜像** `https://cdn.jsdelivr.net/gh/torvalds/linux@v6.6/<路径>`（2026-08-12 起生效）。限流时停等换源，不硬刷。
+- **行号引用但书**：镜像暂时取不到的文件，正文只引路径不标行号，批次汇报中明示待验项，镜像恢复后补验闭环。
 - **行号引用必须基于缓存文件实际查证**，写入正文时注明文件与行号。
 
 ## 5. 风格约定（plan.md 之外的补充，全书已确认）
@@ -101,11 +105,24 @@
 - **新增源码缓存**：`atomic_ll_sc.h`、`atomic_lse.h`、`asm/barrier.h`、`rwonce.h`、`rcupdate.h` 等（`help-docs/kernel-src-v6.6/`）。
 - README 页脚小节数 21→23；index.md 第 13 章行已更新为「AI复检完成 / 2026年8月11日」。
 
-## 12. 当前任务
+## 12. 第 12 章复检结论存档（2026-08-12 闭环）
 
-第 13 章复检已闭环（2026-08-11）。下一章候选：**第 12 章 文件系统**（13.99 前后章关联表已留指针）；或继续第二部剩余章节。等用户指定。
+- **范围**：全章 18 节复检（12.1×4 / 12.2×3 / 12.3×5 / 12.4×3 / 12.5×3 / 12.99×1）+ 新写 12.1.4，每批构建 0 WARNING，终验 0 WARNING，19 文件一致性 grep 全绿（所属章节/导读/本节覆盖/无知识点前缀/无考纲残留/无$提示符/下一步指针）。
+- **新写 12.1.4 字符设备与 file_operations**（用户指出全书盲区，大纲零覆盖）：设备号/cdev 三层 API/misc=major10 特化/chrdev_open 的 fops 替换（char_dev.c:373、def_chr_fops:452）/fops 方法表/ioctl 编码/poll（do_poll fs/select.c:885）/mmap。mkdocs.yml nav、README 已同步。
+- **重大事实修复**（均对 v6.6 验证）：12.1.1 struct file 联合字段更正（fs.h:992）、vfs_read 换 new_sync_read（read_write.c:450）；12.1.2 do_sys_open 链更正（do_sys_openat2 fs/open.c:1406）、删已移除的 s_op->read_inode；12.1.3 挂载链升级 fs_context 框架（super.c:1739 vfs_get_tree→get_tree_bdev:1537）；12.2.1 readpage→read_folio（fs.h:404）、pagecache_get_page 已删除换 __filemap_get_folio（filemap.c:1863）；12.2.2 wb_workfn 换真实实现（fs-writeback.c:2245）、write_cache_pages 换 folio_batch 版（page-writeback.c:2394）；12.2.3 vfs_fsync 更正为 f_op->fsync 带 start/end（sync.c:180）。
+- **12.3 批**：12.3.2 f2fs 原代码块"真实路径+伪代码函数体"全换真实链——`f2fs_gc(sbi, gc_control)`（gc.c:1797）、`__get_victim`（gc.c:1858）、`do_garbage_collect`（gc.c:1675）、`select_gc_type` FG_GREEDY/BG_CB（gc.c:216）、写路径 `__allocate_data_block`（data.c:1468）、Checkpoint `f2fs_write_checkpoint`（checkpoint.c:1620）；虚构的 select_victim_segment/fggc_threshold 等全部清除，调优参数换真实 sysfs（gc_urgent/gc_idle/gc_min_sleep_time）。12.3.3 UBIFS：`ubifs_write_inode`（super.c:296）、`ubifs_leb_change`（io.c:126，无不存在的 dtype 参数）换真实实现；"B+树"更正为游荡树+TNC；原子性承诺核实为真（kapi.c:559→eba.c:1197 ubi_eba_atomic_leb_change）。12.3.4 补 overlayfs（用户批准）：三层模型/copy-up/whiteout/OTA A-B 保留配置。12.3.5 补 iostat/blktrace I/O 模式分析段（充分性缺口落点，README 排错索引断链修复）。
+- **12.4 批**：12.4.1 mtd_read 返回值口径修正（-EUCLEAN/-EBADMSG，非"返回正数"，mtd.h:282）；12.4.2 三处 P0——struct ubi_volume 换真实结构（ubi.h:338，`ck vol_sem` 错字、usable_leb_size、eba_tbl 类型）、EC 头位置更正（PEB 数据区起始 64 字节 in-band，非 OOB；ubi-media.h:147 字段类型修正）、ubi_leb_change 虚构函数体换真实链（kapi.c:559→eba.c:1197→try_write_vid_and_data:944）；WL 阈值 CONFIG_MTD_UBI_WL_THRESHOLD=128、BEB_LIMIT 每 1024 块 20 个；12.4.3 UBI 合入主线年份 2008→2007（2.6.22）。
+- **12.5 批**：safe_write_file 三处重复收敛——12.2.3 为规范实现，12.5.1 改指针引用，12.5.2 保留 mkstemp 变体并注明出处；12.5.2 mermaid 时序错误修复（close 画在 fsync 前）；barrier=0 口径与 12.5.3 对齐；删"防盗门"生活化比喻。
+- **12.99 重写**（仿 13.99 模板）：去 1-60 全局编号，改"关联图+速查表+10 道自测题（???答案块）+前后章关联"格式；关联图内容对齐复检后口径（read_folio、fs_context 挂载链、new_sync_read、F2FS 六区域、游荡树、overlayfs、四层防御、六大陷阱与 12.5.3 一致）；跨章引用更正为 README 口径（第7/9/11/13/15章）。
+- **待补图占位**：第 12 章无新增生图占位（各节 mermaid/ASCII 图覆盖充分）。
+- **新增源码缓存**：`fs_f2fs_gc.c`、`fs_f2fs_data.c`、`fs_f2fs_checkpoint.c`、`fs_ubifs_io.c`、`fs_ubifs_super.c`、`drivers_mtd_ubi_kapi.c`、`drivers_mtd_ubi_eba.c`、`drivers_mtd_ubi_ubi.h`、`drivers_mtd_ubi_ubi-media.h`、`include_linux_mtd_ubi.h`、`include_linux_mtd_mtd.h`（`help-docs/kernel-src-v6.6/`）。
+- README 12.3.x 链接文本同步新标题；index.md 第 12 章行已更新为「AI复检完成 / 2026年8月12日」。
 
-## 13. 工作纪律
+## 13. 当前任务
+
+第 12 章复检已闭环（2026-08-12）。第二部已复检章：10（中断与时间）、11（设备模型）、12（文件系统）、13（并发与同步）。下一章候选：第 9 章内存管理或第 14 章网络子系统，等用户指定。
+
+## 14. 工作纪律
 
 - 一切生成物放工作区内；不改 `help-docs/` 下的原始 docx。
 - 先读后改；不确定的事实用源码验证，不猜测。
