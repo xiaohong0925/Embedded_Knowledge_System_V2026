@@ -42,83 +42,66 @@
 ### 接线
 
 <svg viewBox="0 0 800 345" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;width:100%;height:auto" font-family="sans-serif" font-size="13" stroke="currentColor" fill="none" stroke-width="1.5">
-  <!-- 3.3V 上拉轨道 -->
-  <line x1="300" y1="55" x2="430" y2="55" stroke-width="2"/>
-  <text x="365" y="44" text-anchor="middle" fill="currentColor" stroke="none">3.3V</text>
-
-  <!-- SCL 上拉电阻（跨线处用半圆拱表示不连接） -->
-  <path d="M 300 190 L 300 152 A 9 9 0 0 1 300 128 L 300 122 L 293 114 L 307 106 L 293 98 L 307 90 L 293 82 L 307 74 L 300 66 L 300 55"/>
-  <text x="286" y="102" text-anchor="end" fill="currentColor" stroke="none">4.7 kΩ</text>
-
-  <!-- SDA 上拉电阻 -->
-  <path d="M 430 140 L 430 126 L 423 118 L 437 110 L 423 102 L 437 94 L 423 86 L 437 78 L 430 70 L 430 55"/>
-  <text x="444" y="102" text-anchor="start" fill="currentColor" stroke="none">4.7 kΩ</text>
-
-  <!-- RK3568 -->
-  <rect x="60" y="80" width="170" height="230" stroke-width="2"/>
-  <text x="145" y="106" text-anchor="middle" fill="currentColor" stroke="none" font-size="15">RK3568</text>
-  <line x1="230" y1="140" x2="260" y2="140"/>
-  <text x="222" y="144" text-anchor="end" fill="currentColor" stroke="none">I2C1_SDA</text>
-  <line x1="230" y1="190" x2="260" y2="190"/>
-  <text x="222" y="194" text-anchor="end" fill="currentColor" stroke="none">I2C1_SCL</text>
-  <line x1="230" y1="240" x2="260" y2="240"/>
-  <text x="222" y="244" text-anchor="end" fill="currentColor" stroke="none">3V3</text>
-  <line x1="230" y1="290" x2="260" y2="290"/>
-  <text x="222" y="294" text-anchor="end" fill="currentColor" stroke="none">GND</text>
-
-  <!-- AT24C02 -->
-  <rect x="520" y="80" width="170" height="230" stroke-width="2"/>
-  <text x="605" y="106" text-anchor="middle" fill="currentColor" stroke="none" font-size="15">AT24C02</text>
-  <line x1="520" y1="140" x2="490" y2="140"/>
-  <text x="532" y="144" text-anchor="start" fill="currentColor" stroke="none">SDA（引脚 5）</text>
-  <line x1="520" y1="190" x2="490" y2="190"/>
-  <text x="532" y="194" text-anchor="start" fill="currentColor" stroke="none">SCL（引脚 6）</text>
-  <line x1="520" y1="240" x2="490" y2="240"/>
-  <text x="532" y="244" text-anchor="start" fill="currentColor" stroke="none">VCC（引脚 8）</text>
-  <line x1="520" y1="290" x2="490" y2="290"/>
-  <text x="532" y="294" text-anchor="start" fill="currentColor" stroke="none">GND（引脚 4）</text>
-  <line x1="690" y1="140" x2="720" y2="140"/>
-  <text x="678" y="144" text-anchor="end" fill="currentColor" stroke="none">A0（引脚 1）</text>
-  <line x1="690" y1="184" x2="720" y2="184"/>
-  <text x="678" y="188" text-anchor="end" fill="currentColor" stroke="none">A1（引脚 2）</text>
-  <line x1="690" y1="224" x2="720" y2="224"/>
-  <text x="678" y="228" text-anchor="end" fill="currentColor" stroke="none">A2（引脚 3）</text>
-  <line x1="690" y1="264" x2="720" y2="264"/>
-  <text x="678" y="268" text-anchor="end" fill="currentColor" stroke="none">WP（引脚 7）</text>
-
-  <!-- 信号线 -->
-  <line x1="260" y1="140" x2="490" y2="140" stroke-width="2"/>
-  <text x="385" y="132" text-anchor="middle" fill="currentColor" stroke="none">SDA</text>
-  <line x1="260" y1="190" x2="490" y2="190" stroke-width="2"/>
-  <text x="360" y="182" text-anchor="middle" fill="currentColor" stroke="none">SCL</text>
-  <line x1="260" y1="240" x2="490" y2="240" stroke-width="2"/>
-  <text x="375" y="232" text-anchor="middle" fill="currentColor" stroke="none">3.3V</text>
-  <line x1="260" y1="290" x2="490" y2="290" stroke-width="2"/>
-
-  <!-- 上拉抽头节点 -->
-  <circle cx="300" cy="190" r="3" fill="currentColor" stroke="none"/>
-  <circle cx="430" cy="140" r="3" fill="currentColor" stroke="none"/>
-
-  <!-- GND 符号（主地线） -->
-  <line x1="375" y1="290" x2="375" y2="302"/>
-  <line x1="363" y1="302" x2="387" y2="302"/>
-  <line x1="367" y1="308" x2="383" y2="308"/>
-  <line x1="371" y1="314" x2="379" y2="314"/>
-
-  <!-- A0/A1/A2/WP 公共地轨 -->
-  <line x1="720" y1="140" x2="750" y2="140"/>
-  <line x1="720" y1="184" x2="750" y2="184"/>
-  <line x1="720" y1="224" x2="750" y2="224"/>
-  <line x1="720" y1="264" x2="750" y2="264"/>
-  <line x1="750" y1="140" x2="750" y2="308"/>
-  <circle cx="750" cy="140" r="3" fill="currentColor" stroke="none"/>
-  <circle cx="750" cy="184" r="3" fill="currentColor" stroke="none"/>
-  <circle cx="750" cy="224" r="3" fill="currentColor" stroke="none"/>
-  <circle cx="750" cy="264" r="3" fill="currentColor" stroke="none"/>
-  <line x1="738" y1="308" x2="762" y2="308"/>
-  <line x1="742" y1="314" x2="758" y2="314"/>
-  <line x1="746" y1="320" x2="754" y2="320"/>
-  <text x="768" y="316" text-anchor="start" fill="currentColor" stroke="none">GND</text>
+<line x1="300" y1="55" x2="430" y2="55" stroke-width="2"/>
+<text x="365" y="44" text-anchor="middle" fill="currentColor" stroke="none">3.3V</text>
+<path d="M 300 190 L 300 152 A 9 9 0 0 1 300 128 L 300 122 L 293 114 L 307 106 L 293 98 L 307 90 L 293 82 L 307 74 L 300 66 L 300 55"/>
+<text x="286" y="102" text-anchor="end" fill="currentColor" stroke="none">4.7 kΩ</text>
+<path d="M 430 140 L 430 126 L 423 118 L 437 110 L 423 102 L 437 94 L 423 86 L 437 78 L 430 70 L 430 55"/>
+<text x="444" y="102" text-anchor="start" fill="currentColor" stroke="none">4.7 kΩ</text>
+<rect x="60" y="80" width="170" height="230" stroke-width="2"/>
+<text x="145" y="106" text-anchor="middle" fill="currentColor" stroke="none" font-size="15">RK3568</text>
+<line x1="230" y1="140" x2="260" y2="140"/>
+<text x="222" y="144" text-anchor="end" fill="currentColor" stroke="none">I2C1_SDA</text>
+<line x1="230" y1="190" x2="260" y2="190"/>
+<text x="222" y="194" text-anchor="end" fill="currentColor" stroke="none">I2C1_SCL</text>
+<line x1="230" y1="240" x2="260" y2="240"/>
+<text x="222" y="244" text-anchor="end" fill="currentColor" stroke="none">3V3</text>
+<line x1="230" y1="290" x2="260" y2="290"/>
+<text x="222" y="294" text-anchor="end" fill="currentColor" stroke="none">GND</text>
+<rect x="520" y="80" width="170" height="230" stroke-width="2"/>
+<text x="605" y="106" text-anchor="middle" fill="currentColor" stroke="none" font-size="15">AT24C02</text>
+<line x1="520" y1="140" x2="490" y2="140"/>
+<text x="532" y="144" text-anchor="start" fill="currentColor" stroke="none">SDA（引脚 5）</text>
+<line x1="520" y1="190" x2="490" y2="190"/>
+<text x="532" y="194" text-anchor="start" fill="currentColor" stroke="none">SCL（引脚 6）</text>
+<line x1="520" y1="240" x2="490" y2="240"/>
+<text x="532" y="244" text-anchor="start" fill="currentColor" stroke="none">VCC（引脚 8）</text>
+<line x1="520" y1="290" x2="490" y2="290"/>
+<text x="532" y="294" text-anchor="start" fill="currentColor" stroke="none">GND（引脚 4）</text>
+<line x1="690" y1="140" x2="720" y2="140"/>
+<text x="678" y="144" text-anchor="end" fill="currentColor" stroke="none">A0（引脚 1）</text>
+<line x1="690" y1="184" x2="720" y2="184"/>
+<text x="678" y="188" text-anchor="end" fill="currentColor" stroke="none">A1（引脚 2）</text>
+<line x1="690" y1="224" x2="720" y2="224"/>
+<text x="678" y="228" text-anchor="end" fill="currentColor" stroke="none">A2（引脚 3）</text>
+<line x1="690" y1="264" x2="720" y2="264"/>
+<text x="678" y="268" text-anchor="end" fill="currentColor" stroke="none">WP（引脚 7）</text>
+<line x1="260" y1="140" x2="490" y2="140" stroke-width="2"/>
+<text x="385" y="132" text-anchor="middle" fill="currentColor" stroke="none">SDA</text>
+<line x1="260" y1="190" x2="490" y2="190" stroke-width="2"/>
+<text x="360" y="182" text-anchor="middle" fill="currentColor" stroke="none">SCL</text>
+<line x1="260" y1="240" x2="490" y2="240" stroke-width="2"/>
+<text x="375" y="232" text-anchor="middle" fill="currentColor" stroke="none">3.3V</text>
+<line x1="260" y1="290" x2="490" y2="290" stroke-width="2"/>
+<circle cx="300" cy="190" r="3" fill="currentColor" stroke="none"/>
+<circle cx="430" cy="140" r="3" fill="currentColor" stroke="none"/>
+<line x1="375" y1="290" x2="375" y2="302"/>
+<line x1="363" y1="302" x2="387" y2="302"/>
+<line x1="367" y1="308" x2="383" y2="308"/>
+<line x1="371" y1="314" x2="379" y2="314"/>
+<line x1="720" y1="140" x2="750" y2="140"/>
+<line x1="720" y1="184" x2="750" y2="184"/>
+<line x1="720" y1="224" x2="750" y2="224"/>
+<line x1="720" y1="264" x2="750" y2="264"/>
+<line x1="750" y1="140" x2="750" y2="308"/>
+<circle cx="750" cy="140" r="3" fill="currentColor" stroke="none"/>
+<circle cx="750" cy="184" r="3" fill="currentColor" stroke="none"/>
+<circle cx="750" cy="224" r="3" fill="currentColor" stroke="none"/>
+<circle cx="750" cy="264" r="3" fill="currentColor" stroke="none"/>
+<line x1="738" y1="308" x2="762" y2="308"/>
+<line x1="742" y1="314" x2="758" y2="314"/>
+<line x1="746" y1="320" x2="754" y2="320"/>
+<text x="768" y="316" text-anchor="start" fill="currentColor" stroke="none">GND</text>
 </svg>
 
 要点：A0~A2 全接地 → 7 位地址 0x50；WP 接地 = 允许写入，接高电平则整片只读；SDA/SCL 各经 4.7 kΩ 上拉到 3.3 V（开漏必需，回看 B-A.2.1）。

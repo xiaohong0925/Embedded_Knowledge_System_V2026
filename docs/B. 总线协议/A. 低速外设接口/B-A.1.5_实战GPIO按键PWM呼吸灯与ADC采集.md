@@ -24,16 +24,58 @@ B-A.1.1 ~ B-A.1.4 分别讲了 GPIO、PWM、ADC、DAC 四件套。本篇把它�
 
 ### 接线（RK3568）
 
-| 器件 | 器件引脚 | RK3568 侧 | 说明 |
-|------|----------|-----------|------|
-| 电位器（10 kΩ） | 两端 | 3.3 V / GND | 分压 |
-| 电位器 | 中间抽头 | SARADC 通道 3 | 抽头电压 0~3.3 V 线性对应旋钮角度 |
-| 轻触按键 | 一端 | GPIO1_A0（gpiochip1 offset 0） | 软件启用内部上拉，低电平有效（见 B-A.1.1） |
-| 轻触按键 | 另一端 | GND | |
-| LED | 阳极 | PWM0 引脚，经 330 Ω 限流电阻 | 驱动电流约 4 mA，在 8 mA 限额内 |
-| LED | 阴极 | GND | |
+<svg viewBox="0 0 800 345" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;width:100%;height:auto" font-family="sans-serif" font-size="13" stroke="currentColor" fill="none" stroke-width="1.5">
+<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="currentColor" stroke="none"/></marker></defs>
+<rect x="60" y="70" width="170" height="250" stroke-width="2"/>
+<text x="145" y="92" text-anchor="middle" fill="currentColor" stroke="none" font-size="15">RK3568</text>
+<line x1="230" y1="100" x2="260" y2="100"/>
+<text x="222" y="104" text-anchor="end" fill="currentColor" stroke="none">3V3</text>
+<line x1="230" y1="150" x2="260" y2="150"/>
+<text x="222" y="154" text-anchor="end" fill="currentColor" stroke="none">SARADC_VIN3</text>
+<line x1="230" y1="200" x2="260" y2="200"/>
+<text x="222" y="204" text-anchor="end" fill="currentColor" stroke="none">GPIO1_A0</text>
+<line x1="230" y1="250" x2="260" y2="250"/>
+<text x="222" y="254" text-anchor="end" fill="currentColor" stroke="none">PWM0</text>
+<line x1="230" y1="300" x2="260" y2="300"/>
+<text x="222" y="304" text-anchor="end" fill="currentColor" stroke="none">GND</text>
+<line x1="260" y1="100" x2="520" y2="100" stroke-width="2"/>
+<text x="375" y="92" text-anchor="middle" fill="currentColor" stroke="none">3.3V</text>
+<line x1="520" y1="100" x2="520" y2="130"/>
+<path d="M 520 130 L 513 138 L 527 146 L 513 154 L 527 162 L 513 170 L 527 178 L 520 186"/>
+<line x1="520" y1="186" x2="520" y2="300"/>
+<text x="535" y="122" text-anchor="start" fill="currentColor" stroke="none">电位器 10 kΩ</text>
+<path d="M 260 150 L 572 150 L 572 158 L 534 158" stroke-width="2" marker-end="url(#arr)"/>
+<text x="330" y="142" text-anchor="middle" fill="currentColor" stroke="none">抽头电压 0~3.3V</text>
+<line x1="260" y1="200" x2="478" y2="200" stroke-width="2"/>
+<circle cx="480" cy="200" r="3" fill="currentColor" stroke="none"/>
+<path d="M 482 203 L 514 189"/>
+<circle cx="516" cy="200" r="3" fill="currentColor" stroke="none"/>
+<line x1="516" y1="200" x2="540" y2="200" stroke-width="2"/>
+<text x="500" y="176" text-anchor="middle" fill="currentColor" stroke="none">轻触按键</text>
+<line x1="540" y1="200" x2="540" y2="300"/>
+<line x1="260" y1="250" x2="430" y2="250" stroke-width="2"/>
+<text x="340" y="242" text-anchor="middle" fill="currentColor" stroke="none">PWM 驱动</text>
+<path d="M 430 250 L 437 242 L 445 258 L 453 242 L 461 258 L 469 242 L 477 258 L 485 242 L 493 258 L 500 250"/>
+<text x="465" y="230" text-anchor="middle" fill="currentColor" stroke="none">330 Ω</text>
+<line x1="500" y1="250" x2="520" y2="250" stroke-width="2"/>
+<path d="M 520 238 L 520 262 L 548 250 Z"/>
+<line x1="548" y1="238" x2="548" y2="262"/>
+<text x="534" y="226" text-anchor="middle" fill="currentColor" stroke="none">LED</text>
+<line x1="548" y1="250" x2="580" y2="250" stroke-width="2"/>
+<line x1="580" y1="250" x2="580" y2="300"/>
+<line x1="260" y1="300" x2="580" y2="300" stroke-width="2"/>
+<circle cx="520" cy="300" r="3" fill="currentColor" stroke="none"/>
+<circle cx="540" cy="300" r="3" fill="currentColor" stroke="none"/>
+<circle cx="580" cy="300" r="3" fill="currentColor" stroke="none"/>
+<line x1="560" y1="300" x2="560" y2="310"/>
+<line x1="548" y1="310" x2="572" y2="310"/>
+<line x1="552" y1="316" x2="568" y2="316"/>
+<line x1="556" y1="322" x2="564" y2="322"/>
+</svg>
 
-> 💡 引脚分配以实际板卡原理图为准：电位器接哪个 ADC 通道、PWM 用哪个通道、按键在哪个 GPIO bank，都查本板 dts 与原理图。本节示例用 SARADC 通道 3、pwm0、GPIO1_A0，自行替换。
+要点：电位器两端接 3.3 V/GND、抽头接 SARADC 通道 3，0~3.3 V 线性对应旋钮角度；按键一端 GPIO1_A0、一端 GND，软件启用内部上拉（低电平有效，见 B-A.1.1）；LED 阳极经 330 Ω 限流电阻接 PWM0，电流约 4 mA，在 8 mA 限额内。
+
+> 💡 引脚分配以实际板卡原理图为准：电位器接哪个 ADC 通道、PWM 用哪个通道、按键在哪个 GPIO bank，都查本板 dts 与原理图。本节示例用 SARADC 通道 3、pwm0、GPIO1_A0（gpiochip1 offset 0），自行替换。
 
 ---
 
