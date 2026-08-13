@@ -1,573 +1,263 @@
-# B-A.1.2 PWM脉宽调制 [知识点266-267]
+# B-A.1.2 PWM 脉宽调制
 
-> 所属章节：第五部 B. 总线协议 > B-A.1 常见总线与接口基础
+> 所属章节：第五部 B. 总线协议 > B-A.1 基础外设接口
 >
-> 难度：[B] Beginner | 预计阅读时间：25分钟
+> 难度：[B] Beginner | 预计阅读时间：25 分钟
 
 ## <span class="blue"> 本节导读
 
-PWM（Pulse Width Modulation，脉宽调制）是嵌入式系统中最基础的模拟量"数字分身"技术。LED调光、电机调速、蜂鸣器发声、舵机控制、LCD背光调节——这些看似需要模拟电路才能完成的任务，PWM用一串高低电平的方波就全搞定了。本节从PWM的物理原理讲起，带你理解周期、占空比、极性这些核心概念，再深入到Linux PWM子系统的软件架构，最后用两个完整的行业实例（LCD背光 + 直流电机调速）打通从设备树配置到用户空间控制的全链路。读完这一节，你就能自己动手做一个亮度可调的背光板和转速可控的小风扇。
+GPIO 只能输出 0 和 1 两种状态，PWM（Pulse Width Modulation，脉宽调制）用一串方波在数字引脚上合成"模拟量"：占空比 50% 的 3.3 V 方波，负载感受到的平均电压是 1.65 V。LED 调光、LCD 背光、电机调速、舵机控制、蜂鸣器发声都建立在这一个原理上。
 
-<br>
+本节覆盖：周期/占空比/极性三要素、边沿对齐与中心对齐两种计数模式、H 桥驱动的互补输出与死区时间、Linux PWM 子系统的 sysfs 接口与内核 API、设备树描述（以 RK3568 为锚点），以及背光与电机两个典型落地形态的频率选型依据。
 
-## <span class="blue"> 知识点266：PWM原理 [B]
+---
 
-### 什么是PWM？
+## <span class="blue"> PWM 原理
 
-PWM的核心思想可以用一句话概括：**通过改变数字方波的高电平持续时间，来模拟不同的平均电压输出**。想象一下，你有一个5V的电源和一个开关，如果你让开关以极快的速度开合，使得50%的时间导通、50%的时间断开，那么负载感受到的平均电压就是2.5V。占空比75%？平均电压就是3.75V。这就是PWM的魔法——纯数字手段实现模拟控制。
+### 三要素
 
-### 周期、频率与占空比
+| 参数 | 含义 | 关系式 | 典型值 |
+|------|------|--------|--------|
+| 周期 T | 一个完整波形的时间 | T = 1 / f | 50 μs（20 kHz） |
+| 占空比 D | 有效电平时间占比 | D = t_on / T | 0%~100% |
+| 分辨率 | 占空比最小调节粒度 | 定时器位宽决定 | 8/10/12/16 bit |
 
-这三个参数是PWM的灵魂，缺一不可：
+负载侧只看平均值：平均电压 V_avg = D × V_high。LED 亮度、电机转速、蜂鸣器音量的控制，都是对 D 的调节。
 
-| 参数 | 说明 | 计算公式 | 典型值 |
-|------|------|----------|--------|
-| **周期（Period）** | 一个完整PWM波形的时间长度 | T = 1 / f | 50μs（20kHz时） |
-| **频率（Frequency）** | 每秒完成的周期数 | f = 1 / T | 1Hz ~ 几十MHz |
-| **占空比（Duty Cycle）** | 高电平时间占整个周期的百分比 | D = (t_on / T) × 100% | 0% ~ 100% |
-| **脉宽（Pulse Width）** | 单个周期内高电平的持续时间 | t_on = D × T | 可变 |
-| **分辨率（Resolution）** | 占空比可调节的最小粒度 | 取决于定时器位数 | 8bit/10bit/12bit |
+```
+占空比对比（正极性，周期 T 相同）：
 
-PWM的频率选择是个平衡游戏。频率太低，LED会频闪、电机会抖动发出刺耳的啸叫声；频率太高，MOSFET的开关损耗会急剧增加，发热严重。后文的"陷阱"部分有更详细的说明。
+D = 75%   ┌───┐ ┌───┐ ┌───┐
+          │   │ │   │ │   │
+       ───┘   └─┘   └─┘   └──
 
-### 极性（Polarity）
+D = 50%   ┌──┐  ┌──┐  ┌──┐
+          │  │  │  │  │  │
+       ───┘  └──┘  └──┘  └──
 
-极性定义了PWM信号的有效电平：
-
-- **Active High（正极性）**：高电平为"有效"状态。占空比80%意味着高电平占80%。这是最常用的模式。
-- **Active Low（负极性）**：低电平为"有效"状态。占空比80%意味着低电平占80%。某些LED驱动或电机驱动芯片需要这种极性。
-
-> 💡 **提示**：在配置PWM时，务必确认你的外设 datasheet 要求的极性。很多初学者在驱动有源低电平LED时，因为极性配反而怎么调占空比都是反的，浪费大把调试时间。
-
-### PWM波形示意
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe', 'primaryTextColor': '#01579b', 'primaryBorderColor': '#0288d1', 'lineColor': '#0288d1', 'secondaryColor': '#fff3e0', 'tertiaryColor': '#e8f5e9'}}}%%
-graph LR
-    subgraph "PWM波形示意图"
-        direction LR
-        
-        subgraph "50% 占空比（Active High）"
-            A0["0V"] -->|"↑"| B0["5V"]
-            B0 -->|"T/2"| C0["5V"]
-            C0 -->|"↓"| D0["0V"]
-            D0 -->|"T/2"| E0["0V"]
-            E0 -.->|"周期 T"| A0
-            style B0 fill:#4caf50,stroke:#2e7d32,color:#fff
-            style C0 fill:#4caf50,stroke:#2e7d32,color:#fff
-        end
-        
-        subgraph "25% 占空比（Active High）"
-            A1["0V"] -->|"↑"| B1["5V"]
-            B1 -->|"T/4"| C1["5V"]
-            C1 -->|"↓"| D1["0V"]
-            D1 -->|"3T/4"| E1["0V"]
-            E1 -.->|"周期 T"| A1
-            style B1 fill:#ff9800,stroke:#ef6c00,color:#fff
-            style C1 fill:#ff9800,stroke:#ef6c00,color:#fff
-        end
-        
-        subgraph "75% 占空比（Active Low）"
-            A2["5V"] -->|"↓"| B2["0V"]
-            B2 -->|"T/4"| C2["0V"]
-            C2 -->|"↑"| D2["5V"]
-            D2 -->|"3T/4"| E2["5V"]
-            E2 -.->|"周期 T"| A2
-            style B2 fill:#f44336,stroke:#c62828,color:#fff
-            style C2 fill:#f44336,stroke:#c62828,color:#fff
-        end
-    end
+D = 25%   ┌─┐   ┌─┐   ┌─┐
+          │ │   │ │   │ │
+       ───┘ └───┘ └───┘ └───
+       |<-- T -->|
 ```
 
-<br>
+### 极性
 
-### PWM模式对比
+极性定义哪种电平是"有效"的：正极性（Active High）下占空比指高电平占比；负极性（Active Low）下指低电平占比。某些 LED 驱动与电机驱动芯片要求负极性输入。
 
-MCU内部的定时器通常支持两种PWM输出模式：
+> 💡 极性配反的典型症状：占空比调大亮度反而变暗。排查 PWM 行为时先确认外设数据手册要求的极性，再核对设备树中的 `PWM_POLARITY_NORMAL/INVERTED` 标志。
 
-| 模式 | 工作原理 | 特点 | 适用场景 |
-|------|----------|------|----------|
-| **Edge-aligned（边沿对齐）** | 计数器从0递增至ARR后归零，仅在向上计数过程中比较匹配时翻转电平 | 实现简单，占用定时器资源少，谐波含量较高 | 普通LED调光、简单电机调速、通用PWM输出 |
-| **Center-aligned（中心对齐）** | 计数器先递增至ARR再递减至0，在向上/向下计数时各比较匹配一次 | 谐波含量低，波形对称性好，降低电机转矩脉动 | 无刷电机FOC控制、精密电机驱动、H桥逆变 |
+### 边沿对齐与中心对齐
 
-边沿对齐模式是大多数应用场景的"默认选择"，配置简单，几乎所有MCU都支持。中心对齐模式则在对称性和谐波抑制方面有优势，特别适合电机控制场景。
+| 模式 | 计数方式 | 波形特征 | 适用场景 |
+|------|----------|----------|----------|
+| 边沿对齐 | 计数器 0→ARR 后归零，单次比较翻转 | 实现简单，谐波含量高 | LED 调光、通用调速 |
+| 中心对齐 | 计数器 0→ARR→0，上下行各比较一次 | 波形对称，谐波低，转矩脉动小 | 无刷电机 FOC、H 桥逆变 |
+
+绝大多数应用用边沿对齐；电机控制类场景需要中心对齐时，确认所用 PWM 控制器是否支持（RK3568 的 PWM 支持中心对齐模式，具体见芯片手册 PWM 章节）。
 
 ### 互补输出与死区时间
 
-当PWM用于驱动H桥或半桥电路时，同一桥臂的上下两个MOSFET**绝对不能同时导通**——否则电源直接对地短路，管子瞬间冒烟。为了防止这种悲剧，PWM控制器提供了两个关键机制：
+驱动 H 桥/半桥时，同一桥臂上下两个 MOSFET 绝不能同时导通——同时导通即电源直通短路。PWM 控制器用两个机制保证安全：
 
-**互补输出**：PWM通道可以输出两路完全相反的信号（PWM和PWM̄）。当上管导通时，下管必须关断，反之亦然。
-
-**死区时间（Dead Time）**：在互补输出的两路信号之间插入一小段"全关"的时间窗口（通常几百纳秒到几微秒），确保上管完全关断后下管才开始导通。死区时间的长度需要根据MOSFET的开关特性（特别是关断延迟t_off）来精确计算。
-
-```
-        PWM (上管驱动)
-        ┌──┐     ┌──┐
-        │  │     │  │
-    ────┘  └─────┘  └────
-        
-        PWM̄ (下管驱动)
-    ────┐  ┌─────┐  ┌────
-        │  │     │  │
-        └──┘     └──┘
-        ↑死区↑   ↑死区↑
-        
-    两管同时关断的安全窗口
-```
-
-> ⚠️ **陷阱**：死区时间设置太短，上下管可能短暂直通导致短路；设置太长，输出电压的有效时间会缩短，电机低速时转矩明显不足。一般从500ns开始调试，用示波器观察两路波形的交叠情况。
-
-<br>
-
-## <span class="blue"> 知识点267：Linux PWM子系统 [B]
-
-### 子系统架构
-
-Linux内核的PWM子系统采用统一的框架设计，将底层硬件差异抽象掉，向用户空间提供一致的访问接口。
-
-核心数据结构：
-
-- **pwmchip**：一个PWM控制器（chip）可以管理多路PWM通道。比如STM32的TIM3定时器可以输出4路PWM，就是一个pwmchip，包含4个PWM通道。
-- **pwm_period**：PWM周期，单位是纳秒（ns）。比如20kHz对应的period = 50000ns。
-- **pwm_duty_cycle**：有效电平的持续时间，单位也是纳秒。duty_cycle = period时，占空比就是100%。
-
-### Sysfs接口
-
-从Linux 4.x开始，PWM子系统通过sysfs暴露控制接口。这是目前最常用、最直接的PWM控制方式。
-
-每个pwmchip在sysfs中的路径：
+- **互补输出**：一路 PWM 与其反相的 PWM̄ 成对输出
+- **死区时间**：两路信号切换之间插入"双管全关"的时间窗（几百 ns 到几 μs）
 
 ```
-/sys/class/pwm/pwmchip0/          # 第0个PWM控制器
-    ├── npwm                      # 该控制器支持的通道数
-    ├── export                    # 导出某个通道（echo 0 > export 导出通道0）
-    ├── unexport                  # 释放通道
-    └── pwm0/                     # 导出的通道0
-        ├── period                # 周期（写入纳秒值）
-        ├── duty_cycle            # 有效时间（写入纳秒值）
-        ├── enable                # 使能/禁用（echo 1 > enable 开启输出）
-        └── polarity              # 极性（"normal"或"inversed"）
+PWM  (上管)   ┌──┐     ┌──┐
+           ───┘  └─────┘  └───
+PWM̄ (下管) ───┐  ┌─────┐  ┌───
+              └──┘     └──┘
+              ↑死区↑   ↑死区↑
+        死区窗口内两管均关断
 ```
 
-典型的控制流程：
+> ⚠️ 死区太短，上下管直通短路；太长，有效输出时间被吃掉，电机低速转矩不足。从 MOSFET 关断延迟数据出发计算，再用示波器核对两路波形无交叠。
+
+---
+
+## <span class="blue"> Linux PWM 子系统
+
+### 框架与核心概念
+
+内核 PWM 子系统把各厂控制器的差异收敛为统一抽象：
+
+- **pwmchip**：一个 PWM 控制器，管理若干通道，sysfs 下呈现为 `/sys/class/pwm/pwmchipN/`
+- **pwm_state**：通道状态三元组——`period`（周期，ns）、`duty_cycle`（有效时间，ns）、`polarity` + `enabled`。v6.6 内核中该结构定义于 `include/linux/pwm.h:59`
+
+注意单位：Linux PWM 子系统全程使用**纳秒**，不是赫兹。20 kHz 要写 `period = 50000`。
+
+### sysfs 接口
+
+```
+/sys/class/pwm/pwmchip0/
+    ├── npwm          # 通道数
+    ├── export        # 导出通道：echo 0 > export
+    └── pwm0/
+        ├── period        # 周期（ns）
+        ├── duty_cycle    # 有效时间（ns）
+        ├── polarity      # normal / inversed
+        └── enable        # 1=输出，0=停止
+```
+
+完整操作流程：
 
 ```bash
-# 1. 导出PWM通道
-echo 0 > /sys/class/pwm/pwmchip0/export
-
-# 2. 设置周期（20kHz = 50000纳秒）
+echo 0 > /sys/class/pwm/pwmchip0/export      # 导出通道 0
 echo 50000 > /sys/class/pwm/pwmchip0/pwm0/period
-
-# 3. 设置占空比（50% = 25000纳秒）
-echo 25000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
-
-# 4. 使能PWM输出
+echo 25000 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle   # 50%
 echo 1 > /sys/class/pwm/pwmchip0/pwm0/enable
-
-# 5. 动态调整占空比（不需要disable，直接写入新值）
-echo 37500 > /sys/class/pwm/pwmchip0/pwm0/duty_cycle
 ```
 
-### 字符设备接口（PWM Consumer API）
+> ⚠️ 写入顺序有约束：`duty_cycle` 不能超过 `period`，否则返回 `-EINVAL`。改频率时应先降占空比、改周期、再重设占空比。
 
-内核驱动代码中，使用`pwm_*`系列函数来请求和控制PWM：
+### 设备树描述（RK3568 锚点）
+
+RK3568 的 PWM 控制器节点（`rk356x.dtsi:458`）：
+
+```dts
+pwm0: pwm@fdd70000 {
+    compatible = "rockchip,rk3568-pwm", "rockchip,rk3328-pwm";
+    reg = <0x0 0xfdd70000 0x0 0x10>;
+    clocks = <&pmucru CLK_PWM0>, <&pmucru PCLK_PWM0>;
+    clock-names = "pwm", "pclk";
+    pinctrl-0 = <&pwm0m0_pins>;
+    pinctrl-names = "default";
+    #pwm-cells = <3>;
+    status = "disabled";
+};
+```
+
+`#pwm-cells = <3>` 表示引用方要给三个参数：通道号、周期（ns）、极性。使用方以背光为例：
+
+```dts
+backlight: backlight {
+    compatible = "pwm-backlight";
+    pwms = <&pwm0 0 50000 0>;    /* 控制器 通道 周期ns 极性 */
+    brightness-levels = <0 16 32 64 96 128 160 192 224 255>;
+    default-brightness-level = <5>;
+    status = "okay";
+};
+
+&pwm0 {
+    status = "okay";             /* dtsi 默认 disabled，板级开启 */
+};
+```
+
+`pwm-backlight` 是内核现成驱动（`drivers/video/backlight/pwm_bl.c`），注册后用户态经 `/sys/class/backlight/backlight/brightness` 调亮度，一行 PWM 代码都不用写。
+
+### 内核 API（驱动侧）
+
+内核驱动经 PWM Consumer API 控制通道（以下均对 v6.6 `include/linux/pwm.h` 核对）：
 
 ```c
 #include <linux/pwm.h>
 
 struct pwm_device *pwm;
+struct pwm_state state;
 
-// 从设备树获取PWM
-pwm = devm_pwm_get(&pdev->dev, NULL);
+pwm = devm_pwm_get(&pdev->dev, NULL);        /* pwm.h:406 */
 if (IS_ERR(pwm))
     return PTR_ERR(pwm);
 
-// 配置PWM参数
-struct pwm_state state = {
-    .period = 50000,        // 20kHz，单位ns
-    .duty_cycle = 25000,    // 50%占空比
-    .enabled = true,
-    .polarity = PWM_POLARITY_NORMAL,
-};
-pwm_apply_state(pwm, &state);
-
-// 释放PWM（devm_系列会自动释放）
+pwm_get_state(pwm, &state);                  /* 读出设备树默认状态 */
+state.period = 50000;
+state.duty_cycle = 25000;
+state.enabled = true;
+pwm_apply_state(pwm, &state);                /* pwm.h:312 */
 ```
 
-### 设备树配置
+> 💡 `pwm_apply_state()` 在 v6.8 起更名为 `pwm_apply_might_sleep()`——新名字明示该函数可能睡眠，禁止在中断/原子上下文调用。v6.6 内核中仍是 `pwm_apply_state`，但语义相同，跨版本移植时注意。
 
-设备树中，PWM控制器和PWM使用者通过`pwms`属性关联：
+---
 
-```dts
-// PWM控制器节点（以STM32 TIM3为例）
-timers3: timer@40000400 {
-    compatible = "st,stm32-pwm";
-    reg = <0x40000400 0x400>;
-    clocks = <&rcc TIM3_K>;
-    interrupts = <29>;
-    status = "okay";
+## <span class="blue"> 两个落地形态与频率选型
 
-    pwm {
-        compatible = "st,stm32-pwm";
-        #pwm-cells = <3>;    // 引用时需要3个参数
-    };
-};
+### LCD 背光
 
-// PWM使用者节点（背光驱动）
-backlight: backlight {
-    compatible = "pwm-backlight";
-    pwms = <&timers3 1 50000 PWM_POLARITY_NORMAL>;  // <控制器 通道 周期 极性>
-    brightness-levels = <0 5 10 20 40 60 80 100>;
-    default-brightness-level = <5>;
-    status = "okay";
-};
-```
+人眼对 60 Hz 以下的闪烁敏感，手机相机对光时频闪表现为滚动条纹。背光 PWM 频率取 ≥20 kHz，远超人眼与常见相机的感知范围。设备树用 `pwm-backlight`（上节示例），亮度级别表 `brightness-levels` 按人眼对数感知特性取非线性间隔，低亮段密、高亮段疏。
 
-`#pwm-cells = <3>`表示引用这个控制器时需要3个参数：通道号、周期（纳秒）、极性标志。
+### 直流电机调速
 
-<br>
+电机经 H 桥驱动芯片（TB6612/L298N 类）接 PWM。频率低于 10 kHz 时，PWM 脉冲驱动线圈产生的音频谐波落在人耳范围，表现为高频啸叫；频率过高则 MOSFET 开关损耗上升、发热加剧。折中区间 10~20 kHz。
 
-## <span class="blue"> 行业实例：LCD背光亮度调节 + 直流电机调速
+转速突变对驱动器与机械结构都是冲击，控制侧常用加减速曲线（每步限幅变化 + 固定步进间隔），把占空比的阶跃变成斜坡。
 
-### 实例一：LCD背光亮度调节
+### 频率选型表（Trade-off）
 
-嵌入式设备的LCD屏幕背光通常由一颗PWM控制的LED驱动芯片来驱动。人眼对低于约60Hz的闪烁非常敏感，所以背光PWM频率必须远高于这个阈值。
+| 负载 | 推荐频率 | 下限依据 | 上限依据 |
+|------|----------|----------|----------|
+| LCD 背光 | ≥20 kHz | 人眼频闪、相机条纹 | 驱动芯片开关损耗 |
+| 直流有刷电机 | 10~20 kHz | 音频啸叫 | MOSFET 发热 |
+| 舵机 | 50 Hz（周期 20 ms） | 舵机协议规定 | 协议规定 |
+| 蜂鸣器（无源） | 音频范围内变化 | 目标音调 | — |
+| LED 指示灯 | ≥1 kHz | 可见频闪 | 无特殊约束 |
 
-**硬件接线**：
+---
 
-```
-SoC PWM引脚 (TIM3_CH1, PA6)
-        │
-        │  PWM信号 (20kHz)
-        ▼
-┌──────────────────┐
-│  LED驱动芯片     │
-│  (如MP3302/RT8546)│
-│                  │
-│  PWM输入 ──► 恒流 │──► LED灯串 (3串8并)
-│  调光逻辑    驱动  │    19.2V/120mA
-└──────────────────┘
-```
+## <span class="blue"> 调试与排查
 
-**完整设备树配置**：
-
-```dts
-/ {
-    backlight: backlight {
-        compatible = "pwm-backlight";
-        pwms = <&timers3 0 50000 PWM_POLARITY_NORMAL>;
-                        /* │   │    │
-                           │   │    └── 极性：正极性
-                           │   └─────── 周期：50000ns = 20kHz
-                           └────────── 通道：TIM3_CH1 (通道0)
-                        */
-        brightness-levels = <
-            0   10  20  30  40  50  60  70
-            80  90  100 110 120 130 140 150
-            160 170 180 190 200 210 220 230
-            240 250
-        >;
-        /* 26级亮度，从完全熄灭到最亮 */
-
-        default-brightness-level = <12>;
-        /* 默认亮度：第12级（约50%亮度） */
-
-        status = "okay";
-    };
-};
-```
-
-**Sysfs控制代码（用户空间）**：
-
-```c
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-#define PWM_CHIP    "/sys/class/pwm/pwmchip0"
-#define PWM_CHANNEL PWM_CHIP "/pwm0"
-
-/* 写入sysfs文件 */
-int write_sysfs(const char *path, const char *value)
-{
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        perror("open");
-        return -1;
-    }
-    int ret = write(fd, value, strlen(value));
-    close(fd);
-    return (ret < 0) ? -1 : 0;
-}
-
-/* 初始化PWM：20kHz，初始占空比0% */
-int pwm_init(unsigned long period_ns, unsigned long duty_ns)
-{
-    char buf[32];
-
-    /* 导出PWM通道 */
-    write_sysfs(PWM_CHIP "/export", "0");
-    usleep(100000);  /* 等待内核创建sysfs节点 */
-
-    /* 设置周期 */
-    snprintf(buf, sizeof(buf), "%lu", period_ns);
-    write_sysfs(PWM_CHANNEL "/period", buf);
-
-    /* 设置初始占空比 */
-    snprintf(buf, sizeof(buf), "%lu", duty_ns);
-    write_sysfs(PWM_CHANNEL "/duty_cycle", buf);
-
-    /* 使能输出 */
-    write_sysfs(PWM_CHANNEL "/enable", "1");
-
-    printf("PWM initialized: %luns period (%.1fkHz), duty=%luns\n",
-           period_ns, 1000000000.0/period_ns, duty_ns);
-    return 0;
-}
-
-/* 设置占空比百分比 0~100 */
-int pwm_set_duty_percent(int percent)
-{
-    char buf[32];
-    unsigned long duty;
-
-    if (percent < 0) percent = 0;
-    if (percent > 100) percent = 100;
-
-    /* period = 50000ns，duty按比例计算 */
-    duty = 50000UL * percent / 100;
-
-    snprintf(buf, sizeof(buf), "%lu", duty);
-    return write_sysfs(PWM_CHANNEL "/duty_cycle", buf);
-}
-
-int main(int argc, char *argv[])
-{
-    /* 初始化：20kHz，初始0%亮度 */
-    pwm_init(50000, 0);
-
-    printf("Breathing LED demo: fade in then fade out\n");
-
-    /* 呼吸灯效果：渐亮 */
-    for (int i = 0; i <= 100; i += 2) {
-        pwm_set_duty_percent(i);
-        usleep(20000);  /* 20ms步进 */
-    }
-
-    /* 呼吸灯效果：渐暗 */
-    for (int i = 100; i >= 0; i -= 2) {
-        pwm_set_duty_percent(i);
-        usleep(20000);
-    }
-
-    /* 关闭 */
-    pwm_set_duty_percent(0);
-    write_sysfs(PWM_CHANNEL "/enable", "0");
-    write_sysfs(PWM_CHIP "/unexport", "0");
-
-    return 0;
-}
-```
-
-**编译与运行**：
+常用命令：
 
 ```bash
-# 交叉编译
-arm-linux-gnueabihf-gcc pwm_backlight.c -o pwm_backlight
-
-# 拷贝到目标板运行
-./pwm_backlight
-# 输出：
-# PWM initialized: 50000ns period (20000.0kHz), duty=0ns
-# Breathing LED demo: fade in then fade out
-```
-
-**验证步骤**：
-
-1. 示波器测量PWM引脚，确认频率为20kHz，占空比随程序变化
-2. 肉眼观察LCD屏幕，确认无明显频闪（用手机相机对准屏幕，不应出现滚动条纹）
-3. 用光度计测量亮度，验证亮度与占空比基本成线性关系
-
-### 实例二：直流电机调速
-
-直流电机的转速与施加的平均电压成正比，这正是PWM的拿手好戏。
-
-**硬件接线**：
-
-```
-SoC PWM引脚 (TIM4_CH2, PB7)
-        │
-        │  PWM信号 (10kHz)
-        ▼
-┌──────────────────┐
-│  H桥驱动芯片     │
-│  (如TB6612/L298N) │
-│                  │
-│  PWM ──► 内部    │──► 直流电机 (12V有刷)
-│  逻辑    功率驱动 │    额定3000RPM
-└──────────────────┘
-```
-
-**带加减速曲线的电机控制代码**：
-
-```c
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <math.h>
-
-#define MOTOR_PWM_CHIP    "/sys/class/pwm/pwmchip1"
-#define MOTOR_PWM         MOTOR_PWM_CHIP "/pwm0"
-
-/* 加速曲线：S型加减速，减少对电机和驱动器的冲击 */
-void motor_set_speed_with_ramp(int target_percent)
-{
-    static int current_percent = 0;
-    char buf[32];
-
-    /* 每步变化不超过5%，每步间隔50ms */
-    int step = (target_percent > current_percent) ? 5 : -5;
-
-    while (current_percent != target_percent) {
-        if (abs(target_percent - current_percent) < abs(step))
-            current_percent = target_percent;
-        else
-            current_percent += step;
-
-        /* 10kHz周期 = 100000ns */
-        unsigned long duty = 100000UL * current_percent / 100;
-        snprintf(buf, sizeof(buf), "%lu", duty);
-
-        int fd = open(MOTOR_PWM "/duty_cycle", O_WRONLY);
-        if (fd >= 0) {
-            write(fd, buf, strlen(buf));
-            close(fd);
-        }
-
-        printf("Motor speed: %d%% (duty=%luns)\n", current_percent, duty);
-        usleep(50000);  /* 50ms步进 */
-    }
-}
-
-int main(void)
-{
-    char buf[32];
-
-    /* 初始化：10kHz */
-    write_sysfs(MOTOR_PWM_CHIP "/export", "0");
-    usleep(100000);
-    write_sysfs(MOTOR_PWM "/period", "100000");  /* 10kHz */
-    write_sysfs(MOTOR_PWM "/duty_cycle", "0");
-    write_sysfs(MOTOR_PWM "/enable", "1");
-
-    printf("=== DC Motor Speed Control Demo ===\n");
-
-    /* 加速到80% */
-    printf("\n[Accelerating to 80%%]\n");
-    motor_set_speed_with_ramp(80);
-    sleep(3);
-
-    /* 减速到30% */
-    printf("\n[Decelerating to 30%%]\n");
-    motor_set_speed_with_ramp(30);
-    sleep(3);
-
-    /* 全速 */
-    printf("\n[Full speed 100%%]\n");
-    motor_set_speed_with_ramp(100);
-    sleep(2);
-
-    /* 停止 */
-    printf("\n[Stop]\n");
-    motor_set_speed_with_ramp(0);
-    write_sysfs(MOTOR_PWM "/enable", "0");
-
-    return 0;
-}
-```
-
-> 💡 **提示**：LCD背光用 >20kHz 避开人眼频闪，电机用 >10kHz 避开音频啸叫。如果电机在1kHz~8kHz范围内运行，你大概率会听到一种高频"吱吱"的尖叫声——这是PWM脉冲在驱动电机线圈时产生的音频谐波。提高频率到10kHz以上，人就听不到了。
-
-> ⚠️ **陷阱**：PWM频率太低 → LED频闪/电机啸叫；频率太高 → 开关损耗增加，MOSFET发热严重。一般IGBT器件不超过20kHz，MOSFET可以到100kHz以上。选定频率后，务必在满载条件下测量驱动芯片/MOSFET的温升。
-
-<br>
-
-### 两个实例的关键参数对比
-
-| 参数 | LCD背光调节 | 直流电机调速 |
-|------|-------------|--------------|
-| **PWM频率** | 20kHz（>人眼感知上限） | 10kHz（>音频范围下限） |
-| **周期** | 50000ns | 100000ns |
-| **占空比范围** | 0% ~ 100% | 0% ~ 100% |
-| **分辨率需求** | 8bit（256级足够平滑） | 8bit即可 |
-| **极性** | Active High | Active High |
-| **驱动方式** | 直接驱动LED恒流芯片 | 经H桥驱动电机 |
-| **调速曲线** | 线性或人眼对数曲线 | S型加减速曲线 |
-| **关键考量** | 无频闪、低EMI | 无啸叫、转矩平稳 |
-
-<br>
-
-## <span class="blue"> 调试技巧与常见问题
-
-### 常用调试命令
-
-```bash
-# 查看系统所有PWM控制器
-ls /sys/class/pwm/
-
-# 查看某个控制器支持的通道数
-cat /sys/class/pwm/pwmchip0/npwm
-
-# 查看当前PWM状态
-cat /sys/class/pwm/pwmchip0/pwm0/period
-cat /sys/class/pwm/pwmchip0/pwm0/duty_cycle
-cat /sys/class/pwm/pwmchip0/pwm0/enable
-cat /sys/class/pwm/pwmchip0/pwm0/polarity
-
-# dmesg查看PWM相关日志
+ls /sys/class/pwm/                                # 所有控制器
+cat /sys/class/pwm/pwmchip0/npwm                  # 通道数
+cat /sys/class/pwm/pwmchip0/pwm0/{period,duty_cycle,enable,polarity}
 dmesg | grep -i pwm
-
-# 用devmem直接读定时器寄存器（调试用）
-devmem 0x40000400 32    # TIM3_CR1
-devmem 0x40000434 32    # TIM3_CCR1（捕获比较寄存器）
 ```
 
-### 示波器测量要点
+PWM 无输出时，第一排查手段是核对四件事：**控制器 status 是否 "okay"、pinctrl 是否把引脚复用到 PWM 功能、sysfs 三件套（period/duty_cycle/enable）是否生效、`gpioinfo` 确认引脚没有被当 GPIO 占用**。四项全对仍无波形，再上示波器量引脚——量到波形异常（过冲、振铃）是布线/吸收问题，量不到任何波形则是复用或时钟问题。其中"pinctrl 没配、引脚还在 GPIO 模式"是现场最高频的根因。
 
-1. **确认频率**：测量周期是否为预期值（如20kHz应为50μs）
-2. **确认占空比**：高电平时间是否随写入值变化
-3. **检查极性**：确认Active High/ Low 与代码设置一致
-4. **观察上升沿**：检查有无过冲、振铃（布线过长或缺少RC吸收）
-5. **互补输出时**：两路信号之间是否有足够死区时间，无交叠
+---
 
-<br>
+## <span class="blue"> 常见陷阱
+
+> ⚠️ 频率选错两头受罪：过低（<100 Hz 背光 / <10 kHz 电机）频闪、啸叫；过高开关损耗发热。按上表区间取值后，满载测驱动芯片温升。
+
+> ⚠️ 极性配反。负极性外设配成正极性，占空比逻辑整体反转。症状迷惑性强，先查极性再查代码。
+
+> ⚠️ `duty_cycle > period` 写入失败。改频率时必须先降占空比再改周期，顺序错了 sysfs 返回 EINVAL 而脚本不报错。
+
+> ⚠️ pinctrl 未复用。设备树里 PWM 控制器 status okay、sysfs 操作全部成功，引脚上却没有波形——引脚还在 GPIO 功能上。用 `gpioinfo` 或 `cat /sys/kernel/debug/pinctrl/.../pinmux-pins` 确认。
+
+> ⚠️ 线性占空比 ≠ 线性亮度。人眼对亮度是对数感知，线性步进在低亮段变化剧烈、高亮段几乎无感。背光/指示灯的亮度表按对数曲线取点。
+
+---
+
+## <span class="blue"> 动手练习
+
+1. **sysfs 全流程**：找一路空闲 PWM 通道，完成导出 → 设 20 kHz → 50% → 使能 → 示波器（或接 LED 肉眼观察）验证；再改 12.5% 观察变化。
+2. **背光路径**：若开发板有 `pwm-backlight`，经 `/sys/class/backlight/*/brightness` 写不同值，同时用 `cat /sys/class/pwm/pwmchip*/pwm*/duty_cycle` 观察内核如何把亮度级别换算成占空比。
+3. **失败注入**：先写 `duty_cycle=60000` 再写 `period=50000`，观察 `echo $?` 的返回值与 dmesg，理解写入顺序约束。
+4. **无硬件后备**：内核 `CONFIG_PWM_SIM`（pwm-sim 模块，`drivers/pwm/pwm-sim.c`）可虚拟出 PWM 控制器，sysfs 全流程在 PC 虚拟环境原样可练；配合内核文档 `Documentation/testing/pwm-sim.rst`。
+
+---
 
 ## <span class="blue"> 本节总结
 
-| 内容 | 要点 |
-|------|------|
-| **PWM三要素** | 周期（T）、频率（f=1/T）、占空比（D=t_on/T） |
-| **极性** | Active High：高电平有效；Active Low：低电平有效 |
-| **两种模式** | 边沿对齐（简单通用） vs 中心对齐（低谐波、电机FOC） |
-| **互补输出** | H桥驱动必备，配合死区时间防止上下管直通短路 |
-| **Linux接口** | sysfs（/sys/class/pwm/pwmchip*/pwm*/）或内核pwm_* API |
-| **背光频率** | ≥20kHz，避开人眼频闪，占空比0-100%调光 |
-| **电机频率** | ≥10kHz，避开音频啸叫，加减速曲线防止冲击 |
+| 自查项 | 确认标准 |
+|--------|----------|
+| 三要素 | 周期/占空比/分辨率的关系；平均电压 = D × V_high |
+| 极性 | 正负极性语义；配反的症状与排查 |
+| 对齐模式 | 边沿对齐通用、中心对齐用于电机 FOC |
+| 死区 | H 桥直通风险、死区的定义与调试方法 |
+| Linux 接口 | sysfs 四文件操作流；纳秒单位；duty≤period 约束 |
+| 设备树 | `#pwm-cells` 三参数；`pwm-backlight` 零代码路径 |
+| 内核 API | `devm_pwm_get` / `pwm_get_state` / `pwm_apply_state`（v6.6 核对） |
+| 排查锚点 | 无输出四查：status / pinctrl / sysfs 三件套 / GPIO 占用 |
 
-<br>
-
-## <span class="blue"> 下一步
-
-PWM让你能用数字手段控制"模拟量"，但世界是模拟的，嵌入式系统常常需要反过来——将模拟信号转换成数字量。下一节我们将学习 **B-A.1.3 ADC模数转换**，看看如何用ADC读取温度传感器、电池电压、光照强度等模拟信号，配合本节的PWM输出，你就能实现完整的闭环控制了。
-
-<br>
+---
 
 ## <span class="blue"> 配套资源
 
-- **内核文档**：`Documentation/devicetree/bindings/pwm/pwm.txt`
-- **PWM子系统源码**：`drivers/pwm/core.c`、`include/linux/pwm.h`
-- **pwm-backlight驱动**：`drivers/video/backlight/pwm_bl.c`
-- **STM32 PWM参考手册**：RM0433 参考手册 Timer章节
-- **推荐阅读**：Linux Device Drivers, Chapter 18 - PWM子系统概述
+- **内核文档**：`Documentation/devicetree/bindings/pwm/pwm.yaml`、`Documentation/testing/pwm-sim.rst`
+- **内核源码**：`drivers/pwm/core.c`、`include/linux/pwm.h`（v6.6）、`drivers/video/backlight/pwm_bl.c`
+- **锚点硬件**：RK3568 PWM 节点见配套源码缓存 `help-docs/kernel-src-v6.6/rk356x.dtsi:458`
+
+---
+
+## <span class="blue"> 下一步
+
+PWM 解决的是"数字控制模拟量"，反方向的问题是把模拟信号读进来——温度、电池电压、光照强度。下一节 **B-A.1.3 ADC 模数转换**，讲 SAR 型 ADC 的采样原理与 Linux IIO 子系统。到 **B-A.1.5 实战篇**，GPIO 按键、PWM 呼吸灯、ADC 采集将合并为一个完整的产品级代码案例。
+
+> 💡 螺旋衔接：本节的内核 API 只给了最小用法，PWM 控制器驱动（pwm_chip 注册、`->apply` 实现）的完整写法归 D 扩展子系统篇；呼吸灯与按键的端到端组合归 B-A.1.5。

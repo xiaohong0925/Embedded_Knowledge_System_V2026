@@ -10,10 +10,12 @@
 | [B-A.1.2 PWM脉宽调制](B-A.1.2_PWM脉宽调制.md) | PWM 原理与驱动 |
 | [B-A.1.3 ADC模数转换](B-A.1.3_ADC模数转换.md) | ADC 原理与驱动 |
 | [B-A.1.4 DAC与基础外设选型](B-A.1.4_DAC与基础外设选型.md) | DAC 原理与选型 |
+| [B-A.1.5 实战GPIO按键PWM呼吸灯与ADC采集](B-A.1.5_实战GPIO按键PWM呼吸灯与ADC采集.md) | 三件套端到端代码实战 |
 | [B-A.2.1 I2C物理层与电气特性](B-A.2.1_I2C物理层与电气特性.md) | I2C 物理层 |
 | [B-A.2.2 I2C协议层与帧格式](B-A.2.2_I2C协议层与帧格式.md) | I2C 协议层 |
 | [B-A.2.3 I2C Linux驱动框架与SMBus](B-A.2.3_I2C Linux驱动框架与SMBus.md) | I2C 驱动框架 |
-| [B-A.2.4 I2C调试工具与1-Wire](B-A.2.4_I2C调试工具与1-Wire.md) | I2C 调试 |
+| [B-A.2.4 I2C调试工具与故障排查](B-A.2.4_I2C调试工具与故障排查.md) | I2C 调试与排查 |
+| [B-A.2.5 实战AT24C02 EEPROM端到端读写](B-A.2.5_实战AT24C02_EEPROM端到端读写.md) | AT24C02 全链路实战 |
 | [B-A.3.1 SPI物理层与四种模式](B-A.3.1_SPI物理层与四种模式.md) | SPI 物理层 |
 | [B-A.3.2 SPI协议层与时序](B-A.3.2_SPI协议层与时序.md) | SPI 协议层 |
 | [B-A.3.3 SPI Linux驱动框架](B-A.3.3_SPI Linux驱动框架.md) | SPI 驱动框架 |

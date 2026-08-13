@@ -17,10 +17,10 @@
 
 | 子目录 | 主题 | 难度 |
 |--------|------|------|
+| [D. 片内总线认知](D. 片内总线认知/README.md) | APB、AHB、AXI、TileLink、NoC、CHI、UCIe 等 SoC 内部互连（B 扩展第一站，由片内向片外） | [B→M] |
 | [A. 低速外设接口](A. 低速外设接口/README.md) | I2C、SPI、UART、1-Wire 等基础外设总线 | [B→I] |
-| [B. 中高速外设与存储](B. 中高速外设与存储/README.md) | USB、SD、eMMC、PCIe 等高速扩展总线 | [I→E] |
-| [C. 专用网络总线](C. 专用网络总线/README.md) | CAN、LIN、车载以太网、工业以太网 | [I→E] |
-| [D. 片内总线认知](D. 片内总线认知/README.md) | APB、AHB、AXI、TileLink 等 SoC 内部总线 | [B→M] |
+| [B. 中高速外设与存储](B. 中高速外设与存储/README.md) | USB、SD、eMMC、MIPI 等高速扩展总线 | [I→E] |
+| [C. 专用网络总线](C. 专用网络总线/README.md) | PCIe、CAN、工业以太网、车载与新型总线 | [I→E] |
 | [E. 综合实战](E. 综合实战/README.md) | 多总线系统集成、拓扑设计、选型决策 | [I→E] |
 
 ---

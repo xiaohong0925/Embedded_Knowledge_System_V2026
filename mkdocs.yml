@@ -628,17 +628,24 @@ nav:
       - 概览: A. 应用层编程/README.md
   - B. 总线协议:
       - 概览: B. 总线协议/README.md
+      - D. 片内总线认知:
+          - D.13 片内总线:
+              - B-D.13.1 APB/AHB/AXI/TileLink概念认知: B. 总线协议/D. 片内总线认知/B-D.13.1_APB_AHB_AXI_TileLink概念认知.md
+              - B-D.13.2 AXI深入与NoC片上网络: B. 总线协议/D. 片内总线认知/B-D.13.2_AXI深入与NoC片上网络.md
+              - B-D.13.3 CHI与UCIe互连: B. 总线协议/D. 片内总线认知/B-D.13.3_CHI与UCIe互连.md
       - A. 低速外设接口:
           - A.1 GPIO/PWM/ADC/DAC:
               - B-A.1.1 GPIO通用输入输出: B. 总线协议/A. 低速外设接口/B-A.1.1_GPIO通用输入输出.md
               - B-A.1.2 PWM脉宽调制: B. 总线协议/A. 低速外设接口/B-A.1.2_PWM脉宽调制.md
               - B-A.1.3 ADC模数转换: B. 总线协议/A. 低速外设接口/B-A.1.3_ADC模数转换.md
               - B-A.1.4 DAC与基础外设选型: B. 总线协议/A. 低速外设接口/B-A.1.4_DAC与基础外设选型.md
+              - B-A.1.5 实战GPIO按键PWM呼吸灯与ADC采集: B. 总线协议/A. 低速外设接口/B-A.1.5_实战GPIO按键PWM呼吸灯与ADC采集.md
           - A.2 I2C:
               - B-A.2.1 I2C物理层与电气特性: B. 总线协议/A. 低速外设接口/B-A.2.1_I2C物理层与电气特性.md
               - B-A.2.2 I2C协议层与帧格式: B. 总线协议/A. 低速外设接口/B-A.2.2_I2C协议层与帧格式.md
               - B-A.2.3 I2C Linux驱动框架与SMBus: B. 总线协议/A. 低速外设接口/B-A.2.3_I2C Linux驱动框架与SMBus.md
-              - B-A.2.4 I2C调试工具与1-Wire: B. 总线协议/A. 低速外设接口/B-A.2.4_I2C调试工具与1-Wire.md
+              - B-A.2.4 I2C调试工具与故障排查: B. 总线协议/A. 低速外设接口/B-A.2.4_I2C调试工具与故障排查.md
+              - B-A.2.5 实战AT24C02 EEPROM端到端读写: B. 总线协议/A. 低速外设接口/B-A.2.5_实战AT24C02_EEPROM端到端读写.md
           - A.3 SPI:
               - B-A.3.1 SPI物理层与四种模式: B. 总线协议/A. 低速外设接口/B-A.3.1_SPI物理层与四种模式.md
               - B-A.3.2 SPI协议层与时序: B. 总线协议/A. 低速外设接口/B-A.3.2_SPI协议层与时序.md
@@ -687,9 +694,6 @@ nav:
               - B-C.12.1 I2S与PCM物理层: B. 总线协议/C. 专用网络总线/B-C.12.1_I2S与PCM物理层.md
               - B-C.12.2 I2S Linux驱动与ALSA: B. 总线协议/C. 专用网络总线/B-C.12.2_I2S Linux驱动与ALSA.md
               - B-C.12.3 SPDIF与音频接口选型: B. 总线协议/C. 专用网络总线/B-C.12.3_SPDIF与音频接口选型.md
-      - D. 片内总线认知:
-          - D.13 片内总线:
-              - B-D.13.1 APB/AHB/AXI/TileLink概念认知: B. 总线协议/D. 片内总线认知/B-D.13.1_APB_AHB_AXI_TileLink概念认知.md
       - E. 综合实战:
           - E.14 行业实战:
               - B-E.14.1 六轴协作机械臂多总线协同: B. 总线协议/E. 综合实战/B-E.14.1_六轴协作机械臂多总线协同.md
