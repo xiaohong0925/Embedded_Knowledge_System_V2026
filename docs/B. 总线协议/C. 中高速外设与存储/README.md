@@ -2,19 +2,34 @@
 
 > 高速数据扩展总线：USB、eMMC/UFS、MIPI CSI/DSI、SPI NAND/QSPI
 
-本目录覆盖嵌入式系统中高速数据通信与存储接口，从物理层信号到协议栈实现，掌握这些接口是处理音视频、大容量存储等数据密集型场景的基础。
+## 板块定位
 
-| 文件 | 主题 |
+当数据量超过 Mbps 级——外接 U 盘、刷大容量固件、接摄像头、点显示屏——低速总线到顶了。本板块处理"快"的代价：阻抗匹配、协议栈分层、专用驱动框架（USB core、MMC 子系统、V4L2/DRM）。这些总线的共同特征是**软件栈比物理协议厚**，所以各组都按"物理层 → 协议/枚举 → Host 侧框架 → Device 侧/实战"铺开。
+
+是否必读取决于产品形态：带屏、带摄像头、带大存储的产品绕不开；纯控制类产品（PLC、电机驱动器）可以整板块缓读。
+
+## 组内结构
+
+| 组 | 篇目 | 各篇主题 |
+|----|------|----------|
+| C.7 USB | [7.1 物理层与拓扑](B-C.7.1_USB物理层与拓扑.md) · [7.2 枚举与描述符](B-C.7.2_USB枚举与描述符.md) · [7.3 Linux Host驱动](B-C.7.3_USB Linux Host驱动.md) · [7.4 Gadget模式与ConfigFS](B-C.7.4_USB Gadget模式与ConfigFS.md) · 7.5 实战 Gadget 模拟 U盘/串口（规划） | Host 与 Device 双视角；Gadget 是嵌入式特有的"我是设备"玩法 |
+| C.8 存储接口 | [8.1 eMMC协议](B-C.8.1_eMMC协议深度解析.md) · [8.2 eMMC驱动与SD卡](B-C.8.2_eMMC Linux驱动与SD卡.md) · [8.3 UFS闪存](B-C.8.3_UFS闪存.md) · [8.4 SPI NAND与QSPI](B-C.8.4_SPI_NAND与QSPI.md) · 8.5 实战 eMMC 分区与可靠性测试（规划） | 从 SD 卡到 UFS 的存储谱系；掉电可靠性是嵌入式存储的主战场 |
+| C.9 显示与摄像 | [9.1 MIPI D-PHY](B-C.9.1_MIPI_D-PHY物理层.md) · [9.2 CSI-2与V4L2](B-C.9.2_MIPI_CSI-2协议层与V4L2.md) · [9.3 DSI与DRM](B-C.9.3_MIPI_DSI协议层与DRM.md) · [9.4 LVDS/eDP/HDMI/DP](B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md) · 9.5 实战 OV 摄像头点亮（规划） | 摄像头进（CSI-2）、屏幕出（DSI）两条管道与框架对接 |
+
+## 先修与后续
+
+- **先修**：B 板块（低速总线术语）；C.7.2 的枚举-描述符模型是 D.10.2 PCIe 枚举的直接先修——两者都是"上电发现 → 读能力 → 分资源"。
+- **后续**：C.9 的差分 PHY 是 F 板块 SerDes 通识的入门；C.8 存储与 D.10 PCIe 交汇于 NVMe（F 板块延伸话题）。
+
+## 选读建议
+
+| 读者 | 建议 |
 |------|------|
-| [B-C.7.1 USB物理层与拓扑](B-C.7.1_USB物理层与拓扑.md) | USB 物理层 |
-| [B-C.7.2 USB枚举与描述符](B-C.7.2_USB枚举与描述符.md) | USB 枚举 |
-| [B-C.7.3 USB Linux Host驱动](B-C.7.3_USB Linux Host驱动.md) | USB Host 驱动 |
-| [B-C.7.4 USB Gadget模式与ConfigFS](B-C.7.4_USB Gadget模式与ConfigFS.md) | USB Gadget |
-| [B-C.8.1 eMMC协议深度解析](B-C.8.1_eMMC协议深度解析.md) | eMMC 协议 |
-| [B-C.8.2 eMMC Linux驱动与SD卡](B-C.8.2_eMMC Linux驱动与SD卡.md) | eMMC 驱动 |
-| [B-C.8.3 UFS闪存](B-C.8.3_UFS闪存.md) | UFS 闪存 |
-| [B-C.8.4 SPI NAND与QSPI](B-C.8.4_SPI_NAND与QSPI.md) | SPI NAND/QSPI |
-| [B-C.9.1 MIPI D-PHY物理层](B-C.9.1_MIPI_D-PHY物理层.md) | MIPI D-PHY |
-| [B-C.9.2 MIPI CSI-2协议层与V4L2](B-C.9.2_MIPI_CSI-2协议层与V4L2.md) | MIPI CSI-2 |
-| [B-C.9.3 MIPI DSI协议层与DRM](B-C.9.3_MIPI_DSI协议层与DRM.md) | MIPI DSI |
-| [B-C.9.4 LVDS/eDP/HDMI/DisplayPort](B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md) | 显示接口 |
+| 消费电子/手机方向 | 全板块必读，三组都是日常 |
+| 仪器仪表/网关方向 | C.7 + C.8 必读；C.9 按有无屏/摄像头决定 |
+| 机器人/工业控制方向 | C.8 存储必读（日志与固件可靠性）；C.7 读 7.1~7.2；C.9 可整组缓读 |
+| 所有人 | 至少读 C.7.2 枚举——"设备怎么被主机认识"是理解 D.10 PCIe 的钥匙 |
+
+## 内容边界
+
+V4L2/DRM 框架本身（buffer 管理、格式协商）属内核子系统专题，本板块只讲到"总线数据怎么进框架"；完整驱动写法归 D 扩展。
