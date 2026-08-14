@@ -628,76 +628,79 @@ nav:
       - 概览: A. 应用层编程/README.md
   - B. 总线协议:
       - 概览: B. 总线协议/README.md
-      - D. 片内总线认知:
-          - D.13 片内总线:
-              - B-D.13.1 APB/AHB/AXI/TileLink概念认知: B. 总线协议/D. 片内总线认知/B-D.13.1_APB_AHB_AXI_TileLink概念认知.md
-              - B-D.13.2 AXI深入与NoC片上网络: B. 总线协议/D. 片内总线认知/B-D.13.2_AXI深入与NoC片上网络.md
-              - B-D.13.3 CHI与UCIe互连: B. 总线协议/D. 片内总线认知/B-D.13.3_CHI与UCIe互连.md
-      - A. 低速外设接口:
-          - A.1 GPIO/PWM/ADC/DAC:
-              - B-A.1.1 GPIO通用输入输出: B. 总线协议/A. 低速外设接口/B-A.1.1_GPIO通用输入输出.md
-              - B-A.1.2 PWM脉宽调制: B. 总线协议/A. 低速外设接口/B-A.1.2_PWM脉宽调制.md
-              - B-A.1.3 ADC模数转换: B. 总线协议/A. 低速外设接口/B-A.1.3_ADC模数转换.md
-              - B-A.1.4 DAC与基础外设选型: B. 总线协议/A. 低速外设接口/B-A.1.4_DAC与基础外设选型.md
-              - B-A.1.5 实战GPIO按键PWM呼吸灯与ADC采集: B. 总线协议/A. 低速外设接口/B-A.1.5_实战GPIO按键PWM呼吸灯与ADC采集.md
-          - A.2 I2C:
-              - B-A.2.1 I2C物理层与电气特性: B. 总线协议/A. 低速外设接口/B-A.2.1_I2C物理层与电气特性.md
-              - B-A.2.2 I2C协议层与帧格式: B. 总线协议/A. 低速外设接口/B-A.2.2_I2C协议层与帧格式.md
-              - B-A.2.3 I2C Linux驱动框架与SMBus: B. 总线协议/A. 低速外设接口/B-A.2.3_I2C Linux驱动框架与SMBus.md
-              - B-A.2.4 I2C调试工具与故障排查: B. 总线协议/A. 低速外设接口/B-A.2.4_I2C调试工具与故障排查.md
-              - B-A.2.5 实战AT24C02 EEPROM端到端读写: B. 总线协议/A. 低速外设接口/B-A.2.5_实战AT24C02_EEPROM端到端读写.md
-          - A.3 SPI:
-              - B-A.3.1 SPI物理层与四种模式: B. 总线协议/A. 低速外设接口/B-A.3.1_SPI物理层与四种模式.md
-              - B-A.3.2 SPI协议层与时序: B. 总线协议/A. 低速外设接口/B-A.3.2_SPI协议层与时序.md
-              - B-A.3.3 SPI Linux驱动框架: B. 总线协议/A. 低速外设接口/B-A.3.3_SPI Linux驱动框架.md
-              - B-A.3.4 SPI调试与选型: B. 总线协议/A. 低速外设接口/B-A.3.4_SPI调试与选型.md
-          - A.4 UART:
-              - B-A.4.1 UART物理层与协议: B. 总线协议/A. 低速外设接口/B-A.4.1_UART物理层与协议.md
-              - B-A.4.2 UART Linux驱动与调试: B. 总线协议/A. 低速外设接口/B-A.4.2_UART Linux驱动与调试.md
-              - B-A.4.3 RS-485与Modbus协议: B. 总线协议/A. 低速外设接口/B-A.4.3_RS-485与Modbus协议.md
-          - A.5 I3C:
-              - B-A.5.1 I3C物理层与I2C演进: B. 总线协议/A. 低速外设接口/B-A.5.1_I3C物理层与I2C演进.md
-              - B-A.5.2 I3C协议层与CCC命令: B. 总线协议/A. 低速外设接口/B-A.5.2_I3C协议层与CCC命令.md
-              - B-A.5.3 I3C Linux驱动与调试: B. 总线协议/A. 低速外设接口/B-A.5.3_I3C Linux驱动与调试.md
-      - B. 中高速外设与存储:
-          - B.6 USB:
-              - B-B.6.1 USB物理层与拓扑: B. 总线协议/B. 中高速外设与存储/B-B.6.1_USB物理层与拓扑.md
-              - B-B.6.2 USB枚举与描述符: B. 总线协议/B. 中高速外设与存储/B-B.6.2_USB枚举与描述符.md
-              - B-B.6.3 USB Linux Host驱动: B. 总线协议/B. 中高速外设与存储/B-B.6.3_USB Linux Host驱动.md
-              - B-B.6.4 USB Gadget模式与ConfigFS: B. 总线协议/B. 中高速外设与存储/B-B.6.4_USB Gadget模式与ConfigFS.md
-          - B.7 存储接口:
-              - B-B.7.1 eMMC协议深度解析: B. 总线协议/B. 中高速外设与存储/B-B.7.1_eMMC协议深度解析.md
-              - B-B.7.2 eMMC Linux驱动与SD卡: B. 总线协议/B. 中高速外设与存储/B-B.7.2_eMMC Linux驱动与SD卡.md
-              - B-B.7.3 UFS闪存: B. 总线协议/B. 中高速外设与存储/B-B.7.3_UFS闪存.md
-              - B-B.7.4 SPI NAND与QSPI: B. 总线协议/B. 中高速外设与存储/B-B.7.4_SPI_NAND与QSPI.md
-          - B.8 MIPI显示与摄像:
-              - B-B.8.1 MIPI D-PHY物理层: B. 总线协议/B. 中高速外设与存储/B-B.8.1_MIPI_D-PHY物理层.md
-              - B-B.8.2 MIPI CSI-2协议层与V4L2: B. 总线协议/B. 中高速外设与存储/B-B.8.2_MIPI_CSI-2协议层与V4L2.md
-              - B-B.8.3 MIPI DSI协议层与DRM: B. 总线协议/B. 中高速外设与存储/B-B.8.3_MIPI_DSI协议层与DRM.md
-              - B-B.8.4 LVDS/eDP/HDMI/DisplayPort: B. 总线协议/B. 中高速外设与存储/B-B.8.4_LVDS_eDP_HDMI_DisplayPort.md
-      - C. 专用网络总线:
-          - C.9 CAN总线:
-              - B-C.9.1 CAN FD物理层与帧格式: B. 总线协议/C. 专用网络总线/B-C.9.1_CAN FD物理层与帧格式.md
-              - B-C.9.2 CAN FD协议层与错误处理: B. 总线协议/C. 专用网络总线/B-C.9.2_CAN FD协议层与错误处理.md
-              - B-C.9.3 CAN FD Linux驱动与SocketCAN: B. 总线协议/C. 专用网络总线/B-C.9.3_CAN FD Linux驱动与SocketCAN.md
-              - B-C.9.4 CANopen协议对象字典与NMT: B. 总线协议/C. 专用网络总线/B-C.9.4_CANopen协议对象字典与NMT.md
-              - B-C.9.5 CANopen PDO/SDO与Linux驱动: B. 总线协议/C. 专用网络总线/B-C.9.5_CANopen_PDO_SDO与Linux驱动.md
-          - C.10 工业以太网:
-              - B-C.10.2 EtherCAT协议深度解析: B. 总线协议/C. 专用网络总线/B-C.10.2_EtherCAT协议深度解析.md
-              - B-C.10.3 EtherCAT分布式时钟与Linux驱动: B. 总线协议/C. 专用网络总线/B-C.10.3_EtherCAT分布式时钟与Linux驱动.md
-              - B-C.10.4 PROFINET与OPC UA: B. 总线协议/C. 专用网络总线/B-C.10.4_PROFINET与OPC_UA.md
-          - C.11 PCIe:
-              - B-C.11.1 PCIe基础与物理层: B. 总线协议/C. 专用网络总线/B-C.11.1_PCIe基础与物理层.md
-              - B-C.11.2 PCIe枚举与配置空间: B. 总线协议/C. 专用网络总线/B-C.11.2_PCIe枚举与配置空间.md
-              - B-C.11.3 PCIe Linux驱动与DMA: B. 总线协议/C. 专用网络总线/B-C.11.3_PCIe Linux驱动与DMA.md
-          - C.12 音频总线:
-              - B-C.12.1 I2S与PCM物理层: B. 总线协议/C. 专用网络总线/B-C.12.1_I2S与PCM物理层.md
-              - B-C.12.2 I2S Linux驱动与ALSA: B. 总线协议/C. 专用网络总线/B-C.12.2_I2S Linux驱动与ALSA.md
-              - B-C.12.3 SPDIF与音频接口选型: B. 总线协议/C. 专用网络总线/B-C.12.3_SPDIF与音频接口选型.md
+      - A. 片内总线认知:
+          - A.1 片内总线:
+              - B-A.1.1 APB/AHB/AXI/TileLink概念认知: B. 总线协议/A. 片内总线认知/B-A.1.1_APB_AHB_AXI_TileLink概念认知.md
+              - B-A.1.2 AXI深入与NoC片上网络: B. 总线协议/A. 片内总线认知/B-A.1.2_AXI深入与NoC片上网络.md
+              - B-A.1.3 CHI与UCIe互连: B. 总线协议/A. 片内总线认知/B-A.1.3_CHI与UCIe互连.md
+      - B. 低速外设接口:
+          - B.2 GPIO/PWM/ADC/DAC:
+              - B-B.2.1 GPIO通用输入输出: B. 总线协议/B. 低速外设接口/B-B.2.1_GPIO通用输入输出.md
+              - B-B.2.2 PWM脉宽调制: B. 总线协议/B. 低速外设接口/B-B.2.2_PWM脉宽调制.md
+              - B-B.2.3 ADC模数转换: B. 总线协议/B. 低速外设接口/B-B.2.3_ADC模数转换.md
+              - B-B.2.4 DAC与基础外设选型: B. 总线协议/B. 低速外设接口/B-B.2.4_DAC与基础外设选型.md
+              - B-B.2.5 实战GPIO按键PWM呼吸灯与ADC采集: B. 总线协议/B. 低速外设接口/B-B.2.5_实战GPIO按键PWM呼吸灯与ADC采集.md
+          - B.3 I2C:
+              - B-B.3.1 I2C物理层与电气特性: B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md
+              - B-B.3.2 I2C协议层与帧格式: B. 总线协议/B. 低速外设接口/B-B.3.2_I2C协议层与帧格式.md
+              - B-B.3.3 I2C Linux驱动框架与SMBus: B. 总线协议/B. 低速外设接口/B-B.3.3_I2C Linux驱动框架与SMBus.md
+              - B-B.3.4 I2C调试工具与故障排查: B. 总线协议/B. 低速外设接口/B-B.3.4_I2C调试工具与故障排查.md
+              - B-B.3.5 实战AT24C02 EEPROM端到端读写: B. 总线协议/B. 低速外设接口/B-B.3.5_实战AT24C02_EEPROM端到端读写.md
+          - B.4 SPI:
+              - B-B.4.1 SPI物理层与四种模式: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md
+              - B-B.4.2 SPI协议层与时序: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md
+              - B-B.4.3 SPI Linux驱动框架: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md
+              - B-B.4.4 SPI调试与选型: B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md
+              - B-B.4.5 实战W25Qxx SPI NOR Flash端到端: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md
+          - B.5 UART:
+              - B-B.5.1 UART物理层与协议: B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与协议.md
+              - B-B.5.2 UART Linux驱动与调试: B. 总线协议/B. 低速外设接口/B-B.5.2_UART Linux驱动与调试.md
+              - B-B.5.3 RS-485与Modbus协议: B. 总线协议/B. 低速外设接口/B-B.5.3_RS-485与Modbus协议.md
+              - B-B.5.4 实战NEO-6M GPS数据读取与解析: B. 总线协议/B. 低速外设接口/B-B.5.4_实战NEO-6M_GPS数据读取与解析.md
+          - B.6 I3C:
+              - B-B.6.1 I3C物理层与I2C演进: B. 总线协议/B. 低速外设接口/B-B.6.1_I3C物理层与I2C演进.md
+              - B-B.6.2 I3C协议层与CCC命令: B. 总线协议/B. 低速外设接口/B-B.6.2_I3C协议层与CCC命令.md
+              - B-B.6.3 I3C Linux驱动与调试: B. 总线协议/B. 低速外设接口/B-B.6.3_I3C Linux驱动与调试.md
+              - B-B.6.4 I3C深化错误恢复多主Hub与生态选型: B. 总线协议/B. 低速外设接口/B-B.6.4_I3C深化错误恢复多主Hub与生态选型.md
+      - C. 中高速外设与存储:
+          - C.7 USB:
+              - B-C.7.1 USB物理层与拓扑: B. 总线协议/C. 中高速外设与存储/B-C.7.1_USB物理层与拓扑.md
+              - B-C.7.2 USB枚举与描述符: B. 总线协议/C. 中高速外设与存储/B-C.7.2_USB枚举与描述符.md
+              - B-C.7.3 USB Linux Host驱动: B. 总线协议/C. 中高速外设与存储/B-C.7.3_USB Linux Host驱动.md
+              - B-C.7.4 USB Gadget模式与ConfigFS: B. 总线协议/C. 中高速外设与存储/B-C.7.4_USB Gadget模式与ConfigFS.md
+          - C.8 存储接口:
+              - B-C.8.1 eMMC协议深度解析: B. 总线协议/C. 中高速外设与存储/B-C.8.1_eMMC协议深度解析.md
+              - B-C.8.2 eMMC Linux驱动与SD卡: B. 总线协议/C. 中高速外设与存储/B-C.8.2_eMMC Linux驱动与SD卡.md
+              - B-C.8.3 UFS闪存: B. 总线协议/C. 中高速外设与存储/B-C.8.3_UFS闪存.md
+              - B-C.8.4 SPI NAND与QSPI: B. 总线协议/C. 中高速外设与存储/B-C.8.4_SPI_NAND与QSPI.md
+          - C.9 MIPI显示与摄像:
+              - B-C.9.1 MIPI D-PHY物理层: B. 总线协议/C. 中高速外设与存储/B-C.9.1_MIPI_D-PHY物理层.md
+              - B-C.9.2 MIPI CSI-2协议层与V4L2: B. 总线协议/C. 中高速外设与存储/B-C.9.2_MIPI_CSI-2协议层与V4L2.md
+              - B-C.9.3 MIPI DSI协议层与DRM: B. 总线协议/C. 中高速外设与存储/B-C.9.3_MIPI_DSI协议层与DRM.md
+              - B-C.9.4 LVDS/eDP/HDMI/DisplayPort: B. 总线协议/C. 中高速外设与存储/B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md
+      - D. 专用网络总线:
+          - D.10 PCIe:
+              - B-D.10.1 PCIe基础与物理层: B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层.md
+              - B-D.10.2 PCIe枚举与配置空间: B. 总线协议/D. 专用网络总线/B-D.10.2_PCIe枚举与配置空间.md
+              - B-D.10.3 PCIe Linux驱动与DMA: B. 总线协议/D. 专用网络总线/B-D.10.3_PCIe Linux驱动与DMA.md
+          - D.11 CAN总线:
+              - B-D.11.1 CAN FD物理层与帧格式: B. 总线协议/D. 专用网络总线/B-D.11.1_CAN FD物理层与帧格式.md
+              - B-D.11.2 CAN FD协议层与错误处理: B. 总线协议/D. 专用网络总线/B-D.11.2_CAN FD协议层与错误处理.md
+              - B-D.11.3 CAN FD Linux驱动与SocketCAN: B. 总线协议/D. 专用网络总线/B-D.11.3_CAN FD Linux驱动与SocketCAN.md
+              - B-D.11.4 CANopen协议对象字典与NMT: B. 总线协议/D. 专用网络总线/B-D.11.4_CANopen协议对象字典与NMT.md
+              - B-D.11.5 CANopen PDO/SDO与Linux驱动: B. 总线协议/D. 专用网络总线/B-D.11.5_CANopen_PDO_SDO与Linux驱动.md
+          - D.12 工业以太网:
+              - B-D.12.2 EtherCAT协议深度解析: B. 总线协议/D. 专用网络总线/B-D.12.2_EtherCAT协议深度解析.md
+              - B-D.12.3 EtherCAT分布式时钟与Linux驱动: B. 总线协议/D. 专用网络总线/B-D.12.3_EtherCAT分布式时钟与Linux驱动.md
+              - B-D.12.4 PROFINET与OPC UA: B. 总线协议/D. 专用网络总线/B-D.12.4_PROFINET与OPC_UA.md
+          - D.13 音频总线:
+              - B-D.13.1 I2S与PCM物理层: B. 总线协议/D. 专用网络总线/B-D.13.1_I2S与PCM物理层.md
+              - B-D.13.2 I2S Linux驱动与ALSA: B. 总线协议/D. 专用网络总线/B-D.13.2_I2S Linux驱动与ALSA.md
+              - B-D.13.3 SPDIF与音频接口选型: B. 总线协议/D. 专用网络总线/B-D.13.3_SPDIF与音频接口选型.md
       - E. 综合实战:
-          - E.14 行业实战:
-              - B-E.14.1 六轴协作机械臂多总线协同: B. 总线协议/E. 综合实战/B-E.14.1_六轴协作机械臂多总线协同.md
-              - B-E.14.2 移动机器人AGV总线方案: B. 总线协议/E. 综合实战/B-E.14.2_移动机器人AGV总线方案.md
+          - E.15 行业实战:
+              - B-E.15.1 六轴协作机械臂多总线协同: B. 总线协议/E. 综合实战/B-E.15.1_六轴协作机械臂多总线协同.md
+              - B-E.15.2 移动机器人AGV总线方案: B. 总线协议/E. 综合实战/B-E.15.2_移动机器人AGV总线方案.md
       - 知识图谱:
           - B.99 知识图谱: B. 总线协议/知识图谱/B.99_知识图谱.md
   - C. 专用技术与前沿趋势:

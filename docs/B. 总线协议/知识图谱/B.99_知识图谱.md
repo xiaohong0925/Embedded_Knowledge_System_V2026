@@ -18,7 +18,7 @@
 flowchart TB
     subgraph BA["B-A 低速外设接口（264-300）"]
         direction TB
-        subgraph BA1["B-A.1 基础外设（264-271）"]
+        subgraph BA1["B-B.2 基础外设（264-271）"]
             B264["264 GPIO寄存器操作"]
             B265["265 GPIO中断与消抖"]
             B266["266 GPIO设备树配置"]
@@ -28,7 +28,7 @@ flowchart TB
             B270["270 ADC基础与采样"]
             B271["271 看门狗定时器"]
         end
-        subgraph BA2["B-A.2 I2C+1-Wire（272-280）"]
+        subgraph BA2["B-B.3 I2C+1-Wire（272-280）"]
             B272["272 I2C协议时序"]
             B273["273 I2C设备地址与寻址"]
             B274["274 I2C设备驱动模型"]
@@ -39,7 +39,7 @@ flowchart TB
             B279["279 1-Wire协议基础"]
             B280["280 DS18B20驱动"]
         end
-        subgraph BA3["B-A.3 SPI（281-288）"]
+        subgraph BA3["B-B.4 SPI（281-288）"]
             B281["281 SPI协议时序与模式"]
             B282["282 SPI设备树配置"]
             B283["283 SPI驱动框架"]
@@ -49,7 +49,7 @@ flowchart TB
             B287["287 SPI触摸屏驱动"]
             B288["288 SPI性能优化"]
         end
-        subgraph BA4["B-A.4 UART+RS-485（289-294）"]
+        subgraph BA4["B-B.5 UART+RS-485（289-294）"]
             B289["289 UART协议与帧格式"]
             B290["290 UART驱动与termios"]
             B291["291 UART设备树配置"]
@@ -57,7 +57,7 @@ flowchart TB
             B293["293 UART DMA传输"]
             B294["294 UART调试控制台"]
         end
-        subgraph BA5["B-A.5 I3C（295-300）"]
+        subgraph BA5["B-B.6 I3C（295-300）"]
             B295["295 I3C协议概述"]
             B296["296 I3C动态地址分配"]
             B297["297 I3C设备树配置"]
@@ -69,7 +69,7 @@ flowchart TB
 
     subgraph BB["B-B 中高速外设与存储（301-315）"]
         direction TB
-        subgraph BB6["B-B.6 USB（301-308）"]
+        subgraph BB6["B-C.7 USB（301-308）"]
             B301["301 USB拓扑与枚举"]
             B302["302 USB描述符解析"]
             B303["303 USB Gadget模式"]
@@ -79,7 +79,7 @@ flowchart TB
             B307["307 USB摄像头UVC"]
             B308["308 USB转串口CDC-ACM"]
         end
-        subgraph BB7["B-B.7 存储（309-315）"]
+        subgraph BB7["B-C.8 存储（309-315）"]
             B309["309 eMMC协议与分区"]
             B310["310 eMMC设备树配置"]
             B311["311 SD卡协议与检测"]
@@ -92,10 +92,10 @@ flowchart TB
 
     subgraph BC["B-C 专用网络总线（概述性章节）"]
         direction TB
-        BC9["B-C.9 CAN FD+CANopen"]
-        BC10["B-C.10 工业总线（EtherCAT/Profinet）"]
-        BC11["B-C.11 PCIe"]
-        BC12["B-C.12 音频（I2S/PDM）"]
+        BC9["B-D.11 CAN FD+CANopen"]
+        BC10["B-D.12 工业总线（EtherCAT/Profinet）"]
+        BC11["B-D.10 PCIe"]
+        BC12["B-D.13 音频（I2S/PDM）"]
     end
 
     subgraph BD["B-D 片内总线（358-359）"]
@@ -212,24 +212,24 @@ flowchart TB
 ```mermaid
 flowchart LR
     subgraph INDUSTRIAL["工业控制场景"]
-        I2C["I2C（B-A.2）<br/>配置传感器/PMIC"]
-        SPI["SPI（B-A.3）<br/>连接触摸屏/Flash"]
-        CAN["CAN FD（B-C.9）<br/>电机控制总线"]
-        ETH["EtherCAT（B-C.10）<br/>主站通信"]
+        I2C["I2C（B-B.3）<br/>配置传感器/PMIC"]
+        SPI["SPI（B-B.4）<br/>连接触摸屏/Flash"]
+        CAN["CAN FD（B-D.11）<br/>电机控制总线"]
+        ETH["EtherCAT（B-D.12）<br/>主站通信"]
     end
 
     subgraph DISPLAY["显示多媒体场景"]
-        MIPI["MIPI DSI（B-B.8）<br/>LCD显示"]
-        I2S["I2S/PDM（B-C.12）<br/>音频传输"]
-        USB_UVC["USB UVC（B-B.6）<br/>摄像头"]
-        GPU["GPU/DRM（B-B.8）<br/>图形渲染"]
+        MIPI["MIPI DSI（B-C.9）<br/>LCD显示"]
+        I2S["I2S/PDM（B-D.13）<br/>音频传输"]
+        USB_UVC["USB UVC（B-C.7）<br/>摄像头"]
+        GPU["GPU/DRM（B-C.9）<br/>图形渲染"]
     end
 
     subgraph STORAGE["存储扩展场景"]
-        EMMC["eMMC（B-B.7）<br/>板载存储"]
-        NVME["NVMe（B-B.7）<br/>高速SSD"]
-        PCIE["PCIe（B-C.11）<br/>扩展插槽"]
-        USB_MSC["USB MSC（B-B.6）<br/>外接U盘"]
+        EMMC["eMMC（B-C.8）<br/>板载存储"]
+        NVME["NVMe（B-C.8）<br/>高速SSD"]
+        PCIE["PCIe（B-D.10）<br/>扩展插槽"]
+        USB_MSC["USB MSC（B-C.7）<br/>外接U盘"]
     end
 
     subgraph CORE["片内核心"]
@@ -460,11 +460,11 @@ flowchart LR
 
 如果你完成了全部自测题且正确率≥80%，恭喜你，可以进入**第三部 驱动实战**——把协议知识转化为真实可运行的内核代码。如果某些题目做错了，别急着前进，回到对应知识点复习：
 
-- I2C/SPI/UART选型题（Q1/Q6）错 → 重温 B-A.2、B-A.3、B-A.4；
-- CAN FD帧格式（Q2）错 → 查看 B-C.9 相关章节；
-- MIPI Lane带宽（Q3）错 → 复习 B-B.8 显示接口部分；
-- EtherCAT飞读飞写（Q4）错 → 深入 B-C.10 工业总线；
-- PCIe BAR（Q5）错 → 回看 B-C.11 PCIe 配置空间；
+- I2C/SPI/UART选型题（Q1/Q6）错 → 重温 B-B.3、B-B.4、B-B.5；
+- CAN FD帧格式（Q2）错 → 查看 B-D.11 相关章节；
+- MIPI Lane带宽（Q3）错 → 复习 B-C.9 显示接口部分；
+- EtherCAT飞读飞写（Q4）错 → 深入 B-D.12 工业总线；
+- PCIe BAR（Q5）错 → 回看 B-D.10 PCIe 配置空间；
 - 简答题（Q6-Q10）答不完整 → 这是正常现象，简答题覆盖的知识点需要实际项目历练才能完全掌握，建议先进入第三部边写边理解。
 
 ---
@@ -484,6 +484,6 @@ flowchart LR
 
 > 💡 **提示**：建议把这54个知识点的速查表打印出来贴在工位前，遇到总线问题时先扫一眼定位范围，再深入查文档。
 >
-> ⚠️ **陷阱**：知识图谱中的学习路径是"建议顺序"而非"铁律"。如果你正在做一个纯CAN总线项目，完全可以直接从B-C.9开始，有需要时再回查B-A的基础内容。
+> ⚠️ **陷阱**：知识图谱中的学习路径是"建议顺序"而非"铁律"。如果你正在做一个纯CAN总线项目，完全可以直接从B-D.11开始，有需要时再回查B-A的基础内容。
 >
 > 🔴 **危险**：总线调试中最容易犯的错误是**时序不匹配**——SPI模式（CPOL/CPHA）配错、UART波特率偏差>2%、I2C上拉电阻过大导致上升沿过缓。养成先用逻辑分析仪抓波形的习惯，能避免80%的"通信不通"问题。

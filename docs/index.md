@@ -92,10 +92,10 @@
 ??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年6月8日</span>"
     | 章节 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
     |------|---------|------|------------|------------|
-    | A. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | B. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | C. 专用网络总线 | CAN/CANopen、EtherCAT、PCIe、I2S | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | D. 片内总线认知 | APB/AHB/AXI/TileLink | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+    | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+    | D. 专用网络总线 | PCIe、CAN/CANopen、EtherCAT、I2S | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
     | E. 综合实战 | 机械臂多总线协同、AGV总线方案 | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
 
     **[→ 进入B扩展目录](B.%20总线协议/README.md)**

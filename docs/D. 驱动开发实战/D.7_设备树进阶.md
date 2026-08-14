@@ -33,7 +33,7 @@
 2. **bool 不用 read_u32 模拟**：`of_property_read_bool` 按"存在性"判定，写 `flag = <0>` 也是真。反过来，需要三态（开/关/未配置）时不能用 bool，要 read_u32 + 查返回值
 3. **phandle 引用有计数**：`of_parse_phandle` 拿到的节点带引用计数，remove 或错误路径漏 `of_node_put` 就是节点泄漏——DT overlay 卸载时会被这些悬挂引用卡住
 
-GPIO 的新旧两条路：`of_get_named_gpio` 返回全局编号的老接口只用于维护老代码；新驱动用 `devm_gpiod_get(&dev, "reset", GPIOD_OUT_LOW)` 系列——描述符式 API 自带 devm 托管、极性处理和设备树 `-gpios` 属性约定，B-A.1.1 有 GPIO 子系统的完整背景。
+GPIO 的新旧两条路：`of_get_named_gpio` 返回全局编号的老接口只用于维护老代码；新驱动用 `devm_gpiod_get(&dev, "reset", GPIOD_OUT_LOW)` 系列——描述符式 API 自带 devm 托管、极性处理和设备树 `-gpios` 属性约定，B-B.2.1 有 GPIO 子系统的完整背景。
 
 ---
 
