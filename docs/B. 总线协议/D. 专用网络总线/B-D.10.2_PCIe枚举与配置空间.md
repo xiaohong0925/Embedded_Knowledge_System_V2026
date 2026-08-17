@@ -1,462 +1,315 @@
-# B-D.10.2 PCIe枚举与配置空间
+# B-D.10.2 PCIe 枚举与配置空间
 
-> 所属章节：第五部 B. 总线协议 > B-D.10 PCIe总线
+> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
 >
-> 难度：[E] Expert / [M] Master | 预计阅读时间：35分钟
+> 难度：[I] Intermediate ~ [M] Master | 预计阅读时间：45 分钟
 
 ## <span class="blue"> 本节导读
 
-上一节我们了解了PCIe的物理层和链路训练，但那只是"修路"的过程。路修好了，CPU怎么才能知道这条路上连了哪些设备、各自需要什么资源？这就是**枚举（Enumeration）**和**配置空间（Configuration Space）**要解决的问题。
+10.1 讲了链路怎么修通——但链路通只是物理层就绪。CPU 复位后面对的是一片黑暗：不知道 PCIe 域里插了什么设备、每个设备要多少内存地址空间、设备的中断怎么递过来。把这片黑暗点亮的过程叫**枚举（Enumeration）**，承载这一切信息的标准化存储结构叫**配置空间（Configuration Space）**。
 
-本节你将深入理解：
+这两个机制是 PCIe 软件世界的大门：驱动的 `probe()` 拿到的资源是枚举阶段分配好的，`lspci` 显示的每一行都来自配置空间，设备树里 PCIe 节点的 `ranges` 属性描述的就是配置空间与 MMIO 的地址翻译关系。看不懂配置空间，写 PCIe 驱动就是在背 API；看懂了，驱动代码里每个函数调用都能对应到硬件动作。
 
-- Root Complex如何从零开始扫描整个PCIe拓扑树
-- BDF（Bus/Device/Function Number）寻址体系的本质
-- 配置空间的256字节/4KB布局结构
-- BAR（Base Address Register）的机制与陷阱
-- Capability链表的遍历方法
+本篇不要求任何背景，所有术语就地解释。工具一节给出 `lspci -vvv` 完整真实输出的逐段解读——读完后你应该能把任何一个字段反查到配置空间的具体偏移。
 
-枚举是PCIe体系中最精妙的设计之一——它是一套**自描述、自配置**的协议，让操作系统无需硬编码就能识别任意PCIe设备。
+本节覆盖：枚举为什么存在、BDF 寻址体系、Root Complex 深度优先扫描全过程、Type 0/1 Header 布局与关键寄存器、BAR 的机制与探测原理、Capability 链表与 MSI/MSI-X 的寄存器面、lspci/setpci/sysfs 三个工具面。
 
 ---
 
-## <span class="blue"> 知识点348：PCIe枚举与BDF寻址 [E][M]
+## <span class="blue"> 为什么需要枚举：PCI 时代的血泪史
 
-### 为什么需要枚举
+枚举要解决的问题，放在 PCI 时代看得最清楚。上世纪九十年代的 PCI 扩展卡需要用户手动设置跳线或拨码开关来选择 I/O 地址和 IRQ 中断号——两块卡选了同一个 IRQ，系统就随机死机。装卡之前要查手册、记已占用的资源、祈祷不冲突。
 
-想象一下，你刚启动一块全新的ARM开发板，PCIe插槽上插着NVMe SSD和USB扩展卡。CPU复位后，它对这些设备一无所知——不知道存在什么设备，不知道需要多少内存，不知道中断需求。枚举就是CPU" census（人口普查）"的过程。
+根治办法是让资源分配从"人肉静态配置"变成"系统启动时自动发现、自动分配"：
 
-### 枚举的发起者：Root Complex
+1. **发现**：扫描所有可能的设备位置，读出"我是谁、我需要什么"；
+2. **分配**：统筹所有设备的地址需求，给每个设备分一段不冲突的地址空间，写回设备；
+3. **交接**：把分配结果交给操作系统，驱动按图索骥。
 
-在PCIe拓扑中，**Root Complex（RC）**是绝对的"根"。它内部包含一个Host Bridge，负责：
-
-1. 发起配置读写请求（CfgRd0/CfgRd1、CfgWr0/CfgWr1）
-2. 将CPU的MMIO访问转换为PCIe事务层包（TLP）
-3. 管理整个PCIe域的地址映射
-
-枚举正是由RC在系统初始化阶段（UEFI/BIOS或Linux内核早期）主动发起的。
-
-### 枚举过程：深度优先扫描
-
-枚举的核心算法是**深度优先搜索（DFS）**。RC从Bus 0开始，逐层向下探测：
-
-```
-阶段1：RC发现Root Port（总线0上的PCIe控制器）
-       → 给Root Port的Secondary Bus分配Bus号
-
-阶段2：扫描新Bus上的所有Device（0-31号设备槽位）
-       → 对每个Device，读取Vendor ID
-       → 若Vendor ID != 0xFFFF，说明设备存在
-
-阶段3：发现Switch/Bridge
-       → 为其下游分配新的Bus号
-       → 递归进入新Bus继续扫描
-
-阶段4：发现Endpoint（如NVMe、网卡）
-       → 记录其BDF、BAR需求、中断信息
-
-阶段5：分配资源
-       → 根据所有BAR的大小总和分配MMIO/I/O空间
-       → 写入BAR基地址
-       → 配置Command寄存器使能设备
-```
-
-BDF编码是16位的：
-
-```
-[15:8]  Bus Number    (8bit)  → 最多256条总线
-[ 7:3]  Device Number (5bit)  → 每条总线最多32个设备
-[ 2:0]  Function Number (3bit) → 每个设备最多8个功能
-```
-
-一个典型的嵌入式系统拓扑：
-
-```
-0000:00:00.0  Root Complex（RC本身，通常不显示）
-├── 00:01.0  Root Port 0  ──→ Bus 1
-│                              └── 01:00.0  NVMe SSD（Endpoint）
-└── 00:02.0  Root Port 1  ──→ Bus 2
-                               └── 02:00.0  PCIe Switch
-                                   ├── 03:00.0  USB 3.0控制器
-                                   └── 04:00.0  千兆网卡
-```
-
-### 配置空间的层级结构
-
-每个PCIe功能（Function）都包含一份配置空间，分为三个区域：
-
-| 区域 | 偏移范围 | 大小 | 说明 |
-|:---:|:---:|:---:|:---|
-| **Header** | 0x00 - 0x3F | 64字节 | 所有PCI/PCIe设备必须实现 |
-| **Capability链表** | 0x40 - 0xFF | 192字节 | 标准Capability结构 |
-| **Extended Capability链表** | 0x100 - 0xFFF | 3.75KB | PCIe扩展Capability |
-
-配置空间的访问方式有两种：
-
-- **Configuration Access Type 0**：用于访问**同一总线**上的目标设备（目标Bus = 当前Bus）
-- **Configuration Access Type 1**：用于通过Bridge访问**下游总线**的设备（目标Bus ≠ 当前Bus）
-
-Bridge收到Type 1请求后，如果目标Bus在其Secondary/Subordinate范围内，会将其转换为Type 0转发给下游设备。
+PCIe 完整继承了这套"即插即用"模型，并把发现手段标准化为配置空间——**每个设备在上电时就自带一份统一格式的自述档案**，放在固定地址，等 RC 来读。系统不需要任何硬编码的设备清单，就能识别一张从未见过的卡。这是 PCIe 生态二十年不坠的根基。
 
 ---
 
-## <span class="blue"> 知识点349：关键寄存器与Capability链表 [E][M]
+## <span class="blue"> BDF 寻址：每个设备的身份证号
 
-### 配置空间Header布局
+> 枚举：系统启动时由 Root Complex 发起，扫描整个 PCIe 拓扑、为每个设备分配总线号与地址资源、建立"物理插了什么 ↔ 软件看到什么"映射的过程。在 x86 上由 BIOS/UEFI 与内核接力完成，在嵌入式 Linux 上主要由内核 PCI 子系统在启动早期完成。
 
-PCIe配置空间的前64字节Header分为Type 0（Endpoint）和Type 1（Bridge/Switch）两种格式。以下是Type 0 Header的完整布局：
+枚举的成果是给每个设备功能发一个唯一地址——BDF：
 
-### 表格：PCIe配置空间布局（Type 0 Header）
+> BDF（Bus:Device.Function）：PCIe 设备的三段式地址，共 16 位。Bus（8 位，0~255）是总线号，标识设备挂在哪条总线段上；Device（5 位，0~31）是该总线上的设备槽位号；Function（3 位，0~7）是设备内部的功能号——一块双口网卡是一个 Device、两个 Function，各自拥有独立的配置空间。
 
-| 偏移 | 大小 | 字段名 | 说明 |
-|:---:|:---:|:---|:---|
-| 0x00 | 2B | **Vendor ID** | 厂商标识，如0x8086=Intel，0x10EC=Realtek |
-| 0x02 | 2B | **Device ID** | 设备标识，由厂商定义 |
-| 0x04 | 2B | Command | 设备全局控制位（IO/Memory Space使能、Bus Master等） |
-| 0x06 | 2B | Status | 设备状态位（中断状态、能力链表存在位等） |
-| 0x08 | 1B | Revision ID | 设备版本号 |
-| 0x09 | 3B | Class Code | 设备类别码：[23:16]=Base Class，[15:8]=Sub Class，[7:0]=Interface |
-| 0x0C | 1B | Cache Line Size | 缓存行大小（以32字节为单位） |
-| 0x0D | 1B | Latency Timer | 传统PCI保留，PCIe中写0 |
-| 0x0E | 1B | Header Type | [7]=多功能设备标志，[6:0]=Header类型（0=Type0，1=Type1） |
-| 0x0F | 1B | BIST | 内建自测寄存器 |
-| 0x10 | 4B | **BAR0** | 基址寄存器0 |
-| 0x14 | 4B | **BAR1** | 基址寄存器1（或BAR0的高32位） |
-| 0x18 | 4B | **BAR2** | 基址寄存器2 |
-| 0x1C | 4B | **BAR3** | 基址寄存器3（或BAR2的高32位） |
-| 0x20 | 4B | **BAR4** | 基址寄存器4 |
-| 0x24 | 4B | **BAR5** | 基址寄存器5（或BAR4的高32位） |
-| 0x28 | 4B | CardBus CIS Pointer | CardBus指针，PCIe不使用 |
-| 0x2C | 2B | Subsystem Vendor ID | 子系统厂商ID |
-| 0x2E | 2B | Subsystem Device ID | 子系统设备ID |
-| 0x30 | 4B | Expansion ROM Base | 扩展ROM基址 |
-| 0x34 | 1B | **Capabilities Pointer** | 指向第一个Capability的偏移 |
-| 0x35-0x3B | - | Reserved | 保留 |
-| 0x3C | 1B | Interrupt Line | 连接的中断线（PIC模式下的IRQ号） |
-| 0x3D | 1B | Interrupt Pin | 中断引脚（1=INTA#，2=INTB#，3=INTC#，4=INTD#） |
-| 0x3E | 2B | Min/Max Grant | 传统PCI保留，PCIe中写0 |
-
-### 表格：关键寄存器功能速查
-
-| 寄存器 | 偏移 | 功能 | 典型值/位定义 |
-|:---:|:---:|:---|:---|
-| Vendor ID | 0x00 | 标识设备厂商 | 0x8086(Intel), 0x10EC(Realtek), 0x144D(Samsung) |
-| Device ID | 0x02 | 标识具体设备 | 厂商自定义，如0xA808=Intel AX210 WiFi |
-| Class Code | 0x08 | 设备功能类别 | 0x010802=NVMe，0x020000=以太网，0x030200=3D显卡 |
-| Command | 0x04 | 使能各种功能 | Bit0=IO Space，Bit1=Memory Space，Bit2=Bus Master |
-| Status | 0x06 | 反映设备状态 | Bit4=Capabilities List存在，Bit3=中断状态 |
-| BAR0-5 | 0x10-0x24 | 请求MMIO/I/O空间 | 低4位为属性位，高28/60位为可编程地址 |
-| Cap Ptr | 0x34 | Capability链表头指针 | 指向0x40-0xFF范围内的偏移 |
-
-### Class Code的编码规则
-
-Class Code是操作系统识别设备类型的关键。3字节分别代表：
-
-```
-Class Code = [Base Class : Sub Class : Interface]
-
-0x01 0000  → Mass Storage / SCSI
-0x01 0001  → Mass Storage / IDE
-0x01 0006  → Mass Storage / Serial ATA（AHCI）
-0x01 0008  → Mass Storage / NVMe
-0x02 0000  → Network / Ethernet
-0x02 0080  → Network / Other（无线网卡常在此）
-0x03 0000  → Display / VGA
-0x03 0002  → Display / 3D Controller
-0x0C 0330  → Serial Bus / USB / XHCI
+```text
+[15:8]  Bus Number    (8 bit)  → 最多 256 条总线段
+[ 7:3]  Device Number (5 bit)  → 每条总线段最多 32 个设备
+[ 2:0]  Function Number (3 bit)→ 每个设备最多 8 个功能
 ```
 
-Linux内核的`pci.ids`数据库就是靠Vendor ID + Device ID + Class Code来匹配驱动的。
-
-### BAR（Base Address Register）深度解析
-
-BAR是PCIe设备告诉系统"我需要多少地址空间"的机制。每个设备最多6个BAR，每个BAR可以是：
-
-- **32位MMIO空间**：BAR[0]=0，BAR[31:4]=基地址
-- **64位MMIO空间**：BAR0+BAR1组合，BAR0[2]=1表示64位，BAR1为高32位
-- **I/O空间**：BAR[0]=1，表示I/O端口空间（PCIe中基本淘汰）
-
-BAR的低4位是属性位：
-
-```
-Bit 0: 空间类型（0=Memory，1=I/O）
-Bit 1: 保留（Memory类型）或保留（I/O类型）
-Bit 2: Memory类型时（0=32位，1=64位）
-Bit 3: Prefetchable（0=不可预取，1=可预取）
-```
-
-### Capability链表结构
-
-PCIe设备通过Capability链表扩展功能。遍历方法：
-
-1. 读取Status寄存器Bit4，确认Capabilities List存在
-2. 从Capabilities Pointer（0x34）读取第一个Capability的偏移
-3. 每个Capability格式：`[Capability ID:8bit] | [Next Pointer:8bit] | [Data...]`
-4. Next Pointer为0x00表示链表结束
-
-### 表格：常见Capability链表
-
-| Capability | ID | 功能说明 |
-|:---:|:---:|:---|
-| Power Management | 0x01 | 电源管理状态（D0-D3hot/D3cold） |
-| AGP | 0x02 | 已淘汰的加速图形端口 |
-| VPD | 0x03 | Vital Product Data，存储序列号等信息 |
-| Slot Identification | 0x04 | PCI插槽标识 |
-| MSI | 0x05 | **Message Signaled Interrupts**，用内存写模拟中断 |
-| CompactPCI HotSwap | 0x06 | 热插拔支持 |
-| PCI-X | 0x07 | PCI-X扩展 |
-| HyperTransport | 0x08 | AMD HyperTransport |
-| Vendor Specific | 0x09 | 厂商自定义Capability |
-| Debug Port | 0x0A | EHCI调试端口 |
-| CompactPCI | 0x0B | CompactPCI中央资源控制 |
-| PCI Hot-Plug | 0x0C | PCI热插拔 |
-| PCI Bridge Subsystem ID | 0x0D | PCI桥子系统ID |
-| AGP 8x | 0x0E | AGP 8x扩展 |
-| Secure Device | 0x0F | 可信计算组功能 |
-| **PCIe Capability** | **0x10** | **PCIe核心Capability（链路状态、速度、宽度等）** |
-| **MSI-X** | **0x11** | **扩展Message Signaled Interrupts，支持多向量** |
-| SATA Data/Index Config | 0x12 | SATA配置 |
-| Advanced Features | 0x13 | PCI-SIG高级功能 |
-| Enhanced Allocation | 0x14 | 增强分配 |
-| Flattening Portal | 0x15 | FPB（已淘汰） |
-
-> 🔴 **危险**：BAR里写的地址是**PCI域地址**，不是CPU物理地址！
->
-> 在大多数简单系统中，PCI域地址空间被Root Complex直接映射到CPU物理地址空间（1:1映射），所以两者数值相同。但在复杂SoC（如某些ARM服务器芯片）中，Root Complex内部有一个**ATU（Address Translation Unit）**，负责将PCI域地址转换为CPU物理地址。
->
-> 在ATU存在的情况下，BAR里的地址加上ATU的偏移才等于CPU物理地址。写驱动时如果用`ioremap()`直接映射BAR地址，必须确认内核已经完成了这个转换——幸运的是，Linux的PCI子系统已经帮你处理好了，通过`pci_resource_start()`获取的地址就是CPU视角的地址。
-
-> 💡 **提示**：判断BAR大小的标准方法是：
-> ```
-> 1. 保存BAR的原始值
-> 2. 向BAR写入0xFFFFFFFF
-> 3. 读回BAR的值
-> 4. 取反并加1，得到BAR大小
-> 5. 恢复BAR原始值
-> ```
-> 例如：读回0xFFFF0003 → 取反=0x0000FFFC → +1=0x00010000 → BAR大小=64KB
-> 低2位的0x3是属性位（Memory空间+64位），不参与大小计算。
+`lspci` 输出里的 `01:00.0` 就是 BDF 的常用记法（Bus 1、Device 0、Function 0）。为什么 Bus 要 8 位、Device 只要 5 位？因为点对点链路每条"总线"上实际只有一个设备——Device 字段在 PCIe 时代几乎恒为 0，地址空间的主力是 Bus 号：每遇到一个 Switch/Bridge 就消耗一个新 Bus 号。这就是为什么枚举的核心工作是**分配 Bus 号**。
 
 ---
 
-## <span class="blue"> 用户空间查看工具
+## <span class="blue"> 枚举过程：Root Complex 的深度优先扫描
 
-### lspci -vvv 输出解读
+枚举由 RC 发起，算法是深度优先搜索（DFS）——沿着一条分支走到底，再回溯。全过程只需一种操作：**配置读写事务**（Configuration Read/Write TLP，专门用于访问配置空间的事务类型）。
 
-```bash
-$ sudo lspci -vvv -s 01:00.0
+配置事务分两种类型，区分依据是目标在不在当前总线上：
 
-# 第一行：BDF + Class Code解码 + 厂商设备名
-01:00.0 Non-Volatile memory controller: Samsung Electronics Co Ltd NVMe SSD Controller SM981/PM981 (prog-if 02 [NVM Express])
+| 类型 | 用途 | 转发规则 |
+|:----:|------|----------|
+| Type 0 | 目标 Bus 就是当前 Bus——直接送达本总线设备 | 不跨桥 |
+| Type 1 | 目标 Bus 在下游——Bridge/Switch 负责接力 | Bridge 检查目标 Bus 是否落在自己 Secondary~Subordinate 范围内，在则转成 Type 0 继续向下 |
 
-# Subsystem：子系统厂商和设备ID
-        Subsystem: Samsung Electronics Co Ltd Device a801
+Secondary/Subordinate Bus Number 这两个寄存器是 Bridge 的"辖区范围"：下游直接挂的总线号（Secondary）和下游最深处的总线号（Subordinate）。枚举时 RC 逐层填写它们，枚举完成后它们同时承担**路由表**的职责——后续每个配置事务靠它们找到路径。
 
-# Control：Command寄存器的当前值
-        Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx+
-        # I/O-  : I/O空间未使能
-        # Mem+  : Memory空间已使能
-        # BusMaster+ : 设备可作为Bus Master发起DMA
+完整流程五个阶段：
 
-# Status：Status寄存器的当前值
-        Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
-        # Cap+  : Capability链表存在
+```text
+阶段1  RC 扫描 Bus 0（RC 内部总线），发现各个 Root Port
+       └─ Root Port 本质是一个 Bridge，给它的 Secondary 分配 Bus 1
 
-# Latency和Interrupt
+阶段2  进入 Bus 1，遍历 Device 0~31：对每个位置读 Vendor ID
+       ├─ 读回 0xFFFF → 该位置无设备，跳过
+       └─ 读回有效值 → 设备存在，继续读 Header Type
+
+阶段3  发现 Bridge（Header Type = 1）
+       └─ 分配新 Bus 号写入其 Secondary，递归进入新总线扫描
+          全部扫完后回填 Subordinate（记录最深总线号）
+
+阶段4  发现 Endpoint（Header Type = 0）
+       └─ 探测每个 BAR 的大小需求（方法见 BAR 一节）
+
+阶段5  回溯完毕后统一分配资源
+       └─ 按各设备 BAR 需求在 MMIO 窗口中排布基地址，写回 BAR
+          置 Command 寄存器使能位，设备上线
+```
+
+> 💡 Vendor ID 读回 0xFFFF 是"无设备"的判定依据——总线上没有设备应答时，上拉电阻使数据线读回全 1。所以驱动调试时看到 Vendor ID = 0xFFFF，含义是"链路另一头根本没人"，先查物理层（卡没插好、供电、PERST#），别查驱动。
+
+一个典型嵌入式系统的枚举结果：
+
+```text
+-[0000:00]---00.0  Root Complex Host Bridge
+           +-01.0-[01]----00.0  NVMe SSD（Endpoint）
+           +-02.0-[02]--+-00.0  Switch 上行口
+           |            +-01.0-[03]----00.0  FPGA 加速卡
+           |            \-02.0-[04]----00.0  万兆网卡
+           \-03.0-[05]----00.0  WiFi 模组
+```
+
+这就是 `lspci -tv` 的输出格式：方括号是分配到的 Bus 号，缩进是父子关系。注意 Bus 号按发现顺序递增（00→01→02→03→04→05），深度优先的分配顺序一目了然。
+
+---
+
+## <span class="blue"> 配置空间：设备的标准化自述档案
+
+> 配置空间：每个 PCIe Function 自带的一片 4 KB 标准化寄存器区，前 64 字节（Header）格式由规范强制统一，其余是可选的 Capability 扩展区。操作系统对设备的识别、资源分配、能力查询全部通过读写这片区域完成。
+
+4 KB 分三段：
+
+| 区域 | 偏移范围 | 内容 |
+|------|----------|------|
+| Header | 0x00~0x3F | 64 字节，所有设备必须实现，格式规范强制 |
+| Capability 区 | 0x40~0xFF | 192 字节，PCI 时代的标准能力链表 |
+| Extended Capability 区 | 0x100~0xFFF | 3840 字节，PCIe 扩展能力（AER、VC 等） |
+
+### Header 布局（Type 0，Endpoint）
+
+| 偏移 | 字段 | 读它要什么 |
+|:----:|------|-----------|
+| 0x00 | Vendor ID + Device ID | 设备身份，`lspci` 显示设备名的依据（查 pci.ids 数据库） |
+| 0x04 | Command | **三个关键使能位**：Bit0 I/O Space、Bit1 Memory Space、Bit2 Bus Master。BAR 分了地址但不置 Bit1，设备寄存器就是访问不到；不做 DMA 的设备可以不置 Bit2 |
+| 0x06 | Status | Bit4 表示存在 Capability 链表；Bit3 中断挂起状态 |
+| 0x08 | Revision ID + **Class Code**（3 字节） | 设备类别：[Base:Sub:Interface]。`0x010802` = 存储/NVMe，`0x020000` = 以太网，`0x030000` = VGA——通用驱动（nvme、ahci、xhci）靠它成批匹配设备 |
+| 0x0E | Header Type | Bit7 多功能设备标志；低 7 位 = 0 表示 Endpoint，= 1 表示 Bridge |
+| 0x10~0x24 | **BAR0~BAR5** | 六组基址寄存器，下一节专讲 |
+| 0x2C | Subsystem Vendor/Device ID | 板卡级身份：同一块芯片不同厂商的成品卡靠它区分（笔记本厂商定制网卡靠 Subsystem ID 加载各自的配置） |
+| 0x30 | Expansion ROM Base | 可选 ROM 的映射地址（显卡 BIOS、网卡 PXE 固件所在） |
+| 0x34 | Capabilities Pointer | Capability 链表的表头偏移 |
+| 0x3C/0x3D | Interrupt Line / Pin | 传统 INTx 中断的引脚号与路由到的 IRQ——MSI 时代基本只剩兼容意义 |
+
+Bridge/Switch 用的是 Type 1 Header：BAR 只有两个，省下的位置放 Primary/Secondary/Subordinate Bus Number 和下游窗口的地址范围寄存器——即上一节的"辖区范围"。
+
+---
+
+## <span class="blue"> BAR 深度解析：设备怎么领地址空间
+
+> BAR（Base Address Register，基址寄存器）：设备用来声明"我需要多大地址空间"、枚举阶段被写入"你的空间从哪里开始"的寄存器。枚举之后，CPU 访问这段地址就会被 RC 路由到该设备——设备的寄存器、队列、缓冲都通过 BAR 暴露给软件。
+
+### 三类 BAR 与属性位
+
+BAR 是 32 位寄存器，低 4 位是只读属性位，高位才是可编程基地址：
+
+```text
+Bit 0    空间类型：0 = Memory（MMIO），1 = I/O 端口（PCI 遗留，PCIe 基本不用）
+Bit 1    保留
+Bit 2    Memory 类型时：0 = 32 位地址，1 = 64 位地址（此时吃掉相邻的下一个 BAR 作高 32 位）
+Bit 3    Prefetchable：1 = 该区域可读预取/写合并（显存帧缓冲类）；0 = 寄存器类，必须严格按序访问
+```
+
+Prefetchable 位不是性能提示，是**正确性声明**：预取意味着 CPU 可以主动多读、乱序读。设备寄存器读一次就清一次的状态位如果被预取，数据就丢了——所以寄存器区 BAR 必须标 non-prefetchable。`lspci` 里 `Memory at ... (64-bit, non-prefetchable)` 的每个词都对应这些位。
+
+### 大小探测：写全 1 读回
+
+枚举时系统不知道设备要多少空间，用了一个巧妙的自描述机制：
+
+```text
+1. 保存 BAR 原值
+2. 向 BAR 写入 0xFFFFFFFF
+3. 读回——设备内部只实现了它需要的地址线，高位有效、低位恒为 0
+4. 有效位取反 +1，即为申请的地址空间大小
+5. 恢复 BAR 原值
+```
+
+实例演算：向 BAR0 写全 1 后读回 `0xFFF00004`——
+
+```text
+低 4 位 0b0100 → Bit0=0（Memory 空间）、Bit2=1（64 位地址）、Bit3=0（non-prefetchable）
+高 28 位掩码 0xFFF00000 → 取反得 0x000FFFFF，+1 = 0x00100000 = 1 MB
+结论：这是一个 64 位、1 MB、non-prefetchable 的 BAR；高 32 位基地址放在 BAR1 里
+```
+
+实际读回值的低 4 位取决于设备实现，逐位对照上面的属性位定义拆即可。6 个 BAR 的常见分工是 BAR0 放主寄存器区、BAR2/BAR4 放队列或大缓冲；未使用的 BAR 硬件读回全 0。
+
+> 🔴 BAR 里写的地址是 **PCI 域地址**，不必然等于 CPU 物理地址。简单系统里 RC 做 1:1 映射，两者数值相同；复杂 SoC 里 RC 内有地址翻译单元（ATU），BAR 地址要经 ATU 换算才是 CPU 视角的物理地址。写驱动时不需要手工换算——用 `pci_resource_start()` 拿到的就是翻译后的地址；直接对 BAR 原始值做 `ioremap()` 是移植性 bug。设备树 PCIe 节点的 `ranges` 属性描述的就是这层翻译（第 11 章设备树机制在此合流）。
+
+---
+
+## <span class="blue"> Capability 链表与 MSI/MSI-X
+
+64 字节的 Header 装不下 PCIe 不断扩展的新能力，于是有了链表式扩展：每个 Capability 是挂在链上的一个节点。
+
+> Capability 链表：配置空间 0x40 起的能力扩展区。每个节点格式为 `[ID: 8 bit][Next 指针: 8 bit][数据区...]`，从 Header 0x34 的 Capabilities Pointer 出发顺链遍历，Next 为 0x00 即结束。0x100 之后是格式类似的 Extended Capability 链表（16 位 ID），PCIe 新能力都放在那边。
+
+遍历算法四步：确认 Status.Bit4 → 读 0x34 得首节点偏移 → 逐节点读 ID 与 Next → Next=0 收工。常用节点：
+
+| Capability | ID | 作用 |
+|-----------|:--:|------|
+| Power Management | 0x01 | D0~D3 电源状态管理 |
+| MSI | 0x05 | 消息中断（传统版） |
+| **PCIe Capability** | 0x10 | 本系列反复打交道的一个：链路速率/宽度能力（LnkCap）、当前状态（LnkSta）、设备能力（MaxPayload）都在它里面 |
+| MSI-X | 0x11 | 多向量消息中断 |
+| AER | 扩展区 0x01 | 高级错误报告，10.4 专讲 |
+
+### MSI/MSI-X 的寄存器面
+
+10.1 讲过 MSI 的本质是设备向特定内存地址发一笔 Memory Write TLP。这个"特定地址+数据"从哪来？就配置在这两个 Capability 里：
+
+**MSI（0x05）**：节点内含 Message Address（32/64 位）与 Message Data 寄存器。枚举/驱动加载时，内核把一个"落在中断控制器上的特殊地址"写进 Message Address，把中断向量号写进 Message Data。设备要发中断，就往这个地址写这个数据——RC 收到后转交中断控制器，对应中断触发。最多 32 个向量，且必须**连续分配**（Count 字段记录 2 的幂）。
+
+**MSI-X（0x11）**：MSI 的现代化版本，两个关键改进——向量数上限 2048、每个向量独立配置地址与数据（不必连续）。结构上它不再把表放在 Capability 节点里，而是用 **Table BIR/Offset 字段指向某个 BAR 空间内的一张表**：每行 16 字节（地址 + 数据 + 掩码位），配一个 PBA（Pending Bit Array）记录挂起状态。网卡给每个收发队列配一个 MSI-X 向量、绑到不同 CPU，靠的就是这张表。
+
+驱动侧的 API（`pci_alloc_irq_vectors()` 等）在 10.3 讲；这里记住结论：**MSI 至多 32 且连续，MSI-X 至多 2048 且独立，新设备一律 MSI-X**。
+
+---
+
+## <span class="blue"> 工具面：lspci / sysfs / setpci
+
+### lspci -vvv 逐段解读
+
+下面是一份真实 NVMe SSD 的完整输出，逐段对照前文概念：
+
+```text
+01:00.0 Non-Volatile memory controller: Samsung NVMe SSD Controller (prog-if 02 [NVM Express])
+```
+
+首行 = BDF + Class Code 解码 + pci.ids 查出的厂商设备名。`prog-if 02` 就是 Class Code 的 Interface 字节。
+
+```text
+        Control: I/O- Mem+ BusMaster+ ...
+        Status: Cap+ 66MHz- ... INTx-
         Latency: 0, Cache Line Size: 64 bytes
         Interrupt: pin A routed to IRQ 16
+```
 
-# Region 0-4：BAR0-4的解码结果
+Command/Status 寄存器的当前值直译：`Mem+` 是 Bit1 Memory Space 已使能（BAR 地址已生效），`BusMaster+` 是 Bit2 已使能（设备可以做 DMA）。`Cap+` 表示 Capability 链表存在。`Interrupt: pin A` 是 Interrupt Pin 寄存器值——INTx 时代的遗留信息，该设备实际用 MSI。
+
+```text
         Region 0: Memory at f4000000 (64-bit, non-prefetchable) [size=16K]
         Region 4: Memory at f4004000 (64-bit, non-prefetchable) [size=256]
-        # "64-bit"表示BAR0+BAR1组合成64位地址
-        # "non-prefetchable"表示Bit3=0，CPU不能预取此区域
+```
 
-# Capabilities链表展开：
+BAR 解码结果。Region 0 即 BAR0：64 位（BAR0+BAR1 组合）、non-prefetchable（寄存器区）、16 KB。注意没有 Region 1——BAR1 被 BAR0 吃掉当高 32 位了。
+
+```text
         Capabilities: [80] Power Management version 3
-                # 0x80是第一个Capability的偏移
-                Flags: PMEClk- DSI- D1- D2- AuxCurrent=0mA PME(D0-,D1-,D2-,D3hot-,D3cold-)
-                Status: D0 NoSoftRst+ PME-Enable- DSel=0 DScale=0 PME-
-                # D0 = 当前电源状态为D0（全速运行）
-
+                Status: D0 NoSoftRst+ ...
         Capabilities: [90] MSI: Enable- Count=1/32 Maskable- 64bit+
-                # MSI Capability在偏移0x90
-                # Enable- : MSI当前未使能（设备可能用INTx或MSI-X）
-                # Count=1/32 : 支持最多32个向量，当前分配1个
-                # 64bit+ : 支持64位消息地址
-                Address: 0000000000000000  Data: 0000
-
-        Capabilities: [b0] Express endpoint, MSI 00
-                # PCIe Capability在偏移0xB0——这是最重要的Capability
-                DevCap: MaxPayload 256 bytes, PhantFunc 0, Latency L0s <1us, L1 <8us
-                # MaxPayload 256B : 设备支持的最大TLP负载
-                DevCtl: CorrErr- NonFatalErr- FatalErr- UnsupReq- RlxdOrd+ ExtTag- PhantFunc- AuxPwr- NoSnoop+ FLReset-
-                # RlxdOrd+ : 允许宽松排序（提升性能）
-                LnkCap: Port #0, Speed 8GT/s, Width x4, ASPM L1, Exit Latency L1 <64us
-                # Speed 8GT/s : PCIe 3.0速率
-                # Width x4    : 4条Lane
-                LnkCtl: ASPM L1 Enabled; RCB 64 bytes, Disabled- CommClk+
-                # ASPM L1 Enabled : 主动状态电源管理已使能L1
+        Capabilities: [b0] Express Endpoint, MSI 00
+                DevCap: MaxPayload 256 bytes ...
+                LnkCap: Port #0, Speed 8GT/s, Width x4 ...
                 LnkSta: Speed 8GT/s, Width x4
-                # 当前实际协商的速率和宽度
-
         Capabilities: [100 v1] Advanced Error Reporting
         Capabilities: [150 v1] Virtual Channel
-        Capabilities: [180 v1] Power Budgeting
-        Capabilities: [1c0 v1] Latency Tolerance Reporting
-        Capabilities: [1e0 v1] L1 PM Substates
-        Capabilities: [250 v1] Secondary PCI Express
-        # 0x100及以上偏移属于Extended Capability区域
-
+        ...
         Kernel driver in use: nvme
-        # 当前绑定到该设备的内核驱动
 ```
 
-### /sys/bus/pci/devices 资源查看
+方括号里是偏移，正好演示链表结构：0x80（PM）→ 0x90（MSI）→ 0xB0（PCIe）→ 0x100 起进入扩展区（AER、VC……）。`LnkCap` 与 `LnkSta` 的判读方法在 10.1 已建立——Speed/Width 一致即健康。最后一行是当前绑定的内核驱动。
+
+### /sys/bus/pci/devices
+
+每个设备一个目录，常用文件：
 
 ```bash
-# 查看某PCIe设备的所有资源分配
-$ cat /sys/bus/pci/devices/0000:01:00.0/resource
-
-# 输出格式：每行代表一个BAR资源
-# start_addr    end_addr        flags（含义见include/linux/ioport.h）
-0x00000000f4000000 0x00000000f4003fff 0x0000000000040200
-# BAR0: 64-bit MMIO, 从0xF4000000开始，大小16KB
-# flags 0x00402200 = IORESOURCE_MEM | IORESOURCE_MEM_64 | IORESOURCE_PREFETCH
-
-0x0000000000000000 0x0000000000000000 0x0000000000000000
-# BAR1: 为0表示BAR0+BAR1组合成64位，BAR1自身没有独立区域
-
-0x0000000000000000 0x0000000000000000 0x0000000000000000
-# BAR2: 未使用
-
-0x0000000000000000 0x0000000000000000 0x0000000000000000
-# BAR3: 未使用
-
-0x00000000f4004000 0x00000000f40040ff 0x0000000000040200
-# BAR4: 64-bit MMIO, 从0xF4004000开始，大小256字节
-
-0x0000000000000000 0x0000000000000000 0x0000000000000000
-# BAR5: 为0，BAR4+BAR5组合
-
-0x0000000000000000 0x0000000000000000 0x0000000000000200
-# ROM BAR: 未使能
-
-# flags位的含义（十六进制位域）：
-# bit 0    : IORESOURCE_IO (0x00000100)
-# bit 1    : IORESOURCE_MEM (0x00000200)
-# bit 3    : IORESOURCE_PREFETCH (0x00000800)
-# bit 4    : IORESOURCE_MEM_64 (0x00001000)
-# bit 8    : IORESOURCE_DISABLED (0x00010000)
-
-# 查看设备配置空间的原始字节
-$ sudo hexdump -C /sys/bus/pci/devices/0000:01:00.0/config | head -8
-# 前64字节即Header区域
-
-# 查看当前使用的IRQ
-$ cat /sys/bus/pci/devices/0000:01:00.0/irq
-16
-
-# 查看已使能的驱动
-$ cat /sys/bus/pci/devices/0000:01:00.0/driver/module/drivers/pci:nvme
-# 或简单地
-$ ls -la /sys/bus/pci/devices/0000:01:00.0/driver
+cat /sys/bus/pci/devices/0000:01:00.0/resource
 ```
 
-### 调试命令：树形查看与寄存器读写
+```text
+0x00000000f4000000 0x00000000f4003fff 0x0000000000140404
+0x0000000000000000 0x0000000000000000 0x0000000000000000
+...
+```
+
+每行一个 BAR：`起始地址 结束地址 flags`。flags 位域对应 `include/linux/ioport.h` 的 `IORESOURCE_*`（0x200=MEM、0x800=PREFETCH、0x1000=MEM_64 等）——起始地址是全 0 的行表示该 BAR 未使用或被 64 位组合吃掉。
+
+同目录下还有：`config`（配置空间原始 4 KB，可 hexdump）、`irq`（当前 IRQ 号）、`driver`（符号链接指向绑定驱动）、`vendor`/`device`/`class`（三个 ID 的原始值）。
+
+### setpci：寄存器级读写
+
+`setpci` 直接读写配置空间，单位后缀 `.b/.w/.l` = 字节/字/双字：
 
 ```bash
-# ========== lspci -t 树形拓扑 ==========
-$ lspci -t -v
--[0000:00]-+-00.0  Intel Corporation Xeon E3-1200 v6/7th Gen Core Host Bridge
-           +-01.0-[01]----00.0  Samsung Electronics Co Ltd NVMe SSD
-           +-14.0  Intel Corporation 200 Series/Z370 Chipset USB 3.0 xHCI
-           +-1c.0-[02]--+-00.0  ASMedia Technology ASM1182 PCIe Switch
-           |            +-02.0-[03]----00.0  Intel I210 Gigabit Network
-           |            \-04.0-[04]----00.0  Fresco Logic FL1100 USB 3.0
-           +-1f.0  Intel Corporation 200 Series LPC Controller
-
-# 解读：
-# 00:01.0 是Root Port，其下游是Bus 1，设备01:00.0
-# 00:1c.0 是另一个Root Port，下游接了ASM1182 Switch
-# Switch的下游端口分别引出Bus 3和Bus 4
-
-# ========== setpci 读写寄存器 ==========
-# 读取Vendor ID（0x00，2字节）
-$ sudo setpci -s 01:00.0 0x00.w
-144d
-
-# 读取Device ID（0x02，2字节）
-$ sudo setpci -s 01:00.0 0x02.w
-a808
-
-# 读取整个Class Code（0x08，4字节）
-$ sudo setpci -s 01:00.0 0x08.l
-01080200
-# 解码：Base=0x01(Mass Storage), Sub=0x08(NVMe), IF=0x02
-
-# 读取Command寄存器（0x04，2字节）
-$ sudo setpci -s 01:00.0 0x04.w
-# 输出例如 0x0006 = Bus Master(0x04) + Memory Space(0x02)
-
-# 读取BAR0（0x10，4字节）
-$ sudo setpci -s 01:00.0 0x10.l
-f4000004
-# 0x04 = 低4位，Bit2=1表示64位BAR
-
-# 读取BAR1（BAR0的高32位）
-$ sudo setpci -s 01:00.0 0x14.l
-00000000
-
-# 完整64位BAR地址 = 0x00000000f4000000
-
-# 读取Capability Pointer
-$ sudo setpci -s 01:00.0 0x34.b
-80
-# 第一个Capability在偏移0x80
-
-# 读取偏移0x80处的Capability
-$ sudo setpci -s 01:00.0 0x80.l
-# 低字节=Capability ID，第2字节=Next Pointer
-
-# 修改Command寄存器使能Bus Master
-$ sudo setpci -s 01:00.0 0x04.w=0x0006
-# 0x02=Memory Space Enable, 0x04=Bus Master Enable
-
-# ⚠️ 危险操作：直接修改BAR可能导致系统崩溃！
-# $ sudo setpci -s 01:00.0 0x10.l=0x12345000  ← 不要这样做！
+setpci -s 01:00.0 0x00.w        # Vendor ID → 144d
+setpci -s 01:00.0 0x04.w        # Command → 0006（Mem+ BusMaster+）
+setpci -s 01:00.0 0x10.l        # BAR0 → f4000004（低 4 位属性：64-bit Memory）
+setpci -s 01:00.0 0x34.b        # Cap Pointer → 80
+setpci -s 01:00.0 0x04.w=0x0006 # 写：使能 Memory Space + Bus Master
 ```
+
+> ⚠️ setpci 写操作绕过内核 PCI 子系统的状态管理。改 Command 使能位尚可恢复；**改 BAR 基地址会让内核维护的 resource 树与硬件失步，后果不可预期**——演示和学习在虚拟机上做，生产机器只读不写。
+
+---
+
+## <span class="blue"> 方案对比（Trade-off）
+
+| 维度 | 评价 |
+|------|------|
+| 自描述枚举 vs 设备树静态描述 | PCIe 设备可热插拔、拓扑任意，必须运行时枚举；ARM 板级设备不可枚举才需要设备树——两套模型在 RC 节点处交汇 |
+| 集中资源分配 vs 设备自报固定地址 | 无冲突、可利用碎片；代价是启动时间增加、固件/内核分工复杂 |
+| MSI vs MSI-X | MSI 简单但向量少且连续；MSI-X 表占 BAR 空间但每向量独立——多队列设备没有第二种选择 |
+| Prefetchable vs non-prefetchable | 预取提升大块数据吞吐；寄存器区标错成 prefetchable 是隐蔽的正确性 bug |
+| 32 位 vs 64 位 BAR | 64 位摆脱 4 GB 以下地址拥挤；代价是吃掉相邻 BAR 槽位 |
 
 ---
 
 ## <span class="blue"> 本节总结
 
-| 主题 | 核心要点 |
-|:---|:---|
-| **枚举算法** | RC从Bus 0开始DFS深度优先扫描，为每个发现的Bridge分配新Bus号，为Endpoint分配BDF |
-| **BDF编码** | 16位地址 = Bus[15:8] + Device[7:3] + Function[2:0]，最多256 Bus × 32 Dev × 8 Func |
-| **配置访问类型** | Type 0访问同一总线设备，Type 1通过Bridge访问下游总线 |
-| **Header区域** | 0x00-0x3F共64字节，含Vendor/Device/Class Code/Command/Status/BAR等关键寄存器 |
-| **BAR机制** | 6个BAR声明MMIO/I/O需求，低4位是属性位，写入全1读回可计算大小 |
-| **⚠️ BAR陷阱** | BAR地址是PCI域地址，非CPU物理地址；复杂SoC需经ATU转换 |
-| **Capability链表** | 从偏移0x34开始遍历，每个节点=[ID:8][NextPtr:8][Data...]，0x00结束 |
-| **关键Capability** | Power Management(0x01)、MSI(0x05)、PCIe(0x10)、MSI-X(0x11) |
-| **调试工具** | `lspci -t`看拓扑、`lspci -vvv`看详情、`setpci`读写寄存器、`/sys/bus/pci`查资源 |
-
----
-
-## <span class="blue"> 下一步
-
-**B-D.10.3 PCIe Linux驱动与DMA**
-
-你将学习如何在Linux中编写PCIe设备驱动——从`pci_register_driver()`的注册流程，到`probe()`中请求BAR并`ioremap()`映射，再到配置MSI-X中断和实现高性能DMA传输。DMA是PCIe设备（如NVMe、网卡、GPU）的灵魂，理解了配置空间后再学DMA，你会发现一切豁然开朗。
+| 自查项 | 读完应能独立完成的动作 |
+|--------|------------------------|
+| 枚举动机 | 说清 PCI 时代手动配置的痛点，以及"发现→分配→交接"三阶段 |
+| BDF | 把 `02:01.0` 翻译成三段含义；解释为什么 PCIe 时代 Device 恒为 0、Bus 号才是主力 |
+| 枚举流程 | 复述 DFS 五阶段；解释 Secondary/Subordinate 的双重身份（枚举产物 + 路由表） |
+| 配置空间 | 默画 4 KB 三段布局；说出 Vendor ID 读回 0xFFFF 的真实含义 |
+| Header 寄存器 | 说出 Command 三个使能位各自管什么、不置位的症状 |
+| BAR | 完整演算一遍写全 1 探测；解释 prefetchable 的正确性含义；说清 PCI 域地址与 CPU 物理地址的关系 |
+| Capability | 手写遍历算法；说出 MSI/MSI-X 的结构差异与选型结论 |
+| 工具 | 给一段 `lspci -vvv` 输出，把每个字段反查到配置空间偏移 |
 
 ---
 
 ## <span class="blue"> 配套资源
 
-- **PCI Express Base Specification 6.0** — PCI-SIG官方规范，第7章（Configuration Space）
-- **Linux PCI驱动框架源码**：`drivers/pci/`目录，重点`probe.c`、`access.c`、`pci-sysfs.c`
-- **工具手册**：`man lspci`、`man setpci`、`man pci`
-- **在线数据库**：[pcilookup.com](https://pcilookup.com/) — 查询Vendor ID / Device ID对应关系
-- **推荐书籍**：《PCI Express System Architecture》MindShare Inc. — 配置空间和枚举的权威参考书
+- **规范**：PCIe Base Specification 第 7 章（Configuration Space）
+- **内核**：`drivers/pci/probe.c`（枚举实现）、`include/linux/ioport.h`（resource flags 位域）
+- **工具**：`man lspci` / `man setpci`；[pcilookup.com](https://pcilookup.com/)（Vendor/Device ID 反查）
+- **衔接**：B-D.10.1（链路与拓扑）；B-D.10.3（驱动侧怎么消费本篇的资源分配结果）；B-D.10.4（AER 扩展 Capability 详解）

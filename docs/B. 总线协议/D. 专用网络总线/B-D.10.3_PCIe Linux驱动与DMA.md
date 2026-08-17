@@ -1,730 +1,367 @@
-# B-D.10.3 PCIe Linux驱动与DMA
+# B-D.10.3 PCIe Linux 驱动与 DMA
 
-> 所属章节：第五部 B. 总线协议 > B-D.10 PCIe高速串行总线
+> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
 >
-> 难度：[E][M] | 预计阅读时间：55分钟
+> 难度：[M] Master | 预计阅读时间：50 分钟
 
 ## <span class="blue"> 本节导读
 
-上两节我们把PCIe的硬件底子打牢了——从差分信号到TLP事务层，从枚举机制到BAR空间配置。但面对一个真实的PCIe设备（比如插在M.2插槽上的WiFi6网卡或NVMe固态硬盘），你该怎么写Linux驱动？怎么把BAR映射到内核虚拟地址？怎么让设备通过DMA直接读写系统内存而不经过CPU？这些才是从"懂原理"跨越到"能干活"的关键一跃。
+10.1 讲清了链路与拓扑，10.2 讲清了枚举与配置空间——这两篇的成果，是系统启动后每个 PCIe 设备都带着一份"已分配好的资源清单"等在那里。本篇回答的问题是：驱动代码怎么把这份清单消费掉。`pci_driver` 怎么注册、`probe()` 里那七八个 API 调用各自对应哪个硬件动作、DMA 为什么必须处理缓存一致性、MSI-X 中断在代码里怎么落地——这些是 PCIe 驱动开发的全部骨架。
 
-想象一下这个场景：你的板子上插了一块Intel AX210 WiFi6模块和一块NVMe SSD。BIOS枚举通过了，lspci能看到设备，然后呢？pci_driver怎么注册？BAR0怎么映射成寄存器基地址？DMA传输时缓存一致性怎么保证？MSI中断怎么配置？这一节我们把这些问题一网打尽。
+本篇与 D 扩展的分工：D 扩展讲"驱动写法的通用套路体系"（probe 模式、资源管理、子系统封装），本篇只讲 PCI 驱动特有的部分——总线特有的 API、DMA 与中断的 PCI 侧机制。通用机制（bus-device-driver 匹配、devm 资源管理）见主线第 11 章，不重复展开。
 
-读完你会掌握：Linux PCIe驱动框架的核心API与调用顺序、BAR映射与DMA地址设置、一致性/流式DMA的操作流程、SG分散收集DMA的原理、INTx/MSI/MSI-X三种中断方式的差异，以及两个完整的行业实例——AX210 WiFi6驱动的加载验证和NVMe SSD的读写测试。从设备树配置到用户空间命令，端到端跑通。
+本篇面向要在真实板卡上写或调 PCIe 驱动的工程师，所有 API 以 v6.6 内核为准。锚点实例是两块经典设备：Intel AX210 WiFi 模组（PCIe x1）与 NVMe SSD（PCIe x4）。
 
-<br>
+本节覆盖：PCI Core 分层与驱动注册、probe 的完整步骤与每步的失败症状、BAR 映射与寄存器访问、缓存一致性问题的完整推理、一致性/流式/SG 三种 DMA 的选型与代码、INTx/MSI/MSI-X 的代码落地、真实设备的加载验证路径、常见故障排查表。
 
-## <span class="blue"> Linux PCIe驱动框架 [E][M]
+---
 
-PCIe在Linux内核中的驱动架构跟Platform驱动思路类似，但有其独特性。核心是`pci_driver`结构体和`pci_dev`结构体，前者代表驱动，后者代表设备实例。
+## <span class="blue"> 驱动在内核里的位置
 
-### PCIe驱动架构概览
+一个 PCIe 设备驱动并不直接面对硬件链路，它叠在三层之上：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     用户空间 (User Space)                          │
-│       lspci  /sys/bus/pci/devices/  /dev/nvme0  /dev/wlan0       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐   │
-│  │  iwlwifi.ko  │  │  nvme.ko     │  │   你的pcie_driver    │   │
-│  │  (WiFi驱动)  │  │  (SSD驱动)   │  │     (自定义)          │   │
-│  │              │  │              │  │                      │   │
-│  │ pci_driver{} │  │ pci_driver{} │  │    pci_driver{}      │   │
-│  │ probe/remove │  │ probe/remove │  │    probe/remove      │   │
-│  │ bar映射+DMA  │  │ bar映射+DMA  │  │    bar映射+DMA       │   │
-│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘   │
-├─────────┼─────────────────┼─────────────────────┼───────────────┤
-│         │                 PCI Core               │               │
-│  ┌──────▼─────────────────▼─────────────────────▼───────┐        │
-│  │    pci_enable_device() / pci_request_regions()       │        │
-│  │    pci_iomap() / pci_set_dma_mask()                  │        │
-│  │    pci_alloc_consistent() / dma_map_single()         │        │
-│  │    内核路径：drivers/pci/                            │        │
-│  └────────────────────────┬─────────────────────────────┘        │
-├───────────────────────────┼─────────────────────────────────────┤
-│                           ▼                                       │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │              PCIe Host Controller Driver                   │   │
-│  │              (dw_pcie / mtk_pcie / rcar_pcie)              │   │
-│  │            解析设备树 → 初始化PHY/时钟 → 枚举下游           │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│                           ▼                                       │
-│                    硬件 (PCIe Root Complex + EP)                  │
-└─────────────────────────────────────────────────────────────────┘
+```text
+┌──────────────────────────────────────────────────┐
+│ 用户空间：lspci / /sys/bus/pci / /dev/nvme0       │
+├──────────────────────────────────────────────────┤
+│ 设备驱动：iwlwifi.ko / nvme.ko / 你的驱动          │
+│   pci_driver{ .probe .remove .id_table }         │
+├──────────────────────────────────────────────────┤
+│ PCI Core（drivers/pci/）                          │
+│   枚举（10.2）/ 资源分配 / 统一 API 出口           │
+├──────────────────────────────────────────────────┤
+│ 主控驱动（dw_pcie 等，SoC 原厂提供）                │
+│   解析设备树 → 初始化 PHY/时钟 → 拉起 LTSSM        │
+└──────────────────────────────────────────────────┘
 ```
 
-**核心思想**：PCI Core层提供了统一的API，让设备驱动不用关心底层是DesignWare PCIe还是某厂商自研控制器。驱动的生命周期围绕`probe`（设备发现后初始化）和`remove`（设备卸载或热拔）展开。
+这张分层图解释了驱动开发的实际边界：**枚举、总线扫描、地址分配都由 PCI Core 和主控驱动在你介入之前完成**。你的驱动被 `probe()` 叫醒时，BAR 已经分好了地址、链路已经训练完毕——你要做的是"启用设备、接管资源、开始收发"。这也解释了排障的分界：`lspci` 都看不到的设备不是你的驱动的问题（往下看 PHY/时钟/复位）；`lspci` 正常但驱动不工作，才是本篇内容的问题域。
 
-<br>
+---
 
-### pci_driver 结构体与注册
+## <span class="blue"> 驱动注册与匹配
+
+PCI 驱动与 platform 驱动（第 11 章）同构：一个描述"我是谁"的结构体、一张描述"我支持谁"的 ID 表、一对 probe/remove 回调。不同的是匹配依据——platform 驱动靠设备树 compatible 字符串，PCI 驱动靠**枚举读到的 Vendor ID / Device ID**：
 
 ```c
-/* 定义PCI设备ID表 - 驱动支持哪些Vendor/Device ID */
+/* ID 表：本驱动支持哪些设备 */
 static const struct pci_device_id my_pcie_ids[] = {
-    { PCI_DEVICE(0x8086, 0x2725) },   /* Intel AX210 WiFi6 */
-    { PCI_DEVICE(0x144d, 0xa808) },   /* Samsung NVMe SSD */
-    { 0, }  /* 结束标记 */
+    { PCI_DEVICE(0x8086, 0x2725) },   /* Intel AX210 */
+    { PCI_DEVICE(0x144d, 0xa808) },   /* Samsung NVMe */
+    { 0, }                            /* 结束标记 */
 };
 MODULE_DEVICE_TABLE(pci, my_pcie_ids);
 
-/* pci_driver 结构体 */
 static struct pci_driver my_pcie_driver = {
     .name     = "my_pcie_drv",
-    .id_table = my_pcie_ids,      /* 匹配的设备ID列表 */
-    .probe    = my_pcie_probe,    /* 设备匹配成功时调用 */
-    .remove   = my_pcie_remove,   /* 设备移除时调用 */
-    .suspend  = my_pcie_suspend,  /* 电源管理：挂起 (可选) */
-    .resume   = my_pcie_resume,   /* 电源管理：恢复 (可选) */
+    .id_table = my_pcie_ids,
+    .probe    = my_pcie_probe,
+    .remove   = my_pcie_remove,
 };
 
-/* 模块初始化：注册pci_driver */
-static int __init my_pcie_init(void)
-{
-    return pci_register_driver(&my_pcie_driver);
-}
-
-/* 模块退出：注销pci_driver */
-static void __exit my_pcie_exit(void)
-{
-    pci_unregister_driver(&my_pcie_driver);
-}
-module_init(my_pcie_init);
-module_exit(my_pcie_exit);
+module_pci_driver(my_pcie_driver);   /* 注册/注销一体宏 */
 ```
 
-**关键点**：`.id_table`里的Vendor ID和Device ID必须与`lspci -nn`输出一致。如果ID对不上，`probe`函数永远不会被调用——这是很多新手卡住的地方。
+`MODULE_DEVICE_TABLE` 宏把 ID 表导出给用户空间——设备插入时 udev 据此自动加载对应内核模块，这就是 PCIe 设备"插上来驱动自己就来了"的完整链路：枚举读到 ID → 生成 modalias → udev 匹配 → modprobe 加载 → probe 被调用。
 
-<br>
+> 💡 除了精确 ID 匹配，还有通配匹配：`PCI_DEVICE_CLASS(0x010802, ~0)` 匹配所有 NVMe 类设备（靠 10.2 讲的 Class Code）——nvme 驱动就是这样成批通吃所有厂商 NVMe 盘的。你的自定义驱动一般走精确 ID；当设备可换料（同一功能不同厂商）时才考虑 class 匹配。
 
-### PCIe驱动核心API
+probe 永远不被调用的头号原因就是 ID 对不上：拿 `lspci -nn` 的实际输出（方括号里的 `[8086:2725]`）逐一核对 ID 表，注意 Subsystem ID 不参与默认匹配。
 
-下面的表格总结了PCIe设备驱动在`probe`函数中必须按顺序调用的核心API：
+---
 
-| 函数 | 功能 | 调用时机 | 失败后果 |
-|------|------|----------|----------|
-| `pci_enable_device(pdev)` | 激活PCI设备，分配I/O和内存资源，唤醒设备 | probe中最早调用 | 设备无法访问，后续所有操作失败 |
-| `pci_request_regions(pdev, name)` | 请求并独占该PCI设备的BAR区域，防止其他驱动抢占 | enable之后 | BAR被抢占，寄存器读写冲突 |
-| `pci_iomap(pdev, bar, maxlen)` | 将指定BAR的物理地址映射到内核虚拟地址空间 | request_regions之后 | 无法通过指针访问设备寄存器 |
-| `pci_set_dma_mask(pdev, mask)` | 设置DMA地址位数（32位或64位），告知设备能访问的内存范围 | iomap之前或之后均可 | DMA地址越界，数据传输失败或系统崩溃 |
-| `pci_alloc_consistent(pdev, size, &dma_handle)` | 分配一致性DMA内存（ uncached ），返回CPU虚拟地址和DMA物理地址 | 需要DMA缓冲区时 | DMA缓冲区分配失败，无法启动DMA传输 |
-| `pci_free_consistent(pdev, size, vaddr, dma_handle)` | 释放一致性DMA内存 | remove或模块卸载时 | 内存泄漏 |
-| `pci_iounmap(pdev, vaddr)` | 取消BAR的虚拟地址映射 | remove中 | 虚拟地址残留，内核资源泄漏 |
-| `pci_release_regions(pdev)` | 释放BAR区域占用 | remove中 | 资源不释放，其他驱动无法使用 |
-| `pci_disable_device(pdev)` | 禁用PCI设备，进入低功耗状态 | remove最后调用 | 设备持续耗电，可能干扰其他设备 |
+## <span class="blue"> probe 完整流程：每一步对应一个硬件动作
 
-<br>
+`probe()` 里的 API 调用顺序不是惯例，是依赖关系——每步失败的症状都不同，记住这张表，驱动加载失败时按症状反查步骤：
 
-### probe函数完整框架
+| 步骤 | API | 对应 10.2 的哪个概念 | 失败时的典型症状 |
+|------|-----|---------------------|------------------|
+| 1. 启用设备 | `pci_enable_device()` | Command 寄存器置位、资源激活 | 后续一切访问无效；dmesg 报 "can't enable device" |
+| 2. 独占 BAR 区域 | `pci_request_regions()` | resource 树占用标记 | 报 "BAR in use"——上一个驱动没释放干净 |
+| 3. 设为总线主 | `pci_set_master()` | Command.Bit2 Bus Master | 不调用则 DMA 静默失败——寄存器读写正常但数据不动 |
+| 4. 映射 BAR | `pci_iomap(pdev, 0, 0)` | BAR0 的 CPU 侧地址 | 返回 NULL：BAR 未使能或地址冲突 |
+| 5. 设 DMA 掩码 | `dma_set_mask_and_coherent()` | 设备可寻址内存范围 | 高内存机器上 DMA 数据损坏（地址截断） |
+| 6. 申请中断 | `pci_alloc_irq_vectors()` | MSI/MSI-X Capability | 中断永远不触发 |
+| 7. 初始化硬件 | 写设备寄存器 | —— | 视设备而定 |
+
+完整骨架（v6.6 现代 API）：
 
 ```c
+struct my_priv {
+    struct pci_dev *pdev;
+    void __iomem *bar0;
+    int nvec;
+};
+
 static int my_pcie_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 {
-    struct my_device_priv *priv;
-    void __iomem *bar0_base;
-    dma_addr_t dma_handle;
-    void *dma_buf;
+    struct my_priv *priv;
     int err;
 
-    /* Step 1: 启用PCI设备 — 必须最先调用 */
-    err = pci_enable_device(pdev);
+    priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
+    if (!priv)
+        return -ENOMEM;
+    priv->pdev = pdev;
+    pci_set_drvdata(pdev, priv);
+
+    /* 1+2 合并：使能设备并请求全部 BAR 区域（devm 托管，免手动释放） */
+    err = pcim_enable_device(pdev);
+    if (err)
+        return err;
+    err = pcim_iomap_regions(pdev, BIT(0), "my_pcie_drv");
+    if (err)
+        return err;
+
+    /* 3. 允许设备做 Bus Master——DMA 的前提 */
+    pci_set_master(pdev);
+
+    /* 4. 取 BAR0 映射基地址，之后 readl/writel 访问寄存器 */
+    priv->bar0 = pcim_iomap_table(pdev)[0];
+    if (!priv->bar0)
+        return -ENOMEM;
+
+    /* 5. DMA 掩码：先试 64 位，失败回退 32 位 */
+    err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
+    if (err)
+        err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
     if (err) {
-        dev_err(&pdev->dev, "Failed to enable PCI device, err=%d\n", err);
+        dev_err(&pdev->dev, "no usable DMA configuration\n");
         return err;
     }
 
-    /* Step 2: 请求BAR区域独占权 */
-    err = pci_request_regions(pdev, "my_pcie_drv");
-    if (err) {
-        dev_err(&pdev->dev, "Failed to request regions\n");
-        goto err_disable;
-    }
+    /* 6. 中断：优先 MSI-X 多向量，依次自动降级 MSI → INTx */
+    priv->nvec = pci_alloc_irq_vectors(pdev, 1, 4,
+                                       PCI_IRQ_MSIX | PCI_IRQ_MSI | PCI_IRQ_LEGACY);
+    if (priv->nvec < 0)
+        return priv->nvec;
+    err = devm_request_irq(&pdev->dev, pci_irq_vector(pdev, 0),
+                           my_irq_handler, 0, "my_pcie_drv", priv);
+    if (err)
+        return err;
 
-    /* Step 3: 映射BAR0到内核虚拟地址 — 之后通过bar0_base读写寄存器 */
-    bar0_base = pci_iomap(pdev, 0, 0);  /* bar=0, maxlen=0表示映射全部 */
-    if (!bar0_base) {
-        dev_err(&pdev->dev, "Failed to map BAR0\n");
-        goto err_release;
-    }
+    /* 7. 设备硬件初始化：写寄存器、建描述符环…… */
+    my_hw_init(priv);
 
-    /* Step 4: 设置DMA掩码 — 告诉设备我们能支持多大的DMA地址 */
-    err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
-    if (err) {
-        /* 64位失败则回退到32位 */
-        err = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-        if (err) {
-            dev_err(&pdev->dev, "No usable DMA configuration\n");
-            goto err_iounmap;
-        }
-    }
-
-    /* Step 5: 分配一致性DMA缓冲区 — 用于描述符环等需要CPU和Device同时访问的数据 */
-    dma_buf = pci_alloc_consistent(pdev, 4096, &dma_handle);
-    if (!dma_buf) {
-        dev_err(&pdev->dev, "Failed to allocate DMA buffer\n");
-        goto err_iounmap;
-    }
-
-    /* Step 6: 申请中断 — MSI或传统INTx */
-    err = pci_enable_msi(pdev);  /* 尝试MSI */
-    if (err) {
-        dev_warn(&pdev->dev, "MSI not available, falling back to INTx\n");
-    }
-    err = request_irq(pdev->irq, my_pcie_irq_handler,
-                      IRQF_SHARED, "my_pcie_drv", priv);
-    if (err) {
-        dev_err(&pdev->dev, "Failed to request IRQ %d\n", pdev->irq);
-        goto err_dma_free;
-    }
-
-    /* Step 7: 初始化设备私有结构体，保存关键资源 */
-    priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-    priv->pdev = pdev;
-    priv->bar0_base = bar0_base;
-    priv->dma_buf = dma_buf;
-    priv->dma_handle = dma_handle;
-    pci_set_drvdata(pdev, priv);  /* 将priv关联到pdev，remove时可取回 */
-
-    /* Step 8: 初始化设备硬件 — 写寄存器、启动DMA引擎等 */
-    my_pcie_hw_init(priv);
-
-    dev_info(&pdev->dev, "PCIe device probed successfully, BAR0=%p, DMA=%pad\n",
-             bar0_base, &dma_handle);
+    dev_info(&pdev->dev, "probed: bar0=%p, vectors=%d\n", priv->bar0, priv->nvec);
     return 0;
-
-/* 错误处理：按相反顺序释放资源 */
-err_dma_free:
-    pci_free_consistent(pdev, 4096, dma_buf, dma_handle);
-err_iounmap:
-    pci_iounmap(pdev, bar0_base);
-err_release:
-    pci_release_regions(pdev);
-err_disable:
-    pci_disable_device(pdev);
-    return err;
 }
 ```
 
-**错误处理是生死线**。PCIe驱动的`remove`函数或`probe`出错时的回退路径，必须严格按"后申请的先释放"的顺序执行，否则会导致资源泄漏甚至内核崩溃。
+两处相对老代码的现代化修正，值得展开：
 
-<br>
+**`pcim_*` 与 `devm_*` 托管 API**（11.3.4 的 devm 机制在 PCI 侧的延伸）：`pcim_enable_device()`、`pcim_iomap_regions()` 申请的资源随设备自动释放，probe 出错返回时不用手写七八个 `goto` 回退标签——老代码里"按相反顺序释放资源"的错误处理阶梯，被资源托管整个消掉了。新代码一律用托管版。
 
-> ⚠️ **陷阱**：`pci_set_dma_mask(64)`成功后，你分配的DMA缓冲区地址可能超过4GB。但如果你的设备其实只支持32位DMA（某些老旧PCIe设备或桥接芯片），64位mask会导致DMA传输时地址截断，数据写到错误的物理地址，轻则数据损坏，重则系统panic。正确做法是先尝试64位，失败后回退到32位，并确保后续的`dma_alloc_*`也使用一致的mask。
+**`pci_alloc_irq_vectors()` 取代 `pci_enable_msi()`**：这是 v6.6 的统一中断分配 API——传入想要的最小/最大向量数和支持的中断类型（`PCI_IRQ_MSIX | PCI_IRQ_MSI | PCI_IRQ_LEGACY`），内核按优先级自动尝试并降级。取第 i 个向量的中断号用 `pci_irq_vector(pdev, i)`——**不要再用 `pdev->irq + i` 推算**，MSI-X 的向量号并不保证连续，那是旧 MSI 时代的侥幸写法。
 
-<br>
+---
 
-## <span class="blue"> DMA操作与缓存一致性 [E][M]
+## <span class="blue"> DMA 与缓存一致性：为什么 DMA 需要专门一套 API
 
-PCIe设备的核心优势之一就是DMA——设备可以直接读写系统内存，不需要CPU逐字节搬运。但DMA引入了一个棘手的问题：**缓存一致性**。
+### 问题本身
 
-### 为什么DMA需要特殊处理？
+CPU 有 Cache：CPU 写内存时，数据可能只进了 Cache，物理内存里还是旧值；设备 DMA 直读物理内存，读到的就是旧数据。反方向同样成立：设备 DMA 写了物理内存，CPU 读时命中了 Cache 里的旧副本。两边各看各的，数据就悄悄错了——而且这种错误**偶发、与负载相关、不可稳定复现**，是驱动 bug 里最难查的一类。
 
-现代CPU都有数据缓存（Cache）。CPU写内存时可能只写到Cache，还没刷到物理内存，设备通过DMA读到的就是旧数据。反过来，设备通过DMA写数据到内存后，CPU读的时候可能命中Cache，读到的也是旧数据。
+> 缓存一致性（Cache Coherence）：同一份内存数据在 CPU Cache 和物理内存（以及 DMA 设备视角）之间保持一致的性质。x86 的 PCIe DMA 由硬件保证一致性（snooping）；多数 ARM 嵌入式 SoC 的 DMA 不保证，必须由软件（驱动调 DMA API）维护——这就是这套 API 存在的理由，也是同一份驱动代码在 x86 上"没问题"、搬到 ARM 上就数据损坏的经典根源。
 
-Linux提供了两套DMA API来解决这个问题：**一致性DMA（Coherent DMA）**和**流式DMA（Streaming DMA）**。
+### 两种解法
 
-<br>
+| | 一致性 DMA（Coherent） | 流式 DMA（Streaming） |
+|---|---|---|
+| 做法 | 分配不可缓存的内存，CPU 与设备始终直访内存 | 用普通内存，传输前后手动同步 Cache |
+| 性能 | 每次访问都穿到内存，慢 | 日常访问走 Cache，快 |
+| 适用 | 描述符环、门铃寄存器镜像——小而频繁、双方都要读写 | 大块数据单向搬运——网卡报文、SSD 读写 |
+| API | `dma_alloc_coherent()` / `dma_free_coherent()` | `dma_map_single()` / `dma_unmap_single()` + sync 系列 |
 
-### 一致性DMA vs 流式DMA
+选型口诀：**长期共享的小结构用一致性，单次搬运的大数据用流式**。一个设备驱动几乎总是两者混用：描述符环（一致性）+ 数据缓冲区（流式）。
 
-| 特性 | 一致性DMA (Coherent) | 流式DMA (Streaming) |
-|------|----------------------|---------------------|
-| 缓存行为 | 关闭Cache，CPU和设备看到的始终一致 | 保持Cache，手动同步 |
-| 性能 | 较低（每次访问都直达内存） | 较高（利用Cache加速） |
-| 适用场景 | 设备描述符环、控制结构、频繁读写的状态变量 | 大批量数据传输（网卡收发包、SSD读写） |
-| 分配API | `pci_alloc_consistent()` / `dma_alloc_coherent()` | 不需要特殊分配，使用普通内存 |
-| 同步API | 不需要同步 | `dma_map_single()` / `dma_unmap_single()` |
-| 内存限制 | 可能从特殊区域分配，大小受限 | 无特殊限制 |
+### 流式 DMA 的完整动作序列
 
-<br>
-
-### DMA API详解
-
-下面的表格列出了流式DMA操作的核心API：
-
-| 函数 | 功能 | 缓存一致性处理 | 适用场景 |
-|------|------|---------------|----------|
-| `dma_map_single(dev, cpu_addr, size, dir)` | 将CPU虚拟地址映射为DMA物理地址 | 根据dir刷Cache或Invalidate | 传输开始前调用 |
-| `dma_unmap_single(dev, dma_addr, size, dir)` | 取消映射，释放DMA地址资源 | 根据dir刷Cache或Invalidate | 传输完成后调用 |
-| `dma_sync_single_for_cpu(dev, dma_addr, size, dir)` | 设备写完后，让CPU能看到最新数据 | Invalidate CPU Cache | CPU读取DMA数据前 |
-| `dma_sync_single_for_device(dev, dma_addr, size, dir)` | CPU准备好数据后，让设备能看到 | Flush CPU Cache到内存 | 设备读取DMA数据前 |
-| `dma_map_sg(dev, sgl, nents, dir)` | 分散收集映射：把多个不连续的物理页映射为连续的DMA地址列表 | 同map_single | SG DMA传输 |
-| `dma_unmap_sg(dev, sgl, nents, dir)` | 取消SG映射 | 同unmap_single | SG传输完成后 |
-
-**dir参数**：`DMA_TO_DEVICE`（CPU→设备）、`DMA_FROM_DEVICE`（设备→CPU）、`DMA_BIDIRECTIONAL`（双向）、`DMA_NONE`。
-
-<br>
-
-### 流式DMA使用示例
+流式 DMA 的每个 API 对应一次明确的 Cache 操作，理解了这个对应关系就永远不会用错：
 
 ```c
-/* ========== 发送数据：CPU准备 → 设备DMA读取 ========== */
-void send_packet(struct my_device_priv *priv, void *data, size_t len)
-{
-    dma_addr_t dma_addr;
-    void *buf;
+/* 发送路径：CPU 备好数据 → 设备读走 */
+dma_addr_t dma;
 
-    /* 1. 在内核中分配发送缓冲区 */
-    buf = kmalloc(len, GFP_KERNEL);
-    memcpy(buf, data, len);
+dma = dma_map_single(&pdev->dev, buf, len, DMA_TO_DEVICE);
+/* map 的动作：把 buf 对应 Cache 行刷回内存，返回设备可用的总线地址 */
+if (dma_mapping_error(&pdev->dev, dma))
+    return -ENOMEM;
 
-    /* 2. 映射缓冲区，让设备可以通过DMA访问 */
-    dma_addr = dma_map_single(&priv->pdev->dev, buf, len, DMA_TO_DEVICE);
-    if (dma_mapping_error(&priv->pdev->dev, dma_addr)) {
-        kfree(buf);
-        return;
-    }
+/* 把总线地址和长度写进设备寄存器，敲门铃启动 DMA */
+writel(lower_32_bits(dma), priv->bar0 + REG_DMA_ADDR_LO);
+writel(upper_32_bits(dma), priv->bar0 + REG_DMA_ADDR_HI);
+writel(len,               priv->bar0 + REG_DMA_LEN);
+writel(DMA_START,         priv->bar0 + REG_DMA_CTRL);
 
-    /* 3. 将DMA地址写入设备寄存器，启动DMA传输 */
-    writel(lower_32_bits(dma_addr), priv->bar0_base + REG_TX_DMA_ADDR_LO);
-    writel(upper_32_bits(dma_addr), priv->bar0_base + REG_TX_DMA_ADDR_HI);
-    writel(len, priv->bar0_base + REG_TX_DMA_LEN);
-    writel(TX_START_BIT, priv->bar0_base + REG_TX_CTRL);
+wait_for_completion(&priv->done);     /* 等完成中断 */
 
-    /* 4. 等待传输完成（中断或轮询） */
-    wait_for_completion(&priv->tx_done);
-
-    /* 5. 传输完成，取消映射 */
-    dma_unmap_single(&priv->pdev->dev, dma_addr, len, DMA_TO_DEVICE);
-    kfree(buf);
-}
-
-/* ========== 接收数据：设备DMA写入 → CPU读取 ========== */
-void recv_packet(struct my_device_priv *priv, void *data, size_t len)
-{
-    dma_addr_t dma_addr = priv->rx_dma_handle;
-
-    /* 1. 映射接收缓冲区（方向：设备→CPU） */
-    dma_addr = dma_map_single(&priv->pdev->dev, priv->rx_buf, len,
-                               DMA_FROM_DEVICE);
-
-    /* 2. 启动设备DMA写入 */
-    writel(lower_32_bits(dma_addr), priv->bar0_base + REG_RX_DMA_ADDR);
-    writel(len, priv->bar0_base + REG_RX_DMA_LEN);
-
-    /* 3. 等待接收完成 */
-    wait_for_completion(&priv->rx_done);
-
-    /* 4. 同步：让CPU能看到设备写入的最新数据 */
-    dma_sync_single_for_cpu(&priv->pdev->dev, dma_addr, len, DMA_FROM_DEVICE);
-
-    /* 5. CPU读取数据 */
-    memcpy(data, priv->rx_buf, len);
-
-    /* 6. 取消映射 */
-    dma_unmap_single(&priv->pdev->dev, dma_addr, len, DMA_FROM_DEVICE);
-}
+dma_unmap_single(&pdev->dev, dma, len, DMA_TO_DEVICE);
+/* unmap 的动作：本例方向下无实际 Cache 操作，释放映射资源 */
 ```
 
-<br>
+接收路径多一步：设备写完后、CPU 读之前，要用 `dma_sync_single_for_cpu()` 使对应 Cache 行失效——否则 CPU 读到的是 Cache 里的旧副本。`DMA_TO_DEVICE` 方向刷 Cache、`DMA_FROM_DEVICE` 方向失效 Cache，方向参数就是告诉内核该做哪个动作，写错方向的后果就是数据偶发错乱。
 
-### SG（Scatter-Gather）DMA
+> ⚠️ map 与 unmap 之间的缓冲区是"借给设备"的：期间 CPU 代码不许读写这段内存（数据对 CPU 不可信），也不许 `kfree`。提前释放的破坏要等 DMA 引擎碰巧写到那片内存时才发作——可能已经是别的驱动的数据了。
 
-实际应用中，数据往往不在连续的物理内存中（比如socket接收的数据分散在多个skb页中）。SG DMA允许设备通过一张"地址列表"（Scatter-Gather List）读写多个不连续的物理页。
+### SG（Scatter-Gather）：不连续内存的直接传输
+
+> Scatter-Gather（分散-收集）：把多个物理上不连续的内存片段，组织成一张"地址+长度"列表交给设备，设备按列表逐段 DMA，免去 CPU 先把数据拷到连续缓冲区的开销。
+
+应用场景决定它绕不开：网络协议栈的 skb 数据天然分散在多页里；NVMe 一次 I/O 对应文件系统的多个页框。内核用 `struct scatterlist` 数组描述片段，`dma_map_sg()` 一次性映射整张表：
 
 ```c
-#include <linux/scatterlist.h>
-#include <linux/dma-mapping.h>
-
-/* 假设有多个不连续的数据片段 */
 struct scatterlist sg[4];
-int nents, mapped_nents;
+int nents;
 
-/* 1. 初始化scatterlist数组 */
 sg_init_table(sg, 4);
-sg_set_buf(&sg[0], buf0, len0);   /* 第一个片段 */
-sg_set_buf(&sg[1], buf1, len1);   /* 第二个片段（物理上可能不连续） */
-sg_set_buf(&sg[2], buf2, len2);
-sg_set_buf(&sg[3], buf3, len3);
+sg_set_buf(&sg[0], buf0, len0);
+sg_set_buf(&sg[1], buf1, len1);
+/* ... */
 
-/* 2. 将scatterlist映射为DMA地址 */
-mapped_nents = dma_map_sg(&pdev->dev, sg, 4, DMA_TO_DEVICE);
-if (mapped_nents == 0) {
-    /* 映射失败 */
+nents = dma_map_sg(&pdev->dev, sg, 4, DMA_TO_DEVICE);
+if (!nents)
+    return -ENOMEM;
+
+for_each_sg(sg, sgent, nents, i) {
+    write_sg_desc(priv, i, sg_dma_address(sgent), sg_dma_len(sgent));
 }
-
-/* 3. 遍历映射后的sg，将DMA地址写入设备 */
-for_each_sg(sg, sgent, mapped_nents, i) {
-    dma_addr_t addr = sg_dma_address(sgent);   /* 获取DMA物理地址 */
-    unsigned int len = sg_dma_len(sgent);      /* 获取映射长度 */
-
-    /* 写入设备的SG描述符环 */
-    write_sg_descriptor(priv, i, addr, len);
-}
-
-/* 4. 启动SG DMA传输 */
-writel(SG_TX_START, priv->bar0_base + REG_SG_CTRL);
-
-/* 5. 传输完成后取消映射 */
-dma_unmap_sg(&pdev->dev, sg, mapped_nents, DMA_TO_DEVICE);
+writel(SG_START, priv->bar0 + REG_DMA_CTRL);
+/* …完成后… */
+dma_unmap_sg(&pdev->dev, sg, 4, DMA_TO_DEVICE);
 ```
 
-**SG的价值**：网卡收发包、NVMe SSD读写、视频采集等大数据量场景下，SG避免了内核先花大量CPU时间把所有数据拷贝到连续缓冲区的开销，直接让设备DMA读写分散的内存页。
+> 💡 IOMMU 会改变 `dma_map_*` 的行为：启用 IOMMU（ARM SMMU / Intel VT-d）时，map 返回的是 IOVA（I/O 虚拟地址）而非物理地址，SG 的多个不连续物理页还可能被 IOMMU 拼成连续 IOVA（`nents` 返回值小于输入）。设备能不能用直通地址、IOMMU 开关对性能的影响，是服务器/虚拟化场景的日常议题；嵌入式裸机上多数不启用。
 
-<br>
+---
 
-### 中断处理：INTx vs MSI vs MSI-X
+## <span class="blue"> 中断的代码面：INTx / MSI / MSI-X
 
-PCIe设备完成DMA传输后需要通知CPU，这就是中断。三种中断方式差异很大：
+10.2 讲了寄存器面（Capability 结构、MSI-X 表），这里只补代码落地的差异：
 
-| 中断方式 | 原理 | 特点 | 性能 | 适用场景 |
-|----------|------|------|------|----------|
-| **INTx** | 传统的边带中断信号（INTA/INTB/INTC/INTD），所有设备共享一条中断线 | 需共享IRQ，需查询设备确认中断源 | 最低 | 老旧PCI设备兼容、不支持MSI的硬件 |
-| **MSI** | Message Signaled Interrupt：设备通过写特殊的内存地址触发中断，每个设备可分配1~32个中断向量 | 不共享IRQ，无需查询确认，中断延迟低 | 中等 | 大多数PCIe设备的标准配置 |
-| **MSI-X** | MSI的扩展版本，每个设备最多支持2048个独立中断向量 | 每个RX/TX队列独占一个中断向量，可实现一队列一CPU绑定 | 最高 | 高性能网卡（10GbE+）、NVMe SSD、多队列设备 |
+| | INTx | MSI | MSI-X |
+|---|---|---|---|
+| 本质 | 虚拟化边带信号，多设备共享 IRQ | 写特定地址的 TLP，至多 32 向量且连续 | 写特定地址的 TLP，至多 2048 向量各自独立 |
+| 代码申请 | `PCI_IRQ_LEGACY` | `PCI_IRQ_MSI` | `PCI_IRQ_MSIX` |
+| 处理函数 | 必须先读设备寄存器确认中断源（共享） | 向量即来源，免确认 | 向量即来源，且可一队列一向量绑 CPU |
+| 现状 | 只作兼容后备 | 普通设备标配 | 多队列高性能设备（NVMe、万兆网卡）标配 |
 
-<br>
+`pci_alloc_irq_vectors(pdev, min, max, flags)` 一套调用覆盖三者的尝试与降级，处理函数注册用 `pci_irq_vector(pdev, i)` 取向量号——上一节的 probe 骨架已经是完整写法。多队列设备的典型手法：probe 时申请 N 个向量，每个队列 `request_irq` 一个，再用 `irq_set_affinity()` 把向量 i 绑到 CPU i——网卡/NVMe 的多核性能就来自这里。
 
-```c
-/* MSI中断使能 */
-static int setup_msi_interrupts(struct pci_dev *pdev)
-{
-    int nvec = 4;  /* 申请4个中断向量 */
-    int err;
+---
 
-    /* pci_enable_msi_range: 申请[nvec, nvec]范围的中断数 */
-    err = pci_enable_msi_range(pdev, nvec, nvec);
-    if (err < 0) {
-        dev_warn(&pdev->dev, "MSI enable failed, use INTx\n");
-        /* 回退到INTx：pdev->irq就是INTx中断号 */
-        return request_irq(pdev->irq, my_intx_handler,
-                           IRQF_SHARED, "my_pcie_intx", priv);
-    }
+## <span class="blue"> 真实设备验证：AX210 + NVMe
 
-    /* MSI成功后，pdev->irq是第一个MSI中断号，其余依次+1 */
-    for (i = 0; i < nvec; i++) {
-        err = request_irq(pdev->irq + i, my_msi_handler[i],
-                          0, "my_pcie_msi", priv);
-    }
-    return 0;
-}
-```
+以一块 ARM64 开发板接 AX210（PCIe x1）与 NVMe SSD（PCIe x4）为例，走一遍从设备树到功能验证的最短路径。
 
-<br>
-
-## <span class="blue"> 行业实例：PCIe WiFi6模块（AX210）+ NVMe SSD [E][M]
-
-### 场景描述
-
-你的ARM64开发板上有两个M.2插槽，一个插了Intel AX210 WiFi6模块（PCIe x1），另一个插了三星NVMe SSD（PCIe x4）。我们要完成设备树配置、驱动加载和用户空间验证。
-
-<br>
-
-### 设备树PCIe控制器节点
+### 设备树：PCIe 主控节点的关键属性
 
 ```dts
-/* arch/arm64/boot/dts/your-board.dts */
-
-/ {
-    /* PCIe PHY时钟 */
-    pcie_refclk: pcie-refclk {
-        compatible = "fixed-clock";
-        #clock-cells = <0>;
-        clock-frequency = <100000000>;  /* 100MHz PCIe参考时钟 */
-    };
-};
-
-&pcie_controller {
-    compatible = "your-soc,dw-pcie";
-    reg = <0x0 0xfd000000 0x0 0x100000>,   /* DBI寄存器区域 */
-          <0x0 0xfd100000 0x0 0x100000>;   /* ATU寄存器区域 */
-    reg-names = "dbi", "atu";
-
-    /* 中断：MSI需要GIC ITS支持 */
-    interrupts = <GIC_SPI 120 IRQ_TYPE_LEVEL_HIGH>;
-    #interrupt-cells = <1>;
-    interrupt-map-mask = <0 0 0 7>;
-    interrupt-map = <0 0 0 1 &gic GIC_SPI 121 IRQ_TYPE_LEVEL_HIGH>,  /* INTA */
-                    <0 0 0 2 &gic GIC_SPI 122 IRQ_TYPE_LEVEL_HIGH>,  /* INTB */
-                    <0 0 0 3 &gic GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>,  /* INTC */
-                    <0 0 0 4 &gic GIC_SPI 124 IRQ_TYPE_LEVEL_HIGH>;  /* INTD */
-
-    /* 地址映射：PCIe地址空间 → CPU物理地址空间 */
-    /* ranges格式：<flags pref base-high base-low cpu-high cpu-low size-high size-low> */
-    ranges = <0x82000000 0x0 0x00000000 0x6 0x00000000 0x0 0x40000000>;  /* 非预取MEM: 1GB */
-
-    /* MSI控制器 — 必须配ITS才能用MSI/MSI-X */
-    msi-parent = <&its>;
-
-    /* 参考时钟 */
-    clocks = <&pcie_refclk>;
-    clock-names = "refclk";
-
-    /* PERST#复位引脚 — 热插拔和初始化时拉低复位 */
-    reset-gpios = <&gpio4 12 GPIO_ACTIVE_LOW>;
-
-    /* PHY配置 */
+&pcie {
+    clocks = <&pcie_refclk>;              /* 100 MHz 参考时钟，链路训练的前提 */
+    reset-gpios = <&gpio4 12 GPIO_ACTIVE_LOW>;   /* PERST# */
     phys = <&pcie_phy>;
-    phy-names = "pcie-phy";
-
+    msi-parent = <&its>;                  /* MSI 需要中断控制器的 ITS 支持 */
+    ranges = <0x82000000 0x0 0x00000000 0x6 0x00000000 0x0 0x40000000>;
+    /* ranges：PCI 域地址 → CPU 物理地址的翻译表（10.2 的 ATU 一节） */
     status = "okay";
 };
 ```
 
-> 💡 **提示**：PCIe热插拔需要先拉低PERST#引脚复位设备 → 等待100ms以上 → 上电 → 等待设备稳定 → 再扫描总线。顺序不能反过来！如果先上电再复位，设备可能进入不确定状态，枚举时挂死或报`Training Error`。
+`ranges` 行是本篇与 10.2 的接缝：BAR 分到的 PCI 域地址经它翻译成 CPU 地址。配错的表现是设备能枚举、寄存器读写全错。
 
-<br>
+### 枚举与驱动加载日志判读
 
-### 启动日志与设备枚举验证
-
-```bash
-# 查看PCIe控制器初始化日志
-$ dmesg | grep -i pcie
-[    2.341] your-soc-pcie fd000000.pcie: host bridge /pcie@fd000000 ranges:
-[    2.342] your-soc-pcie fd000000.pcie:      MEM 0x0600000000..0x063fffffff -> 0x0000000000
-[    2.345] your-soc-pcie fd000000.pcie: PCI host bridge to bus 0000:00
-[    2.346] pci 0000:00:00.0: [1dd8:0100] type 01 class 0x060400  /* Root Port */
-[    2.350] pci 0000:01:00.0 [8086:2725] type 00 class 0x028000  /* AX210 Network */
-[    2.351] pci 0000:02:00.0 [144d:a808] type 00 class 0x010802 /* Samsung NVMe */
-
-# 详细查看AX210设备信息
-$ lspci -s 01:00.0 -vvv
-01:00.0 Network controller: Intel Corporation Wi-Fi 6 AX210/AX211/AX411 (rev 1a)
-    Subsystem: Intel Corporation Wi-Fi 6 AX210 160MHz
-    Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping-
-    Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR-
-    Latency: 0
-    Interrupt: pin A routed to IRQ 121
-    Region 0: Memory at 60000000 (64-bit, non-prefetchable) [size=16K]
-    Capabilities: [40] Power Management version 3
-    Capabilities: [50] MSI: Enable+ Count=1/1 Maskable+ 64bit+
-    Capabilities: [70] Express Endpoint, MSI 00
-    Capabilities: [100] Advanced Error Reporting
-    Capabilities: [140] Device Serial Number ...
-    Capabilities: [14c] Latency Tolerance Reporting
-    Kernel driver in use: iwlwifi
-    Kernel modules: iwlwifi
-
-# 详细查看NVMe设备信息
-$ lspci -s 02:00.0 -vvv
-02:00.0 Non-Volatile memory controller: Samsung Electronics Co Ltd NVMe SSD Controller (rev 01)
-    Subsystem: Samsung Electronics Co Ltd Device a801
-    Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr-
-    Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort-
-    Latency: 0, Cache Line Size: 64 bytes
-    Interrupt: pin A routed to IRQ 122
-    Region 0: Memory at 60200000 (64-bit, non-prefetchable) [size=16K]
-    Capabilities: [40] Power Management version 3
-    Capabilities: [50] MSI: Enable+ Count=8/8 Maskable+ 64bit+
-    Capabilities: [b0] MSI-X: Enable- Count=33 Masked-
-    Capabilities: [c0] Express Endpoint, MSI 00
-    Capabilities: [100] Advanced Error Reporting
-    Capabilities: [148] Device Serial Number ...
-    Capabilities: [158] Single Root I/O Virtualization (SR-IOV)
-    Capabilities: [188] Latency Tolerance Reporting
-    Capabilities: [190] L1 PM Substates
-    Kernel driver in use: nvme
-    Kernel modules: nvme
-```
-
-<br>
-
-### AX210 WiFi6驱动加载与验证
-
-```bash
-# 1. 确认固件已就位（iwlwifi需要外部固件）
-$ ls /lib/firmware/ | grep iwlwifi
-iwlwifi-ty-a0-gf-a0-59.ucode      /* AX210对应的固件 */
-
-# 2. 加载驱动（通常内核自动加载，也可手动）
-$ modprobe iwlwifi
-$ dmesg | grep iwlwifi
-[   12.456] iwlwifi 0000:01:00.0: enabling device (0000 -> 0002)
-[   12.456] iwlwifi 0000:01:00.0: Detected crf-type: harp
-[   12.478] iwlwifi 0000:01:00.0: loaded firmware version 59.601f3a66
+```text
+[    2.345] pcie fd000000.pcie: host bridge ranges: MEM 0x0600000000..0x063fffffff
+[    2.346] pci 0000:00:00.0: [1dd8:0100] type 01 class 0x060400   ← Root Port
+[    2.350] pci 0000:01:00.0: [8086:2725] type 00 class 0x028000   ← AX210
+[    2.351] pci 0000:02:00.0: [144d:a808] type 00 class 0x010802   ← NVMe
+[   12.478] iwlwifi 0000:01:00.0: loaded firmware version 59.xxxx
 [   12.501] iwlwifi 0000:01:00.0: Detected Intel(R) Wi-Fi 6 AX210 160MHz
-[   12.501] iwlwifi 0000:01:00.0:基带地址:0x... 射频类型:0x0
-
-# 3. 查看无线接口
-$ iw dev
-phy#0
-    Interface wlan0
-        ifindex 4
-        wdev 0x1
-        addr 9c:2e:xx:xx:xx:xx
-        type managed
-        txpower 22.00 dBm
-
-# 4. 扫描WiFi网络（验证PCIe通信 + DMA + 中断都正常）
-$ iw dev wlan0 scan | grep SSID
-        SSID: MyHome_5G
-        SSID: CMCC-XXXX
-        SSID: TP-LINK_XXXX
-
-# 5. 连接WiFi并测试吞吐量
-$ wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
-$ dhclient wlan0
-$ iperf3 -c 192.168.1.1
-[SUM]   0.00-10.00  sec  1.08 GBytes   927 Mbits/sec    sender
 ```
 
-<br>
+三行 `pci 0000:` 就是枚举的现场报告：BDF、ID、Header Type（type 00 = Endpoint，01 = Bridge）、Class Code——与 10.2 的配置空间逐字段对应。随后 iwlwifi 打印固件加载与设备识别，说明驱动 probe 走完了全程。
 
-### NVMe SSD驱动与性能测试
+### 功能验证与两者的机制差异
+
+验证路径不需要长：AX210 用 `iw dev wlan0 scan`（扫到 SSID 即证明 PCIe 通信 + DMA + 中断链路全通）；NVMe 用 `nvme list` 确认设备、`fio` 跑带宽、对 `current_link_speed/width` 确认协商速率。两个设备放在一起，恰好覆盖本篇所有机制的两种典型用法：
+
+| | AX210（iwlwifi） | NVMe SSD（nvme） |
+|---|---|---|
+| 链路 | PCIe 3.0 x1 | PCIe 4.0 x4 |
+| DMA 形态 | 流式 + SG（skb 报文） | 流式 + SGL（块 I/O） |
+| 一致性内存 | 描述符环 | Admin/IO 队列 |
+| 中断 | MSI 单向量 | MSI-X 33 向量（每队列一个） |
+| 带宽瓶颈 | 空口（2.4 Gbps），PCIe 绰绰有余 | PCIe 链路本身——降速立刻可见 |
+
+这张表也给出排查直觉：**NVMe 性能不达标先查链路协商（10.1 的方法），WiFi 吞吐量不达标先查空口，PCIe 极少是瓶颈**。
+
+---
+
+## <span class="blue"> 调试与排障
+
+### 命令速查
 
 ```bash
-# 1. 确认NVMe设备被识别
-$ nvme list
-Node        SN                   Model                Namespace  Usage              Format
-/dev/nvme0  S5G2NG0NBXXXXX       Samsung SSD 980 PRO  1         500.11 GB / 500.11 GB  512 B
-
-# 2. 查看PCIe链路状态（速度和宽度）
-$ cat /sys/bus/pci/devices/0000:02:00.0/current_link_speed
-16.0 GT/s PCIe                   /* 确认跑在PCIe 4.0速度 */
-$ cat /sys/bus/pci/devices/0000:02:00.0/current_link_width
-4                                /* 确认x4宽度 */
-
-# 3. 分区格式化
-$ fdisk /dev/nvme0n1
-$ mkfs.ext4 /dev/nvme0n1p1
-$ mount /dev/nvme0n1p1 /mnt/nvme
-
-# 4. fio性能测试（验证DMA读写性能）
-$ fio --name=randread --ioengine=libaio --iodepth=32 \
-      --rw=randread --bs=4k --direct=1 --size=4G \
-      --numjobs=4 --runtime=60 --group_reporting \
-      --filename=/dev/nvme0n1
-  read: IOPS=1015k, BW=3965MiB/s   /* PCIe 4.0 x4 NVMe满速接近 */
-
-$ fio --name=randwrite --ioengine=libaio --iodepth=32 \
-      --rw=randwrite --bs=4k --direct=1 --size=4G \
-      --numjobs=4 --runtime=60 --group_reporting \
-      --filename=/dev/nvme0n1
-  write: IOPS=723k, BW=2823MiB/s
-
-# 5. 查看NVMe控制器信息（MSI-X使用情况）
-$ nvme id-ctrl /dev/nvme0 | grep -E "(nn|mqes)"
-mn        : Samsung SSD 980 PRO 500GB
-sn        : S5G2NG0NBXXXXX
-mqes      : 256                  /* 最大队列深度256 */
-nn        : 1                   /* 1个命名空间 */
+lspci -tv                                   # 拓扑树
+lspci -s 01:00.0 -vvv                       # 完整配置空间解码（10.2 逐段讲过）
+dmesg | grep -iE "pci|pcie"                 # 枚举与主控日志
+echo 'file drivers/pci/*.c +p' > /sys/kernel/debug/dynamic_debug/control   # 打开 PCI Core 动态调试
+cat /proc/interrupts | grep -E "nvme|iwl"   # 中断向量分配与触发计数
+cat /sys/bus/pci/devices/0000:02:00.0/current_link_speed    # 协商速率
+cat /sys/bus/pci/devices/0000:02:00.0/current_link_width    # 协商宽度
+cat /sys/bus/pci/devices/0000:01:00.0/dma_mask_bits         # DMA 掩码
+dmesg | grep -i iommu                       # IOMMU 状态
 ```
 
-<br>
+`/proc/interrupts` 是中断问题的第一手证据：向量分到了没有、计数涨不涨、是否均匀分布在多个 CPU 上，一行看全。
 
-### AX210 + NVMe 的DMA机制对比
+### 常见故障对照
 
-| 特性 | AX210 WiFi6 (iwlwifi) | NVMe SSD (nvme) |
-|------|----------------------|-----------------|
-| PCIe链路 | PCIe 3.0 x1 | PCIe 4.0 x4 |
-| 理论带宽 | ~1GB/s | ~8GB/s |
-| 实际带宽 | 2.4Gbps (WiFi6 160MHz) | ~4GB/s读 / ~3GB/s写 |
-| DMA类型 | 流式DMA + SG | 流式DMA + PRP/SGL |
-| 中断方式 | MSI (默认) / MSI-X | MSI-X (32 vectors) |
-| DMA Mask | 64-bit | 64-bit |
-| 缓存管理 | dma_map_single / dma_sync | dma_map_sg (大IO用SGL) |
-| 驱动架构 | mac80211 → iwlwifi → PCIe | block层 → nvme → PCIe |
-| 队列数 | 1 TX + 1 RX (per interface) | 最多64 IO队列 + 1 Admin |
-| 用户空间 | iw / wpa_supplicant / iperf3 | nvme-cli / fio / dd |
+| 现象 | 最可能原因 | 第一手检查 |
+|------|-----------|-----------|
+| `lspci` 看不到设备 | PERST# 未释放 / 参考时钟未起 / LTSSM 卡在 Detect | dmesg 主控日志；量 REFCLK 与 PERST# |
+| 设备可见但寄存器读写无效 | `ranges` 翻译错 / Command.Mem 未使能 | 对设备树 ranges；`lspci -v` 看 Control 行 |
+| probe 从未被调用 | ID 表不匹配 | `lspci -nn` 对 ID；查 modalias |
+| 寄存器正常但 DMA 不动 | 漏调 `pci_set_master()` | 补调用；`lspci -v` 看 BusMaster+ |
+| DMA 数据偶发错乱 | 缓存同步缺失 / dir 写错 | 审 `dma_sync_single_for_cpu` 调用点 |
+| 中断不触发 | MSI 需 ITS 而设备树没配 / 向量号取错 | `msi-parent` 属性；`/proc/interrupts` |
+| 高内存机器上数据损坏 | DMA mask 64 位与设备能力不匹配 | `dma_mask_bits`；回退 32 位验证 |
+| 性能远低于标称 | 链路降速 / 队列深度不足 | `current_link_speed/width`；fio 加大 iodepth |
 
-<br>
+---
 
-## <span class="blue"> 调试技巧与常见问题
+## <span class="blue"> 方案对比（Trade-off）
 
-### 调试命令速查
+| 维度 | 评价 |
+|------|------|
+| `pcim_/devm_` 托管 vs 手动释放 | 消灭回退阶梯与泄漏类 bug；代价是释放时机不再精确可控（绑定设备生命周期） |
+| 一致性 vs 流式 DMA | 简单正确 vs 高性能但要手动同步——正确姿势是混用：环用一致性、数据用流式 |
+| 精确 ID 匹配 vs Class 通配 | 精确匹配防误绑；Class 通配支持换料，但要承担同类别设备行为差异 |
+| MSI-X 多向量 vs 单向量 | 多队列绑多核，中断并行；向量数消耗系统资源，小设备无必要 |
+| IOMMU 开 vs 关 | 安全隔离与 IOVA 灵活性 vs 映射开销与调试复杂度 |
 
-```bash
-# ========== PCIe枚举与配置空间 ==========
-# 查看所有PCIe设备树
-$ lspci -tv
--[0000:00]-+-00.0  YourSoC PCIe Root Port
-           +-01.0--+-00.0  Intel AX210 WiFi
-           \-02.0--+-00.0  Samsung NVMe SSD
-
-# 查看设备配置空间原始数据（256字节或4KB）
-$ lspci -s 01:00.0 -xxxx
-
-# 查看BAR地址和大小
-$ lspci -s 01:00.0 -v | grep "Region"
-
-# 查看PCIe链路能力和当前状态
-$ lspci -s 01:00.0 -vvv | grep -E "(LnkCap|LnkSta)"
-    LnkCap: Port #0, Speed 16GT/s, Width x4
-    LnkSta: Speed 16GT/s, Width x4, TrErr- Train-
-
-# ========== 内核调试日志 ==========
-# 打开PCIe调试打印（动态debug）
-$ echo 'file drivers/pci/*.c +p' > /sys/kernel/debug/dynamic_debug/control
-
-# 查看PCIe相关dmesg
-$ dmesg | grep -iE "pci|pcie|nvme|iwlwifi"
-
-# 查看MSI/MSI-X中断分配
-$ cat /proc/interrupts | grep -E "(nvme|iwl|pci)"
-  121:       4523     0     0     0  GICv3  121 Level   iwlwifi
-  122:     890123    0     0     0  GICv3  122 Level   nvme0q0, nvme0q1
-  123:     456789    0     0     0  GICv3  123 Level   nvme0q2, nvme0q3
-
-# ========== DMA相关检查 ==========
-# 查看设备的DMA mask设置
-$ cat /sys/bus/pci/devices/0000:01:00.0/dma_mask_bits
-64
-
-# 查看IOMMU状态（如果启用）
-$ dmesg | grep -i iommu
-[    0.012] iommu: Default domain type: Translated
-
-# ========== NVMe专用调试 ==========
-# NVMe控制器寄存器状态
-$ nvme show-regs /dev/nvme0
-
-# 查看NVMe日志页
-$ nvme error-log /dev/nvme0
-
-# ========== WiFi专用调试 ==========
-# 查看iwlwifi详细日志
-$ modprobe iwlwifi debug=0xffffffff
-$ dmesg -w | grep iwlwifi
-
-# 查看无线接口统计
-$ iw dev wlan0 station dump
-$ iw dev wlan0 survey dump
-```
-
-<br>
-
-### 常见问题排查
-
-| 现象 | 可能原因 | 排查方法 |
-|------|----------|----------|
-| `lspci`看不到设备 | PERST#未释放 / 参考时钟未起振 / 链路Training失败 | 检查`dmesg`中`pcie`日志；测量REFCLK和PERST#信号 |
-| 设备可见但` BAR`无法访问 | BAR未映射到CPU地址空间 / 地址翻译(ATU)配置错误 | 检查设备树`ranges`和`dma-ranges` |
-| DMA传输数据错误 | DMA mask设置错误 / 缓存未同步 / IOMMU映射失败 | 检查`dma_mask_bits`；确认`sync_for_cpu`/`sync_for_device`调用 |
-| MSI中断不触发 | GIC ITS未配置 / MSI地址写入错误 | 检查ITS节点；对比`lspci -vvv`中MSI地址和ITS基地址 |
-| NVMe性能远低于标称 | 链路降速(x1 instead of x4) / 队列深度太小 | `cat current_link_speed`和`current_link_width`；fio调iodepth |
-| iwlwifi固件加载失败 | 固件文件缺失或版本不匹配 | `dmesg`搜索`firmware`；到linux-firmware.git下载对应固件 |
-
-<br>
+---
 
 ## <span class="blue"> 本节总结
 
-| 主题 | 核心要点 |
-|------|----------|
-| **PCIe驱动注册** | `pci_driver` + `pci_device_id` 表 → `pci_register_driver()` → 匹配后调用`probe()` |
-| **probe调用链** | `pci_enable_device()` → `pci_request_regions()` → `pci_iomap()` → `pci_set_dma_mask()` → `pci_alloc_consistent()` → `request_irq()` |
-| **BAR映射** | `pci_iomap(bar)`返回`void __iomem *`，后续用`readl()`/`writel()`访问寄存器 |
-| **一致性DMA** | `pci_alloc_consistent()`分配uncached内存，适合描述符环；CPU和设备始终看到一致数据 |
-| **流式DMA** | `dma_map_single()` → 传输 → `dma_sync_single_for_cpu()` → `dma_unmap_single()`；性能更高 |
-| **SG DMA** | `dma_map_sg()`将多个不连续物理页映射为DMA地址列表；适合大数据量分散传输 |
-| **中断选择** | 优先MSI-X（多队列并行）→ MSI（不共享低延迟）→ INTx（兼容老旧设备） |
-| **DMA陷阱** | mask必须匹配设备能力；64位失败后必须回退32位；probe出错按逆序释放资源 |
-| **热插拔** | 严格遵循 PERST#复位 → 等待 → 上电 → 扫描的顺序 |
-| **AX210验证** | `lspci`确认枚举 → `dmesg`确认固件 → `iw dev`确认接口 → `iw scan`验证功能 |
-| **NVMe验证** | `nvme list`确认设备 → `current_link_speed/width`确认链路 → `fio`测DMA吞吐 |
+| 自查项 | 读完应能独立完成的动作 |
+|--------|------------------------|
+| 分层定位 | 说出 PCI Core 在 probe 前替你完成了什么；按"lspci 是否可见"切分问题域 |
+| 注册匹配 | 写出 id_table + `module_pci_driver` 骨架；用 `lspci -nn` 排查 probe 不触发 |
+| probe 步骤 | 默写七步顺序，并给每步说出失败症状 |
+| 现代 API | 说清 `pcim_*` 托管相对手动 goto 阶梯的收益；用 `pci_alloc_irq_vectors`/`pci_irq_vector` 写中断申请 |
+| 缓存一致性 | 完整复述 DMA 数据错乱的机理；解释 x86 与 ARM 的差异来源 |
+| DMA 选型 | 给一个设备场景（描述符环 + 数据缓冲），正确拆分一致性/流式并写出 API 序列 |
+| SG | 说出 SG 解决什么问题、`nents` 返回值为什么可能小于输入 |
+| 中断 | 三种中断方式选型；解释 `pdev->irq + i` 为什么是错的 |
+| 排障 | 对着常见故障表，把"寄存器正常但 DMA 不动"这类症状映射到检查动作 |
 
-<br>
-
-## <span class="blue"> 下一步
-
-PCIe的高速串行传输能力为存储和网络设备提供了超高带宽，但在嵌入式音频领域，我们还需要了解另一种专用的串行总线——**I2S（Inter-IC Sound）**。下一节 **B-D.13.1 I2S与PCM物理层** 将带你进入音频世界：从I2S的时钟线（BCLK）、帧同步线（LRCK/WS）到数据线（SD），以及它和PCM（脉冲编码调制）的关系，为后续理解音频Codec驱动打下基础。
-
-<br>
+---
 
 ## <span class="blue"> 配套资源
 
-- **内核文档**：`Documentation/PCI/pci.rst`、`Documentation/DMA-API.rst`
-- **驱动源码**：`drivers/pci/`、`drivers/net/wireless/intel/iwlwifi/`、`drivers/nvme/host/`
-- **工具**：`pciutils`（lspci/setpci）、`nvme-cli`、`iw`、`wireless-tools`、`fio`
-- **参考手册**：Intel AX210 Datasheet、NVM Express Base Specification 2.0
-- **固件下载**：`git://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git`
+- **内核文档**：`Documentation/PCI/pci.rst`、`Documentation/core-api/dma-api.rst`
+- **内核源码**：`drivers/pci/`（PCI Core）、`drivers/nvme/host/`（MSI-X 多队列范本）、`include/linux/pci.h`（本篇全部 API 原型）
+- **工具**：pciutils（lspci/setpci）、nvme-cli、fio
+- **衔接**：B-D.10.1（链路层）、B-D.10.2（配置空间与 BAR）、第 11 章（设备模型与 devm）、B-D.10.6（把本篇骨架跑成一张 EP 卡的完整实战）

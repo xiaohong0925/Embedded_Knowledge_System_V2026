@@ -12,7 +12,7 @@ PCIe 提至第一组是刻意的：它是高速互连的事实标准，PCIe 的�
 
 | 组 | 篇目 | 面向行业 |
 |----|------|----------|
-| D.10 PCIe | [10.1 基础与物理层](B-D.10.1_PCIe基础与物理层.md) · [10.2 枚举与配置空间](B-D.10.2_PCIe枚举与配置空间.md) · [10.3 Linux驱动与DMA](B-D.10.3_PCIe Linux驱动与DMA.md) · 10.4 进阶 Gen4/5/6 与 AER（规划） · 10.5 CXL 生态（规划） · 10.6 实战 EP 卡 BAR/DMA（规划） | 服务器、加速卡、仪器仪表 |
+| D.10 PCIe | [10.1 基础与物理层](B-D.10.1_PCIe基础与物理层.md) · [10.2 枚举与配置空间](B-D.10.2_PCIe枚举与配置空间.md) · [10.3 Linux驱动与DMA](B-D.10.3_PCIe Linux驱动与DMA.md) · [10.4 进阶 Gen4/5/6 与 AER](B-D.10.4_PCIe进阶Gen456信号完整性与AER.md) · [10.5 CXL 生态](B-D.10.5_CXL与PCIe生态扩展.md) · [10.6 实战 EP 卡 BAR/DMA](B-D.10.6_实战PCIe_EP卡BAR访问与DMA驱动开发.md) | 服务器、加速卡、仪器仪表 |
 | D.11 CAN | [11.1 CAN FD物理层](B-D.11.1_CAN FD物理层与帧格式.md) · [11.2 协议层与错误处理](B-D.11.2_CAN FD协议层与错误处理.md) · [11.3 Linux驱动与SocketCAN](B-D.11.3_CAN FD Linux驱动与SocketCAN.md) · [11.4 CANopen对象字典与NMT](B-D.11.4_CANopen协议对象字典与NMT.md) · [11.5 PDO/SDO与Linux驱动](B-D.11.5_CANopen_PDO_SDO与Linux驱动.md) · 11.6 实战双板收发+伺服控制（规划） | 机器人、汽车、工业控制 |
 | D.12 工业以太网 | 12.1 版图总览 EtherCAT/PROFINET/EtherNet-IP（规划） · [12.2 EtherCAT协议](B-D.12.2_EtherCAT协议深度解析.md) · [12.3 分布式时钟与驱动](B-D.12.3_EtherCAT分布式时钟与Linux驱动.md) · [12.4 PROFINET与OPC UA](B-D.12.4_PROFINET与OPC_UA.md) · 12.5 实战 IgH 主站+伺服（规划） | 机器人、工厂自动化 |
 | D.13 音频 | [13.1 I2S与PCM物理层](B-D.13.1_I2S与PCM物理层.md) · [13.2 Linux驱动与ALSA](B-D.13.2_I2S Linux驱动与ALSA.md) · [13.3 SPDIF与选型](B-D.13.3_SPDIF与音频接口选型.md) · 13.4 实战 codec 声卡注册（规划） | 多媒体、座舱 |
