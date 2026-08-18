@@ -669,16 +669,19 @@ nav:
               - B-C.7.2 USB枚举与描述符: B. 总线协议/C. 中高速外设与存储/B-C.7.2_USB枚举与描述符.md
               - B-C.7.3 USB Linux Host驱动: B. 总线协议/C. 中高速外设与存储/B-C.7.3_USB Linux Host驱动.md
               - B-C.7.4 USB Gadget模式与ConfigFS: B. 总线协议/C. 中高速外设与存储/B-C.7.4_USB Gadget模式与ConfigFS.md
+              - B-C.7.5 实战USB Gadget模拟U盘与串口: B. 总线协议/C. 中高速外设与存储/B-C.7.5_实战USB_Gadget模拟U盘与串口.md
           - C.8 存储接口:
               - B-C.8.1 eMMC协议深度解析: B. 总线协议/C. 中高速外设与存储/B-C.8.1_eMMC协议深度解析.md
               - B-C.8.2 eMMC Linux驱动与SD卡: B. 总线协议/C. 中高速外设与存储/B-C.8.2_eMMC Linux驱动与SD卡.md
               - B-C.8.3 UFS闪存: B. 总线协议/C. 中高速外设与存储/B-C.8.3_UFS闪存.md
               - B-C.8.4 SPI NAND与QSPI: B. 总线协议/C. 中高速外设与存储/B-C.8.4_SPI_NAND与QSPI.md
+              - B-C.8.5 实战eMMC分区可靠性与fio测试: B. 总线协议/C. 中高速外设与存储/B-C.8.5_实战eMMC分区可靠性与fio测试.md
           - C.9 MIPI显示与摄像:
               - B-C.9.1 MIPI D-PHY物理层: B. 总线协议/C. 中高速外设与存储/B-C.9.1_MIPI_D-PHY物理层.md
               - B-C.9.2 MIPI CSI-2协议层与V4L2: B. 总线协议/C. 中高速外设与存储/B-C.9.2_MIPI_CSI-2协议层与V4L2.md
               - B-C.9.3 MIPI DSI协议层与DRM: B. 总线协议/C. 中高速外设与存储/B-C.9.3_MIPI_DSI协议层与DRM.md
               - B-C.9.4 LVDS/eDP/HDMI/DisplayPort: B. 总线协议/C. 中高速外设与存储/B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md
+              - B-C.9.5 实战OV摄像头点亮全流程: B. 总线协议/C. 中高速外设与存储/B-C.9.5_实战OV摄像头点亮全流程.md
       - D. 专用网络总线:
           - D.10 PCIe:
               - B-D.10.1 PCIe基础与物理层: B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层.md
@@ -693,22 +696,38 @@ nav:
               - B-D.11.3 CAN FD Linux驱动与SocketCAN: B. 总线协议/D. 专用网络总线/B-D.11.3_CAN FD Linux驱动与SocketCAN.md
               - B-D.11.4 CANopen协议对象字典与NMT: B. 总线协议/D. 专用网络总线/B-D.11.4_CANopen协议对象字典与NMT.md
               - B-D.11.5 CANopen PDO/SDO与Linux驱动: B. 总线协议/D. 专用网络总线/B-D.11.5_CANopen_PDO_SDO与Linux驱动.md
+              - B-D.11.6 实战SocketCAN双板收发与CANopen伺服控制: B. 总线协议/D. 专用网络总线/B-D.11.6_实战SocketCAN双板收发与CANopen伺服控制.md
           - D.12 工业以太网:
+              - B-D.12.1 工业以太网总览EtherCAT_PROFINET_EtherNet-IP版图: B. 总线协议/D. 专用网络总线/B-D.12.1_工业以太网总览EtherCAT_PROFINET_EtherNet-IP版图.md
               - B-D.12.2 EtherCAT协议深度解析: B. 总线协议/D. 专用网络总线/B-D.12.2_EtherCAT协议深度解析.md
               - B-D.12.3 EtherCAT分布式时钟与Linux驱动: B. 总线协议/D. 专用网络总线/B-D.12.3_EtherCAT分布式时钟与Linux驱动.md
               - B-D.12.4 PROFINET与OPC UA: B. 总线协议/D. 专用网络总线/B-D.12.4_PROFINET与OPC_UA.md
+              - B-D.12.5 实战IgH EtherCAT主站搭建与CSP伺服控制: B. 总线协议/D. 专用网络总线/B-D.12.5_实战IgH_EtherCAT主站搭建与CSP伺服控制.md
           - D.13 音频总线:
               - B-D.13.1 I2S与PCM物理层: B. 总线协议/D. 专用网络总线/B-D.13.1_I2S与PCM物理层.md
               - B-D.13.2 I2S Linux驱动与ALSA: B. 总线协议/D. 专用网络总线/B-D.13.2_I2S Linux驱动与ALSA.md
               - B-D.13.3 SPDIF与音频接口选型: B. 总线协议/D. 专用网络总线/B-D.13.3_SPDIF与音频接口选型.md
+              - B-D.13.4 实战I2S Codec声卡注册与放音录音: B. 总线协议/D. 专用网络总线/B-D.13.4_实战I2S_Codec声卡注册与放音录音.md
+          - D.14 车载与高速管理面:
+              - B-D.14.1 车载以太网与TSN: B. 总线协议/D. 专用网络总线/B-D.14.1_车载以太网与TSN.md
+              - B-D.14.2 LIN总线车载低成本子网: B. 总线协议/D. 专用网络总线/B-D.14.2_LIN总线车载低成本子网.md
+              - B-D.14.3 CAN XL与功能安全FSoE: B. 总线协议/D. 专用网络总线/B-D.14.3_CAN XL与功能安全FSoE.md
+              - B-D.14.4 车载SerDes五标准: B. 总线协议/D. 专用网络总线/B-D.14.4_车载SerDes五标准.md
+              - B-D.14.5 光模块管理面CMIS与SFF-8636: B. 总线协议/D. 专用网络总线/B-D.14.5_光模块管理面CMIS与SFF-8636.md
       - E. 综合实战:
           - E.15 行业实战:
               - B-E.15.1 六轴协作机械臂多总线协同: B. 总线协议/E. 综合实战/B-E.15.1_六轴协作机械臂多总线协同.md
               - B-E.15.2 移动机器人AGV总线方案: B. 总线协议/E. 综合实战/B-E.15.2_移动机器人AGV总线方案.md
+              - B-E.15.3 人形机器人EtherCAT全身总线实战: B. 总线协议/E. 综合实战/B-E.15.3_人形机器人EtherCAT全身总线实战.md
+              - B-E.15.4 整机总线架构设计方法: B. 总线协议/E. 综合实战/B-E.15.4_整机总线架构设计方法.md
+              - B-E.15.5 数通仪器仪表整机总线架构: B. 总线协议/E. 综合实战/B-E.15.5_数通仪器仪表整机总线架构.md
+              - B-E.15.6 PREEMPT_RT与总线实时性调优: B. 总线协议/E. 综合实战/B-E.15.6_PREEMPT_RT与总线实时性调优.md
       - F. 前沿高速串行:
           - F.16 前沿高速:
               - B-F.16.1 SerDes通识均衡眼图抖动信道预算: B. 总线协议/F. 前沿高速串行/B-F.16.1_SerDes通识均衡眼图抖动信道预算.md
               - B-F.16.4 JESD204C数据转换器接口: B. 总线协议/F. 前沿高速串行/B-F.16.4_JESD204C数据转换器接口.md
+              - B-F.16.5 USB4与Thunderbolt: B. 总线协议/F. 前沿高速串行/B-F.16.5_USB4与Thunderbolt.md
+              - B-F.16.6 Aurora与FPGA互连: B. 总线协议/F. 前沿高速串行/B-F.16.6_Aurora与FPGA互连.md
       - 知识图谱:
           - B.99 知识图谱: B. 总线协议/知识图谱/B.99_知识图谱.md
   - C. 专用技术与前沿趋势:

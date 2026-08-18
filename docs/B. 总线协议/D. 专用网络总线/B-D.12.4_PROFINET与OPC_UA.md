@@ -1,296 +1,168 @@
-# B-D.12.4 PROFINET与OPC UA
+# B-D.12.4 PROFINET 与 OPC UA
 
-> 所属章节：第五部 B. 总线协议 > B-D.12 工业以太网
+> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
 >
-> 难度：[E] Expert | 预计阅读时间：30分钟
+> 难度：[E] | 预计阅读时间：40 分钟
 
-## <span class="blue"> 本节导读
+## 本节导读
 
-前面几节我们深入分析了EtherCAT的DC时钟机制和从站同步原理——它像一列准点的高速列车，每个站点精确停靠。但EtherCAT并非工业通信的唯一答案。
+12.1 的版图里，PROFINET 和 EtherNet/IP 代表"标准以太网兼容"路线，与 EtherCAT 的专用机制路线相对。本节把这条路线讲透一半——PROFINET 的三档实时等级是怎么用不同技术换确定性的，GSDML 设备描述文件怎样支撑即插即用；另一半留给信息层：OPC UA 不是现场总线，它解决的是"数据是什么意思"的语义互操作问题，并且正通过 Pub/Sub over TSN 向实时层下探。这两者的组合（PROFINET 跑控制、OPC UA 跑信息）是当前工厂自动化最常见的纵向架构。
 
-在实际的工厂车间里，你会面临这样的现实：**新采购的设备支持PROFINET，而老产线用的是EtherCAT；IT部门要求数据上传到MES系统，而OT工程师只懂PLC寄存器地址。** 这种IT/OT融合的需求催生了两类关键协议：一类是桥接不同实时以太网的工业现场协议（PROFINET），另一类是打通设备到云端的信息模型协议（OPC UA）。本节将深入剖析两者，帮你建立"协议选型的决策框架"。
+本节覆盖：PROFINET NRT/RT/IRT 三档的实现机制与硬件要求、GSDML 文件的作用与工程流程、PROFINET 与 EtherCAT 的取舍边界、OPC UA 信息模型与配套规范、Client/Server 与 Pub/Sub 两种模式、open62541 在嵌入式 Linux 上的最小用例、控制层与信息层的选型决策。
 
-```mermaid
-graph TD
-    A[工业通信协议栈] --> B[现场层: 实时控制]
-    A --> C[信息层: 数据互操作]
-    B --> D[PROFINET RT/IRT]
-    B --> E[EtherCAT]
-    C --> F[OPC UA Client/Server]
-    C --> G[OPC UA Pub/Sub]
-    D -.-> H[GSDML设备描述]
-    F -.-> I[信息模型/数字孪生]
-    style D fill:#4a90d9,color:#fff
-    style F fill:#5cb85c,color:#fff
-```
+## PROFINET：三档实时等级
 
----
+PROFINET（IEC 61158 Type 10，PI 协会）的设计前提是不改以太网 MAC 层，用工程手段获得确定性。三档等级对应三种机制：
 
-## <span class="blue"> PROFINET：西门子主导的工业以太网 [E]
-
-### PROFINET的起源与定位
-
-PROFINET（Process Field Network）由PI（PROFIBUS & PROFINET International）组织开发，2003年发布，被纳入IEC 61158国际标准。与EtherCAT的"专用以太网"路线不同，PROFINET选择了一条更务实的路径：**基于标准IEEE 802.3以太网，通过优先级调度（IEEE 802.1Q VLAN Tag + QoS）实现实时性**。
-
-这种设计哲学让PROFINET拥有天然的兼容性——你可以在同一根网线上混接PLC、HMI、摄像头、甚至办公打印机。付出的代价则是实时性的天花板：纯软件实现的RT（Real Time）模式只能到1~10ms，而EtherCAT轻松突破100μs。
-
-### 三种通信等级的本质差异
-
-PROFINET定义了三个明确的通信等级，本质上是用不同的技术手段在"通用性"与"实时性"之间做取舍：
-
-| 等级 | 名称 | 周期 | 实现方式 | 适用场景 |
-|:---:|:---|:---:|:---|:---|
-| NRT | Non-Real Time | > 100ms | 标准TCP/IP协议栈 | 参数配置、诊断、Web服务 |
-| RT | Real Time | 1~10ms | 绕过TCP/IP，直接以太网帧传输（EtherType = 0x8892）| 常规I/O控制、过程控制 |
-| IRT | Isochronous RT | < 1ms（典型250μs）| **专用ASIC（ERTEC芯片）**，硬件时间切片 | 运动控制、凸轮同步 |
-
-NRT很好理解——就是普通以太网。RT模式的关键在于绕过操作系统协议栈：发送端直接将数据封装为以太网帧，接收端用专用驱动从网卡DMA取数据，跳过TCP/IP处理流水线。这类似于我们在Socket编程里用`SOCK_RAW`绕过内核，但PROFINET RT在驱动层做了更深的优化。
-
-IRT则是完全不同的故事。ERTEC（Enhanced Real Time Ethernet Controller）芯片在物理层实现了**时间切片（Time Slicing）**：将通信周期划分为"IRT窗口"和"开放窗口"，IRT窗口内只传输时间关键的同步数据，开放窗口才留给NRT流量。这需要网卡硬件精确知道周期的起始点，普通网卡根本无法做到。
-
-### GSDML：设备的"自描述简历"
-
-每个PROFINET设备都附带一个GSDML（General Station Description Markup Language）文件，本质是XML格式的设备描述文档。它定义了：
-
-- 设备身份标识（Vendor ID、Device ID、Order Number）
-- 支持的通信等级（RT/IRT能力声明）
-- 过程数据接口（输入/输出数据块的长度与数据类型）
-- 模块配置（可插拔I/O模块的排列组合）
-- 参数默认值与允许范围
-
-在TIA Portal（西门子工程工具）中导入GSDML后，系统会自动识别设备能力，用户只需拖拽配置即可——这种即插即用的体验是PROFINET在西门子生态圈中普及的重要原因。
-
-```
-+---------------+      GSDML文件      +---------------+
-|  TIA Portal   | <================> |  PROFINET设备  |
-|  工程工具      |   (XML描述文件)     |  (PLC/IO模块)  |
-+---------------+                     +---------------+
-        |                                    |
-        | Step 1: 导入GSDML                   |
-        | Step 2: 拖拽配置拓扑                 |
-        | Step 3: 自动分配设备名/IP             |
-        | Step 4: 下载配置+启动                 |
-        v                                    v
-   +---------+  PROFINET RT帧  +---------+
-   |  S7-1500 | <============> |  ET200SP |
-   |   PLC    |   周期1-10ms   |  IO从站   |
-   +---------+                +---------+
-```
-
-### PROFINET vs EtherCAT：核心差异
-
-| 对比维度 | PROFINET | EtherCAT | 分析与建议 |
+| 等级 | 周期 | 机制 | 硬件要求 |
 |:---|:---|:---|:---|
-| **标准归属** | IEC 61158 Type 10 | IEC 61158 Type 12 | 同为IEC标准，无本质差异 |
-| **实时性** | RT: 1~10ms；IRT: <1ms | 典型100μs，最小12.5μs | EtherCAT高一个数量级，运动控制首选 |
-| **拓扑灵活性** | 星型/树型/线型，支持标准交换机 | 线型/分支最佳，需EtherCAT专用交换机或从站集成 | PROFINET适合改造现有网络 |
-| **标准设备混用** | ✅ 同一网络可接摄像头、PC | ❌ 纯EtherCAT网络，异构设备需网关 | PROFINET在IT/OT融合场景占优 |
-| **主站成本** | 标准网卡 + 软件栈即可（RT） | 需EtherCAT主站卡或专用芯片 | PROFINET RT入门门槛更低 |
-| **设备生态** | 西门子生态主导 | 倍福主导，Beckhoff自动化 | 看甲方用什么品牌 |
-| **Linux支持** | 较薄弱，官方无开源主站 | EtherLab开源主站成熟 | Linux嵌入式首选EtherCAT |
-| **IRT硬件要求** | **必须ERTEC芯片** | 无需专用ASIC（从站用ESC芯片） | 两者都需要专用芯片，只是位置不同 |
+| NRT | >100 ms | 标准 TCP/IP | 无 |
+| RT | 1~10 ms | 以太网类型 0x8892 直发，绕开 TCP/IP；VLAN 优先级插队 | 标准网卡 + RT 协议栈 |
+| IRT | ~250 µs | 周期时间片调度：IRT 窗口只传实时帧，开放窗口传其余 | ERTEC 专用芯片（交换机与控制器两端都要） |
 
-⚠️ **陷阱**：**PROFINET IRT需要专用硬件（ERTEC芯片）**——普通网卡（包括树莓派的板载网卡、Intel i219-V、Realtek RTL8111等）均不支持IRT。如果你打算用树莓派跑PROFINET IRT运动控制，这条路走不通。RT模式可以跑（需要适配的协议栈），但1~10ms的周期满足不了高速伺服需求。
+RT 档的关键动作是把实时帧从操作系统协议栈里摘出来：发送侧直接组以太网帧，接收侧驱动层分流，0x8892 帧不进 IP 栈。这与 EtherCAT 绕开协议栈的思路一致，区别在于 PROFINET RT 的帧仍然逐站独立收发、经过交换机排队——确定性靠优先级而不是靠消灭排队，所以天花板在毫秒级。
 
-💡 **提示**：**EtherCAT适合运动控制（1kHz+）→ PROFINET适合过程控制（10~100ms）**——选型时不要只看实时性数字，要看你的工艺需求。一条灌装产线的温度PID控制，50ms周期绰绰有余，PROFINET RT的灵活性和诊断能力反而更实用；但一条六轴机器人的关节插补，必须EtherCAT的125μs周期。
+IRT 档把时间切成确定的窗口，窗口调度由硬件执行，因此普通网卡做不了 IRT。树莓派板载网卡、Intel i219、RTL8111 这类标准网卡只能跑 RT——选型时先确认目标周期落在哪一档，再反推硬件清单。
 
----
+> ⚠️
+> "PROFINET 主站用普通网卡就行"只对 RT 成立。IRT 需要 ERTEC 或等效 ASIC，Linux 侧没有成熟开源 IRT 主站方案。Linux 平台上要做亚毫秒运动控制，工程上收敛到 EtherCAT（IgH/SOEM），不要在 PROFINET IRT 上耗费预研成本。
 
-## <span class="blue"> OPC UA：工业互操作的信息模型 [E]
+## GSDML：设备描述驱动的组态流程
 
-### 从OPC Classic到OPC UA的跨越
+每个 PROFINET 设备附带 GSDML 文件——XML 格式的设备自描述：厂商与设备标识、支持的实时等级、可插拔模块的排列、每路 IO 的数据类型与参数范围。工程工具（TIA Portal 或第三方组态软件）导入 GSDML 后，设备能力自动呈现在组态界面里，拓扑拖拽、设备名/IP 分配、配置下载一气呵成。
 
-OPC Classic（DA/HDA/AE）诞生于1996年，基于微软DCOM技术——这注定了它只能运行在Windows平台。OPC UA（Unified Architecture，IEC 62541）彻底重写了架构，用**TCP/IP + 自定义二进制协议**替代DCOM，实现了真正的跨平台。现在你可以在ARM Linux网关上运行OPC UA服务器，让iPhone上的客户端直接读取PLC数据。
-
-但OPC UA的核心价值不是跨平台，而是**信息模型（Information Model）**。
-
-### 信息模型：给数据赋予语义
-
-传统MODBUS通信中，你知道`0x0001`地址存的是一个16位整数——但这个数字代表什么？温度？压力？还是故障代码？单位是摄氏度还是华氏度？量程范围多少？这些信息全部丢失在"原始字节"层面。
-
-OPC UA的信息模型解决了这个问题。它定义了一套**面向对象的地址空间**：
+这个机制的工程价值在于**把集成成本转移到设备厂商侧**：厂商写一次 GSDML，所有用户的组态工具都能理解设备。同类机制在 CANopen 里叫 EDS，在 EtherCAT 里叫 ESI——三者用途相同，格式互不兼容。做设备开发时这份文件是交付物的一部分；做集成时它是排障的第一参考（模块顺序、数据长度以 GSDML 为准）。
 
 ```
-Objects Folder
-└── ProductionLine_1
-    └── TemperatureSensor_T1
-        ├── Value          (Variable, Double, 125.5)
-        ├── Unit           (Property, String, "°C")
-        ├── RangeMin       (Property, Double, 0.0)
-        ├── RangeMax       (Property, Double, 200.0)
-        └── AlarmHigh      (Method, threshold=180.0)
+ 组态流程（TIA Portal 或等价工具）：
+   导入 GSDML → 拓扑视图拖拽设备 → 分配设备名（DCP 协议发现）
+   → 编译下载到 PLC → RT 周期通信建立
+        │
+        ▼ 运行期
+   PLC ══ RT 帧（0x8892，1~10 ms）══ IO 设备
+   PLC ══ NRT（TCP/UDP）══════════ HMI / 诊断终端
 ```
 
-每个节点不仅有值，还有类型定义、语义描述、访问权限和历史趋势。更重要的是，OPC UA标准定义了**配套规范（Companion Specifications）**——例如ISA-95（企业-控制系统集成）规范定义了设备、物料、人员等标准对象类型。这意味着：如果两家厂商的OPC UA服务器都实现了ISA-95，上位机软件可以直接理解对方的语义，无需人工映射。
+## PROFINET 与 EtherCAT 的取舍
 
-### Pub/Sub机制：从轮询到发布
-
-传统OPC UA使用Client/Server模式：客户端定时发起Read/Write请求——这本质上是轮询。Pub/Sub（发布/订阅，OPC UA Part 14）改变了游戏规则：
-
-| 模式 | 通信方式 | 带宽效率 | 实时性 | 适用场景 |
-|:---|:---|:---:|:---:|:---|
-| Client/Server | 请求-响应轮询 | 低（每次需建立连接） | 取决于轮询间隔 | 配置、诊断、按需读取 |
-| Pub/Sub (Broker) | 发布到MQTT Broker，订阅者接收 | 中 | 中 | 云边协同、多对多 |
-| Pub/Sub (UDP) | 多播/广播直连 | **高** | **高（μs级）** | TSN网络下的实时控制 |
-
-Pub/Sub over UDP在TSN（Time-Sensitive Networking）网络上可以实现微秒级同步，这使得OPC UA开始进入传统现场总线的领地。2020年后，OPC UA over TSN被公认为下一代工业通信的统一框架。
-
-### 安全性：内建而非附加
-
-OPC UA将安全性融入协议设计，而非像MODBUS TCP那样"后期打补丁"：
-
-| 安全机制 | 实现方式 | 说明 |
+| 维度 | PROFINET | EtherCAT |
 |:---|:---|:---|
-| 身份认证 | X.509证书 | 双向证书验证，替代用户名密码 |
-| 通道加密 | AES-128/256、RSA-2048 | 防窃听 |
-| 消息签名 | HMAC-SHA256 | 防篡改 |
-| 会话管理 | SecureChannel + UserToken | 多层安全上下文 |
-| 审计日志 | 内建审计事件 | 记录所有安全相关操作 |
+| 运动控制适配 | RT 不够、IRT 需专用硬件且 Linux 生态弱 | 原生设计，100 µs 周期成熟 |
+| IT/OT 混网 | 天然支持，同网线跑摄像头/办公流量 | 实时段须物理隔离 |
+| 存量改造 | 可在现有交换网络上叠加 | 需独立布线 |
+| 主站成本 | RT：标准网卡 + 协议栈 | 标准网卡即可（IgH 免费） |
+| 从站芯片 | RT：标准 MAC；IRT：ERTEC | 必须 ESC |
+| 生态中心 | 西门子 TIA 体系 | ETG/倍福系，主站开源 |
+| Linux 友好度 | 弱（无开源主站） | 强（IgH/SOEM 双开源） |
 
-> 💡 **提示**：在生产环境中部署OPC UA时，**务必启用证书验证**。跳过证书检查（accept_all）虽然调试方便，但等于把产线数据裸奔在网络上。很多工控安全事件并非高科技攻击，而是协议本身的安全特性被管理员手动关闭了。
+收敛规则一句话：控制周期 ≤1 ms 且多轴同步 → EtherCAT；西门子/罗克韦尔存量生态内的过程控制 → 跟随生态；信息层集成 → 下一节的 OPC UA。
 
-### open62541：Linux上的OPC UA实现
+## OPC UA：解决语义互操作
 
-open62541是用C99编写的开源OPC UA栈（LGPL v3），移植性极佳——已经在STM32、Raspberry Pi、x86 Linux上广泛验证。以下是一个完整的客户端示例：
+现场总线传的是字节，字节的意义靠人和文档对齐。Modbus 寄存器 0x0001 是温度还是压力、单位是什么、量程多少，协议本身不回答。OPC UA（IEC 62541）的核心是**信息模型**：地址空间是一棵带语义的节点树，每个节点有类型、单位、量程、访问权限，节点之间有关系引用：
+
+```
+ Objects
+ └── ProductionLine_1
+     └── TemperatureSensor_T1          （对象节点，类型：TemperatureSensorType）
+         ├── Value       Double 125.5  （变量节点）
+         ├── Unit        "°C"          （属性）
+         ├── RangeMin/Max 0.0/200.0    （属性）
+         └── AlarmHigh()               （方法节点，可调用的操作）
+```
+
+行业配套规范（Companion Specification）把信息模型再标准化一层：ISA-95 定义企业-控制集成的对象，PackML 定义包装机械的状态机，机器人有 OPC 40001。两家厂商都实现同一配套规范时，上位软件无需人工点表就能理解数据——这是 OPC UA 相对"私有协议 + 点表"模式的代差。
+
+安全是内建的：X.509 证书双向认证、AES/RSA 加密、消息签名、审计日志，全部在协议层定义。部署时唯一要记住的是**不要关它**：调试时为省事接受所有证书，等于把产线数据明文开放，量产后必须恢复证书验证。
+
+## Client/Server 与 Pub/Sub
+
+| 模式 | 机制 | 时延 | 适用 |
+|:---|:---|:---|:---|
+| Client/Server | TCP 连接上的请求-响应（Read/Write/Browse/Call/Subscribe） | 10 ms 级以上 | 配置、诊断、MES/云集成——当前绝对主流 |
+| Pub/Sub + MQTT Broker | 发布到消息代理，多方订阅 | 取决于 Broker | 云边协同、一对多分发 |
+| Pub/Sub + UDP 多播 | 无连接直发 | µs 级（配合 TSN） | 下一代实时架构（OPC UA FX） |
+
+C/S 模式里的 Subscription/MonitoredItem 机制值得单独知道：客户端订阅变量后，服务器在数值变化超阈值时主动推送——不是轮询，事件驱动，带宽和时延都比周期 Read 好。嵌入式网关采集场景优先用订阅而不是循环读。
+
+Pub/Sub over UDP 配合 TSN 是 OPC UA FX（Field eXchange）的方向：把语义层直接压到控制层，长期看可能统一现场层与信息层。当前处于早期，跟踪即可，不要在新产品设计里押注它替代 EtherCAT。
+
+## open62541 最小用例
+
+open62541 是 C99 开源 OPC UA 栈（MPL v2），ARM Linux 上广泛验证。最小客户端：连接、读一个变量、断开。
 
 ```c
-/* open62541_client.c
- * 编译: gcc -o ua_client open62541_client.c -lopen62541
+/* ua_client_min.c — 读温度变量
+ * 编译：gcc -o ua_client ua_client_min.c -lopen62541
  */
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-int main(int argc, char *argv[])
+int main(void)
 {
     UA_Client *client = UA_Client_new();
     UA_ClientConfig_setDefault(UA_Client_getConfig(client));
 
-    /* Step 1: 连接到服务器 */
-    UA_StatusCode retval = UA_Client_connect(client, "opc.tcp://192.168.1.100:4840");
-    if (retval != UA_STATUSCODE_GOOD) {
-        fprintf(stderr, "连接失败: %s\n", UA_StatusCode_name(retval));
-        UA_Client_delete(client);
-        return EXIT_FAILURE;
+    if (UA_Client_connect(client, "opc.tcp://192.168.1.100:4840") != UA_STATUSCODE_GOOD) {
+        fprintf(stderr, "连接失败\n");
+        return 1;
     }
-    printf("[+] 已连接到OPC UA服务器\n");
 
-    /* Step 2: 读取变量节点
-     * NodeId格式: ns=命名空间索引;i=标识符
-     * 示例读取ns=1, i=1001的Double类型变量（温度值）
-     */
     UA_Variant value;
     UA_Variant_init(&value);
-    retval = UA_Client_readValueAttribute(
-                client,
-                UA_NODEID_STRING(1, "TemperatureSensor_T1.Value"),
-                &value);
-    if (retval == UA_STATUSCODE_GOOD && UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_DOUBLE])) {
-        UA_Double temperature = *(UA_Double *)value.data;
-        printf("[+] 温度读数: %.2f °C\n", temperature);
-    } else {
-        fprintf(stderr, "[-] 读值失败或类型不匹配: %s\n", UA_StatusCode_name(retval));
-    }
+    UA_StatusCode rc = UA_Client_readValueAttribute(client,
+        UA_NODEID_STRING(1, "TemperatureSensor_T1.Value"), &value);
+    if (rc == UA_STATUSCODE_GOOD &&
+        UA_Variant_hasScalarType(&value, &UA_TYPES[UA_TYPES_DOUBLE]))
+        printf("温度 = %.2f °C\n", *(UA_Double *)value.data);
     UA_Variant_clear(&value);
 
-    /* Step 3: 断开连接 */
     UA_Client_disconnect(client);
     UA_Client_delete(client);
-    printf("[+] 已断开连接\n");
-
-    return EXIT_SUCCESS;
+    return 0;
 }
 ```
 
-**在目标板上编译运行：**
+嵌入式网关的经典形态：libmodbus 读现场设备 + open62541 起服务器把数据挂进信息模型，向上对 MES/云暴露 OPC UA 接口。这一组合把"协议网关"做成几十行胶水代码，是 OPC UA 在边缘侧落地最多的姿势。
 
-```bash
-# 交叉编译（以ARM为例）
-arm-linux-gnueabihf-gcc -o ua_client open62541_client.c \
-    -I/path/to/open62541/include -L/path/to/open62541/lib \
-    -lopen62541 -lpthread -Wl,-rpath,/usr/local/lib
+## 控制层与信息层的组合决策
 
-# 部署到目标板运行
-scp ua_client root@192.168.1.50:/tmp/
-ssh root@192.168.1.50 '/tmp/ua_client'
-# 输出:
-# [+] 已连接到OPC UA服务器
-# [+] 温度读数: 125.50 °C
-# [+] 已断开连接
-```
-
-> 💡 **提示**：open62541同时提供服务器API。如果你的嵌入式Linux网关需要采集MODBUS数据并暴露为OPC UA接口，可以用libmodbus读数据 + open62541创建节点，两行代码创建一个UA_Variable节点，把传感器数据映射进去。这是工业物联网关的经典实现模式。
-
----
-
-## <span class="blue"> OPC UA协议架构分层
-
-| 层级 | 功能 | 协议/机制 | 说明 |
-|:---:|:---|:---|:---|
-| **应用层** | 信息模型、方法调用、事件通知 | Companion Specs (ISA-95, PackML) | 语义层，不同行业的标准化对象定义 |
-| **服务层** | Read/Write/Browse/Call/Publish等 | OPC UA服务集 | 抽象的UA服务接口，与传输无关 |
-| **传输层** | 数据序列化与连接管理 | UA Binary / UA JSON / UA XML | 推荐UA Binary（效率高），Web场景用JSON |
-| **安全通道层** | 加密/签名/证书验证 | X.509 + AES/RSA | 可配置的安全策略，从无安全到最高级 |
-| **传输层** | TCP/IP或MQTT/UDP | opc.tcp / mqtt / udp | Client/Server用TCP；Pub/Sub用MQTT或UDP多播 |
-
----
-
-## <span class="blue"> 工业协议选型决策表
-
-| 协议 | 实时性 | 推荐拓扑 | 适用场景 | Linux支持 | 推荐度 |
-|:---|:---:|:---|:---|:---:|:---:|
-| **EtherCAT** | < 100μs | 线型/分支 | 运动控制、CNC、机器人关节 | ⭐⭐⭐ 开源主站成熟 | ★★★★★（运动控制） |
-| **PROFINET RT** | 1~10ms | 星型/树型 | 过程控制、西门子产线集成 | ⭐⭐ 商业方案为主 | ★★★★☆（西门子生态） |
-| **PROFINET IRT** | 250μs | 星型+IRT交换机 | 高速凸轮同步、飞剪 | ⭐ 无开源方案 | ★★☆☆☆（Linux不友好） |
-| **OPC UA C/S** | > 100ms | 任意以太网 | MES集成、云端上传、跨平台互操作 | ⭐⭐⭐⭐ open62541优秀 | ★★★★★（信息层首选） |
-| **OPC UA Pub/Sub** | μs级(TSN) | TSN网络 | 下一代统一架构，替代现场总线 | ⭐⭐⭐ 需要TSN硬件 | ★★★☆☆（未来方向） |
-| **EtherNet/IP** | 1~10ms | 星型/线型 | 罗克韦尔/OMRON生态 | ⭐⭐ OpENer可用 | ★★★☆☆（北美市场） |
-| **TSN (802.1AS)** | < 1ms | 任意 | 工业以太网的"统一底层" | ⭐⭐⭐ Linux TSN协议栈发展中 | ★★★★☆（基础设施） |
-
----
-
-## <span class="blue"> 本节总结
-
-| 关键要点 | 详细说明 |
+| 需求 | 收敛方案 |
 |:---|:---|
-| PROFINET的双层实时 | RT（软件实现，1~10ms）满足多数过程控制；IRT（ERTEC硬件，<1ms）进入运动控制领域 |
-| GSDML的自描述能力 | XML设备描述实现即插即用，是PROFINET生态工程效率的核心 |
-| PROFINET vs EtherCAT | PROFINET赢在灵活性（标准以太网混用）和诊断能力；EtherCAT赢在实时性和Linux开源支持 |
-| OPC UA的信息模型 | 给数据赋予语义（类型/单位/量程/方法），Companion Specs实现跨厂商互操作 |
-| Pub/Sub革命 | 从轮询到发布订阅，over UDP + TSN可达到μs级，是现场总线的未来统一方向 |
-| 安全内建设计 | X.509证书 + AES加密 + HMAC签名，替代传统工控协议的"明文裸奔" |
-| open62541实践 | C99实现的LGPL开源栈，ARM Linux网关部署OPC UA服务器的首选方案 |
-| 选型核心逻辑 | 运动控制→EtherCAT；西门子生态→PROFINET；IT/OT融合→OPC UA；未来统一→OPC UA over TSN |
+| 多轴运动控制（≤1 ms） | EtherCAT（控制层），OPC UA 做上位信息接口 |
+| 西门子产线集成（10 ms 级 IO） | PROFINET RT，信息层走 OPC UA |
+| 纯信息集成（MES/云/跨厂商） | OPC UA C/S，不引入新现场总线 |
+| 新架构预研 | 跟踪 OPC UA FX over TSN；车载方向看 D.14.1 |
 
----
+纵向看，一座现代化工厂的典型栈是：EtherCAT/PROFINET 跑控制回路 → 边缘网关把过程数据挂进 OPC UA 信息模型 → MES/SCADA/云以 OPC UA 客户端消费。嵌入式工程师在网关这一层价值最大——两头都要懂。
 
-## <span class="blue"> 下一步
+## 排障：PROFINET 与 OPC UA 常见故障
 
-B-D.12节关于工业以太网的内容至此告一段落——我们从EtherCAT的帧结构、DC时钟、从站同步，走到PROFINET的RT/IRT分级、GSDML配置，再到OPC UA的信息模型与Pub/Sub。你已具备在真实项目中做协议选型的能力。
+| 症状 | 优先怀疑 | 验证方法 |
+|:---|:---|:---|
+| PROFINET 设备组态后不上线 | 设备名未分配（DCP 命名是 PROFINET 寻址前提） | 组态软件里"分配设备名"后核对 MAC 对应关系 |
+| RT 通信周期不达标 | 网段里有大流量冲击优先级队列 | 交换机端口镜像抓包，确认 VLAN 优先级生效 |
+| OPC UA 客户端连不上 | 证书被拒、端点 URL 的命名空间/IP 不一致 | 服务器日志看证书拒绝记录；先关安全策略定位再恢复 |
+| 读到的变量类型与预期不符 | 信息模型里该节点是 String/Int 而非 Double | Browse 节点确认 DataType，不要按文档猜 |
+| 订阅无推送 | 发布间隔或死区（deadband）配置过滤了变化 | 调 MonitoredItem 的 samplingInterval 与 deadband |
 
-接下来我们将进入 **B-D.10.1 PCIe基础与物理层** ——从工业现场总线转向计算机系统内部的高速总线。理解PCIe的TLP（Transaction Layer Packet）、枚举流程和BAR空间配置，是后续理解网卡、GPU、NVMe等高速设备驱动的基础。如果说CAN/EtherNET是设备的"外部神经网络"，那PCIe就是"内部骨架"。
+## 本节自查
 
----
+读完本节，你应能独立完成以下动作：
 
-## <span class="blue"> 配套资源
+- 说出 PROFINET 三档的周期、机制、硬件要求，并判定给定项目该落在哪一档
+- 解释 GSDML 在组态流程中的角色，并举出它在 CANopen/EtherCAT 里的对应物
+- 为一个"西门子 PLC + 国产 IO 模块"的集成项目列出开工顺序
+- 画出 OPC UA 信息模型节点树，说明节点与"裸寄存器"的本质差异
+- 在 Client/Server 订阅、Pub/Sub MQTT、Pub/Sub UDP 之间为三个不同场景选型
+- 用 open62541 写出"连接-读值-断开"的最小客户端，并说明嵌入式网关的典型组合
+- 解释为什么量产的 OPC UA 服务不能关闭证书验证
 
-**参考文档：**
-- PI组织官网: https://www.profibus.com （PROFINET技术规范、GSDML规范下载）
-- OPC Foundation: https://opcfoundation.org （OPC UA标准、Companion Specifications）
-- open62541文档: https://open62541.org/doc/current/ （API参考、Pub/Sub教程）
-- IEC 61158: 工业以太网协议国际标准
-- IEC 62541: OPC UA国际标准
+## 参考资料
 
-**推荐书籍：**
-- 《OPC UA: Unified Architecture》— Wolfgang Mahnke 等著（OPC UA标准作者写的权威参考书）
-- 《Industrial Communication Technology Handbook》— Richard Zurawski（工业通信百科全书式手册）
-
-**开源项目：**
-- open62541: https://github.com/open62541/open62541 （⭐ 6k+，最活跃的C语言OPC UA实现）
-- p-net: https://github.com/rtlabs-com/p-net （开源PROFINET设备栈，RT级别，LGPL）
-
-**调试工具：**
-- `UAExpert` — Free的OPC UA客户端GUI工具（Unified Automation出品），支持浏览地址空间、读写变量、调用方法
-- Wireshark内置PROFINET和OPC UA协议解析器（过滤器：`pn_io` 或 `opcua`）
-- 工业抓包要点：交换机需配置端口镜像（Port Mirroring），普通交换机无法抓取PROFINET RT帧
+- IEC 61158 Type 10 — PROFINET；PI 组织系统描述文档
+- IEC 62541 — OPC UA 系列标准；Part 14（Pub/Sub）
+- open62541：open62541.org（文档含服务器/客户端/PubSub 教程）
+- OPC 基金会配套规范库（ISA-95、PackML、OPC 40001 等）
+- TSN：IEEE 802.1AS/802.1Qbv；OPC UA FX 进展见 OPC 基金会 FLC 工作组

@@ -89,14 +89,16 @@
 
     **[→ 进入A扩展目录](A.%20应用层编程/README.md)**
 
-??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年6月8日</span>"
+??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月18日</span>"
     | 章节 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
     |------|---------|------|------------|------------|
-    | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | D. 专用网络总线 | PCIe、CAN/CANopen、EtherCAT、I2S | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | E. 综合实战 | 机械臂多总线协同、AGV总线方案 | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+    | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
+    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇） | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
+    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战） | <span class="tag tag-done">完成</span> | 否 | 2026年8月17日 |
+    | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇，每组含实战） | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
+    | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优 | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
+    | F. 前沿高速串行 | SerDes 通识、JESD204C、USB4/Thunderbolt、Aurora | <span class="tag tag-done">完成</span> | 否 | 2026年8月17日 |
+    | 知识图谱 | B.99 全局结构图、跨场景关联、选型速查、10 道自测题 | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
 
     **[→ 进入B扩展目录](B.%20总线协议/README.md)**
 

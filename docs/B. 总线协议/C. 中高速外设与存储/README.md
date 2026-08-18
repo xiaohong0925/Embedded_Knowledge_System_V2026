@@ -12,9 +12,9 @@
 
 | 组 | 篇目 | 各篇主题 |
 |----|------|----------|
-| C.7 USB | [7.1 物理层与拓扑](B-C.7.1_USB物理层与拓扑.md) · [7.2 枚举与描述符](B-C.7.2_USB枚举与描述符.md) · [7.3 Linux Host驱动](B-C.7.3_USB Linux Host驱动.md) · [7.4 Gadget模式与ConfigFS](B-C.7.4_USB Gadget模式与ConfigFS.md) · 7.5 实战 Gadget 模拟 U盘/串口（规划） | Host 与 Device 双视角；Gadget 是嵌入式特有的"我是设备"玩法 |
-| C.8 存储接口 | [8.1 eMMC协议](B-C.8.1_eMMC协议深度解析.md) · [8.2 eMMC驱动与SD卡](B-C.8.2_eMMC Linux驱动与SD卡.md) · [8.3 UFS闪存](B-C.8.3_UFS闪存.md) · [8.4 SPI NAND与QSPI](B-C.8.4_SPI_NAND与QSPI.md) · 8.5 实战 eMMC 分区与可靠性测试（规划） | 从 SD 卡到 UFS 的存储谱系；掉电可靠性是嵌入式存储的主战场 |
-| C.9 显示与摄像 | [9.1 MIPI D-PHY](B-C.9.1_MIPI_D-PHY物理层.md) · [9.2 CSI-2与V4L2](B-C.9.2_MIPI_CSI-2协议层与V4L2.md) · [9.3 DSI与DRM](B-C.9.3_MIPI_DSI协议层与DRM.md) · [9.4 LVDS/eDP/HDMI/DP](B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md) · 9.5 实战 OV 摄像头点亮（规划） | 摄像头进（CSI-2）、屏幕出（DSI）两条管道与框架对接 |
+| C.7 USB | [7.1 物理层与拓扑](B-C.7.1_USB物理层与拓扑.md) · [7.2 枚举与描述符](B-C.7.2_USB枚举与描述符.md) · [7.3 Linux Host驱动](B-C.7.3_USB Linux Host驱动.md) · [7.4 Gadget模式与ConfigFS](B-C.7.4_USB Gadget模式与ConfigFS.md) · [7.5 实战 Gadget 模拟 U盘/串口](B-C.7.5_实战USB_Gadget模拟U盘与串口.md) | Host 与 Device 双视角；Gadget 是嵌入式特有的"我是设备"玩法 |
+| C.8 存储接口 | [8.1 eMMC协议](B-C.8.1_eMMC协议深度解析.md) · [8.2 eMMC驱动与SD卡](B-C.8.2_eMMC Linux驱动与SD卡.md) · [8.3 UFS闪存](B-C.8.3_UFS闪存.md) · [8.4 SPI NAND与QSPI](B-C.8.4_SPI_NAND与QSPI.md) · [8.5 实战 eMMC 分区与可靠性测试](B-C.8.5_实战eMMC分区可靠性与fio测试.md) | 从 SD 卡到 UFS 的存储谱系；掉电可靠性是嵌入式存储的主战场 |
+| C.9 显示与摄像 | [9.1 MIPI D-PHY](B-C.9.1_MIPI_D-PHY物理层.md) · [9.2 CSI-2与V4L2](B-C.9.2_MIPI_CSI-2协议层与V4L2.md) · [9.3 DSI与DRM](B-C.9.3_MIPI_DSI协议层与DRM.md) · [9.4 LVDS/eDP/HDMI/DP](B-C.9.4_LVDS_eDP_HDMI_DisplayPort.md) · [9.5 实战 OV 摄像头点亮](B-C.9.5_实战OV摄像头点亮全流程.md) | 摄像头进（CSI-2）、屏幕出（DSI）两条管道与框架对接 |
 
 ## 先修与后续
 

@@ -14,8 +14,8 @@
 |------|------|------|
 | [B-F.16.1 SerDes通识：均衡、眼图、抖动、信道预算](B-F.16.1_SerDes通识均衡眼图抖动信道预算.md) | 高速链路共用语言：FFE/CTLE/DFE、眼图判读、抖动分解、预算与 redriver/retimer | 已完成 |
 | [B-F.16.4 JESD204C：高速数据转换器接口](B-F.16.4_JESD204C数据转换器接口.md) | 高速 ADC/DAC 与 FPGA/SoC 的主动脉：LMFS 参数表、建链流程、subclass 与确定性延迟 | 已完成 |
-| B-F.16.5 USB4 与 Thunderbolt | 隧道化架构：一根 Type-C 装进 PCIe/DP/USB3 | 规划 |
-| B-F.16.6 Aurora 与 FPGA 互连 | 逻辑侧轻量 SerDes 协议，自定义链路起点 | 规划 |
+| [B-F.16.5 USB4 与 Thunderbolt](B-F.16.5_USB4与Thunderbolt.md) | 隧道化架构：一根 Type-C 装进 PCIe/DP/USB3 | 已完成 |
+| [B-F.16.6 Aurora 与 FPGA 互连](B-F.16.6_Aurora与FPGA互连.md) | 逻辑侧轻量 SerDes 协议，自定义链路起点 | 已完成 |
 
 16.1 是其余三篇的共同地基，必须先读；后三篇互相独立，按产品需要选读。号段跳过 16.2/16.3：原「当代 PCIe」「CXL」两题已并入 D.10 PCIe 系列（10.4/10.5），不在这里重复。
 
