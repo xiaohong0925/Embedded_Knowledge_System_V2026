@@ -27,11 +27,11 @@
 ??? details "第二部 核心机制深度解析  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月6日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
-    | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | 理解BootROM→SPL→U-Boot→Kernel→init的完整链路 | <span class="tag tag-done">完成</span> | 风格重写+验收 | 2026年7月23日 |
+    | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | 理解BootROM→SPL→U-Boot→Kernel→init的完整链路；AI复检（19节+7.99全量：节组级设计调研前置、7.6.1/7.6.2旧内核残留代码换v6.6真实实现、rootwait概念性错误修正、全章所属行与下一步衔接链统一） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月26日 |
     | 第8章 进程与调度 | 内核如何管理任务与分配CPU？ | 掌握task_struct、CFS、RT调度、cgroups与EAS | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
     | 第9章 内存管理 | 内核如何管理物理与虚拟内存？ | 掌握伙伴系统、SLUB、CMA、OOM | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
     | 第10章 中断与时间 | 硬件中断如何变成软件事件？ | 掌握GIC、顶半部/底半部、hrtimer、tickless；AI复检（30节全量：虚构内核代码换v6.6真实实现、10.5.3时间轮改4.8后扁平数组、跨节重复收敛、PREEMPT_RT主线时间线更正） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月10日 |
-    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform；结构重组（新增11.0导学+11.1其然台阶8篇、机制文重编号11.2-11.6）+10张流程图补齐 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月10日 |
+    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform；结构重组（新增11.0导学+11.1其然台阶8篇、机制文重编号11.2-11.6）+10张流程图补齐 | <span class="tag tag-done">完成</span> | 完成：需二次复查 | 2026年8月26日 |
     | 第12章 文件系统 | 内核如何管理和访问文件？ | 掌握VFS、页缓存、ext4/f2fs/UBIFS、MTD/UBI、掉电保护；新增12.1.4字符设备与file_operations、12.3.4补overlayfs、12.3.5补iostat/blktrace落点 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月12日 |
     | 第13章 并发与同步 | 内核如何处理多核并发？ | 掌握spinlock/mutex、RCU、原子操作、lockdep/KASAN；AI复检（23节全量：虚构实现换v6.6真实源码核对、PI三处P0修正、13.7.1拆分为排查实战+RCU迁移实战两节、13.99去全局孤儿编号、4+1张待补图占位） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月11日 |
     | 第14章 网络子系统 | 内核如何处理网络数据包？ | 掌握sk_buff、Netfilter、NAPI、XDP/eBPF | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
