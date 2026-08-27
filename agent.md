@@ -114,6 +114,7 @@
 - **新增源码缓存**：`kernel_time_timer.c`、`kernel_time_timer_list.c`、`kernel_time_tick-sched.h`、`kernel_time_tick-internal.h`、`include_trace_events_timer.h` 等（清单见第 3 节缓存目录）。
 - index.md 第 10 章行已更新为「AI复检完成 / 2026年8月10日」。
 - **后续拆分（2026-08-10 应用户要求）**：10.7.1 拆为两节——`10.7.1_实战GPIO中断延迟排查.md`（带练A + 新增修复前后中断路径对比 mermaid 图）和 `10.7.2_实战音频爆音排查与排错方法论.md`（带练B + 方法论/工具速查/症状对照）。旧文件 `10.7.1_综合实战从GPIO延迟到音频爆音.md` 已删除，mkdocs.yml、README.md、10.6.4 下一步指针均已同步。全章现 31 节。
+- **用户人工复检补漏（2026-08-27）**：10.1.5 pca953x 代码块系虚构——真实驱动（v6.6 与 v6.18 一致）从未用过 `gpiochip_set_chained_irqchip()`，走 Nested 路线：`gpio_irq_chip_set_chip()` + `girq->threaded=true` + `devm_request_threaded_irq(IRQF_ONESHOT|IRQF_SHARED)`，handler 内 `irq_find_mapping()` + `handle_nested_irq()`（I2C 读 pending 必须睡眠，Chained 物理上不可行）。probe/handler 两代码块已换 v6.6 真实实现，🔴 框 `generic_handle_irq`→`handle_nested_irq`；用户自加 Chained/Nested 对比表保留。**教训：复检覆盖框架层但漏了逐驱动核实，示例代码引用具体驱动时须对该驱动源码核实**。新增缓存 `drivers_gpio_gpio-pca953x.c`（v6.6）；用户提供的 v6.18 源码存 `help-docs/kernel-src-v6.18/`。
 
 ## 11. 第 13 章复检结论存档（2026-08-11 闭环）
 
