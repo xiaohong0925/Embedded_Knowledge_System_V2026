@@ -73,7 +73,7 @@
 | 10.4.3 | [线程化中断的优势代价与PREEMPT_RT](10.4.3_线程化中断的优势代价与PREEMPT_RT.md) | 什么时候该线程化 | [E] |
 | 10.5.1 | [传统定时器精度问题](10.5.1_传统定时器精度问题.md) | 为什么 timer 精度受 HZ 限制 | [I] |
 | 10.5.2 | [时间子系统分层架构](10.5.2_时间子系统分层架构.md) | clocksource 与 clockevent 怎么分工 | [E] |
-| 10.5.3 | [timer_wheel级联实现](10.5.3_timer_wheel级联实现.md) | 传统定时器队列怎么组织 | [E] |
+| 10.5.3 | [timer_wheel时间轮实现](10.5.3_timer_wheel时间轮实现.md) | 传统定时器队列怎么组织 | [E] |
 | 10.5.4 | [hrtimer的实现](10.5.4_hrtimer的实现.md) | 微秒级定时怎么做到 | [E] |
 | 10.5.5 | [hrtimer精度问题与CPU idle](10.5.5_hrtimer精度问题与CPU_idle.md) | 高精度定时为什么被 idle 拖住 | [E] |
 | 10.5.6 | [alarm_timer与posix_timer](10.5.6_alarm_timer与posix_timer.md) | 用户态定时 API 的内核对应物 | [E] |
