@@ -42,13 +42,13 @@
 ??? details "第三部 系统设计与决策 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年7月2日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
-    | 第16章 内核版本与启动架构设计 | 选什么内核版本？启动链怎么设计？ | 能做出版本选型和启动链设计决策 | <span class="tag tag-done">完成</span> | 否 | 2026年7月8日 |
-    | 第17章 存储架构设计 | 文件系统怎么选？存储怎么分区？ | 能做出存储架构和文件系统选型决策 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
-    | 第18章 构建系统设计 | 用Yocto还是Buildroot？ | 能做出构建系统选型并设计CI/CD | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 第16章 内核版本与启动架构设计 | 一套内核版本与启动链方案怎么定下来，并在十年后仍然成立？ | 能用五维评分卡做版本选型、BSP 策略裁决、启动时间预算分配、DTS 组织裁决，并用 14 项评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
+    | 第17章 存储架构设计 | 一套存储方案怎么设计出来，并被证明是对的？ | 能完成数据生命周期分类、介质/文件系统/分区/断电四域决策与评审清单 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月7日 |
+    | 第18章 构建系统设计 | 一套构建流程怎么设计出来，并被证明它能撑五年？ | 能完成构建系统选型、TCO测算、Layer组织、CI/CD分层与SBOM合规闭环，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
     | 第19章 安全架构设计 | 安全要做什么程度？TrustZone值得投入吗？ | 能设计安全启动链和运行时安全方案 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
     | 第20章 实时性设计 | 需要硬实时吗？PREEMPT_RT够了吗？ | 能评估实时需求并选择PREEMPT_RT/Xenomai | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
     | 第21章 OTA与更新架构设计 | OTA怎么做？A/B分区还是单分区？ | 能设计OTA方案并选择A/B/差分更新策略 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
-    | 第22章 驱动架构设计 | 怎么设计可维护的驱动层？ | 能设计驱动框架和硬件抽象层 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 第22章 驱动架构设计 | 怎么设计"硬件变更时影响范围最小"的驱动层？ | 能做驱动放置量化决策、错误分级、电源依赖图、HAL位置裁决、总线故障域分析与多媒体带宽预算，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
 
     **[→ 进入第三部目录](03-系统设计与决策/README.md)**
 
@@ -112,6 +112,14 @@
     | 10.4 RISC-V 生态与开放 ISA 实践 [E→M] | [RISC-V](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
     | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](C.%20专用技术与前沿趋势/05-Linux长期演进与技术路线图/README.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
     | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](C.%20专用技术与前沿趋势/06-嵌入式Linux实时化技术/01-Linux实时性基础.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
+
+??? details "D. 驱动开发实战 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月12日</span>"
+    | 板块 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
+    |------|---------|------|------------|------------|
+    | Part 1 驱动骨架（D.1~D.9） | 模块框架、字符设备、阻塞等待、中断处理、定时器、DMA、设备树资源获取、电源管理、调试接口 | <span class="tag tag-done">完成</span> | 否 | 2026年8月12日 |
+    | Part 2 子系统写法（D.10~D.18） | input、IIO、hwmon、LED、watchdog、regmap、MFD、用户态驱动（UIO/VFIO）、选型速查 | <span class="tag tag-done">完成</span> | 否 | 2026年8月12日 |
+
+    **[→ 进入D扩展目录](D.%20驱动开发实战/README.md)**
 
 ---
 > **GitHub**: [github.com/xiaohong0925/Embedded_Knowledge_System_V2026](https://github.com/xiaohong0925/Embedded_Knowledge_System_V2026)
