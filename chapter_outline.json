@@ -1,0 +1,1029 @@
+[
+  {
+    "number": "三部：每",
+    "title": "围绕一个核心决策问题，系统运用trade-off表格",
+    "raw": "第三部：每章围绕一个核心决策问题，系统运用trade-off表格",
+    "sections": []
+  },
+  {
+    "number": "1",
+    "title": "认识你的开发板",
+    "raw": "第1章 认识你的开发板",
+    "sections": [
+      {
+        "number": "1.1",
+        "title": "开发板开箱：你需要知道什么 [B]",
+        "subsections": []
+      },
+      {
+        "number": "1.2",
+        "title": "处理器架构速览：ARM vs RISC-V [B]",
+        "subsections": []
+      },
+      {
+        "number": "1.3",
+        "title": "存储介质：eMMC、SD卡、Flash的区别 [B]",
+        "subsections": []
+      },
+      {
+        "number": "1.4",
+        "title": "电源与复位：上电时发生了什么 [B]",
+        "subsections": []
+      },
+      {
+        "number": "1.5",
+        "title": "串口：你的第一道窗口 [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "2",
+    "title": "交叉编译与工具链",
+    "raw": "第2章 交叉编译与工具链",
+    "sections": [
+      {
+        "number": "2.1",
+        "title": "为什么需要交叉编译 [B]",
+        "subsections": []
+      },
+      {
+        "number": "2.2",
+        "title": "构建你的第一个工具链 [B]",
+        "subsections": []
+      },
+      {
+        "number": "2.3",
+        "title": "gcc、binutils、libc的关系 [B]",
+        "subsections": []
+      },
+      {
+        "number": "2.4",
+        "title": "使用预构建工具链快速开始 [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "3",
+    "title": "Bootloader：系统的第一段代码",
+    "raw": "第3章 Bootloader：系统的第一段代码",
+    "sections": [
+      {
+        "number": "3.1",
+        "title": "上电后发生了什么：BootROM→SPL→U-Boot [B]",
+        "subsections": []
+      },
+      {
+        "number": "3.2",
+        "title": "U-Boot基础：配置、编译、烧录 [B]",
+        "subsections": []
+      },
+      {
+        "number": "3.3",
+        "title": "设备树：描述硬件的语言 [B]",
+        "subsections": []
+      },
+      {
+        "number": "3.4",
+        "title": "从U-Boot启动内核 [B]",
+        "subsections": []
+      },
+      {
+        "number": "3.5",
+        "title": "网络启动：TFTP/NFS快速开发 [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "4",
+    "title": "内核配置与编译",
+    "raw": "第4章 内核配置与编译",
+    "sections": [
+      {
+        "number": "4.1",
+        "title": "获取内核源码 [B]",
+        "subsections": []
+      },
+      {
+        "number": "4.2",
+        "title": "Kconfig与menuconfig [B]",
+        "subsections": []
+      },
+      {
+        "number": "4.3",
+        "title": "为你的板子配置内核 [B]",
+        "subsections": []
+      },
+      {
+        "number": "4.4",
+        "title": "编译与烧录 [B]",
+        "subsections": []
+      },
+      {
+        "number": "4.5",
+        "title": "内核启动日志解读 [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "5",
+    "title": "根文件系统与初始化",
+    "raw": "第5章 根文件系统与初始化",
+    "sections": [
+      {
+        "number": "5.1",
+        "title": "什么是根文件系统 [B]",
+        "subsections": []
+      },
+      {
+        "number": "5.2",
+        "title": "BusyBox：最小用户空间 [B]",
+        "subsections": []
+      },
+      {
+        "number": "5.3",
+        "title": "设备节点与devtmpfs [B]",
+        "subsections": []
+      },
+      {
+        "number": "5.4",
+        "title": "init进程与启动脚本 [B]",
+        "subsections": []
+      },
+      {
+        "number": "5.5",
+        "title": "看到Shell提示符：系统活了！ [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "6",
+    "title": "第一个外设：点亮LED",
+    "raw": "第6章 第一个外设：点亮LED",
+    "sections": [
+      {
+        "number": "6.1",
+        "title": "GPIO子系统：用户空间的控制 [B]",
+        "subsections": []
+      },
+      {
+        "number": "6.2",
+        "title": "sysfs接口 [B]",
+        "subsections": []
+      },
+      {
+        "number": "6.3",
+        "title": "编写第一个设备树节点 [B]",
+        "subsections": []
+      },
+      {
+        "number": "6.4",
+        "title": "加载驱动，控制LED [B]",
+        "subsections": []
+      },
+      {
+        "number": "6.5",
+        "title": "从LED理解”驱动”的概念 [B]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "7",
+    "title": "启动链深度解析 [I→E]",
+    "raw": "第7章 启动链深度解析 [I→E]",
+    "sections": [
+      {
+        "number": "7.1",
+        "title": "BootROM的秘密：芯片上电后的第一件事 [I]",
+        "subsections": []
+      },
+      {
+        "number": "7.2",
+        "title": "SPL的极简使命 [I]",
+        "subsections": []
+      },
+      {
+        "number": "7.3",
+        "title": "U-Boot的初始化流程 [I]",
+        "subsections": []
+      },
+      {
+        "number": "7.4",
+        "title": "设备树传递与解析 [E]",
+        "subsections": []
+      },
+      {
+        "number": "7.5",
+        "title": "内核启动：从_start到init [E]",
+        "subsections": []
+      },
+      {
+        "number": "7.6",
+        "title": "init进程与系统初始化 [I]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "8",
+    "title": "进程与调度：谁在运行？ [I→E]",
+    "raw": "第8章 进程与调度：谁在运行？ [I→E]",
+    "sections": [
+      {
+        "number": "8.1",
+        "title": "进程描述符task_struct深度解析 [E]",
+        "subsections": []
+      },
+      {
+        "number": "8.2",
+        "title": "fork与COW机制 [I]",
+        "subsections": []
+      },
+      {
+        "number": "8.3",
+        "title": "CFS调度器：红黑树与vruntime [E]",
+        "subsections": []
+      },
+      {
+        "number": "8.4",
+        "title": "实时调度与优先级继承 [E]",
+        "subsections": []
+      },
+      {
+        "number": "8.5",
+        "title": "cgroups v2资源控制 [E]",
+        "subsections": []
+      },
+      {
+        "number": "8.6",
+        "title": "EAS能效调度 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "9",
+    "title": "内存管理：谁在占用？ [I→E]",
+    "raw": "第9章 内存管理：谁在占用？ [I→E]",
+    "sections": [
+      {
+        "number": "9.1",
+        "title": "虚拟内存与页表 [I]",
+        "subsections": []
+      },
+      {
+        "number": "9.2",
+        "title": "Buddy分配器与内存碎片 [E]",
+        "subsections": []
+      },
+      {
+        "number": "9.3",
+        "title": "SLUB分配器与kmalloc [E]",
+        "subsections": []
+      },
+      {
+        "number": "9.4",
+        "title": "CMA：大块连续内存分配 [E]",
+        "subsections": []
+      },
+      {
+        "number": "9.5",
+        "title": "zswap与内存压缩 [E]",
+        "subsections": []
+      },
+      {
+        "number": "9.6",
+        "title": "OOM killer机制 [I]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "10",
+    "title": "中断与时间：外设怎么通知CPU？ [I→E]",
+    "raw": "第10章 中断与时间：外设怎么通知CPU？ [I→E]",
+    "sections": [
+      {
+        "number": "10.1",
+        "title": "中断硬件基础与GIC [I]",
+        "subsections": []
+      },
+      {
+        "number": "10.2",
+        "title": "顶半部：快速响应 [I]",
+        "subsections": []
+      },
+      {
+        "number": "10.3",
+        "title": "底半部选择：softirq vs tasklet vs workqueue [E]",
+        "subsections": []
+      },
+      {
+        "number": "10.4",
+        "title": "线程化中断 [E]",
+        "subsections": []
+      },
+      {
+        "number": "10.5",
+        "title": "时间子系统：clocksource与hrtimer [E]",
+        "subsections": []
+      },
+      {
+        "number": "10.6",
+        "title": "tickless与低功耗 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "11",
+    "title": "设备模型：驱动是怎么被管理的？ [I→E]",
+    "raw": "第11章 设备模型：驱动是怎么被管理的？ [I→E]",
+    "sections": [
+      {
+        "number": "11.1",
+        "title": "总线-设备-驱动模型 [I]",
+        "subsections": []
+      },
+      {
+        "number": "11.2",
+        "title": "platform设备与probe流程 [E]",
+        "subsections": []
+      },
+      {
+        "number": "11.3",
+        "title": "设备树匹配机制 [E]",
+        "subsections": []
+      },
+      {
+        "number": "11.4",
+        "title": "sysfs与uevent [I]",
+        "subsections": []
+      },
+      {
+        "number": "11.5",
+        "title": "设备树overlay [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "12",
+    "title": "文件系统与存储：数据怎么存？ [I→E]",
+    "raw": "第12章 文件系统与存储：数据怎么存？ [I→E]",
+    "sections": [
+      {
+        "number": "12.1",
+        "title": "VFS统一接口 [I]",
+        "subsections": []
+      },
+      {
+        "number": "12.2",
+        "title": "页缓存与写回策略 [E]",
+        "subsections": []
+      },
+      {
+        "number": "12.3",
+        "title": "ext4/f2fs/UBIFS深度对比 [E]",
+        "subsections": []
+      },
+      {
+        "number": "12.4",
+        "title": "MTD子系统与Flash管理 [E]",
+        "subsections": []
+      },
+      {
+        "number": "12.5",
+        "title": "断电安全设计 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "13",
+    "title": "并发与同步：怎么不崩？ [I→E]",
+    "raw": "第13章 并发与同步：怎么不崩？ [I→E]",
+    "sections": [
+      {
+        "number": "13.1",
+        "title": "竞态条件与临界区 [I]",
+        "subsections": []
+      },
+      {
+        "number": "13.2",
+        "title": "spinlock vs mutex选择策略 [E]",
+        "subsections": []
+      },
+      {
+        "number": "13.3",
+        "title": "原子操作与内存屏障 [E]",
+        "subsections": []
+      },
+      {
+        "number": "13.4",
+        "title": "RCU机制 [E]",
+        "subsections": []
+      },
+      {
+        "number": "13.5",
+        "title": "lockdep死锁检测 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "14",
+    "title": "网络子系统：包怎么走？ [I→E]",
+    "raw": "第14章 网络子系统：包怎么走？ [I→E]",
+    "sections": [
+      {
+        "number": "14.1",
+        "title": "sk_buff与网络路径 [I]",
+        "subsections": []
+      },
+      {
+        "number": "14.2",
+        "title": "Netfilter框架 [I]",
+        "subsections": []
+      },
+      {
+        "number": "14.3",
+        "title": "NAPI与高性能收包 [E]",
+        "subsections": []
+      },
+      {
+        "number": "14.4",
+        "title": "XDP与eBPF加速 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "15",
+    "title": "电源管理：电去哪了？ [I→E]",
+    "raw": "第15章 电源管理：电去哪了？ [I→E]",
+    "sections": [
+      {
+        "number": "15.1",
+        "title": "Runtime PM框架 [I]",
+        "subsections": []
+      },
+      {
+        "number": "15.2",
+        "title": "cpuidle与cpufreq [E]",
+        "subsections": []
+      },
+      {
+        "number": "15.3",
+        "title": "DVFS与Energy Model [E]",
+        "subsections": []
+      },
+      {
+        "number": "15.4",
+        "title": "Thermal框架 [E]",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "7",
+    "title": "启动链\n                        |\n        +---------------+---------------+---------------+\n        |               |               |               |\n    第8章 调度      第9章 内存      第10章 中断    第11章 设备模型\n    (谁在运行)      (内存去哪了)    (外设通知)      (驱动管理)\n        |               |               |               |\n        +---------------+---------------+---------------+\n                        |\n            +-----------+-----------+\n            |           |           |\n        第12章 FS   第13章 并发   第14章 网络\n        (数据存储)   (怎么不崩)    (包怎么走)\n                        |\n                    第15章 电源管理\n                    (电去哪了)",
+    "raw": "第7章 启动链\n                        |\n        +---------------+---------------+---------------+\n        |               |               |               |\n    第8章 调度      第9章 内存      第10章 中断    第11章 设备模型\n    (谁在运行)      (内存去哪了)    (外设通知)      (驱动管理)\n        |               |               |               |\n        +---------------+---------------+---------------+\n                        |\n            +-----------+-----------+\n            |           |           |\n        第12章 FS   第13章 并发   第14章 网络\n        (数据存储)   (怎么不崩)    (包怎么走)\n                        |\n                    第15章 电源管理\n                    (电去哪了)",
+    "sections": []
+  },
+  {
+    "number": "16",
+    "title": "内核版本与启动架构设计",
+    "raw": "第16章 内核版本与启动架构设计",
+    "sections": [
+      {
+        "number": "16.1",
+        "title": "内核版本选型决策树（LTS/SLTS/厂商BSP/主线）",
+        "subsections": []
+      },
+      {
+        "number": "16.2",
+        "title": "上游优先策略vs厂商依赖",
+        "subsections": []
+      },
+      {
+        "number": "16.3",
+        "title": "启动链设计（BootROM→SPL→U-Boot→Kernel的安全与效率权衡）",
+        "subsections": []
+      },
+      {
+        "number": "16.4",
+        "title": "设备树架构设计（单板vs多产品线的DTS组织）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "17",
+    "title": "存储架构设计",
+    "raw": "第17章 存储架构设计",
+    "sections": [
+      {
+        "number": "17.1",
+        "title": "存储介质选型（NAND/eMMC/SD/NVMe）",
+        "subsections": []
+      },
+      {
+        "number": "17.2",
+        "title": "文件系统选型矩阵（ext4/f2fs/UBIFS/SquashFS/EROFS）",
+        "subsections": []
+      },
+      {
+        "number": "17.3",
+        "title": "分区策略设计（只读rootfs+可写数据区+备份区）",
+        "subsections": []
+      },
+      {
+        "number": "17.4",
+        "title": "断电安全架构（barrier/journal/原子更新）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "18",
+    "title": "构建系统设计",
+    "raw": "第18章 构建系统设计",
+    "sections": [
+      {
+        "number": "18.1",
+        "title": "Yocto vs Buildroot vs OpenWrt决策矩阵",
+        "subsections": []
+      },
+      {
+        "number": "18.2",
+        "title": "构建系统的长期维护成本分析",
+        "subsections": []
+      },
+      {
+        "number": "18.3",
+        "title": "Layer/Recipe组织最佳实践",
+        "subsections": []
+      },
+      {
+        "number": "18.4",
+        "title": "CI/CD流水线设计",
+        "subsections": []
+      },
+      {
+        "number": "18.5",
+        "title": "开源合规与SBOM管理",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "19",
+    "title": "安全架构设计",
+    "raw": "第19章 安全架构设计",
+    "sections": [
+      {
+        "number": "19.1",
+        "title": "安全威胁模型分析",
+        "subsections": []
+      },
+      {
+        "number": "19.2",
+        "title": "安全启动链设计（ROM→ATF→OP-TEE→U-Boot→Kernel）",
+        "subsections": []
+      },
+      {
+        "number": "19.3",
+        "title": "运行时安全（SELinux/AppArmor/seccomp选择）",
+        "subsections": []
+      },
+      {
+        "number": "19.4",
+        "title": "密钥管理与TPM",
+        "subsections": []
+      },
+      {
+        "number": "19.5",
+        "title": "功能安全入门（IEC 61508/ISO 26262）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "20",
+    "title": "实时性设计",
+    "raw": "第20章 实时性设计",
+    "sections": [
+      {
+        "number": "20.1",
+        "title": "实时需求评估（硬实时vs软实时vs非实时）",
+        "subsections": []
+      },
+      {
+        "number": "20.2",
+        "title": "PREEMPT_RT vs Xenomai vs 双系统决策树",
+        "subsections": []
+      },
+      {
+        "number": "20.3",
+        "title": "延迟预算设计（从中断到响应的全链路）",
+        "subsections": []
+      },
+      {
+        "number": "20.4",
+        "title": "混合关键性系统设计（Jailhouse/Xen）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "21",
+    "title": "OTA与更新架构设计",
+    "raw": "第21章 OTA与更新架构设计",
+    "sections": [
+      {
+        "number": "21.1",
+        "title": "OTA方案选型（RAUC/SWUpdate/Mender）",
+        "subsections": []
+      },
+      {
+        "number": "21.2",
+        "title": "分区策略（A/B vs 非A/B vs 差分更新）",
+        "subsections": []
+      },
+      {
+        "number": "21.3",
+        "title": "安全验证（签名/回滚/防降级）",
+        "subsections": []
+      },
+      {
+        "number": "21.4",
+        "title": "更新策略设计（强制/可选/灰度）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "22",
+    "title": "驱动架构设计",
+    "raw": "第22章 驱动架构设计",
+    "sections": [
+      {
+        "number": "22.1",
+        "title": "用户空间驱动vs内核驱动的选择",
+        "subsections": []
+      },
+      {
+        "number": "22.2",
+        "title": "驱动框架设计（错误恢复、热插拔、电源管理集成）",
+        "subsections": []
+      },
+      {
+        "number": "22.3",
+        "title": "硬件抽象层设计",
+        "subsections": []
+      },
+      {
+        "number": "22.4",
+        "title": "总线驱动架构（I2C/SPI/CAN/USB）",
+        "subsections": []
+      },
+      {
+        "number": "22.5",
+        "title": "多媒体驱动架构（ALSA/DRM/V4L2）",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "三部的七",
+    "title": "共同传递一个核心思想：有经验的嵌入式Linux工程师的价值不在于知道每个工具的使用方法，而在于能在复杂约束下做出有理据的技术选择。",
+    "raw": "第三部的七章共同传递一个核心思想：有经验的嵌入式Linux工程师的价值不在于知道每个工具的使用方法，而在于能在复杂约束下做出有理据的技术选择。",
+    "sections": []
+  },
+  {
+    "number": "23",
+    "title": "系统调试方法论 [E]",
+    "raw": "第23章 系统调试方法论 [E]",
+    "sections": [
+      {
+        "number": "23.1",
+        "title": "调试思维：从症状到根因的系统方法",
+        "subsections": []
+      },
+      {
+        "number": "23.2",
+        "title": "信息收集：日志、Tracing、监控",
+        "subsections": []
+      },
+      {
+        "number": "23.3",
+        "title": "假设-验证法：缩小问题范围",
+        "subsections": []
+      },
+      {
+        "number": "23.4",
+        "title": "常见陷阱：看似是A问题实际是B问题",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "24",
+    "title": "启动全链路优化 [E]",
+    "raw": "第24章 启动全链路优化 [E]",
+    "sections": [
+      {
+        "number": "24.1",
+        "title": "启动时间拆解方法论",
+        "subsections": []
+      },
+      {
+        "number": "24.2",
+        "title": "Bootloader优化",
+        "subsections": []
+      },
+      {
+        "number": "24.3",
+        "title": "内核并行初始化",
+        "subsections": []
+      },
+      {
+        "number": "24.4",
+        "title": "用户空间优化",
+        "subsections": []
+      },
+      {
+        "number": "24.5",
+        "title": "目标<2秒的完整方案",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "25",
+    "title": "Camera全链路：从Sensor到屏幕 [E]",
+    "raw": "第25章 Camera全链路：从Sensor到屏幕 [E]",
+    "sections": [
+      {
+        "number": "25.1",
+        "title": "Camera Pipeline架构",
+        "subsections": []
+      },
+      {
+        "number": "25.2",
+        "title": "V4L2子系统深度",
+        "subsections": []
+      },
+      {
+        "number": "25.3",
+        "title": "Buffer管理（DMA-BUF/ION）",
+        "subsections": []
+      },
+      {
+        "number": "25.4",
+        "title": "DRM/KMS显示通路",
+        "subsections": []
+      },
+      {
+        "number": "25.5",
+        "title": "端到端延迟分析",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "26",
+    "title": "网络全链路：从PHY到Socket [E]",
+    "raw": "第26章 网络全链路：从PHY到Socket [E]",
+    "sections": [
+      {
+        "number": "26.1",
+        "title": "网络硬件架构（PHY/MAC/交换机）",
+        "subsections": []
+      },
+      {
+        "number": "26.2",
+        "title": "内核网络路径",
+        "subsections": []
+      },
+      {
+        "number": "26.3",
+        "title": "Netfilter与eBPF加速",
+        "subsections": []
+      },
+      {
+        "number": "26.4",
+        "title": "Socket层到应用",
+        "subsections": []
+      },
+      {
+        "number": "26.5",
+        "title": "端到端延迟与吞吐量分析",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "27",
+    "title": "工业通信全链路 [E]",
+    "raw": "第27章 工业通信全链路 [E]",
+    "sections": [
+      {
+        "number": "27.1",
+        "title": "EtherCAT主站架构",
+        "subsections": []
+      },
+      {
+        "number": "27.2",
+        "title": "CAN-FD子系统",
+        "subsections": []
+      },
+      {
+        "number": "27.3",
+        "title": "TSN时间敏感网络",
+        "subsections": []
+      },
+      {
+        "number": "27.4",
+        "title": "实时调度协同",
+        "subsections": []
+      },
+      {
+        "number": "27.5",
+        "title": "工业控制系统的端到端设计",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "28",
+    "title": "功耗全链路 [E]",
+    "raw": "第28章 功耗全链路 [E]",
+    "sections": [
+      {
+        "number": "28.1",
+        "title": "功耗分析方法论",
+        "subsections": []
+      },
+      {
+        "number": "28.2",
+        "title": "CPU/GPU/DDR功耗分解",
+        "subsections": []
+      },
+      {
+        "number": "28.3",
+        "title": "外设功耗管理",
+        "subsections": []
+      },
+      {
+        "number": "28.4",
+        "title": "系统级功耗优化策略",
+        "subsections": []
+      },
+      {
+        "number": "28.5",
+        "title": "功耗与性能的权衡",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "29",
+    "title": "安全全链路 [E]",
+    "raw": "第29章 安全全链路 [E]",
+    "sections": [
+      {
+        "number": "29.1",
+        "title": "安全启动链设计",
+        "subsections": []
+      },
+      {
+        "number": "29.2",
+        "title": "TEE与普通世界交互",
+        "subsections": []
+      },
+      {
+        "number": "29.3",
+        "title": "内核安全加固",
+        "subsections": []
+      },
+      {
+        "number": "29.4",
+        "title": "应用层安全",
+        "subsections": []
+      },
+      {
+        "number": "29.5",
+        "title": "OTA安全更新",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "30",
+    "title": "可靠性工程：让系统7×24运行 [E]",
+    "raw": "第30章 可靠性工程：让系统7×24运行 [E]",
+    "sections": [
+      {
+        "number": "30.1",
+        "title": "看门狗与心跳机制",
+        "subsections": []
+      },
+      {
+        "number": "30.2",
+        "title": "健康检查框架",
+        "subsections": []
+      },
+      {
+        "number": "30.3",
+        "title": "自动恢复策略",
+        "subsections": []
+      },
+      {
+        "number": "30.4",
+        "title": "现场日志收集与分析",
+        "subsections": []
+      },
+      {
+        "number": "30.5",
+        "title": "OTA远程修复",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "31",
+    "title": "行业格局：谁在用什么？ [E]",
+    "raw": "第31章 行业格局：谁在用什么？ [E]",
+    "sections": [
+      {
+        "number": "31.1",
+        "title": "消费电子",
+        "subsections": []
+      },
+      {
+        "number": "31.2",
+        "title": "汽车电子",
+        "subsections": []
+      },
+      {
+        "number": "31.3",
+        "title": "工业控制",
+        "subsections": []
+      },
+      {
+        "number": "31.4",
+        "title": "IoT",
+        "subsections": []
+      }
+    ]
+  },
+  {
+    "number": "32",
+    "title": "RISC-V：变局者 [E]",
+    "raw": "第32章 RISC-V：变局者 [E]",
+    "sections": []
+  },
+  {
+    "number": "33",
+    "title": "Rust for Linux：新语言 [E]",
+    "raw": "第33章 Rust for Linux：新语言 [E]",
+    "sections": []
+  },
+  {
+    "number": "34",
+    "title": "边缘AI：智能无处不在 [E]",
+    "raw": "第34章 边缘AI：智能无处不在 [E]",
+    "sections": []
+  },
+  {
+    "number": "35",
+    "title": "虚拟化与混合关键性 [E]",
+    "raw": "第35章 虚拟化与混合关键性 [E]",
+    "sections": []
+  },
+  {
+    "number": "36",
+    "title": "安全与合规：从可选到强制 [E]",
+    "raw": "第36章 安全与合规：从可选到强制 [E]",
+    "sections": []
+  },
+  {
+    "number": "37",
+    "title": "长期维护：10年的承诺 [E]",
+    "raw": "第37章 长期维护：10年的承诺 [E]",
+    "sections": []
+  },
+  {
+    "number": "38",
+    "title": "技术路线规划：你的下一步 [E]",
+    "raw": "第38章 技术路线规划：你的下一步 [E]",
+    "sections": []
+  }
+]
