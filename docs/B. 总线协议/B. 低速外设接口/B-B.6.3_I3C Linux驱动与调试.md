@@ -261,6 +261,10 @@ MODULE_LICENSE("GPL");
 
 **手机传感器总线（I3C + I2C 混合）**：IMU、光照走 I3C（高速 + IBI 数据就绪上报），气压计沿用 I2C 兼容模式省成本——对应前文设备树示例的完整形态。关键工程结论：混合总线下 legacy 设备驱动零改动，新设备拿到 IBI 与高速率，迁移成本集中在设备树与初始化时序上。
 
+<!-- 【待补图】images/b-b-6-3-mixed-bus-topology.png（优先级：△有更好）
+图名：I3C + I2C 混合传感器总线拓扑原理图
+生图提示词：电路原理框图风格，白底，16:9。左侧一个 SoC 芯片方块，标注"I3C 控制器"，引出 SCL/SDA 两条总线（棕色粗线）向右延伸，总线末端画上拉电阻 Rp 到 VDD。总线上挂三个设备方块：① IMU（标注"I3C 模式，12.5 MHz + IBI"），② 光照传感器（标注"I3C 模式，HDR-DDR"），③ 气压计 BMP280（标注"I2C legacy 模式，400 kHz，驱动零改动"）。每个设备标注其动态地址或静态地址。底部配一条注释放大框：混合总线的两条纪律——"速度迁就最弱者"、"legacy 设备无 IBI 能力"。配色：芯片深灰、总线棕色、I3C 设备蓝框、I2C 设备橙框，中文标注，风格参考芯片 datasheet 应用电路图。 -->
+
 ---
 
 ## <span class="blue"> 方案对比（Trade-off）
@@ -274,50 +278,48 @@ MODULE_LICENSE("GPL");
 
 ---
 
-## <span class="blue"> 常见陷阱
+## <span class="blue"> 排障速查
 
-> ⚠️ 照抄二手文章的设备树：`i3c@0` + 两元组 reg 是旧草案写法，主线 v6.6 已按三元组 + `<type>@<static>,<pid>` 命名。以内核源码树 `i3c.yaml` 为准。
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| 设备树配好了但设备不出现 | 照抄二手文章的旧草案写法（两元组 reg、`i2c@1` 命名），主线 v6.6 已不识别 | 以内核源码树 `i3c.yaml` 为准改成三元组 + `<type>@<static>,<pid>` 命名 |
+| priv_xfer 返回错误或读到垃圾 | `rnw` 方向写反——写寄存器地址用了 `rnw=true` | 记住 false=写、true=读；从 I2C 驱动移植时逐个检查 xfer |
+| IBI 一触发就死锁或调度警告 | 在 IBI 回调里直接做私有传输——回调在中断上下文，priv_xfer 可能睡眠 | 回调里只 `schedule_work()`，读写一律下放 workqueue |
+| `/sys/bus/i3c/` 存在但 dmesg 无 master 日志 | 只开了 CONFIG_I3C，没开控制器驱动 | 查内核配置补 `CONFIG_I3C_MASTER_*` 对应项 |
 
-> ⚠️ `rnw` 方向写反：写寄存器地址用了 `rnw=true`，priv_xfer 返回错误或读到垃圾。false=写、true=读。
-
-> ⚠️ IBI 回调里直接做私有传输：回调在中断上下文，priv_xfer 可能睡眠——死锁或调度警告。一律 workqueue 下放。
-
-> ⚠️ 只开 CONFIG_I3C 没开控制器驱动：子系统存在但总线不注册，dmesg 无 master 初始化日志。
-
----
-
-## <span class="blue"> 动手练习
-
-1. **API 对照**：在本机内核源码 `drivers/i3c/device.c` 中找到 `i3c_device_do_priv_xfers` 与 `i3c_device_request_ibi` 的实现，确认参数与返回值语义。
-2. **设备树改错**：把前文"旧写法"（两元组 reg、`i2c@1` 命名）的设备树改写成主线格式，并说明每处修改依据。
-3. **驱动走查**：给骨架补上 Chip ID 校验的完整两阶段 xfer 代码，编译通过（可只编译不加载）。
-4. **无硬件后备**：用 `CONFIG_I3C` + debugfs/dynamic_debug 阅读 `drivers/misc/eeprom/spd5118.c`，回答：它的温度读取用的是哪组 API，IBI 用没用、为什么。
+> 💡 无硬件时的学习路径：内核源码树里 `drivers/misc/eeprom/spd5118.c` 是一个完整的真实 I3C 设备驱动（DDR5 SPD），对照本篇骨架读它，重点回答两个问题——温度读取用的哪组 API、它为什么不用 IBI。
 
 ---
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 确认标准 |
-|--------|----------|
-| 架构 | master/device/driver 三层；与 I2C 子系统的同构与差异（DAA 可发现） |
-| Kconfig | CONFIG_I3C + 控制器驱动 + I3CDEV 三者分工 |
-| API | priv_xfers 的 rnw/联合体语义；IBI 三件套与释放顺序 |
-| 设备树 | 三元组 reg、`<type>@<static>,<pid>` 命名、assigned-address 两条分配路径 |
-| 工具 | i3cinfo 看 DAA 结果；dmesg + dynamic_debug 分层定位 |
-| 调试 | 先降速再分层；中断上下文不做 priv_xfer |
+I3C 子系统与 I2C 子系统结构同构——都是 master/device/driver 三层，但 DAA 带来一个本质差异：设备可被发现，设备树节点从必填变成可选。落到写代码上，日常只有三组东西：私有传输读写寄存器（注意 `rnw` 语义与 I2C 标志相反）、IBI 三件套（request → enable，remove 时严格反向，回调里只做调度）、以及一张经主线绑定核实的设备树。调试纪律与 I2C 一脉相承：工具先行（i3cinfo 确认 DAA 结果）、先降速再分层、中断上下文不碰传输。掌握这些，I3C 驱动就是"又一个 bus 实例"，没有新世界观。
 
----
+速查表：
 
-## <span class="blue"> 配套资源
+| 主题 | 要点 |
+|------|------|
+| 架构 | master/device/driver 三层；DAA 可发现使设备树节点可选 |
+| Kconfig | CONFIG_I3C（核心）+ 控制器驱动 + CONFIG_I3CDEV（用户态） |
+| 私有传输 | `i3c_device_do_priv_xfers()`；rnw=false 写 / true 读；联合体取 `.out`/`.in` |
+| IBI | request→enable、disable→free 顺序严格；回调中断上下文，workqueue 下放 |
+| 设备树 | 三元组 reg、`<type>@<static>,<pid>` 命名、assigned-address 走 SETDASA 或 ENTDAA+SETNEWDA |
+| 工具 | i3cinfo 看 DAA 结果；i3ctransfer 手动读写；dmesg + dynamic_debug 分层定位 |
+| 调试 | 先降 `i3c-scl-hz` 再分层；legacy 设备在 `/sys/bus/i2c/` 侧看 |
 
-- **内核文档**：`Documentation/driver-api/i3c/`、`Documentation/devicetree/bindings/i3c/i3c.yaml`（v6.6）
-- **内核源码**：`drivers/i3c/`（子系统）、`drivers/i3c/master/cdns-i3c-master.c`（控制器参考）、`drivers/misc/eeprom/spd5118.c`（真实设备驱动）
-- **工具**：i3c-tools（配套 CONFIG_I3CDEV，源码编译）
+本节自查：
+
+1. I3C 与 I2C 子系统结构同构，唯一的本质差异是什么？它对设备树写法的影响是什么？
+2. `rnw=false` 是读还是写？从 I2C 驱动移植时为什么容易写反？
+3. IBI 的 request/enable/disable/free 四个调用顺序为什么不能乱？
+4. 设备树里 `reg = <0x68 0x392 0x144004>` 三个数分别是什么？`assigned-address` 的两条分配路径对应哪两个 CCC？
+5. 拿到一块新板子，`/sys/bus/i3c/` 不存在和存在但设备不出现，分别先查什么？
+6. 为什么 IBI 回调里不能直接做私有传输？正确做法是什么？
 
 ---
 
 ## <span class="blue"> 下一步
 
-I3C 三篇（物理层 → 协议层 → 驱动与调试）到此收口，B-A 低速外设接口板块完成。接下来按 v4 规划补 **B-B.6.4 I3C 深化篇**（多主、时序控制、错误恢复等进阶主题），随后进入 **B-B 中高速总线**板块——USB 从 4 线电缆到 Type-C 的完整演进。
+I3C 驱动篇到此收口，下一篇 **B-B.6.4 I3C 深化**（错误恢复、多主、Hub 与生态选型）结束后，B-B 低速外设接口板块完成，随后进入 **B-C 中高速外设与存储**板块——USB 从 4 线电缆到 Type-C 的完整演进。
 
 > 💡 螺旋衔接：IBI 回调 + workqueue 的下放模式与第二部第 10 章中断处理的 top half/bottom half 是同一框架；`i3c_driver` 的注册匹配回看第二部第 11 章设备模型（i3c_bus_type 是又一个 bus 实例）；混合总线的 I2C adapter 创建逻辑印证 B-B.3.3 的 adapter 概念——子系统之间从来都是互相复用的。

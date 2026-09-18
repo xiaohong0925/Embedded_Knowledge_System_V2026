@@ -207,6 +207,20 @@ PC 与服务器领域几乎全是 SMBus 的地盘：内存条 SPD 信息、笔�
 
 > ⚠️ 35 ms 时钟低超时是硬规定。从设备时钟延展超过 35 ms，SMBus 控制器会中止传输——调试带长内部写周期的器件时留意。
 
+### PMBus：服务器电源管理的标配
+
+PMBus（Power Management Bus）是 SMBus 在电源领域的再扩展：物理层、传输格式完全沿用 SMBus，**在上面定义了一整套电源管理命令集**——输出电压/电流/温度的读取与设定、裕量调节（margining）、故障状态字、上下电时序控制。服务器、交换机、PCIe 加速卡上的多相 VRM（电压调节模块）和热插拔控制器，管理接口几乎清一色是 PMBus。
+
+命令集按页组织：`PAGE` 命令选择监控哪一路电源轨（一张卡上 12V 主供电、核心电压、DDR 电压各占一页），然后 `READ_VOUT`、`READ_IOUT`、`READ_TEMPERATURE_1` 读出该页的实时值，`STATUS_WORD` 读故障位。数据编码多为 LINEAR11 格式（5 位指数 + 11 位尾数的浮点），驱动负责换算成毫伏/毫安。
+
+```
+主机 → PAGE(轨号) → READ_VOUT → 返回 LINEAR11 编码 → 驱动换算 → hwmon 上报毫伏
+```
+
+Linux 侧，PMBus 设备走 `drivers/hwmon/pmbus/` 目录的通用框架，主流 VRM 芯片（TI TPS 系列、Infineon IR 系列、ADI LTC 系列）各有小驱动挂在框架上，probe 成功后传感器值出现在标准 hwmon 节点（`/sys/class/hwmon/hwmonN/in1_input` 等），`sensors` 命令直接可读。做服务器或 PCIe 卡产品时，BMC/带外管理对板卡电源的监控链路就是这条：VRM → PMBus → 内核 pmbus 驱动 → hwmon → 管理固件。
+
+> 💡 排查 PMBus 设备与排查普通 I2C 设备用同一套工具：`i2cdetect` 扫地址（VRM 常见 0x40~0x5F 段），`i2cget` 裸读命令字。区别只在数据解释——读回的两个字节要按 LINEAR11 解码才是电压值，直接当整数看会得到莫名其妙的数。
+
 ---
 
 ## <span class="blue"> 用户态接口 /dev/i2c-x
@@ -255,49 +269,47 @@ SoC 原生 GPIO 不够用时，I2C GPIO 扩展器用两根线扩出 8/16 个 GPI
 
 ---
 
-## <span class="blue"> 常见陷阱
+## <span class="blue"> 排障速查
 
-> ⚠️ 设备树 `reg` 写 8 位地址。`reg = <0xA0>` 会让 client 地址变成错误值，probe 直接失败。设备树与代码统一用 7 位地址。
-
-> ⚠️ 跳过 `i2c_check_functionality()`。控制器不支持所需 SMBus 操作时，错误推迟到第一次读写才以 `-EIO` 爆发，定位成本高。probe 第一步先查能力。
-
-> ⚠️ 用 SMBus Block 读超过 32 字节。协议硬上限，超限直接失败。长数据用 `i2c_transfer()` 多 msg。
-
-> ⚠️ 子节点单元地址与 `reg` 不一致（`eeprom@50` 配 `reg = <0x51>`）。内核创建 client 用 `reg`，地址错位且设备树自检工具会报警。
-
-> ⚠️ 用户态与内核驱动抢设备。内核驱动已绑定（`i2cdetect` 显示 `UU`）的地址，`/dev/i2c` 再 `I2C_SLAVE` 会被拒绝或行为异常。调试用 `I2C_SLAVE_FORCE` 要清楚自己在绕开内核驱动。
-
----
-
-## <span class="blue"> 动手练习
-
-1. **结构观察**：在开发板上执行 `ls /sys/bus/i2c/devices/` 与 `ls /sys/class/i2c-adapter/`，对照三层架构图，确认本板有几路 Adapter、各挂了哪些 Client。
-2. **设备树比对**：打开板级 dts，找一个 I2C 子节点，核对 `compatible`、`reg`、单元地址三者关系；再到 `/proc/device-tree/` 下确认该节点已实例化。
-3. **能力查询**：用 `i2cdetect -F <bus>` 查看控制器 `functionality` 支持列表，理解 probe 里 `i2c_check_functionality()` 查的是什么。
-4. **无硬件后备**：阅读内核源码 `drivers/i2c/i2c-core-base.c` 中 `i2c_register_adapter()` 与设备树 client 实例化路径（`of_i2c_register_devices`），把"设备树节点 → i2c_client"这条链走通。
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| probe 直接失败，client 地址错误 | 设备树 `reg` 写了 8 位地址（0xA0） | 设备树与代码统一用 7 位地址（0x50） |
+| 第一次读写才报 `-EIO`，定位困难 | 跳过 `i2c_check_functionality()`，控制器能力不满足 | probe 第一步先查能力，不支持早返回 |
+| 块读超过 32 字节直接失败 | SMBus Block 协议硬上限 | 长数据改 `i2c_transfer()` 多 msg，长度自由 |
+| 设备树自检报警、地址错位 | 子节点单元地址与 `reg` 不一致（`@50` 配 `<0x51>`） | 两者必须一致；内核按 `reg` 创建 client |
+| `/dev/i2c` 访问被拒绝或行为异常 | 地址已被内核驱动绑定（`i2cdetect` 显示 `UU`） | 确认是否该用内核驱动；调试绕开用 `I2C_SLAVE_FORCE` 要知情 |
+| hwmon 读出的电压是莫名其妙的数 | PMBus 数据是 LINEAR11 编码，被当整数读 | 走 pmbus 驱动换算；裸读时按 LINEAR11 手工解码 |
 
 ---
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 确认标准 |
-|--------|----------|
-| 三层架构 | Core / Adapter / Client 分工与内核路径 |
+I2C 子系统的三层切分回答了一个工程问题：让 SoC 厂商、设备厂商、内核维护者各写各的代码而互不感知。Adapter 层由 SoC 厂商交付，Client 层由设备驱动作者交付，Core 层把两边粘起来——所以日常开发的真实形状是：设备树里加一个子节点描述硬件，驱动里写一个 `i2c_driver` 描述行为，匹配交给 Core。连驱动都不想写的时候，`/dev/i2c-x` 把同一套总线直接递给用户态，代价是中断、并发和性能。
+
+SMBus 一节记住"受限子集"四个字就不会迷路：同一套两线开漏，协议上砍掉高速率、加上 35 ms 超时和固定命令集，换来管理类设备的互操作性。PMBus 则是这套方言在服务器电源领域的行业标准——做服务器或 PCIe 卡产品时，电压电流温度的带外监控链路就是 VRM → PMBus → pmbus 驱动 → hwmon，这是它和消费类嵌入式最实际的交点。
+
+**速查表**
+
+| 项 | 要点 |
+|----|------|
+| 三层架构 | Core（`i2c-core-*`）/ Adapter（`busses/`，SoC 厂商）/ Client（设备驱动） |
 | 结构体 | adapter=控制器、client=设备、driver=驱动、msg=传输单元 |
-| 设备树 | `reg` 为 7 位地址、单元地址一致、`clock-frequency` 按最慢设备 |
-| API 选型 | smbus 系列 vs `i2c_transfer` 的边界（32 字节、复合消息） |
-| 注册流程 | 设备树 → client → compatible 匹配 → probe |
-| SMBus | I2C 受限子集：35 ms 超时、固定命令集、PEC、32 字节上限 |
-| 用户态 | /dev/i2c 的适用边界与 UU 冲突 |
-| 扩展器 | 中断需求决定选型；注册为标准 gpiochip |
+| 设备树 | `reg`=7 位地址、单元地址与 reg 一致、`clock-frequency` 按最慢设备 |
+| API 选型 | 寄存器读写用 `i2c_smbus_*`；复合消息/超 32 字节用 `i2c_transfer()` |
+| 注册流程 | 设备树 → client → of_match 匹配 → probe（先查 functionality） |
+| SMBus | I2C 受限子集：10~100k、35 ms 超时、固定命令集、PEC、Block ≤32B |
+| PMBus | SMBus + 电源命令集；PAGE 选轨、READ_VOUT/IOUT；LINEAR11 编码；hwmon 上报 |
+| 用户态 | `/dev/i2c-N` + `I2C_SLAVE`；无中断无并发；`UU`=已被内核驱动绑定 |
+| 扩展器 | 中断需求决定选型（MCP23017 带 INT）；注册为标准 gpiochip |
 
----
+**本节自查**
 
-## <span class="blue"> 配套资源
-
-- **内核文档**：`Documentation/i2c/`（`writing-clients.rst`、`smbus-protocol.rst`）
-- **内核源码**：`drivers/i2c/i2c-core-base.c`、`drivers/i2c/busses/i2c-rk3x.c`（RK3568 控制器驱动）
-- **绑定文档**：`Documentation/devicetree/bindings/i2c/`
+1. 三层架构中，设备驱动作者日常只写哪一层？另外两层各由谁交付？
+2. 设备树 `reg = <0xA0>` 会导致什么后果？正确写法是什么？
+3. 什么场景必须用 `i2c_transfer()` 而不能用 `i2c_smbus_read_block_data()`？
+4. SMBus 相对 I2C 加了哪三条硬约束？分别解决什么问题？
+5. PMBus 的 `PAGE` 命令起什么作用？`READ_VOUT` 读回的字节为什么不能直接当整数用？
+6. `i2cdetect` 某地址显示 `UU`，此时用 `/dev/i2c` 访问该地址会发生什么？
 
 ---
 

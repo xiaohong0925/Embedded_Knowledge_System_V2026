@@ -54,6 +54,25 @@ struct uart_port {
 
 分工很干净：**TTY 层对用户空间**（字符设备、termios、ldisc），**UART 层对硬件**（寄存器、中断、FIFO）。SoC 厂商写 UART 驱动只需填 `uart_ops` 回调，TTY 侧的事情内核全包。
 
+### serdev：UART 上挂设备的内核态框架
+
+调试控制台只是 UART 的一种用法。另一种常见形态是 **UART 上挂着一颗从设备**——蓝牙模组（HCI over UART）、GNSS 模块、4G 模组的控制通道。这类场景里 UART 不是给用户敲命令的终端，而是设备的"总线"，内核为此提供了 serdev（serial device bus，`drivers/tty/serdev/`）框架：
+
+```dts
+&uart2 {
+    status = "okay";
+
+    bluetooth {                     /* UART 的子节点 = 挂在串口上的设备 */
+        compatible = "brcm,bcm43438-bt";
+        max-speed = <1500000>;
+    };
+};
+```
+
+serdev 让 UART 子节点像 I2C/SPI 子节点一样参与设备模型：compatible 匹配触发对应驱动（蓝牙走 `hci_uart`、GNSS 走 `gnss` 子系统）的 probe，驱动从 serdev 拿到端口句柄直接在内核态收发——用户空间看到的不是 `/dev/ttyS2` 加一行 ldisc 魔法，而是 `/dev/ttyS2` 被驱动占用、上层出现 `hci0` 或 `/dev/gnss0` 这样的业务接口。
+
+> 💡 新旧两条路要会区分：老做法（`btattach`/`ldattach` 用户态工具）通过 `TIOCSETD` ioctl 把 N_HCI 这类**线路规程**挂到 tty 上，配置在运行时、设备树不参与；serdev 把设备声明收进设备树，内核自动完成绑定与电源管理。新内核（蓝牙、GNSS）主推 serdev，看到 UART 节点下挂子节点就知道走的是这条路。
+
 ```
 用户空间 read()/write()
   │
@@ -241,6 +260,8 @@ cat /proc/tty/driver/ttyS
 
 四步走完仍不通，才轮到逻辑分析仪上硬件波形。
 
+> 💡 无开发板时，PC 上 `socat -d -d pty,raw,echo=0 pty,raw,echo=0` 创建一对互通的伪终端（PTY），一端写一端读——PTY 同样走 TTY 子系统，stty、回环逻辑、计数器观察都能在这对虚拟口上预演。
+
 ---
 
 ## <span class="blue"> 方案对比（Trade-off）
@@ -255,48 +276,47 @@ cat /proc/tty/driver/ttyS
 
 ---
 
-## <span class="blue"> 常见陷阱
+## <span class="blue"> 排障速查
 
-> ⚠️ 设备树 status 忘了开：节点齐全但 `/dev/ttyS2` 不存在。先看 status，再看 dmesg。
-
-> ⚠️ 二进制数据不开 raw：NMEA 里偶尔出现 0x0D、AT 模组返回 0x11 时，数据被 ldisc 静默改写/吞掉，协议解析随机失败。
-
-> ⚠️ aliases 编号与预期不符：使能了多个 UART 后，`/dev/ttyS2` 未必对应你以为的那个物理口。以 aliases 中的 `serialN` 为准，别猜。
-
-> ⚠️ earlycon 参数写错宽度：RK3568 是 `reg-shift=2`，earlycon 必须 `mmio32`；写成 `mmio` 则 earlycon 静默无效，表现为"早期日志全丢、console 起来后正常"。
-
-> ⚠️ cat 读串口被工具占用：minicom/screen 没退干净（或另一个进程开着同一口），新进程 read 阻塞或读到残帧。`fuser /dev/ttyS2` 查占用者。
-
----
-
-## <span class="blue"> 动手练习
-
-1. **通路追踪**：在本机内核源码中找到 `8250_dw.c` 的 probe 函数，沿 `uart_add_one_port` 追到 `tty_register_driver`，画出注册调用链。
-2. **回环二分**：开发板上做回环测试，分别验证"正常"与"拔掉跳线"两种状态下 `/proc/tty/driver/ttyS` 的 tx/rx 计数变化，理解计数器的定位意义。
-3. **乱码复现**：故意用错误波特率打开调试串口观察乱码，再用正确值恢复——建立"乱码=波特率"的肌肉记忆。
-4. **无硬件后备**：PC Linux 上用 `socat -d -d pty,raw,echo=0 pty,raw,echo=0` 创建一对伪终端，一端 echo 一端 cat，用 stty 配置 PTY 参数——PTY 同样走 TTY 子系统，可在无开发板时演练本节全部工具链。
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| 节点齐全但 `/dev/ttyS2` 不存在 | 设备树 `status` 未改 "okay"（dtsi 默认 disabled） | 先查 status，再看 dmesg probe 报错 |
+| 协议解析随机失败、数据被改写 | 二进制数据未开 raw，N_TTY 转换 0x0D/吞 0x11/0x13 | `stty raw` 或 termios 关输入处理 |
+| `/dev/ttyS2` 不是你以为的那个物理口 | 多 UART 使能后编号漂移 | 以 aliases 中 `serialN` 为准，不猜编号 |
+| 早期日志全丢、console 起来后正常 | earlycon 宽度写错（RK3568 须 `mmio32` 配 `reg-shift=2`） | 核对 earlycon 参数与 dtsi 的 reg-shift |
+| 新进程 read 阻塞或读到残帧 | minicom/screen 没退干净，端口被占用 | `fuser /dev/ttyS2` 查占用者 |
+| UART 上蓝牙/GPS 设备不工作 | 走了 serdev 的设备被当普通 tty 用（或反之） | 查 UART 节点下有无子节点，确认绑定路径 |
 
 ---
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 确认标准 |
-|--------|----------|
-| TTY 分层 | tty_driver / tty_struct / tty_port 各自职责；ldisc 的位置 |
-| 双层注册 | uart_register_driver 管设备族，uart_add_one_port 管端口；TTY 对用户、UART 对硬件 |
-| 设备树 | serial 节点字段含义；status、aliases、chosen/stdout-path 三处易漏点 |
-| Console | stdout-path 与 earlycon 的分工；RK3568 默认 1500000 |
-| 工具链 | stty 关键参数（raw 必记）；screen/picocom 一行打开 |
-| 调试闭环 | 节点→回环→计数器→参数 四步二分 |
+串口子系统的双层框架回答的是一个边界问题：TTY 层管"用户空间看到的字符设备长什么样"（节点、termios、线路规程），UART Framework 管"硬件寄存器怎么动"（uart_ops 回调、FIFO、中断）。SoC 厂商只填回调，应用开发者只碰 termios，中间的分层各司其职——所以排查时的第一层二分就是"问题在 TTY 层（参数/ldisc/占用）还是 UART 层（节点/时钟/引脚）"，回环测试加 `/proc/tty/driver` 计数器正好卡在这个分界上。
 
----
+serdev 值得单独记住，因为它代表 UART 角色的转变：从"给人用的控制台"变成"给设备用的总线"。看到 UART 节点下挂着 bluetooth/gnss 子节点，这条串口就是设备树管理的内核资源，不再是可以随手 `cat` 的调试口——这和老做法 `btattach` 挂线路规程是新旧两代机制，新内核主推前者。工具层面带走三件：`stty raw` 是二进制通信的保命参数，回环是一条跳线换一半故障域的最高性价比操作，earlycon 是启动卡死时唯一的日志来源（宽度参数必须配 SoC）。
 
-## <span class="blue"> 配套资源
+**速查表**
 
-- **内核源码**：`drivers/tty/serial/serial_core.c`（UART Framework）、`drivers/tty/serial/8250/8250_dw.c`（RK3568 所用驱动）
-- **内核文档**：`Documentation/driver-api/tty.rst`
-- **工具**：`apt-get install minicom picocom socat`；screen 通常自带
-- **设备树参考**：`arch/arm64/boot/dts/rockchip/rk356x.dtsi` 的 uart2 节点
+| 项 | 要点 |
+|----|------|
+| TTY 分层 | tty_driver（族）/ tty_struct（会话）/ tty_port（端口+RX 缓冲）；ldisc 默认 N_TTY |
+| 双层注册 | `uart_register_driver()` 管设备族 + `uart_add_one_port()` 管端口 |
+| 设备树 | status 必改 okay；aliases 定 ttySN 编号；chosen/stdout-path 定 console |
+| earlycon | `earlycon=uart8250,mmio32,0xADDR,1500000`；宽度配 reg-shift |
+| serdev | UART 子节点挂设备（蓝牙/GNSS）；内核态绑定，区别于用户态 btattach |
+| stty | `raw` 二进制必选；`sane` 救砖；`-crtscts` 查流控 |
+| 回环 | TX/RX 短接自发自收；通=本端无恙，不通=查本端 |
+| 计数器 | `/proc/tty/driver/ttyS` 的 tx/rx：不涨=卡上层，涨=查对端 |
+| 排查四步 | 节点 → 回环 → 计数器 → 参数（stty -a） |
+
+**本节自查**
+
+1. TTY 层和 UART Framework 的分工边界在哪？SoC 厂商的驱动代码落在哪一层？
+2. 默认 N_TTY 线路规程会对二进制数据做哪两类破坏？怎么绕过？
+3. serdev 和 `btattach` 挂 N_HCI 线路规程是同一个目的的哪两代机制？设备树上怎么区分？
+4. earlycon 和 console 各覆盖启动的哪段时期？RK3568 的 earlycon 为什么要写 `mmio32`？
+5. 回环测试收到乱码，故障域在哪一侧？下一步查什么？
+6. `/proc/tty/driver/ttyS` 显示 tx 不涨，说明数据卡在哪一层？怎么确认？
 
 ---
 

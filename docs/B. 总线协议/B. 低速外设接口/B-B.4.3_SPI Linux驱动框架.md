@@ -110,6 +110,18 @@ ret = spi_sync(spi, &m);        /* 两段在同一 CS 周期内完成 */
 
 与 I2C 完全同构：设备树子节点实例化为 `spi_device`，`spi_driver` 用 `of_match_table` 的 compatible 匹配，`module_spi_driver()` 注册，probe 里 `spi_setup()` 确认模式后注册上层接口。probe/remove 的完整工程写法属驱动专题（D 扩展），本篇不展开。
 
+### cs_change：CS 行为的精确语义
+
+CS 在什么时候拉高，由 message 边界和 `cs_change` 字段共同决定，规则比直觉更细：
+
+- **同一 `spi_message` 内的多个 transfer，默认 CS 全程保持拉低**——三段式帧拆成多段 transfer 依然是一次完整事务，这正是拆段的合法性来源
+- **message 结束（`spi_sync` 返回前）CS 拉高**，从设备状态机复位
+- **`cs_change = 1` 表示"这段 transfer 结束后拉高 CS"**（语义是"改变 CS 当前状态"），用于需要段间拉高的特殊器件；下一段 transfer 开始前会再次拉低
+
+绝大多数驱动不碰 `cs_change`，默认行为就是对的。需要动它的典型场景：某些触摸屏控制器（如 ADS7846）要求命令段与数据段之间 CS 翻转一次；多笔独立事务连续下发时，靠拆成多个 message 让 CS 自然拉高，而不是在一个 message 里手动翻转。
+
+> ⚠️ 把多笔独立事务塞进一个 message：CS 全程低电平，从设备把它们当成一笔超长事务，状态机错位。反之，把一笔事务拆成两个 message：CS 中途拉高，从设备状态机中途复位（B-B.4.2 的 CS 毛刺问题在软件层的同构）。划分的标准只有一个——**手册时序图里 CS 在哪里拉高，message 边界就在哪里**。
+
 ---
 
 ## <span class="blue"> 现成驱动路径：多数 SPI 器件不用自己写驱动
@@ -166,48 +178,47 @@ spidev 把每个片选导出为 `/dev/spidevB.C`（B=总线号，C=片选号）�
 
 ---
 
-## <span class="blue"> 常见陷阱
+## <span class="blue"> 排障速查
 
-> ⚠️ `reg` 当成从机地址理解。SPI 的 `reg` 是片选号；总线上两个节点写同一个 `reg` 会争用同一根 CS，数据互串。
-
-> ⚠️ `spi-cpol = <1>` 写法。布尔属性写了值，dtc 检查与维护阅读都别扭；规范写法是裸属性名。
-
-> ⚠️ 栈变量做 DMA 传输缓冲。栈内存物理不连续且生命周期短，DMA 读写出垃圾。用 `kmalloc`/`devm_kzalloc`。
-
-> ⚠️ 设备树直接写 `compatible = "spidev"` 期望通用。内核 4.x 后 spidev 要求明确允许（`spidev_of_match` 白名单），不在列表直接 probe 失败。量产产品不应依赖 spidev 节点。
-
-> ⚠️ 在 `spi_async` 回调里睡眠。complete 回调运行在中断上下文，调用 `msleep`/`mutex_lock` 直接死锁。需要睡眠的操作丢给 workqueue。
-
----
-
-## <span class="blue"> 动手练习
-
-1. **拓扑观察**：开发板执行 `ls /sys/bus/spi/devices/`，确认各设备的总线号.片选号命名；`cat /sys/bus/spi/devices/spi1.0/modalias` 看匹配的 compatible。
-2. **设备树比对**：在板级 dts 找一个 SPI 子节点，核对 `reg`/`spi-max-frequency`/模式属性三项；到 `/proc/device-tree/` 确认实例化。
-3. **回环验证**：MOSI 短接 MISO，`spidev_test -D /dev/spidev1.0` 应原样收回数据，验证控制器与 pinctrl。
-4. **无硬件后备**：阅读内核 `drivers/mtd/spi-nor/core.c` 的 probe 路径，看 `jedec,spi-nor` 如何从设备树节点变成 MTD 设备；或阅读 `drivers/spi/spidev.c` 中 `SPI_IOC_MESSAGE` 的处理函数 `spidev_ioctl()`。
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| 两个设备节点数据互串 | `reg` 当从机地址理解，两节点写了同一 `reg` 争用同一根 CS | `reg` 是片选号；核对各节点 reg 与实际 CS 接线 |
+| 模式配置"写了但没生效"观感 | `spi-cpol = <1>` 带值写法，语义不规范 | 布尔属性裸写属性名：`spi-cpol; spi-cpha;` |
+| DMA 传输读出垃圾数据 | 栈变量/vmalloc 内存做 DMA 缓冲，物理不连续 | 缓冲区用 `kmalloc`/`devm_kzalloc`/`dma_alloc_coherent` |
+| spidev 节点 probe 失败 | `compatible = "spidev"` 不在内核白名单（4.x 后收紧） | 确认 `spidev_of_match`；量产产品写正式驱动 |
+| `spi_async` 使用后系统死锁 | complete 回调（中断上下文）里调了 `msleep`/`mutex_lock` | 回调里只标记完成，睡眠操作丢 workqueue |
+| 从设备把多笔事务当一笔、状态机错位 | 多笔独立事务塞进一个 message，CS 全程低 | 按手册时序图的 CS 拉高点划 message 边界 |
 
 ---
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 确认标准 |
-|--------|----------|
-| 分层 | Core / controller / driver 三层与内核路径 |
+SPI 子系统与 I2C 子系统是同一张图纸的两次施工：Core/controller/driver 三层，设备树节点实例化为 device，compatible 匹配触发 probe。真正属于 SPI 自己的知识只有两个：传输模型和 CS 语义。`spi_message` 串 `spi_transfer` 的模型让三段式帧有了天然的代码映射——命令、地址、数据各占一段，同一次 CS 有效期内完成；而"message 边界 = CS 拉高点"这条规则，是把手册时序图翻译成代码结构时唯一不能错的对应关系。
+
+路径判断沿用 I2C 一课的结论并再推进一步：SPI 器件的现成框架比 I2C 更厚——Flash 有 spi-nor→MTD、显示屏有 fbtft/DRM、ADC/DAC 有 IIO，自研驱动的合理理由只剩"无现成驱动"和"框架装不下"两条。spidev 是评估期的跳板，白名单机制已经明确表达了内核社区的态度：它是调试工具，不是产品方案。
+
+**速查表**
+
+| 项 | 要点 |
+|----|------|
+| 分层 | Core（`spi.c`）/ controller（`spi-rockchip.c`）/ driver（设备驱动） |
 | 结构体 | controller=控制器、device=从设备、message=事务、transfer=段 |
-| 设备树 | `reg`=片选号、布尔模式属性、max-frequency 必填 |
-| 传输模型 | 多段 transfer 同 CS 周期；三段式帧的代码映射 |
-| API 选型 | 默认 spi_sync；write_then_read 覆盖寄存器型交互 |
-| 现成路径 | spi-nor→MTD 等框架优先原则 |
-| spidev | ioctl 三件套与适用边界、白名单约束 |
+| 设备树 | `reg`=片选号、`spi-max-frequency` 必填、模式布尔属性裸写 |
+| 传输模型 | 多段 transfer 同 CS 周期；message 边界 = CS 拉高点 |
+| cs_change | 默认 message 内 CS 全程低；=1 表示该段后拉高；默认不动 |
+| API | 默认 `spi_sync`；`spi_write_then_read` 覆盖寄存器型交互 |
+| 现成路径 | spi-nor→MTD、fbtft/DRM、IIO；先查框架再写驱动 |
+| spidev | `SPI_IOC_MESSAGE(n)` 核心 ioctl；白名单约束；非产品方案 |
+| DMA | 短传输 PIO 更快；缓冲区必须物理连续 |
 
----
+**本节自查**
 
-## <span class="blue"> 配套资源
-
-- **内核文档**：`Documentation/spi/spi-summary.rst`
-- **内核源码**：`drivers/spi/spi.c`、`drivers/spi/spi-rockchip.c`、`drivers/spi/spidev.c`
-- **绑定文档**：`Documentation/devicetree/bindings/spi/rockchip,spi.yaml`
+1. `spi_message` 串多段 transfer 的价值是什么？它与三段式帧如何对应？
+2. message 边界和 CS 行为是什么关系？把多笔独立事务塞进一个 message 会怎样？
+3. 设备树里 `reg = <0>` 和 I2C 的 `reg = <0x50>` 语义有什么本质不同？
+4. Mode 3 的设备树怎么写？为什么不能写 `spi-cpol = <1>`？
+5. 什么场景该用 `spi_async`？它的回调里不能做什么？
+6. W25Q128 接入产品，从零到可烧录要走哪条现成路径？哪一步都不用自己写代码？
 
 ---
 
