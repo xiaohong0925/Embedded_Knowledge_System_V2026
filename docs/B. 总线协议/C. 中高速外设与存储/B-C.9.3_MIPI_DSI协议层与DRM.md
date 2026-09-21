@@ -1,10 +1,10 @@
 # B-C.9.3 MIPI DSI 协议层与 DRM
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.9 显示与摄像
 >
-> 难度：[M] | 预计阅读时间：40 分钟
+> 难度：[M] Master | 预计阅读时间：40 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前两节讲的是"摄像头进"（CSI-2）；本节讲"屏幕出"（DSI）。DSI 与 CSI-2 共享 D-PHY 物理层，包格式同源，但应用方向相反、且多了一套显示专用的 DCS 命令集。软件栈这边对应的框架也从 V4L2 换成了 DRM/KMS。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：DSI 命令模式与视频模式的取舍、短包/长包格式、DCS 核心命令集与 MADCTL/COLMOD 详解、初始化序列的时序纪律、DRM/KMS 组件链（CRTC→Encoder→Connector→Panel）、5 寸 ST7701S 屏的完整设备树与 modetest 验证、显示类问题排查表。
 
-## DSI 的两种工作模式
+## <span class="blue"> DSI 的两种工作模式
 
 DSI 协议层定义了两种截然不同的模式，选择哪种由面板构造和应用场景共同决定。
 
@@ -52,7 +52,7 @@ DDR 帧缓冲 → DMA → LCD 控制器 → DSI Host → 面板逐行实时显�
 
 > 💡 选型判断不只看屏幕尺寸：很多 5 寸以下工业屏用命令模式 + 内置 GRAM，功耗可低至视频模式的十分之一。反过来，不要以为小屏就一定是命令模式——看面板手册里驱动 IC 支持的模式和有无 GRAM。
 
-## 包格式：与 CSI-2 同源的短包/长包
+## <span class="blue"> 包格式：与 CSI-2 同源的短包/长包
 
 DSI 的包结构与 CSI-2 一脉相承（同一套 D-PHY 之上）。
 
@@ -69,7 +69,7 @@ DSI 的包结构与 CSI-2 一脉相承（同一套 D-PHY 之上）。
 
 ECC 保包头、CRC 保 Payload 的分工与 CSI-2 完全一致，不再重复。
 
-## DCS 命令集：面板的标准语言
+## <span class="blue"> DCS 命令集：面板的标准语言
 
 DCS（Display Command Set）是 MIPI 定义的显示面板标准指令集。初始化、睡眠唤醒、亮度、GRAM 读写都靠它。
 
@@ -123,7 +123,7 @@ MH(D2) 水平刷新顺序
 | 镜像/旋转/红蓝交换 | MADCTL 配置与面板安装方向不符 |
 | 局部不刷新 | 0x2A/0x2B 的地址窗口参数错误 |
 
-## DRM/KMS：Linux 显示栈的组件链
+## <span class="blue"> DRM/KMS：Linux 显示栈的组件链
 
 DRM（Direct Rendering Manager）是内核显示框架，KMS（Kernel Mode Setting）负责模式配置。一条 DSI 显示链路被抽象为五个组件的串联：
 
@@ -144,7 +144,7 @@ drm_crtc        → drm_encoder → drm_bridge → drm_connector → drm_panel
 DDR 帧缓冲 → DMA → LCD 控制器(VOP/DCSS/DE2) → DSI Host → MIPI 2/4 lane → 面板驱动IC → 玻璃
 ```
 
-## 实战：5 寸 ST7701S（800×480，DSI 2-lane）
+## <span class="blue"> 实战：5 寸 ST7701S（800×480，DSI 2-lane）
 
 ### 硬件与连接
 
@@ -289,23 +289,36 @@ cat /sys/class/drm/card0-DSI-1/status
 | 背光闪烁 | PWM 频率过低 | 提到 20kHz 以上 |
 | modetest 无 connector | 设备树端口/endpoint 没连上 | 对照 dmesg 的 panel probe 日志 |
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| 双模式 | 按场景（静态 UI / 视频）在命令/视频模式间选型并说出理由 |
-| DCS | 写出标准初始化序列（含两处关键延时），解释每条命令的作用 |
-| MADCTL/COLMOD | 给定显示异常（镜像/红蓝反/花屏）反推该改哪个寄存器的哪一位 |
-| DRM 组件链 | 画出 CRTC→Encoder→Bridge→Connector→Panel 链并说清各环职责 |
-| 设备树 | 写出 DSI panel 节点（时序 + 初始化序列 + 背光），知道序列编码格式查哪里 |
-| 验证流程 | 用 modetest 彩条 → fb 写像素 → 背光控制三步独立验证显示链路 |
-| 排障 | 按排查表处理白屏/花屏/撕裂/闪烁四类问题 |
+把 DSI 收拢成一句话：它就是"显示方向的 CSI-2"——同一层 D-PHY、同一套短包/长包格式，差别只在数据流向相反，以及多了一套 DCS 命令语言。前两节学的包格式、ECC/CRC 分工、LP/HS 状态切换，到这里全部直接复用，真正的新内容只有 DCS 命令集和 DRM/KMS 这条组件链。
 
-## 配套资源
+调屏的四类经典翻车不是玄学，每一个都有唯一的机械根因：白屏对应初始化序列（缺步骤、延时不够、编码格式抄错平台），花屏对应 COLMOD 与 DSI 输入格式不匹配，镜像和红蓝反对应 MADCTL 的那几个位，局部不刷新对应 0x2A/0x2B 的地址窗口。拿到一块点不亮的屏，先按这张对应表定位到寄存器，再动手改，比盲目换初始化序列快得多。
 
-- MIPI DSI Specification v1.3 与 DCS Specification v1.3（MIPI Alliance）
-- 内核 DRM 文档：`Documentation/gpu/drm-kms.rst`
-- Panel binding 文档：`Documentation/devicetree/bindings/display/panel/`（初始化序列格式以此为准）
-- ST7701S 数据手册（含完整 DCS 初始化序列参考）
-- Synopsys DWC MIPI DSI 驱动：`drivers/gpu/drm/bridge/synopsys/dw-mipi-dsi.c`
-- 工具：modetest（libdrm-utils）、fbset、支持 MIPI DSI 解码的逻辑分析仪
+工程流程上记住两件事：一是 `panel-init-sequence` 的字节编码格式是驱动私有的，换平台先读 binding 文档再抄序列；二是验证顺序固定为 modetest 彩条 → fb 写像素 → 背光控制，三步各自独立、互不依赖，能把"链路不通"和"背光没起"彻底分开。
+
+### 速查表
+
+| 项 | 要点 |
+|----|------|
+| 模式选型 | 静态 UI/低功耗 → 命令模式（面板带 GRAM）；视频/高刷 → 视频模式 |
+| 关键延时 | 硬件复位后 ≥10ms；Sleep Out(0x11) 后必须等 120ms |
+| MADCTL(0x36) | MY/MX/MV 控制扫描方向，RGB 位翻转转 BGR |
+| COLMOD(0x3A) | 0x55=16bpp / 0x66=18bpp / 0x77=24bpp，必须与 dsi,format 一致 |
+| DRM 链 | CRTC → Encoder → Bridge → Connector → Panel，调屏逐环确认 |
+| 验证三步 | modetest 彩条 → `cat /dev/urandom > /dev/fb0` → 背光 PWM |
+| 终极手段 | 逻辑分析仪 DSI 解码，与手册逐条比对 DCS 序列 |
+
+### 本节自查
+
+1. 命令模式和视频模式对面板硬件的要求差在哪？为什么电子书用前者、手机主屏用后者？
+2. 一块屏点亮后画面左右镜像、红蓝互换，分别该改 MADCTL 的哪几位？
+3. Sleep Out 之后的 120ms 延时省掉会怎样？为什么？
+4. `modetest -s 37@36:800x480 -C smpte` 出彩条能证明什么、不能证明什么？
+5. 把 Rockchip 的 `panel-init-sequence` 原样抄到内核主线 `panel-simple` 驱动的平台上，会发生什么？为什么？
+
+## <span class="blue"> 下一步
+
+下一节 **B-C.9.4 LVDS/eDP/HDMI/DisplayPort**：MIPI DSI 主要覆盖中小尺寸屏，工业大屏、笔记本内屏和桌面显示器走的是另一条路线。下一节把四种主流显示接口的电气特性、协议层次和 DRM 里的对接方式一次理清，并补上工控 HMI 里仍然常见的 RGB/DPI 并口屏。
+
+> 💡 本节的 DRM 组件链（CRTC→Encoder→Connector→Panel）本质上是第 11 章设备模型在显示子系统的一次特化——每个组件都是一个 `struct device`，靠 of_graph 的 port/endpoint 串联；DCS 初始化序列与 B-B.3 节 I2C 外设的寄存器配置序列同属"配置通道"套路，只是一个走 DSI 一个走 I2C；panel-timing 里的 hfront-porch/vsync-len 等显示时序参数，在 B-C.9.4 讲 RGB/DPI 并口屏时还会原样再用一次。

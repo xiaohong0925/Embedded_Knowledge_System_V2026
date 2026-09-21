@@ -2,9 +2,9 @@
 
 > 所属章节：第五部 B. 总线协议 > F. 前沿高速串行
 >
-> 难度：[M] | 预计阅读时间：50 分钟
+> 难度：[M] Master | 预计阅读时间：50 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 USB4 是 USB 家族的一次架构革命：它不再是"一种更快的 USB"，而是一台**协议隧道交换机**——同一根 Type-C 线缆里，PCIe、DisplayPort、USB 3.2 三种协议的流量被打包成隧道包分时复用。一个扩展坞插上去，显示器、网卡、NVMe 硬盘同时工作，靠的就是这套隧道机制。
 
@@ -14,7 +14,7 @@ USB4 是 USB 家族的一次架构革命：它不再是"一种更快的 USB"，�
 
 先修：B-C.7 USB 子系统（枚举与描述符）、B-D.10.1 PCIe（隧道载荷之一）、B-F.16.1 SerDes 通识（PAM3/retimer 术语出处）。
 
-## 隧道化架构：一根线里的三条高速公路
+## <span class="blue"> 隧道化架构：一根线里的三条高速公路
 
 传统 USB 是单一协议总线：线上跑的永远是 USB 包。USB4 改换了思路——它自己定义一套链路层，把**其他协议的数据封装成隧道包**在线上传输，到对端再还原：
 
@@ -63,7 +63,7 @@ USB4 是 USB 家族的一次架构革命：它不再是"一种更快的 USB"，�
 
 但如果显示器换成 8K 或双 4K，DP 一路就吃掉 30G+，链路立刻紧张——这就是为什么 Thunderbolt 4 认证强制"双 4K"而 USB4 把它列为可选：**标称速率相同，能兑现的场景不同**。评估坞站方案时按自己负载清单算一遍这笔账，别只看 40G 的标称值。
 
-## 时间同步：三条隧道共享一条链路的代价
+## <span class="blue"> 时间同步：三条隧道共享一条链路的代价
 
 三类隧道共享一条物理链路，问题随之出现：DP 视频流是**等时流量**（isochronous）——每帧像素必须在确定的时间窗口送达，晚到就是花屏；而 PCIe/USB3 是异步流量，能容忍排队。
 
@@ -71,7 +71,7 @@ USB4 是 USB 家族的一次架构革命：它不再是"一种更快的 USB"，�
 
 USB4 的解法是**时间管理单元（TMU，Time Management Unit）**：链路两端的路由器通过专用协议把本地时钟对齐到 ns 级，然后在统一时间基准上做时分调度——视频流的隧道包被保证在约定的时刻窗口内发出去。这就是为什么 USB4 规范里有一整章讲时间同步，也是"USB4 链路训练完成后 TMU 未锁定"会导致视频异常而数据传输正常的原因。
 
-## 速率档位与编码
+## <span class="blue"> 速率档位与编码
 
 | 版本 | 速率 | 编码 | 对称性 |
 |------|------|------|--------|
@@ -82,7 +82,7 @@ USB4 的解法是**时间管理单元（TMU，Time Management Unit）**：链路
 
 两个值得注意的点。一是 USB4 只用 Type-C 接口，Type-A 物理上不存在 USB4——Type-C 的两组高速差分对（TX1/RX1、TX2/RX2）正好支撑"×2"双通道。二是 v2 上 80G 靠的是**编码升级而非频率翻倍**：PAM3 用 3 个电平，每符号传 log₂3 ≈ 1.58 bit，在相同波特率下比 NRZ 多传 58%——B-F.16.1 讲的"带宽不够先升级调制"在这里是个少见的三电平实例（PCIe/车载走的是 PAM4 四电平）。非对称模式 120/40 是显示场景的特化：视频下行吃带宽，上行只需少量回传。
 
-## USB4 与 Thunderbolt：一张血缘图
+## <span class="blue"> USB4 与 Thunderbolt：一张血缘图
 
 | 维度 | USB4 v1/v2 | Thunderbolt 3 | Thunderbolt 4 | Thunderbolt 5 |
 |------|-----------|---------------|---------------|---------------|
@@ -98,7 +98,7 @@ USB4 的解法是**时间管理单元（TMU，Time Management Unit）**：链路
 
 USB4 把大部分特性定为"可选"，所以同样是标 USB4 的口，不同设备能力差距可能很大——一个只支持 DP+USB3 隧道（不支持 PCIe 隧道）的 SoC 也可以合法自称 USB4。选型时要看规格书的具体条目（PCIe 隧道支持与否、DP 几路、Gen 几），不能只看"USB4"三个字。这条对嵌入式选型尤其重要：很多集成 USB4 的 SoC 砍掉了 PCIe 隧道，扩展坞玩法直接不存在。
 
-## 线缆：E-Marker 与主动/被动之分
+## <span class="blue"> 线缆：E-Marker 与主动/被动之分
 
 USB4 时代线缆不再是"线"，是带芯片的部件：
 
@@ -111,7 +111,7 @@ USB4 时代线缆不再是"线"，是带芯片的部件：
 
 > Retimer / Redriver：高速链路的中继器件。Redriver 只做模拟放大与均衡（增强信号），retimer 带时钟数据恢复（CDR），把数据完整重新定时再生——眼图重新张开。B-F.16.1 的器件谱系有展开；在 USB4 场景它们被做进主动线缆的插头里。
 
-## DP Alt Mode 与 DP 隧道：别混淆
+## <span class="blue"> DP Alt Mode 与 DP 隧道：别混淆
 
 Type-C 上的视频有两条完全不同的路径：
 
@@ -127,7 +127,7 @@ Type-C 上的视频有两条完全不同的路径：
 
 供电是"一线通"的第三条腿：USB PD（Power Delivery）在 CC 线上协商电压/电流档位（5V/9V/15V/20V，PD3.1 扩到 48V/240W）。扩展坞场景的典型功率流是双向的——坞给笔记本充电（上行供电），坞又从自己的电源适配器取电分给下游设备。嵌入式产品做坞站类设计时，PD 协商芯片（如 FUSB302、TPS6598x 系列）是独立于 USB4 控制器的一路器件，两路的固件配合（先 PD 协商供电与角色，再进 Alt Mode/USB4 枚举）是 bring-up 的正确顺序。
 
-## Linux 支持：thunderbolt 驱动与安全级别
+## <span class="blue"> Linux 支持：thunderbolt 驱动与安全级别
 
 内核的 `thunderbolt` 驱动同时管 USB4 和 Thunderbolt（代码同源）。用户态的可见面：
 
@@ -155,7 +155,7 @@ cat /sys/bus/thunderbolt/devices/domain0/security
 
 设备树层面，USB4 控制器节点与 xHCI 类似（参考时钟、PHY、retimer 描述），差异化部分由各家 SoC 厂商定义；多数嵌入式场景下原厂 BSP 已配好，工程师的工作是验证与排障而非从零 bring-up。
 
-## 协商与回退：USB4 不成怎么办
+## <span class="blue"> 协商与回退：USB4 不成怎么办
 
 Type-C 口上的能力协商是分层的，理解回退链才能读懂"降级"现象：
 
@@ -174,7 +174,7 @@ Type-C 口上的能力协商是分层的，理解回退链才能读懂"降级"�
 
 排障表里"设备只当 USB 2.0 用"就是回退链一路跌到底的表现——USB4 训练和 USB 3.2 训练都失败了，最常见原因按序：线缆无 E-Marker 或虚标 → CC 协商阶段就有错（PD 分析仪看）→ 高速通道信号完整性（retimer/走线）→ 控制器固件。**回退链的存在意味着"还能用"不代表"没问题"**：设备功能正常但速度慢一倍，用户可能几周都不发现，验收时要主动核对链路协商到的档位（`lspci -vv` 的 LnkSta、内核日志里的 link training 行）。
 
-## 嵌入式视角：什么时候会碰到 USB4
+## <span class="blue"> 嵌入式视角：什么时候会碰到 USB4
 
 | 场景 | USB4 的角色 |
 |------|------------|
@@ -194,7 +194,7 @@ Type-C 口上的能力协商是分层的，理解回退链才能读懂"降级"�
 5. **retimer 布局**：板内长走线到 Type-C 口可能要 retimer，原理图评审项。
 6. **回退链验收**：协商档位要主动核对，不能只看"功能正常"。
 
-## 排障速查
+## <span class="blue"> 排障速查
 
 | 症状 | 第一怀疑 | 验证路径 |
 |------|---------|---------|
@@ -207,7 +207,7 @@ Type-C 口上的能力协商是分层的，理解回退链才能读懂"降级"�
 | 坞内设备时有时无 | 供电不足（坞的 PD 功率预算被超分） | 查坞的供电规格与负载清单 |
 | 隧道建立但速率低于预期 | 链路训练落在低档；两端 Gen 能力取交集 | 内核日志查 link training 结果；核对两端 Gen 档位 |
 
-## 本节总结
+## <span class="blue"> 本节总结
 
 USB4 把 USB 从"一种总线"改造成了"一台协议隧道交换机"：PCIe/DP/USB3 三类流量封装成隧道包，在一条 Type-C 链路上由路由器复用分流，TMU 时间同步保证视频等时流量的送达窗口。它的工程推论很反直觉但极实用：隧道过来的设备就是原生设备（lspci 直接可见，无需新驱动），所以调试 USB4 问题实际上是调试 PCIe/DP/Type-C 三个老领域的问题，只是多了一层链路训练与安全级别。版本血缘上记住"USB4 是 TBT3 开放版、TBT4/5 是强制满血版"，选型盯规格书具体条目而非 USB4 三个字。线缆在 40G 时代成了带芯片的部件（E-Marker/主动线），排在排障怀疑列表的前列。
 
@@ -222,7 +222,7 @@ USB4 把 USB 从"一种总线"改造成了"一台协议隧道交换机"：PCIe/D
 | 回退链 | USB4 失败会静默降级到 3.2/2.0，验收要核对协商档位 |
 | 一线通 | 数据+显示+供电三条腿：隧道/DP 隧道或 Alt Mode/PD 在 CC 上先协商 |
 
-## 本节自查
+## <span class="blue"> 本节自查
 
 读完本节，你应能独立做到：
 
@@ -239,12 +239,8 @@ USB4 把 USB 从"一种总线"改造成了"一台协议隧道交换机"：PCIe/D
 - 说明 Thunderbolt 强制认证与 USB4 可选认证在兼容性上的实际差异
 - 说出 PD 协商与 USB4 枚举在 bring-up 中的先后顺序
 
-## 配套资源
+## <span class="blue"> 下一步
 
-- USB4 Specification v1.0/v2.0（usb.org，公开下载）
-- Intel Thunderbolt 技术简报（thunderbolttechnology.net）
-- 内核文档：`Documentation/admin-guide/thunderbolt.rst`
-- bolt 项目（用户态授权管理）：gitlab.freedesktop.org/bolt/bolt
-- USB Type-C Specification Release 2.x 与 USB PD 规范（CC 协商细节）
-- 本书关联：B-C.7（USB 子系统）、B-D.10.1（PCIe，隧道载荷）、B-F.16.1（PAM3/retimer/redriver 通识）
-- USB PD 3.1 规范（EPR 240W 档位）；VESA DisplayPort Alt Mode on Type-C 规范
+USB4 把隧道化做到了消费级接口的极限。下一篇 [B-F.16.6 Aurora 与 FPGA 互连](B-F.16.6_Aurora与FPGA互连.md) 走到另一个世界：没有认证、没有 E-Marker、没有回退链——FPGA 之间自己定义协议、自己掌控每一层的轻量级高速互连，数通仪器内部 FPGA 集群的主干。
+
+> 💡 想继续深挖本篇：规范原文 USB4 Specification v1.0/v2.0 在 usb.org 公开下载，CC 协商细节在 USB Type-C Specification 2.x 与 USB PD 规范（PD3.1 的 240W EPR 档位），视频路径细节在 VESA DisplayPort Alt Mode on Type-C 规范；内核侧读 `Documentation/admin-guide/thunderbolt.rst`，用户态授权管理看 bolt 项目。关联回读：B-C.7 USB 子系统（枚举与描述符）、B-D.10.1 PCIe（隧道载荷）、B-F.16.1（PAM3/retimer/redriver 术语出处）。

@@ -1,10 +1,10 @@
 # B-C.8.1 eMMC 协议深度解析
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.8 存储接口
 >
-> 难度：[I] | 预计阅读时间：35 分钟
+> 难度：[I] Intermediate | 预计阅读时间：35 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 eMMC（Embedded MultiMediaCard）是嵌入式领域最主流的板载闪存方案：一颗焊在主板上的 BGA 芯片，内部封装了 NAND Flash 裸片和一个专用控制器。手机、平板、工业网关、车载中控里的系统存储，大量都是它。与 SD 卡不同，eMMC 焊死在板子上，没有插拔、没有写保护开关，天生为嵌入式设备设计。
 
@@ -12,7 +12,7 @@ eMMC（Embedded MultiMediaCard）是嵌入式领域最主流的板载闪存方�
 
 本节覆盖：eMMC 的物理接口与速度模式、JEDEC 标准演进、四大分区的结构与用途、RPMB 的防重放机制、初始化流程与核心命令集、EXT_CSD 寄存器的关键字段。
 
-## 物理接口与速度模式
+## <span class="blue"> 物理接口与速度模式
 
 eMMC 标准封装是 153-ball BGA，尺寸仅 11.5mm × 13mm，但真正与主控通信的只有 11 根信号线：
 
@@ -43,7 +43,11 @@ eMMC 标准封装是 153-ball BGA，尺寸仅 11.5mm × 13mm，但真正与主�
 
 > ⚠️ HS400 对 PCB 走线要求苛刻：DAT0~DAT7 与 DS 的长度差要控制在 ±1mm 量级，否则 200MHz 双沿下采样窗口直接被偏移吃掉。硬件同事画板时如果这组线没做等长，现象就是高速模式读写报错、降到 HS200 就正常——遇到"降速就好"的存储问题，先怀疑走线。
 
-## JEDEC 标准演进
+<!-- 【待补图】images/b-c-8-1-hs400-timing.png（优先级：△有更好）
+图名：HS400 双沿采样与 DS 选通时序对比图
+生图提示词：数字协议时序图风格，白底，16:9 横版。上下两组对比：上半组"HS200 单沿采样"——CLK 方波一条、DAT 数据波形一条，用竖直虚线标出"仅上升沿采样"，采样窗口宽裕，标注"52→200 MHz，窗口随频率收窄"；下半组"HS400 双沿+DS 选通"——CLK、DAT、DS 三条波形，DAT 在上升沿和下降沿都翻转（标注"双沿：带宽翻倍"），DS 选通信号与 DAT 对齐画出，用红色小窗标注"DS 与 DAT 走线长度差 >1mm 时采样点偏移出窗口"。右侧空白处放一行公式："400 MB/s = 200 MHz × 8 bit × 2（DDR）"。配色：CLK 黑色、DAT 蓝色、DS 红色、标注深蓝，风格参考 JEDEC 规范时序图，中文标注。 -->
+
+## <span class="blue"> JEDEC 标准演进
 
 eMMC 标准由 JEDEC 制定，目前（2026 年）市场主流仍是 eMMC 5.1（JESD84-B51）：
 
@@ -57,7 +61,7 @@ eMMC 标准由 JEDEC 制定，目前（2026 年）市场主流仍是 eMMC 5.1（
 
 eMMC 5.1 之后 JEDEC 没有再推 eMMC 大版本——更高性能的板载存储需求由 UFS 接棒（见 B-C.8.3）。eMMC 5.1 定义的分区管理和寿命监测是本篇后半的重点。
 
-## 分区结构：一块闪存，四个世界
+## <span class="blue"> 分区结构：一块闪存，四个世界
 
 出厂时 eMMC 的闪存空间就被划分成四个独立区域，彼此物理隔离、独立寻址：
 
@@ -119,7 +123,7 @@ eMMC 5.1 还提供两种可选分区：
 
 > ⚠️ 配置 Enhanced Area 和 GPP 是**破坏性操作**：配置生效时 User Area 全部数据被擦除，且配置本身有次数限制。产线上必须在烧录固件之前完成，量产设备运行中绝不触碰。
 
-## 命令集与初始化流程
+## <span class="blue"> 命令集与初始化流程
 
 eMMC 命令集与 SD 卡同源，核心命令如下：
 
@@ -165,7 +169,7 @@ CMD6 是其中最灵活的命令，一身二任：模式切换（速度、总线
 2. **RCA 由主控分配**：这点与 SD 卡不同（SD 卡是自己申请 RCA）。主控通常给 eMMC 分 0x0001。
 3. **CMD7 选中后才进 Transfer 状态**：只有 Transfer 状态下数据读写命令才有效。
 
-## EXT_CSD：512 字节的能力与配置中心
+## <span class="blue"> EXT_CSD：512 字节的能力与配置中心
 
 EXT_CSD 是一个 512 字节寄存器，通过 CMD8 读、CMD6 写。分三段：
 
@@ -217,24 +221,46 @@ EXT_CSD[241] 和 [242] 以 10% 粒度报告 NAND 磨损程度：
 
 A 反映 Boot 分区磨损，B 反映 User Area 磨损。IoT 设备运维里可以定期读取这两个值上报云端做预测性维护——超过 0x08 触发预警，让运维在设备坏掉之前介入。这比等设备返修便宜得多。Linux 下不用自己发 CMD8，`mmc extcsd read /dev/mmcblk0`（mmc-utils 工具）即可读出全部字段，具体用法见 B-C.8.5 实战篇。
 
-## 本节总结
+## <span class="blue"> 排障速查
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| 物理接口 | 说出 eMMC 的 11 根信号线分工，解释 8-bit 总线相对 SD 卡的优势 |
-| 速度模式 | 列出 Legacy/HS SDR/HS200/HS400 四档及其峰值，解释 HS400 为什么需要 DS 信号和等长走线 |
-| 分区结构 | 画出 Boot1/Boot2/RPMB/User Area 的布局，说明各自的典型用途 |
-| 启动机制 | 解释 Boot 分区如何让设备零依赖启动，以及双 Boot 如何实现 OTA 原子切换 |
-| RPMB | 说清防重放的三层机制（一次性 Key、HMAC 签名、单调计数器） |
-| 初始化流程 | 按顺序写出 CMD0→CMD1→CMD2→CMD3→CMD7→CMD8→CMD6 的初始化链 |
-| EXT_CSD | 用 PARTITION_CONFIG 说明 Boot 分区读写的切换步骤，指出忘切回的后果 |
-| 寿命监测 | 用 LIFE_TIME_EST_A/B 设计一个预测性维护方案 |
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| 高速模式读写报错，降 HS200 就正常 | DAT/DS 走线等长超标，采样窗口被偏移吃掉 | 查 PCB 走线报告；`mmc extcsd read` 确认当前 HS_TIMING 档位 |
+| 读写数据错位，甚至覆盖 Bootloader | 操作 Boot 分区后忘了把 PARTITION_CONFIG 切回 User Area | 裸机代码检查 CMD6 切回步骤是否存在；Linux 侧由 `mmc_select_partition()` 兜底 |
+| RPMB 永久不可用 | Key 烧错或烧录中断电——Key 只能写一次 | 无救。产线流程补救：Key 离线备份 + 工程板先验证全流程 |
+| 设备越用越慢、I/O 错误增多 | NAND 磨损接近额定寿命 | `mmc extcsd read` 看 LIFE_TIME_EST_A/B，超 0x08 触发预警更换 |
 
-## 配套资源
+---
 
-- JEDEC JESD84-B51：eMMC 5.1 标准原文（需 JEDEC 会员）
-- 内核源码：`drivers/mmc/core/`（`mmc.c` 里就是本篇的初始化流程）
-- U-Boot 源码：`drivers/mmc/mmc.c`（裸机环境初始化代码）
-- mmc-utils 工具：`mmc extcsd read` 的源码里能看到每个字段的解析
-- OP-TEE 文档：https://optee.readthedocs.io/（RPMB Key 管理与安全存储）
-- Micron eMMC 5.1 Product Manual（公开，含详细时序图）
+## <span class="blue"> 本节总结
+
+eMMC 的本质是"NAND 裸片 + 专用控制器"封成一颗 BGA，软件看到的是一套命令集和四个物理隔离的分区世界。Boot1/Boot2 让启动零依赖并支撑 OTA 原子切换；RPMB 用"一次性 Key + HMAC 签名 + 单调计数器"三层结构解决防回滚；User Area 是系统日常看到的全部。初始化链（CMD0→CMD1 轮询→CMD2→CMD3→CMD7→CMD8→CMD6 提速）顺序严格，EXT_CSD 是这一切的能力与配置中心——PARTITION_CONFIG 管分区切换，LIFE_TIME_EST_A/B 管寿命预警。理解 eMMC 的关键不是背命令表，而是知道这四个分区各自解决什么工程问题：启动、安全、容量、寿命。
+
+速查表：
+
+| 主题 | 要点 |
+|------|------|
+| 信号线 | CLK + CMD + DAT0~7 + DS（仅 HS400）+ RST_n，共 11 根 |
+| 速度模式 | Legacy 26 → HS SDR 52 → HS200 200 → HS400 400 MB/s（双沿+DS） |
+| 四分区 | Boot1/Boot2（Bootloader+OTA 原子切换）、RPMB（防重放）、User（系统数据） |
+| RPMB 三层 | 一次性 Key、HMAC-SHA256 签名绑计数器、单调递增写计数器 |
+| 初始化链 | CMD0 复位 → CMD1 轮询就绪 → CMD2 读 CID → CMD3 分 RCA → CMD7 选中 → CMD8 读 EXT_CSD → CMD6 提速 |
+| EXT_CSD | [179] PARTITION_CONFIG 分区切换；[241]/[242] 寿命估计；[196] 能力位图 |
+| 工具 | `mmc extcsd read /dev/mmcblk0`（mmc-utils）读全部字段 |
+
+本节自查：
+
+1. 说出 eMMC 的 11 根信号线分工，解释 HS400 为什么需要 DS 信号和等长走线。
+2. 画出 Boot1/Boot2/RPMB/User Area 的布局，说明双 Boot 如何实现 OTA 原子切换。
+3. RPMB 防重放的三层机制各防什么？Key 为什么只能写一次？
+4. 按顺序写出上电初始化命令链，指出 CMD1 轮询和 CMD7 选中各自的意义。
+5. 用 PARTITION_CONFIG 说明读写 Boot 分区的切换步骤，忘切回的后果是什么？
+6. 用 LIFE_TIME_EST_A/B 设计一个 IoT 设备的预测性维护方案。
+
+---
+
+## <span class="blue"> 下一步
+
+协议就位，看内核怎么接管：**B-C.8.2 eMMC Linux 驱动与 SD 卡**——MMC 子系统架构、设备树节点写法、HS200/HS400 的驱动侧配置、SD 卡与 eMMC 的异同、U-Boot 下的 mmc 命令，以及"Boot1 烧 U-Boot + User Area 部署 rootfs"的完整实战。
+
+> 💡 螺旋衔接：Boot 分区 → SPL → U-Boot 的启动链回看第一部第 7 章启动链深度解析；RPMB 与 OP-TEE 的配合在第 19 章安全启动里展开；掉电可靠性（eMMC 的头号实战问题）在 B-C.8.5 用 fio + 断电实验正面解决；寿命监测的运维闭环对应第 21 章 OTA 与更新架构的设备健康管理。

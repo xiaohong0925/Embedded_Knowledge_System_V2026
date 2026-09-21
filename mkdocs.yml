@@ -740,6 +740,8 @@ nav:
       - F. 前沿高速串行:
           - F.16 前沿高速:
               - B-F.16.1 SerDes通识均衡眼图抖动信道预算: B. 总线协议/F. 前沿高速串行/B-F.16.1_SerDes通识均衡眼图抖动信道预算.md
+              - B-F.16.2 当代PCIe_Gen4_Gen5_Gen6演进与行业阶段: B. 总线协议/F. 前沿高速串行/B-F.16.2_当代PCIe_Gen4_Gen5_Gen6演进与行业阶段.md
+              - B-F.16.3 CXL内存语义互连: B. 总线协议/F. 前沿高速串行/B-F.16.3_CXL内存语义互连.md
               - B-F.16.4 JESD204C数据转换器接口: B. 总线协议/F. 前沿高速串行/B-F.16.4_JESD204C数据转换器接口.md
               - B-F.16.5 USB4与Thunderbolt: B. 总线协议/F. 前沿高速串行/B-F.16.5_USB4与Thunderbolt.md
               - B-F.16.6 Aurora与FPGA互连: B. 总线协议/F. 前沿高速串行/B-F.16.6_Aurora与FPGA互连.md

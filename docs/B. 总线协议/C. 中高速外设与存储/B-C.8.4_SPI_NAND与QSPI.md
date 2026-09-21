@@ -1,10 +1,10 @@
 # B-C.8.4 SPI NAND 与 QSPI
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.8 存储接口
 >
-> 难度：[E] | 预计阅读时间：35 分钟
+> 难度：[E] Expert | 预计阅读时间：35 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 B 板块讲过标准 SPI 的四线结构与读写时序，但真实产品里挂在 SPI 上的存储器远比"SPI EEPROM"复杂。工业界最常用的是三种方案：**SPI NOR**（存启动代码）、**SPI NAND**（大容量低成本存储）、以及把速率翻倍的 **QSPI/OSPI**（四线/八线扩展）。路由器、IoT 网关、工控板的存储几乎都是这三样的组合。
 
@@ -12,7 +12,7 @@ B 板块讲过标准 SPI 的四线结构与读写时序，但真实产品里挂�
 
 本节覆盖：SPI NOR 与 SPI NAND 的物理特性与差异、QSPI/OSPI 的扩线提速原理、Linux MTD 子系统的抽象模型、spi-nor 的 JEDEC ID + SFDP 自动识别、spi-nand 的坏块管理与 ECC、一个"NOR 启动 + NAND 存系统"的完整双 Flash 产品实例。
 
-## SPI NOR：启动代码的保险箱
+## <span class="blue"> SPI NOR：启动代码的保险箱
 
 SPI NOR 的核心特性是**字节级随机读取**——CPU 可以像读内存一样从任意地址直接取指，这就是 XIP 的基础。
 
@@ -28,7 +28,7 @@ NOR 的存储单元是浮栅晶体管，热电子注入写入、隧道效应擦�
 
 选型关注三个参数：容量（装不装得下 U-Boot + Kernel + DTB）、最高时钟（决定启动速度）、擦写寿命（撑不撑得住产品生命周期内的 OTA 次数）。
 
-## SPI NAND：便宜大碗，但有坏块
+## <span class="blue"> SPI NAND：便宜大碗，但有坏块
 
 SPI NAND 填补了 SPI NOR 与并行 NAND 之间的空白：用 SPI 接口替代并行 NAND 的 8 位数据总线加一大把控制线，省下 PCB 走线；同时保留 NAND 的高密度低成本。
 
@@ -49,7 +49,7 @@ SPI NAND 填补了 SPI NOR 与并行 NAND 之间的空白：用 SPI 接口替代
 
 这两个事实推出一条铁律：**SPI NAND 不能直接跑 ext4/JFFS2**。通用文件系统不知道坏块的存在，第一个坏块出现在元数据区，文件系统就崩了。正确结构是 MTD → UBI（坏块管理 + 磨损均衡）→ UBIFS，后文展开。
 
-## QSPI 与 OSPI：数据线加倍，带宽加倍
+## <span class="blue"> QSPI 与 OSPI：数据线加倍，带宽加倍
 
 标准 SPI 数据走单线（MOSI/MISO 各一根）。QSPI 把数据线扩到 4 根（IO0~IO3），OSPI（JEDEC xSPI 标准）扩到 8 根，带宽随线数线性翻倍：
 
@@ -64,9 +64,13 @@ SPI NAND 填补了 SPI NOR 与并行 NAND 之间的空白：用 SPI 接口替代
 
 QSPI 的 4 根 IO 线与 Flash 的 WP（写保护）和 HOLD（暂停）引脚复用：IO2 平时是 WP、IO3 平时是 HOLD。进 Quad 模式前必须通过状态寄存器把这两个功能关掉，否则 IO2/IO3 被芯片当成 WP/HOLD 处理，Quad 传输直接失败。这是 QSPI 调试的第一经典坑。
 
+<!-- 【待补图】images/b-c-8-4-qspi-pinmux.png（优先级：△有更好）
+图名：SPI NOR 引脚在标准 SPI 与 QSPI 模式下的复用对照图
+生图提示词：芯片引脚示意图风格，白底，16:9 横版。左右并排两个相同的 8 脚 Flash 芯片引脚框（SOP-8 封装轮廓），左侧标注"标准 SPI 模式"：各引脚标注 CS# / DO(IO1) / WP#(IO2) / GND / DI(IO0) / CLK / HOLD#(IO3) / VCC，WP 和 HOLD 引脚用橙色高亮标注"写保护/暂停功能生效"；右侧标注"QSPI 模式"：同样引脚但 WP#→IO2、HOLD#→IO3 用蓝色高亮标注"复用为数据线 IO2/IO3"，并在两图之间画一个红色警示箭头标注"进 Quad 前必须在状态寄存器关掉 WP/HOLD 功能"。配色：芯片框深灰、普通引脚黑色、复用引脚橙/蓝高亮、警示红色，风格参考 Flash datasheet 引脚定义图，中文标注。 -->
+
 OSPI + DTR（双沿）200MHz 下等效 400MHz 采样、8 线并行，带宽过 200MB/s，已接近并行接口水平——高端场景（XIP 跑大固件、FPGA 配置）的选择。Linux 的 spi-mem 框架对 QSPI/OSPI 有完整支持。
 
-## MTD：裸 Flash 的统一抽象
+## <span class="blue"> MTD：裸 Flash 的统一抽象
 
 MTD（Memory Technology Device）是 Linux 管理裸 Flash 的子系统，位于块设备层之下、驱动之上。它存在的意义：eMMC/UFS 内部有控制器做坏块管理和磨损均衡，暴露的是标准块设备；而 NOR/NAND 是"裸"的，这些管理要内核来做——MTD 就是干这个的层。
 
@@ -87,7 +91,7 @@ mtd4: 00a00000 00020000 "userdata"
 
 每个分区有两个设备节点：`/dev/mtdN`（字符设备，用于擦除与烧录）和 `/dev/mtdblockN`（块设备，用于挂载文件系统）。
 
-## spi-nor：JEDEC ID + SFDP 自动识别
+## <span class="blue"> spi-nor：JEDEC ID + SFDP 自动识别
 
 spi-nor 框架识别一颗 NOR 分两步。第一步发 `0x9F`（Read JEDEC ID）拿 3 字节 ID：第 1 字节厂商（0xEF 华邦、0xC2 旺宏、0xC8 兆易创新），后两字节是型号与容量。内核用 ID 在 `spi_nor_ids[]` 表里查参数。
 
@@ -99,7 +103,7 @@ SFDP 的意义是**一颗驱动支持所有合规芯片**：新出的 Flash 只�
 
 > 💡 调试 spi-nor 识别问题，先看 `dmesg | grep spi-nor`：正常会看到型号和容量（`spi-nor spi0.0: w25q128 (16384 Kbytes)`）；出现 `SFDP probe failed` 说明读表失败，驱动回退到硬编码参数表，能用但可能跑不到最高速或功能不全——此时对照数据手册检查 SPI 模式（CPOL/CPHA）和时钟。
 
-## spi-nand：ONFI 参数与坏块管理
+## <span class="blue"> spi-nand：ONFI 参数与坏块管理
 
 spi-nand 框架把 SPI NAND 纳入内核 NAND 子系统。芯片参数来自 ONFI（Open NAND Flash Interface）标准参数页：页/块大小、OOB 布局、ECC 强度、坏块标记位置，驱动读出后自动配置。
 
@@ -117,7 +121,7 @@ spi-nand 驱动（坏块检测、ECC、ONFI 参数）
 
 > UBI（Unsorted Block Images）：MTD 之上的卷管理层。它把物理擦除块映射成逻辑块，文件系统看到的永远是无坏块的连续空间；同时在后台做磨损均衡——把写操作均匀摊到所有块上，避免某些块被集中写死。NAND 上的"文件系统可靠性"几乎全部是 UBI 这一层提供的。
 
-## 实战：W25Q128 NOR + 128MB SPI NAND 双 Flash 系统
+## <span class="blue"> 实战：W25Q128 NOR + 128MB SPI NAND 双 Flash 系统
 
 典型工业路由器/IoT 网关方案：SPI NOR（16MB）存启动链，SPI NAND（128MB）存系统与数据。
 
@@ -242,22 +246,36 @@ dd if=/dev/zero of=/mnt/test.bin bs=1M count=10 conv=fsync # NAND 写
 
 > 💡 文件系统搭配速记：NOR → SquashFS（只读根）+ overlayfs（可写层）或 JFFS2；NAND → UBI + UBIFS。路由器经典的"SquashFS + overlayfs"组合只在 NOR 上成立；NAND 上必须 UBIFS，它的原子写、压缩、坏块透明化都是为 NAND 物理特性设计的。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| NOR/NAND 特性 | 从"能否随机读、有无坏块、是否要 ECC"三问推出两者的用途分工 |
-| 文件系统搭配 | 解释 NAND 为什么必须 UBI+UBIFS，直接 ext4 会在哪里崩 |
-| QSPI/OSPI | 说出扩线与 DTR 的提速机制，指出 WP/HOLD 复用引脚这个坑 |
-| MTD 模型 | 画出 文件系统→UBI→MTD→spi-nand 的栈，读懂 /proc/mtd 输出 |
-| 自动识别 | 说清 JEDEC ID 与 SFDP 各自提供什么、SFDP 失败的后果 |
-| 双 Flash 设计 | 为一个 IoT 网关设计 NOR+NAND 分区方案并给出设备树 |
-| 烧录调试 | 用 flashcp/ubiformat/ubiattach 完成烧录与挂载，用 mtdinfo/ecc_stats 查健康 |
+本篇的所有结论都从两个物理事实推出：NOR 能字节级随机读、几乎没有坏块，所以它是启动代码的保险箱（XIP、U-Boot、内核都放在这）；NAND 按页操作、出厂就有坏块、必须 ECC，所以它的文件系统栈必须是 MTD → UBI → UBIFS——直接上 ext4 等于把文件系统的命交给坏块。QSPI/OSPI 是同一根 SPI 的扩线提速，带宽随线数线性翻倍，代价是 WP/HOLD 引脚复用这个经典坑。JEDEC ID + SFDP 让一颗 spi-nor 驱动通吃所有合规芯片，ONFI 参数页让 spi-nand 同理——自动识别是这一族 Flash 相对老式硬编码驱动表的代际进步。双 Flash 方案（NOR 存启动链、NAND 存系统数据）就是把这些事实组装成产品：每颗芯片干它物理特性最擅长的事。
 
-## 配套资源
+速查表：
 
-- JEDEC JESD216（SFDP 标准）
-- 内核 MTD 文档：`Documentation/mtd/`
-- UBI/UBIFS 官方指南：http://www.linux-mtd.infradead.org/
-- W25Q128JV 数据手册（华邦官网）
-- mtd-utils 工具包（flashcp/flash_erase/ubi* 全家桶）
+| 主题 | 要点 |
+|------|------|
+| SPI NOR | 字节随机读、纳秒级、几乎无坏块；容量 ≤256MB；XIP 基础；存启动链 |
+| SPI NAND | 页/块组织、出厂坏块 2~4%、必须 ECC；128MB~8GB；价格 1/5~1/10 |
+| QSPI/OSPI | 数据线 1→4→8 带宽线性翻倍；DTR 双沿再翻倍；WP/HOLD 复用是第一坑 |
+| MTD | 裸 Flash 统一抽象；`/dev/mtdN` 字符设备 + `/dev/mtdblockN` 块设备 |
+| 自动识别 | JEDEC ID（0x9F）查表 + SFDP（0x5A）读标准参数表，新芯片即插即用 |
+| NAND 栈 | spi-nand → MTD → UBI（坏块管理+磨损均衡）→ UBIFS（原子写+掉电安全） |
+| 烧录工具 | flashcp（NOR）、ubiformat + flashcp（NAND UBI 镜像）、ubiattach/ubimkvol 挂载 |
+| 健康检查 | `dmesg | grep "Bad eraseblock"`、`ecc_stats`、`ubihealth` |
+
+本节自查：
+
+1. 从"能否随机读、有无坏块、是否要 ECC"三个问题推出 NOR 与 NAND 的用途分工。
+2. 解释 SPI NAND 为什么必须走 MTD → UBI → UBIFS，直接 ext4 会在哪里崩。
+3. 说出 QSPI 扩线与 DTR 各自的提速机制，指出 WP/HOLD 引脚复用这个坑的触发条件。
+4. JEDEC ID 和 SFDP 各自提供什么信息？`SFDP probe failed` 的后果是什么？
+5. 为一个 IoT 网关设计 NOR（16MB）+ NAND（128MB）的分区方案，说出分工逻辑。
+6. 用 flashcp/ubiformat/ubiattach 完成一次 NAND 烧录与挂载，写出命令序列。
+
+---
+
+## <span class="blue"> 下一步
+
+存储组的理论篇到此为止，最后一篇把可靠性问题正面引爆：**B-C.8.5 实战：eMMC 分区、可靠性与 fio 测试**——产品级分区布局、EXT_CSD 实操、fio 标准化性能测试，以及嵌入式存储的头号杀手：掉电实验。
+
+> 💡 螺旋衔接：UBIFS 的掉电安全设计与 B-C.8.5 的断电实验互为表里；XIP 与启动链的关系回看第一部第 5 章根文件系统与第 7 章启动链；MTD 分区表的 `fixed-partitions` 写法与第 4 章设备树分区配置同源；QSPI 的 dummy cycle 概念在 B-B.4 SPI 篇的时序参数节有原理铺垫。

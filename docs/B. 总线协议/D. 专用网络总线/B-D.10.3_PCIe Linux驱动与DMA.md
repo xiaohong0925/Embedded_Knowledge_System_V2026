@@ -1,6 +1,6 @@
 # B-D.10.3 PCIe Linux 驱动与 DMA
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.10 PCIe
 >
 > 难度：[M] Master | 预计阅读时间：50 分钟
 
@@ -345,23 +345,35 @@ dmesg | grep -i iommu                       # IOMMU 状态
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 读完应能独立完成的动作 |
-|--------|------------------------|
-| 分层定位 | 说出 PCI Core 在 probe 前替你完成了什么；按"lspci 是否可见"切分问题域 |
-| 注册匹配 | 写出 id_table + `module_pci_driver` 骨架；用 `lspci -nn` 排查 probe 不触发 |
-| probe 步骤 | 默写七步顺序，并给每步说出失败症状 |
-| 现代 API | 说清 `pcim_*` 托管相对手动 goto 阶梯的收益；用 `pci_alloc_irq_vectors`/`pci_irq_vector` 写中断申请 |
-| 缓存一致性 | 完整复述 DMA 数据错乱的机理；解释 x86 与 ARM 的差异来源 |
-| DMA 选型 | 给一个设备场景（描述符环 + 数据缓冲），正确拆分一致性/流式并写出 API 序列 |
-| SG | 说出 SG 解决什么问题、`nents` 返回值为什么可能小于输入 |
-| 中断 | 三种中断方式选型；解释 `pdev->irq + i` 为什么是错的 |
-| 排障 | 对着常见故障表，把"寄存器正常但 DMA 不动"这类症状映射到检查动作 |
+本篇的核心结构是"消费"：10.1 和 10.2 建立的所有机制，到驱动手里就是 probe 里的七个调用。关键认知是分层边界——枚举、地址分配、链路训练都在你介入之前由 PCI Core 完成，驱动只做"启用设备、接管资源、开始收发"。这条边界同时是排障分界：`lspci` 看不到的设备不是驱动问题，看得到但不动才是。probe 七步的失败症状表值得背下来——每步对应一个硬件动作，症状反查步骤是驱动加载失败时最快的路径。
 
----
+DMA 部分真正要带走的是缓存一致性的完整推理链：CPU 有 Cache、设备直访物理内存、两边各看各的——错误偶发、与负载相关、不可稳定复现。x86 硬件兜底的这一层，多数 ARM SoC 要靠软件的 DMA API 维护，这就是"同一份代码 x86 没事 ARM 坏"的根源。选型口诀一句话：长期共享的小结构（描述符环）用一致性，单次搬运的大数据用流式，真实驱动几乎总是两者混用。流式 API 的方向参数不是形式，`DMA_TO_DEVICE` 刷 Cache、`DMA_FROM_DEVICE` 失效 Cache，写错方向就是数据偶发错乱。
 
-## <span class="blue"> 配套资源
+工具纪律两条：`pcim_/devm_` 托管 API 消灭回退阶梯，新代码一律托管版；中断向量用 `pci_alloc_irq_vectors()` + `pci_irq_vector()` 取号，`pdev->irq + i` 是 MSI-X 时代不再成立的旧写法。排障的第一手证据永远先拿：`/proc/interrupts` 看中断、`current_link_speed/width` 看协商。
 
-- **内核文档**：`Documentation/PCI/pci.rst`、`Documentation/core-api/dma-api.rst`
-- **内核源码**：`drivers/pci/`（PCI Core）、`drivers/nvme/host/`（MSI-X 多队列范本）、`include/linux/pci.h`（本篇全部 API 原型）
-- **工具**：pciutils（lspci/setpci）、nvme-cli、fio
-- **衔接**：B-D.10.1（链路层）、B-D.10.2（配置空间与 BAR）、第 11 章（设备模型与 devm）、B-D.10.6（把本篇骨架跑成一张 EP 卡的完整实战）
+### 速查表
+
+| 项 | 要点 |
+|----|------|
+| 分层边界 | lspci 不可见=物理层问题；可见但不动=本篇问题域 |
+| probe 七步 | 使能→占 BAR→set_master→iomap→DMA 掩码→中断→硬件初始化，顺序即依赖 |
+| 托管 API | `pcim_enable_device`/`pcim_iomap_regions`，免 goto 回退阶梯 |
+| 中断申请 | `pci_alloc_irq_vectors(pdev, min, max, PCI_IRQ_MSIX\|MSI\|LEGACY)`，取向量用 `pci_irq_vector()` |
+| DMA 选型 | 描述符环=coherent；数据缓冲=streaming+sync；不连续多页=SG |
+| 方向参数 | TO_DEVICE 刷 Cache，FROM_DEVICE 失效 Cache，写错=偶发错乱 |
+| 缓存一致性 | x86 硬件保证；ARM 多数软件维护——移植bug 高发点 |
+| 第一手证据 | `/proc/interrupts`、`current_link_speed/width`、`dma_mask_bits` |
+
+### 本节自查
+
+1. 驱动 probe 里漏调 `pci_set_master()`，运行时是什么症状？为什么寄存器读写完全正常？
+2. 描述符环为什么不能用流式 DMA？反过来，大块数据为什么不该用一致性内存？
+3. `dma_map_single(..., DMA_FROM_DEVICE)` 后设备写完数据，CPU 直接读会怎样？缺了哪个调用？
+4. `pci_alloc_irq_vectors` 返回 4，第 3 个向量的中断号怎么取？为什么不能用 `pdev->irq + 2`？
+5. 同一份驱动在 x86 服务器正常、搬到 ARM SoC 上 DMA 数据偶发错乱，机理是什么？
+
+## <span class="blue"> 下一步
+
+下一篇 **B-D.10.4 PCIe 进阶：Gen4/5/6 信号完整性与 AER**——本篇的排障表里"性能远低于标称先查链路降速"只是一句话，下一篇把它展开成完整方法论：高速时代的信道预算、retimer 的作用、AER 错误报告怎么读、`LnkSta` 降速的逐级定位。
+
+> 💡 本篇骨架的通用部分全部指向已有章节：`pci_driver` 的注册匹配是第 11 章 bus-device-driver 模型在 PCI 总线上的实例，`devm/pcim` 托管机制在 11.3.4；MSI-X 向量到 `/proc/interrupts` 的链路接第 10 章中断子系统；DMA API 的完整规范在内核 `Documentation/core-api/dma-api.rst`。想拿 MSI-X 多队列当范本读源码，`drivers/nvme/host/` 是教科书级实现。本篇的全部 API 原型在 `include/linux/pci.h`。

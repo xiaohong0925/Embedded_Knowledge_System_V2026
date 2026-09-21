@@ -1,16 +1,16 @@
 # B-D.11.5 CANopen PDO/SDO 与 Linux 实现
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.11 CAN 与 CANopen
 >
-> 难度：[E] | 预计阅读时间：50 分钟
+> 难度：[E] Expert | 预计阅读时间：50 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 上一节建立了 CANopen 的两个支柱——对象字典和 NMT。本节讲数据怎么真正流动：PDO 负责周期性实时数据（伺服的目标位置、实际位置），SDO 负责点对点的参数读写与诊断。两者是"管道"和"管道里的水流"的关系——PDO 的映射关系本身也是通过 SDO 写进对象字典的。后半节落到 Linux：评估裸 SocketCAN 与 CANopenNode 协议栈两条路线，并以 CiA 402 伺服控制为例串起完整流程。
 
 本节覆盖：PDO 的方向与触发机制、传输类型编码、映射配置四步流程、CANopen 字节序（这里要纠正一个流传甚广的错误）、SDO 三种传输类型与命令字节格式、PDO/SDO 的分工边界、CANopenNode 架构与对象字典生成、CiA 402 状态机控制序列、CANopen 层排障清单。
 
-## PDO：无确认的实时数据通道
+## <span class="blue"> PDO：无确认的实时数据通道
 
 闭环控制对通信的要求是周期确定、开销最小：主站每 1 ms 下发目标位置，伺服每 1 ms 回传实际位置。请求-应答模式一次交互至少两帧还要等确认，PDO 的做法是发出去就用、没有确认、没有重传——可靠性由 CAN 底层的 CRC 与错误帧机制兜底，实时性由无握手换来。
 
@@ -62,7 +62,7 @@ TPDO 对称，用 0x1800+x 与 0x1A00+x。映射条目数与子索引个数不�
 
 实例验证：TPDO1 数据 `37 02 A8 61 00 00`，前 2 字节是状态字 0x0237，后 4 字节是实际位置 0x000061A8 = 25000 counts——按小端读才对。在小端主机（x86、ARM 默认小端）上可以 memcpy 直接取；在大端主机上必须逐字段字节交换。判断依据不要靠猜，用设备手册的示例帧对一遍。
 
-## SDO：确认制的参数通道
+## <span class="blue"> SDO：确认制的参数通道
 
 SDO 是主站与单个从站之间的点对点请求-应答通道，上传（upload，从站→主站，读）和下载（download，主站→从站，写）两个方向从主站视角命名。默认 COB-ID：请求 0x600+n，应答 0x580+n。
 
@@ -84,12 +84,25 @@ SDO 是主站与单个从站之间的点对点请求-应答通道，上传（upl
  │ 命令字节  │ OD 索引    │ 子索引  │ 数据（≤4B）   │
  │ (ccs|n|e|s)│ 小端      │         │ 小端          │
  └──────────┴────────────┴─────────┴──────────────┘
+```
 
- 命令字节高 3 位 ccs（客户端命令）：
-   下载：0x2F 写 1 字节 / 0x2B 写 2 字节 / 0x27 写 3 字节 / 0x23 写 4 字节
-   上传请求：0x40
-   分段/块传输另有 cs 编码
+命令字节不是四个魔法数，它有位结构——看懂了就不用背表：
 
+```
+ bit  7   6   5 │ 4  3 │  2  │ 1  0
+     [   ccs   ]│[ n ] │[ e ]│[ s ]
+```
+
+| 位段 | 名称 | 含义 |
+|------|------|------|
+| ccs（bit 7~5） | 客户端命令符 | 1=下载请求、2=上传请求、4=中止……决定这帧要干什么 |
+| n（bit 4~3） | 空字节数 | 数据区里最后几个字节无效（仅 e=1 时有效）：0=4 字节全有效、1=末 1 字节无效…… |
+| e（bit 2） | expedited | 1=加速传输（本帧即全部数据）；0=分段传输起手 |
+| s（bit 1） | size 指示 | 1= n 字段有效（明确声明了有效字节数） |
+
+套一下验证：`0x2F` = 二进制 0010 1111 → ccs=001（下载）、n=11（3 字节无效）、e=1（加速）、s=1（声明长度）→ 有效数据 = 4−3 = **1 字节**。同理 `0x2B`（n=10）写 2 字节、`0x27`（n=01）写 3 字节、`0x23`（n=00）写 4 字节；`0x40` = ccs=010 上传请求。应答方向对称，命令符换成 scs（server command）：
+
+```
  从站应答：
    下载成功：0x60 + 索引回显
    上传应答：0x4F/0x4B/0x47/0x43（对应 1~4 字节）+ 数据
@@ -123,7 +136,7 @@ SDO 应答命令字节 0x80 表示中止，后 4 字节是原因码，调试时�
 
 超过 4 字节走分段：初始化握手约定总长，随后每段 7 字节数据 + 1 个 toggle 位（0/1 交替），接收方按 toggle 位检测丢段或重复段。固件升级场景（OD 0x1F50 区域）数据量大，用 Block 传输把逐段确认改成按块确认，帧数降一个量级。
 
-## PDO 与 SDO 的分工
+## <span class="blue"> PDO 与 SDO 的分工
 
 | 维度 | PDO | SDO |
 |:---|:---|:---|
@@ -135,7 +148,15 @@ SDO 应答命令字节 0x80 表示中止，后 4 字节是原因码，调试时�
 
 工程边界一句话：配置走 SDO，运行走 PDO；运行期再发 SDO 会挤占 PDO 带宽并引入不确定延迟，量产系统的运行环路只发 PDO 和 SYNC。
 
-## Linux 实现路线：裸 SocketCAN 还是 CANopenNode
+## <span class="blue"> Linux 实现路线：裸 SocketCAN 还是 CANopenNode
+
+三条路线的取舍先摆开：
+
+| 路线 | 做什么 | 适合 | 不适合 |
+|------|--------|------|--------|
+| 裸 SocketCAN | 自己组装 SDO/解析 PDO/管 NMT 与心跳 | 学习协议、一次性诊断脚本、只收发少量固定帧的极简场景 | 产品主站——分段 SDO、心跳超时表、EMCY 处理全是自己维护的债 |
+| CANopenNode（开源） | 完整协议栈：NMT/HB/SYNC/SDO/PDO/EMCY，从站与主站（v4+）都行 | 产品级主站与从站，机器人/运动控制主流选择 | 需要集成学习的初期投入 |
+| 商业协议栈（如 port、HMS） | 同 CANopenNode，附认证与技术支持 | 有认证需求（医疗、轨交）的产品 | 成本敏感项目 |
 
 裸 SocketCAN 手写 CANopen 主站，意味着自己实现 SDO 帧组装、分段 toggle 逻辑、NMT 状态跟踪、心跳超时表、PDO 映射解析。做一次能深刻理解协议，但产品里没人维护这份代码。
 
@@ -155,9 +176,37 @@ CANopenNode（github.com/CANopenNode）是纯 C、零依赖的开源协议栈，
 
 对象字典不用手写：objdictgen 目录下的 objdictedit（Python GUI）可视化编辑索引、类型、默认值、PDO 映射权限，导出 OD.c；厂商设备的 EDS（电子数据表）文件可直接导入查看完整字典。CANopenNode 各版本 API 变化较大（v1/v2 的 `CO_init()` 一把梭，v4 拆成 `CO_new()` → `CO_CANinit()` → `CO_CANopenInit()` → 主循环 `CO_process()`），写代码时以所用版本的 `CANopen.h` 注释和 examples 目录为准，不要照抄跨版本教程。
 
+v4 主站侧的最小骨架（以 CANopenNode v4 的 CANopenLinux 为例，细节随版本变动，以 examples 为准）：
+
+```c
+/* 主循环骨架：初始化 → NMT 启动从站 → 周期处理 */
+CO_t *CO = CO_new(NULL, NULL);
+CO_CANinit(CO, can_if, 0);                       /* 绑 SocketCAN 接口 */
+CO_CANopenInit(CO, NULL, NULL, OD, NULL,
+               NMT_CONTROL, node_id, node_id,
+               true, &reset_flag);               /* 本机作为节点上线 */
+
+/* 主站功能：NMT 管理 + SDO 客户端 */
+CO_NMT_sendCommand(CO->NMT, CO_NMT_ENTER_OPERATIONAL, 0);  /* 广播 Start */
+
+CO_SDOclient_t *sdo;
+CO_SDOclient_setup(CO->SDOclient, 0, 0, target_node_id);   /* 对节点 2 建 SDO 通道 */
+
+for (;;) {
+    CO_process(CO, false, 1000, NULL);           /* 1 ms 节拍：处理收发/心跳/SYNC */
+    /* SDO 读写示例：上传从站 0x1000:00 设备类型 */
+    uint32_t dev_type;
+    CO_SDOclient_upload(sdo, 0x1000, 0x00, (uint8_t *)&dev_type,
+                        sizeof(dev_type), NULL, NULL);
+    usleep(1000);
+}
+```
+
+关键认知是节拍模型：CANopenNode 不是事件回调框架，而是一个要你以固定周期（通常 1 ms）驱动 `CO_process()` 的协作式内核——协议栈的心跳发送、SYNC 节拍、PDO 触发都在这个周期里推进。把它放进一个实时线程（配合 B-E.15.6 的 PREEMPT_RT 调度），节拍精度就是总线节拍精度。
+
 运动控制的完整接线与调通流程属于实战内容，在 `B-D.11.6` 展开；这里给出协议层面的控制序列。
 
-## CiA 402 伺服控制序列
+## <span class="blue"> CiA 402 伺服控制序列
 
 CiA 402 定义了驱动器的状态机，主站通过控制字（0x6040）驱动状态转换，通过状态字（0x6041）确认当前状态：
 
@@ -186,7 +235,11 @@ CiA 402 定义了驱动器的状态机，主站通过控制字（0x6040）驱动
 
 状态机跳跃是伺服调试的高频坑：不从 Shutdown 逐级走到 Enable Operation，直接写 0x0F 会被驱动器忽略，状态字停在原处——看到"控制字写了电机不动"，先读状态字对 CiA 402 状态图。
 
-## 排障：PDO/SDO 层故障
+<!-- 【待补图】images/b-d-11-5-cia402-state-machine.png（优先级：★必要）
+图名：CiA 402 驱动器状态机
+生图提示词：技术状态机图，白底工程蓝图风格，中文标注，横版 16:9。状态圆角框：Not Ready to Switch On（灰）→ Switch On Disabled（橙，标注"上电停这里"）→ Ready to Switch On → Switched On → Operation Enabled（绿，标注"电机真正使能"），另画 Fault（红）与 Quick Stop Active（橙）。转换箭头标注控制字命令：0x06 Shutdown、0x07 Switch On、0x0F Enable Operation、0x02 Quick Stop、bit7=1 Fault Reset，每个状态框下小字标注状态字特征位（x01x0001/x0110011/x0110111）。扁平矢量、细线条、无装饰。 -->
+
+## <span class="blue"> 排障：PDO/SDO 层故障
 
 | 症状 | 优先怀疑 | 验证方法 |
 |:---|:---|:---|
@@ -199,7 +252,28 @@ CiA 402 定义了驱动器的状态机，主站通过控制字（0x6040）驱动
 | 状态字不变、电机不动 | CiA 402 状态机跳跃，控制字序列错 | 逐级 0x06→0x07→0x0F，每步核对状态字 |
 | 分段 SDO 传一半中止 0x05030000 | toggle 位未交替，重传逻辑有 bug | candump 看分段帧序列 |
 
-## 本节自查
+## <span class="blue"> 本节总结
+
+CANopen 的数据面就两条通道，分工一句话：**配置走 SDO，运行走 PDO**。PDO 用无确认的广播换实时性，靠 SYNC 把多轴节拍对齐到同一个周期；SDO 用逐帧确认换可靠性，承载所有参数读写与诊断。两者不是并列关系而是层叠关系——PDO 的映射配置本身就是通过 SDO 写进对象字典的，SDO 是地基，PDO 是地基上跑的车。
+
+两个细节值得单独记住。第一，SDO 命令字节不是四个要背的魔法数，它是 `ccs|n|e|s` 的位结构，看懂位段之后 `0x2F`、`0x2B`、`0x40` 都是自己算出来的，遇到没见过的命令字节也能反解。第二，CANopen 全线小端，"PDO 是大端"是把 DBC 信号打包的 Motorola 格式误植过来的错误，在小端主机上 memcpy 直取即可，在大端主机上必须逐字段交换——拿设备手册的示例帧对一遍，永远是最快的验证手段。
+
+工程落地时守住两条纪律：映射改动回 Pre-operational 再做，Operational 下改映射会被 0x08000020 拒绝，这是协议在保护实时链路的确定性；CiA 402 使能必须逐级走 `0x06 → 0x07 → 0x0F`，每步核对状态字再发下一步，跳步驱动器直接忽略。Linux 侧的选型结论也很直接：学习和一次性诊断用裸 SocketCAN，产品主站用 CANopenNode——SDO 分段、心跳超时表、EMCY 处理这些坑，没必要自己再踩一遍。
+
+速查：
+
+| 要点 | 结论 |
+|:---|:---|
+| 默认 COB-ID 规律 | TPDO1 = 0x180+n，RPDO1 = 0x200+n，SDO 请求 0x600+n / 应答 0x580+n |
+| 多轴同步 | 传输类型 1 + 主站周期 SYNC（0x80），节拍统一到 SYNC 周期 |
+| 映射配置四步 | 禁 PDO → 写映射条目 → 写条目数 → 使能 PDO（Pre-operational 下做） |
+| 命令字节位段 | ccs（bit7~5，干什么）/ n（bit4~3，无效字节数）/ e（bit2，加速）/ s（bit1，长度有效） |
+| 字节序 | 小端 LSB-first；大端主机必须逐字段字节交换 |
+| 高频 abort code | 0x06020000 无此条目 / 0x06090030 越界 / 0x08000020 状态不允许 |
+| CiA 402 使能序列 | 0x06 → 0x07 → 0x0F，每步核对状态字特征位 |
+| Linux 路线 | 学习诊断用裸 SocketCAN，产品用 CANopenNode（v4 起带主站功能） |
+
+## <span class="blue"> 本节自查
 
 读完本节，你应能独立完成以下动作：
 
@@ -211,9 +285,9 @@ CiA 402 定义了驱动器的状态机，主站通过控制字（0x6040）驱动
 - 写出 CiA 402 从 Not Ready 到 Operation Enabled 的控制字序列及每步预期状态字
 - 评估项目该用裸 SocketCAN 还是 CANopenNode，并说明理由
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- CiA 301 — PDO/SDO 通信对象与传输协议
-- CiA 402 — 驱动器状态机、控制字/状态字位定义
-- CANopenNode：github.com/CANopenNode/CANopenNode（含 objdictgen 与 Linux example）
-- 内核文档：`Documentation/networking/can.rst`
+`B-D.11.6 实战 SocketCAN 双板收发与 CANopen 伺服控制` 把本节和前两节的协议知识落到实物：两块板卡通过 CAN 收发器互连，先用 SocketCAN 工具链打通原始帧收发，再用 CANopenNode 驱动一台真实伺服完成 CiA 402 使能与位置运动，最后 candump 抓帧对照本节学的 PDO/SDO 格式逐字节验证。
+
+> 💡
+> 本节用到的底层能力：CAN 帧的收发路径与 SocketCAN 接口在 `B-D.11.3`，对象字典与 NMT 状态机在 `B-D.11.4`，1 ms 节拍线程的实时性保障在 `B-E.15.6 PREEMPT_RT`。深入阅读可参考 CiA 301（通信对象与传输协议）、CiA 402（驱动器状态机位定义）与 CANopenNode 仓库的 examples 目录。

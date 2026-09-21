@@ -1,6 +1,6 @@
 # B-D.10.4 PCIe 进阶：Gen4/5/6、信号完整性与 AER
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.10 PCIe
 >
 > 难度：[M] Master | 预计阅读时间：45 分钟
 
@@ -53,6 +53,30 @@ Phase 3  角色互换：RC 评估并指挥 EP 的发送端 preset
 > preset：PCIe Gen3+ 标准化的 11 组发送端均衡参数（P0~P10），每组是 de-emphasis（去加重）与 pre-shoot（预冲）的不同组合。它们就是 F.16.1 讲的 FFE 在 PCIe 里的具体形态——训练过程本质是"试遍若干组 FFE 参数，选对方眼图最好的一组"。
 
 训练的产物完全软件可见：PHY/控制器的链路状态寄存器里有每 Lane 选定的 preset 值与均衡成功标志，原厂工具和部分 `lspci -vvvv` 扩展可以读出。**训练失败（Equalization Timeout / Phase 卡死）的直接后果就是降速**——双方退回上一代速率重新训练，这引出了本篇的核心方法论。
+
+### 均衡状态的软件观测
+
+Gen3+ 设备的 PCIe Capability 里有一组专门记录均衡结果的字段，`lspci -vvvv` 的 `LnkSta2` 行就是它们的解码：
+
+```text
+LnkCap2: Supported Link Speeds: 2.5-16.0GT/s ...
+LnkSta2: Current De-emphasis Level: -6dB, EqualizationComplete+,
+         EqualizationPhase1+, EqualizationPhase2+, EqualizationPhase3+,
+         LinkEqualizationRequest-
+```
+
+逐字段读法：
+
+| 字段 | 含义 | 异常形态 |
+|------|------|---------|
+| `Current De-emphasis Level` | 当前生效的发送去加重档位（preset 换算结果） | 与对端期望档位不符，说明训练没走完就"将就"了 |
+| `EqualizationComplete+/-` | 四个 Phase 是否全部完成 | `-` = 均衡没做完，链路处于"能通但非最优"状态 |
+| `EqualizationPhase1/2/3+/-` | 每个 Phase 各自的成功标志 | 某个 Phase 为 `-` 可定位卡在哪一段（Phase2 挂=RC 发送端方向信道差，Phase3 挂=EP 方向） |
+| `LinkEqualizationRequest` | 有一方正在请求重新均衡 | 偶发置位正常，频繁置位=信道不稳 |
+
+这组字段把"降速了"细分成三种性质不同的情况：**Phase 全 + 但速率低**——训练完成了但双方主动选了低速率（初始协商就降级，查 LnkCap2 的支持列表与固件限速配置）；**某个 Phase 为 -**——训练中途失败退回，信道问题实锤；**EqualizationComplete- 且速率正常**——均衡被跳过（部分平台为省启动时间），链路工作在非最优状态，高温/老化后可能出问题。
+
+> ⚠️ `LnkSta2` 需要 `lspci -vvvv`（四个 v）才显示，且只对 Gen3 及以上设备有意义。Gen1/Gen2 链路没有均衡训练，这些位不存在。
 
 ---
 
@@ -107,6 +131,60 @@ NRZ 时代 PCIe 裸误码率低于 10⁻¹²，CRC 校验加链路层重传（10
 1. **LnkCap 是"能力"，LnkSta 是"现状"**——降速判断的唯一入口是这两者对比，任何性能类工单先看这对字段。
 2. **降速是协议的保护动作，不是故障本身**——均衡训练谈不拢的双方退而求其次。接受"能跑就行"等于掩盖 SI 问题，量产老化后故障率会找上门。
 3. **降速与误码是同因异果**——信道差的时候，协商阶段表现为降速，工作阶段表现为 AER 误码计数上涨。两者一起看才是完整的信道健康画像。
+
+### 实战案例：Gen4 采集卡协商到 Gen3
+
+一块自研 FPGA 采集卡（Gen4 x4）在某客户主板上只协商出 Gen3 x4，带宽从约 8 GB/s 掉到 4 GB/s。按决策树走一遍：
+
+```bash
+# 第一步：确认现状与能力的差距
+lspci -s 03:00.0 -vv | grep -E "LnkCap:|LnkSta:"
+```
+
+```text
+LnkCap: Port #0, Speed 16.0GT/s, Width x4, ASPM L0s L1 ...
+LnkSta: Speed 8.0GT/s (downgraded), Width x4 (OK)
+```
+
+宽度 OK、速率降了一代——进决策树分支②。`downgraded` 字样本身就是协议在告诉你"我试过更高速率，没谈拢"。
+
+```bash
+# 第二步：看均衡训练四 Phase 的完成情况
+lspci -s 03:00.0 -vvvv | grep LnkSta2
+```
+
+```text
+LnkSta2: Current De-emphasis Level: -6dB, EqualizationComplete-,
+         EqualizationPhase1+, EqualizationPhase2+, EqualizationPhase3-
+```
+
+Phase 1/2 成功、**Phase 3 失败、整体未完成**——卡在"RC 指挥 EP 调发送端"那一段，即采集卡→主机方向的信道质量不达标。
+
+```bash
+# 第三步：看 AER 旁证（当前跑在 Gen3 也掩盖不住信道劣化）
+cat /sys/bus/pci/devices/0000:03:00.0/aer_dev_correctable
+```
+
+```text
+RxErr+ 1523
+BadTLP+ 87
+```
+
+Corrected 计数已上万次量级（RxErr 是接收端物理层错误）——链路连 Gen3 都跑得不安稳。
+
+```bash
+# 第四步：看 dmesg 有没有训练失败记录
+dmesg | grep -iE "equalization|retrain|link"
+```
+
+```text
+pcieport 0000:00:02.0: pciehp: ... 
+pci 0000:03:00.0: 8.0 GT/s: link retrained after equalization failure
+```
+
+四方证据齐了：Phase 3 失败 + AER 计数上涨 + retrain 日志 + 降速。结论指向**采集卡发送方向到 RC 接收方向的信道**——查这张卡的金手指触点、连接器插损、以及主板上这段走线的预算。本例最终定位是客户主板该插槽走线过长且无 retimer，换带 retimer 的插槽（或降频接受 Gen3）二选一。
+
+这个案例的方法论价值在于：**四个证据源（LnkSta / LnkSta2 / AER / dmesg）互相印证**，任何一个单独看都可能误判——只看 LnkSta 会说"降速了"，加上 LnkSta2 才知道卡在哪个 Phase，加上 AER 才知道劣化程度，加上 dmesg 才确认是训练失败而非主动限速。
 
 ---
 
@@ -164,6 +242,8 @@ PCIe 出板卡之后的物理形态，是 PCIe 卡工程师的日常接触面：
 
 retimer 在 PCIe 里的特殊性值得强调：它不是透明中继，而是**作为链路的一个真实参与者**加入均衡训练（两端各自与 retimer 训练一段）。这也是 Gen4+ 主板选型 retimer 时必须确认协议代次的原因——一颗只支持 Gen4 的 retimer 会把 Gen5 链路钉死在 Gen4。
 
+> redriver vs retimer：两种"信号中继"器件的本质差别在是否理解协议。redriver 是纯模拟器件——把衰减的波形放大、加重均衡后原样送出，不解析比特内容，便宜但只能补偿固定信道；retimer 内部有完整的 SerDes 收发对——把信号完整接收、重新定时、再以全新波形发出，参与 PCIe 均衡训练协商。redriver 对协议代次无感，retimer 有代次上限。信道预算差一点点用 redriver 补，差得多或链路本身要分段训练就必须 retimer。
+
 > 💡 光模块/AOC/DAC 那套数通谱系（F.16.1 的链路延伸器件表）在 PCIe 世界几乎不出现——PCIe 的战场在机箱内，介质是 PCB 与铜缆。需要跨机箱互联时，主流答案是换成以太网（或 CXL 的前沿形态，见 10.5），而不是给 PCIe 拉光纤。
 
 ---
@@ -182,22 +262,35 @@ retimer 在 PCIe 里的特殊性值得强调：它不是透明中继，而是**�
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 读完应能独立完成的动作 |
-|--------|------------------------|
-| 演进主线 | 说出 Gen3 靠编码、Gen4/5 靠提频、Gen6 换赛道的结构差异 |
-| 均衡训练 | 复述四 Phase 的"轮流当对方眼睛"逻辑；解释 preset 与 FFE 的关系 |
-| Gen6 变革 | 说清 PAM4→FLIT→FEC 的因果链：为什么改调制就不得不多改两样 |
-| L0p | 一句话说清它与 L0s/L1 的本质区别 |
-| 降速定位 | 给一段 LnkCap/LnkSta 不符的现场，沿决策树给出第一组检查动作 |
-| AER | 逐段解读一条 dmesg AER 报告；用 sysfs 计数做信道劣化巡检 |
-| 热插拔 | 区分受控插拔与意外移除；说出驱动侧 `pci_error_handlers` 的意义 |
-| 器件生态 | 按距离场景选对物理形态；说清 retimer 的协议感知为何影响代次兼容 |
+Gen4 之后的 PCIe 演进可以压成一条因果链：速率翻倍 → 信道预算见底 → 均衡训练从"随便过"变成"决定生死" → 训练失败就以降速的形式浮出水面。所以本篇的方法论核心不是记住每个 Phase 的细节，而是建立**证据链思维**：`LnkSta` 告诉你降没降，`LnkSta2` 的四个 Phase 位告诉你卡在哪段，AER 计数告诉你劣化到什么程度，dmesg 的 retrain 日志确认是训练失败而非主动限速——四个证据源互相印证，任何一个单独看都可能误判。
 
----
+Gen6 的三大变革也要记因果而不是记名词：换 PAM4 是因为频率提不动了，换 FLIT 是因为 FEC 需要定长块边界，上 FEC 是因为 PAM4 把裸误码率恶化到了不可工作的量级——改调制方式这一件事，被迫牵动了包格式和纠错机制两处。对软件开发者的好消息是这一切都被封装在物理/链路层之下：TLP 语义、配置空间、BAR、MSI 原样保留，驱动模型对速率代次无感。
 
-## <span class="blue"> 配套资源
+工程纪律两句话：降速是协议的保护动作不是故障本身，"能跑就行"等于把 SI 问题留给量产老化；Corrected 看趋势、Uncorrectable 看现场，巡检脚本定时读 `aer_dev_correctable` 就能在降速发生之前发现信道劣化。
 
-- **规范**：PCIe Base Specification 6.x（Physical Layer 章：均衡训练与 preset；附录：AER 错误位定义）
-- **内核**：`drivers/pci/pcie/aer.c`（AER 服务实现）、`include/uapi/linux/pci_regs.h`（`PCI_ERR_COR_*` 错误位宏）
-- **工具**：`lspci -vvvv`、sysfs `aer_dev_*` 计数、原厂 PHY tuning 指南
-- **衔接**：B-F.16.1（本篇全部物理层概念的机制底座）；B-D.10.1（LTSSM 主干）；B-D.10.5（CXL 如何复用这套物理层）；B-E.15.5（背板预算分配实战）
+### 速查表
+
+| 项 | 要点 |
+|----|------|
+| 演进结构 | Gen3 编码胜利、Gen4/5 纯提频、Gen6 换赛道（PAM4+FLIT+FEC） |
+| 均衡训练 | 四 Phase 轮流当对方眼睛，产物是 preset（FFE 在 PCIe 的具体形态） |
+| 软件观测 | `lspci -vvvv` 的 LnkSta2：EqualizationComplete/Phase1-3 四位 |
+| 降速入口 | `LnkSta` vs `LnkCap` 对比；`downgraded` 字样=协商降级实锤 |
+| AER 判读 | Corrected 看趋势、Uncorrectable 看现场；sysfs `aer_dev_*` 巡检 |
+| Gen6 三变 | PAM4（频率不动带宽翻倍）→ FLIT（FEC 要定长块）→ FEC（裸误码 10⁻⁴ 不可工作） |
+| L0p | L0 态下动态收窄宽度，不用回 Recovery——"只关一半车道" |
+| 中继选型 | redriver 模拟放大无协议感知；retimer 数字重定时参与训练但有代次上限 |
+
+### 本节自查
+
+1. Gen3 到 Gen5 共享同一套编码，为什么 Gen4 才开始把信号完整性变成每个人的问题？
+2. `LnkSta2` 显示 `EqualizationPhase3-`，说明链路的哪个方向信道质量差？
+3. Gen6 为什么改了 PAM4 就必须同时改包格式和纠错机制？
+4. 一块卡偶尔协商到 Gen3、重启又恢复 Gen4，决策树指向哪类根源？
+5. 选型时什么情况下 redriver 够用、什么时候必须 retimer？
+
+## <span class="blue"> 下一步
+
+下一篇 **B-D.10.5 CXL 与 PCIe 生态扩展**：PCIe 的物理层和链路层正在被另一种语义复用——CXL 在同一套电气层上跑内存协议，让"内存扩展"和"缓存一致性互联"成为可能。它是理解 2026 年服务器架构的必修课（选读）。
+
+> 💡 本篇的全部物理层概念（均衡、眼图、信道预算、抖动分解、retimer/redriver 器件谱系）的机制底座在 B-F.16.1，那里讲"为什么"，本篇讲"PCIe 怎么用、坏了怎么定位"。AER 的内核实现在 `drivers/pci/pcie/aer.c`，错误位宏定义在 `include/uapi/linux/pci_regs.h`；背板信道预算的分配实战见 B-E.15.5 数通仪器仪表整机架构。

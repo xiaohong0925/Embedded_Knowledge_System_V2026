@@ -1,16 +1,16 @@
 # B-D.11.3 CAN FD Linux 驱动与 SocketCAN
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.11 CAN 与 CANopen
 >
-> 难度：[E] | 预计阅读时间：50 分钟
+> 难度：[E] Expert | 预计阅读时间：50 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前两节讲了 CAN FD 的物理层和协议层，本节把它落到 Linux 系统里。Linux 的 CAN 子系统（SocketCAN）把 CAN 控制器抽象成标准网络设备，用 BSD socket 接口收发 CAN 帧——`socket()`、`bind()`、`send()`、`recv()`、`epoll` 全套网络编程模型直接复用。这是与字符设备型驱动完全不同的范式，理解了这个抽象，CAN 应用开发就只剩网络编程的基本功。
 
 本节覆盖：SocketCAN 三层架构与各层职责、`can_frame`/`canfd_frame` 结构与标志位、`ip link` 配置 CAN FD 的完整参数、can-utils 工具链的实际用法、DBC 文件与信号解析、一个同时处理 OBD-II 诊断和 J1939 广播的完整程序、SocketCAN 层的常见故障定位。
 
-## SocketCAN 三层架构
+## <span class="blue"> SocketCAN 三层架构
 
 ```
  ┌────────────────────────────────────────────┐
@@ -38,7 +38,7 @@
 > 💡
 > SocketCAN 的多路复用是内核级的：多个进程可以同时 bind 到同一个 `can0`，各自设自己的接收过滤器，内核按过滤器分发帧。不需要自己写守护进程做帧分发。发送也是多路并发，内核排队仲裁。
 
-## 帧结构：can_frame 与 canfd_frame
+## <span class="blue"> 帧结构：can_frame 与 canfd_frame
 
 两个结构都定义在 `<linux/can.h>`：
 
@@ -94,7 +94,7 @@ setsockopt(s, SOL_CAN_RAW, CAN_RAW_FD_FRAMES, &enable, sizeof(enable));
 
 不开启这个选项，socket 只能收发 16 字节的 `can_frame`，FD 帧会被内核过滤。
 
-## 接口配置：ip link
+## <span class="blue"> 接口配置：ip link
 
 CAN 接口用 `ip link` 配置，CAN FD 需要仲裁段和数据段两组参数：
 
@@ -132,7 +132,7 @@ ip -details -statistics link show can0
 > ⚠️
 > CAN FD 模式下接口 MTU 是 72（`CANFD_MTU`），CAN 2.0 模式是 16（`CAN_MTU`）。读 socket 时用 `read()` 的返回值区分帧类型：16 字节是经典帧，72 字节是 FD 帧。缓冲区一律按 `struct canfd_frame` 分配，经典帧也能安全读进来。
 
-## can-utils 工具链
+## <span class="blue"> can-utils 工具链
 
 | 命令 | 用途 | 常用形式 |
 |:---|:---|:---|
@@ -148,7 +148,7 @@ cansend 的帧语法里 `##` 分隔符表示 FD 帧，其后第一位十六进�
 > 💡
 > 排时序问题用 `candump -ta`（微秒级绝对时间戳），不要用默认的相对时间戳。诊断类问题——比如"请求发出后 ECU 多久回"——有了绝对时间戳直接两帧相减。
 
-## DBC 文件与信号解析
+## <span class="blue"> DBC 文件与信号解析
 
 CAN 帧本身只是字节流，字节到物理量的映射由 DBC（CAN Database）文件描述。一段典型定义：
 
@@ -177,7 +177,7 @@ decoded = msg.decode(bytes.fromhex('de06155d00000000'))
 print(decoded)             # {'EngineSpeed': 1758.5, 'EngineTemp': 85.0}
 ```
 
-## 完整实例：OBD-II 诊断 + J1939 监听
+## <span class="blue"> 完整实例：OBD-II 诊断 + J1939 监听
 
 场景：车队监控终端读商用车数据，同时处理 OBD-II 诊断（11 位标准 ID）和 J1939 广播（29 位扩展 ID）。这个程序展示了 SocketCAN 的完整套路：建 socket、开 FD、bind、设过滤器、发请求、分类收帧。
 
@@ -319,7 +319,7 @@ cansend can0 123##30210C                    # 发 FD 帧（BRS=0）
 canbusload can0@500000                      # 负载率，诊断流量应 <5%
 ```
 
-## 排障：SocketCAN 层故障
+## <span class="blue"> 排障：SocketCAN 层故障
 
 | 症状 | 优先怀疑 | 验证方法 |
 |:---|:---|:---|
@@ -333,7 +333,26 @@ canbusload can0@500000                      # 负载率，诊断流量应 <5%
 
 接收错误帧是 SocketCAN 调试的进阶手段：默认错误帧不上送，用 `setsockopt(CAN_RAW_ERR_FILTER)` 打开后，用户态能拿到错误类别（位错误/填充错误/CRC 错误等）和出错位置，配合 11.2 的错误类型表可以直接定位到协议层哪一环。
 
-## 本节自查
+## <span class="blue"> 本节总结
+
+SocketCAN 的核心设计决策是把 CAN 控制器做成标准网络设备——这一个决定换来了一整套现成能力：socket API、多进程各自 bind 同一接口的内核级多路复用、`ip link` 配置、netlink 监控、网络命名空间。应用开发的范式因此从"学一套专用驱动接口"变成"复习网络编程基本功"，这是它相对于字符设备型驱动的本质优势。
+
+软件侧有三个细节坑位值得固化成反射：一是 `can_id` 高位混着 EFF/RTR/ERR 标志，判断帧类型必须掩码与运算，直接相等比较会把扩展帧漏掉；二是接收 FD 帧必须显式 setsockopt 开 `CAN_RAW_FD_FRAMES`，read() 返回值 16 还是 72 就是帧类型判据，缓冲区一律按 `canfd_frame` 分配；三是错误帧默认不上送，开 `CAN_RAW_ERR_FILTER` 才能把 11.2 的五类错误变成用户态可见的诊断信息。DBC 解析永远用 cantools 别手写位提取，字节序看错是最常见的数值乱跳根源。
+
+### 速查表
+
+| 项 | 要点 |
+|----|------|
+| 架构 | af_can 地址族 / 协议模块（RAW/BCM/ISOTP）/ can_dev 网络设备抽象 / 控制器驱动 |
+| 帧类型判据 | `read()` 返回 16=经典帧、72=FD 帧；缓冲区按 `canfd_frame` 分配 |
+| FD 前提 | `setsockopt(CAN_RAW_FD_FRAMES)` + 接口 `fd on`，缺一不可 |
+| can_id 纪律 | 判断用掩码：`& CAN_EFF_FLAG`、`& CAN_EFF_MASK`，禁止直接相等比较 |
+| 接口配置 | `ip link set can0 type can bitrate ... dbitrate ... fd on`，四参数全网一致 |
+| 健康第一眼 | `ip -details -statistics link show can0` 的 state 与六列计数器 |
+| 错误帧 | 默认不上送，`CAN_RAW_ERR_FILTER` 打开后可拿错误类别 |
+| DBC | 用 cantools encode/decode；`@1`=Intel 小端、`@0`=Motorola 大端 |
+
+### 本节自查
 
 读完本节，你应能独立完成以下动作：
 
@@ -344,9 +363,8 @@ canbusload can0@500000                      # 负载率，诊断流量应 <5%
 - 用 cantools 完成一次 DBC 编码和解码，指出字节序错误的表现
 - 开 `CAN_RAW_ERR_FILTER` 接收错误帧，并把错误类别对应到五种协议错误
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- 内核文档：`Documentation/networking/can.rst`
-- 内核源码：`include/uapi/linux/can.h`、`net/can/`、`drivers/net/can/mcp251xfd.c`
-- 工具：can-utils（github.com/linux-can/can-utils）、python-can、cantools
-- SAE J1979（OBD-II 诊断服务）、SAE J1939-21/71（商用车应用层）
+下一篇 **B-D.11.4 CANopen 协议：对象字典与 NMT**：SocketCAN 给了你收发帧的能力，但机器人关节、伺服驱动器之间"谁说什么、什么时候说、怎么说"的约定是应用层协议的事。CANopen 是 CAN 生态里最重要的应用层——对象字典、NMT 状态机、PDO/SDO 分工，从这一篇开始。
+
+> 💡 本篇的内核侧入口：协议族实现在 `net/can/`，控制器驱动范本看 `drivers/net/can/mcp251xfd.c`（SPI 外置 FD 控制器）；can-utils 源码在 github.com/linux-can/can-utils。完整实例里的 OBD-II 服务定义在 SAE J1979，J1939 的 PGN 结构在 SAE J1939-21/71。实战双板收发与伺服控制见 B-D.11.6。

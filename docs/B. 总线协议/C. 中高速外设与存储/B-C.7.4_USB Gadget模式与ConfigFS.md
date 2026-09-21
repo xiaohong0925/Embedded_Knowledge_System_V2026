@@ -1,10 +1,10 @@
 # B-C.7.4 USB Gadget 模式与 ConfigFS
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.7 USB
 >
-> 难度：[E] | 预计阅读时间：35 分钟
+> 难度：[E] Expert | 预计阅读时间：35 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前面三节都站在 USB Host 视角——Linux 作为主机去驱动外设。但嵌入式设备常常有另一个身份：USB Device。开发板用 USB 线连上 PC 时，PC 是 Host，板子是 Device。Linux 的 **Gadget 框架**让设备能扮演各种 USB 角色：U 盘、虚拟串口、USB 网卡、摄像头……配合 **ConfigFS**，这些角色组合可以在运行时动态配置，不用改代码、不用重编内核。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：Gadget 框架的分层（UDC/Gadget/Composite/Function）、ConfigFS 目录语义与配置五步法、三功能复合 Gadget 完整脚本、FunctionFS 的原理与用户态代码框架、T113 导出 eMMC 分区为 U 盘的实战，以及 Gadget 类问题的排查方法。
 
-## Gadget 框架的分层
+## <span class="blue"> Gadget 框架的分层
 
 USB 是主从架构：Host 掌控一切，Device 被动应答。Gadget 框架（也叫 USB Peripheral 框架）就是让 Linux 扮演 Device 角色的基础设施，自下而上分四层：
 
@@ -46,7 +46,7 @@ USB 是主从架构：Host 掌控一切，Device 被动应答。Gadget 框架（
 
 早期的 Gadget 驱动是静态编译的（`g_file_storage`、`g_serial` 等），一个 ko 只提供一种功能，组合关系编译期就定死。现在的主流方案是 **ConfigFS + libcomposite**：功能组合、VID/PID、字符串全部由用户态在运行时拼装。
 
-## ConfigFS：用文件系统操作配置 Gadget
+## <span class="blue"> ConfigFS：用文件系统操作配置 Gadget
 
 > ConfigFS：一种基于 RAM 的内核文件系统，用户态通过"建目录、写文件"来**创建和配置内核对象**。它与 sysfs 的分工是：sysfs 查看和修改已有对象的属性，ConfigFS 能创建和销毁对象本身。USB Gadget 是 ConfigFS 最典型的用户。
 
@@ -177,7 +177,7 @@ echo "Gadget 已停止"
 3. **操作顺序不能乱**——先建功能目录，再 `ln -s` 挂到配置，最后写 UDC 使能；使能之后再改描述符不生效，要先写空 UDC 停用
 4. **RNDIS 需要一对 MAC**——设备端和主机端各一个，用本地管理地址段（第 1 字节的 bit1=1，如 `42:` 开头）避免与真实网卡冲突
 
-## FunctionFS：把 USB 功能搬到用户态
+## <span class="blue"> FunctionFS：把 USB 功能搬到用户态
 
 内核 Function（`f_mass_storage`、`f_acm` 等）稳定高效，但功能逻辑固化在内核里：想实现一个新协议（ADB、MTP、产品私有协议），改一次就要动内核。**FunctionFS（FFS）** 的思路是把协议逻辑搬到用户态：内核只负责底层传输和端点管理，协议解析、状态机、业务逻辑全由用户态程序完成。
 
@@ -371,7 +371,7 @@ FunctionFS 的典型应用：
 
 > 💡 ConfigFS 是运行时配置，调试期可以随时改功能组合、换 VID/PID 快速迭代；但量产时务必把稳定配置固化成启动脚本（systemd service 或 rcS），保证每次开机能自动拉起。
 
-## 实战：T113 数据采集设备导出为 U 盘
+## <span class="blue"> 实战：T113 数据采集设备导出为 U 盘
 
 场景：全志 T113 工业数据采集设备，eMMC 里的数据分区（`/dev/mmcblk0p3`，FAT32）需要在 USB 线连上 PC 时直接变成 U 盘，用户免工具导出数据。
 
@@ -476,7 +476,7 @@ Windows 端打开"此电脑"会出现一个新 U 盘（卷标 Data Logger Disk�
 
 > 🔴 mass_storage 导出 `/dev/mmcblk0p3` 期间，**设备端 Linux 绝不能同时挂载这个分区**。两个系统同时读写同一个文件系统必然导致数据损坏——设备端看到的数据是缓存过的，PC 的写入不会反映到设备端缓存里。正确流程：设备端先 `umount`，再启动导出；PC 安全弹出后，设备端停用 Gadget 再重新挂载。只允许只读共享的场景就设 `lun.0/ro = 1`。
 
-## 排障：Gadget 常见问题
+## <span class="blue"> 排障：Gadget 常见问题
 
 调试命令：
 
@@ -499,21 +499,36 @@ Windows 端打开"此电脑"会出现一个新 U 盘（卷标 Data Logger Disk�
 
 **ACM 串口没有 /dev/ttyGS0。** 内核 `CONFIG_USB_CONFIGFS_ACM` 是否开启 → `dmesg` 有无 `acm` probe 日志 → udev 是否拦截了节点创建 → 应急手动建节点 `mknod /dev/ttyGS0 c 253 0`（主设备号以 `cat /proc/devices` 里 ttyGS 实际值为准）。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| 框架分层 | 画出 UDC → Gadget → Composite → Function 四层并说清各层职责 |
-| ConfigFS 流程 | 按"建 Gadget → 写描述符 → 建功能 → 挂配置 → 绑 UDC"五步配出任意功能组合 |
-| 复合设备 | 改写示例脚本，配出"串口 + 网卡"双功能 Gadget 并在 PC 端验证 |
-| FunctionFS | 说出 FFS 与内核 Function 的分工，解释描述符为什么要先写 ep0 |
-| 存储导出 | 把一个 eMMC 分区安全地导出为 U 盘，并说清为什么不能双重挂载 |
-| 排障 | 对"PC 无反应 / 盘打不开 / 网卡不通 / 串口没节点"四类问题各自给出排查路径 |
+Gadget 框架把"Linux 当 USB 设备"这件事拆成了四层可组合的积木：UDC 驱动碰硬件，Gadget 层管枚举与端点，Composite 层做功能组合，Function 层一个模块一种角色。ConfigFS 把这套积木的拼装权交给用户态——建目录、写文件、拉符号链接、写 UDC 名，五步完成，不用改一行内核代码。要自定义协议时 FunctionFS 再退一步，把协议逻辑整个搬到用户态，内核只剩传输调度——ADB 和 MTP 就是这条路的工业级参照。实战中两条纪律必须记住：操作顺序不能乱（先建功能再挂配置最后绑 UDC），以及 mass_storage 导出的分区绝不能双重挂载。Gadget 是嵌入式独有的玩法，Host 侧驱动书籍从不讲它，但它恰恰是开发板烧录口、产线测试通道、数据导出功能的实现基础。
 
-## 配套资源
+速查表：
 
-- 内核文档：`Documentation/usb/gadget_configfs.rst`、`Documentation/usb/gadget.rst`
-- 内核源码：`drivers/usb/gadget/`（Function 实现都在 `function/` 子目录）
-- 头文件：`include/linux/usb/composite.h`、`include/linux/usb/functionfs.h`
-- Android ADB 源码 `system/core/adb/`：FunctionFS 的工业级完整实现
-- USB-IF 规范文档：https://www.usb.org/documents
+| 主题 | 要点 |
+|------|------|
+| 四层架构 | UDC（硬件）→ Gadget（枚举/端点）→ Composite（组合）→ Function（功能模块） |
+| ConfigFS 五步 | mkdir Gadget → echo 描述符 → mkdir functions → ln -s 挂配置 → echo UDC 使能 |
+| 常用功能 | mass_storage（U盘）/ acm（串口）/ rndis（网卡）/ uvc（摄像头）/ ffs（用户态协议） |
+| 停止顺序 | 先写空 UDC → rm 符号链接 → rmdir 功能与配置目录，严格反向 |
+| FunctionFS | ep0 先写描述符再写字符串（顺序固定），然后 ep1/ep2 收发数据 |
+| 关键约束 | 同一控制器同一时刻只能一种角色；UDC 名逐字符匹配；RNDIS 需一对本地 MAC |
+| 双重挂载 | 导出期间设备端必须 umount 该分区，只读共享设 `lun.0/ro = 1` |
+| 排障入口 | `ls /sys/class/udc/` 看控制器、`cat state/current_speed` 看状态、dmesg -w 看枚举 |
+
+本节自查：
+
+1. 画出 UDC → Gadget → Composite → Function 四层，说清各层职责。
+2. 按 ConfigFS 五步配出一个"串口 + 网卡"双功能 Gadget，写出每步对应的文件系统操作。
+3. 为什么描述符必须在绑定 UDC 之前写好？使能之后再改会发生什么？
+4. FunctionFS 与内核 Function 的分工是什么？为什么 ADB/MTP 选择走 FFS？
+5. mass_storage 导出 eMMC 分区时为什么绝不能双重挂载？正确操作流程是什么？
+6. "PC 插上毫无反应"和"PC 看到 U 盘但打不开"，各自的排查顺序是什么？
+
+---
+
+## <span class="blue"> 下一步
+
+配置方法就位，动手做一遍：**B-C.7.5 实战：USB Gadget 模拟 U 盘与串口**——从零制作 U 盘镜像、配置双功能 Gadget、在 Host 侧观察枚举全过程、故意制造故障训练排障直觉，把本篇的脚本变成肌肉记忆。
+
+> 💡 螺旋衔接：Gadget 侧枚举的每一步正是 B-C.7.2 主机视角八步的镜像（同一套 Setup 包，这次你是应答方）；mass_storage 导出的块设备原理回看第 12 章块层；UDC 角色切换与 B-C.7.1 的 OTG/Type-C 角色机制呼应；ConfigFS"建目录即建内核对象"的设计与第二部第 12 章 sysfs 对照阅读可见内核对象模型的两种面孔。

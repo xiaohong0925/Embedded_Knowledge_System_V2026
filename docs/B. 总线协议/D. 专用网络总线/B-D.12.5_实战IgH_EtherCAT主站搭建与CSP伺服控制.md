@@ -1,10 +1,10 @@
 # B-D.12.5 实战：IgH EtherCAT 主站搭建与 CSP 伺服控制
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.12 工业以太网
 >
-> 难度：[M] | 预计阅读时间：70 分钟
+> 难度：[M] Master | 预计阅读时间：70 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 12.1~12.4 把工业以太网的版图、EtherCAT 协议、DC 时钟和 IgH 的编程模型讲完了，本篇从零搭一个能控制真实伺服的主站系统：装 PREEMPT_RT 内核、编译 IgH Master、用命令行确认从站组态、写一个 1 kHz 周期的 CSP（周期同步位置）模式控制程序，让电机按梯形速度规划走到目标位置。整个过程按"每一步都可验证"组织——每一步做完都有明确的确认手段，不通就先排障再往下走。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：硬件选型与检查清单、PREEMPT_RT 内核获取与验证、IgH Master 编译安装与网卡驱动绑定、命令行组态确认流程、CSP 模式 ecrt 控制程序逐段讲解、梯形轨迹生成、联调排障全清单。
 
-## 硬件与环境清单
+## <span class="blue"> 硬件与环境清单
 
 | 项 | 推荐 | 说明 |
 |:---|:---|:---|
@@ -26,7 +26,7 @@
 > ⚠️
 > EtherCAT 网口必须专用：不接交换机、不跑 IP、不让 NetworkManager 碰它。把网口从系统网络管理里摘出来（`nmcli device set enp2s0 managed no` 或 netplan 里剔除），否则链路状态翻转和 IP 配置动作会干扰实时帧调度。
 
-## 第一步：PREEMPT_RT 内核
+## <span class="blue"> 第一步：PREEMPT_RT 内核
 
 Ubuntu 22.04 起可以直接装官方实时内核，免去手工打补丁：
 
@@ -44,7 +44,7 @@ cyclictest -m -p 99 -i 1000 -l 100000
 
 看 max 延迟：x86 + rt 内核典型 20~60 µs；超过 150 µs 就先到 B-E.15.6 调 BIOS（关 C-states、关超线程、隔离核），不要带病进入下一步。
 
-## 第二步：编译安装 IgH Master
+## <span class="blue"> 第二步：编译安装 IgH Master
 
 ```bash
 git clone -b stable-1.5 https://gitlab.com/etherlab.org/ethercat.git
@@ -76,7 +76,7 @@ systemctl start ethercat              # 或 /opt/etherlab/etc/init.d/ethercat st
 ethercat master                       # 应显示主站 0 与链路状态
 ```
 
-## 第三步：命令行确认从站组态
+## <span class="blue"> 第三步：命令行确认从站组态
 
 伺服上电、网线接好后，先不写代码，用命令行把组态事实全部确认：
 
@@ -99,7 +99,7 @@ ethercat cstruct -p 0
 > 💡
 > 若 `ethercat slaves` 显示从站停在 `PREOP +`（带 `+` 号表示有错误）或 `SAFEOP+E`，用 `ethercat slaves -v` 看详细状态字，绝大多数是 PDO 映射组态与设备固件不匹配，拿 `ethercat pdos` 的真实输出修代码里的映射表。
 
-## 第四步：CSP 控制程序
+## <span class="blue"> 第四步：CSP 控制程序
 
 CSP（Cyclic Sync Position，0x6060 = 8）是 EtherCAT 伺服的标准用法：主站每周期下发目标位置，从站的位置环在 SYNC0 沿同步执行。程序分四段：组态、激活、实时循环、退出。
 
@@ -257,6 +257,12 @@ int main(void)
 }
 ```
 
+`trapezoid()` 每周期返回的"目标位置"串起来是一条位置曲线，其导数（速度）呈梯形——这就是 CSP 模式下主站喂给伺服的轨迹形状：
+
+<!-- 【待补图】images/b-d-12-5-trapezoid-profile.png（优先级：△有更好）
+图名：梯形速度规划的速度-位置曲线
+生图提示词：双坐标折线图，白底学术论文风格，中文标注，横版 16:9。上图速度-时间：梯形曲线——0~t1 线性上升段标注"加速段 a=const"、t1~t2 水平段标注"匀速段 vmax"、t2~t3 线性下降段标注"减速段"，另画一条三角形虚线标注"距离太短时退化为三角形（无匀速段）"。下图位置-时间：对应的 S 形光滑曲线，起点标注 home、终点标注"home+100000 counts"，两图时间轴对齐。扁平矢量、细线条、蓝色主曲线、无装饰。 -->
+
 逐段对照 12.3 的四段式模型：
 
 1. **组态段**（非实时上下文）：`request_master` 拿主站、`create_domain` 建过程数据域、`slave_config` 按"别名+位置+厂商 ID+产品代码"锁定从站、`config_sdo8` 预置 CSP 模式、`config_dc` 打开 SYNC0、`reg_pdo_entry_list` 注册条目到域偏移。
@@ -267,7 +273,7 @@ int main(void)
 > ⚠️
 > CSP 模式的第一安全约束：使能前后目标位置必须连续。程序里 `target_pos = 实际位置` 的跟随分支就是干这个的。删掉它，电机在 Enable Operation 的瞬间会以最快速度冲向寄存器里的旧目标值——真机上这是撞机事故的标准成因。
 
-## 第五步：联调验证
+## <span class="blue"> 第五步：联调验证
 
 按顺序确认，每步有明确判据：
 
@@ -286,7 +292,7 @@ ethercat dc
 #    判据：周期 max < 1.2 ms（1 ms 周期下留 20% 余量）
 ```
 
-## 排障：实战全清单
+## <span class="blue"> 排障：实战全清单
 
 | 症状 | 优先怀疑 | 验证方法 |
 |:---|:---|:---|
@@ -299,7 +305,24 @@ ethercat dc
 | 运行中 WKC 报错 | 线缆松动、从站掉电 | `ethercat slaves` 找掉线的站 |
 | 方向反了 | 伺服侧方向参数或编码器极性 | SDO 0x607E（极性）或驱动器面板参数 |
 
-## 本节自查
+## <span class="blue"> 本节总结
+
+本篇把工业以太网组四篇的机制压缩成一条可复现的流水线，每一步都有判据、不通不往下走。环境侧的三个关键决策：**rt 内核先验证再开发**（cyclictest max 超标就先调 BIOS，带病往下走全是假问题）、**EtherCAT 网口专用**（从 NetworkManager 里摘出来，链路翻转会干扰实时帧）、**PDO 映射以设备实测为准不以文档为准**（`ethercat pdos` 回读的真实映射才是代码的唯一依据，`cstruct` 直接把组态导出成 C 代码）。程序侧的两个安全设计必须理解而不是照抄：使能状态机按状态字逐级推进（对照 11.5/12.2 的 CiA 402 序列），以及**未使能时目标位置跟随实际位置**——CSP 下目标位置跳变等于指令电机瞬时位移，删掉跟随分支就是撞机事故的标准成因。退出前发 Quick Stop 是同类纪律。这套流程打通后，多轴扩展只是 for 循环里多几个 `slave_config` 的事——机制全在，规模而已。
+
+速查：
+
+| 要点 | 结论 |
+|:---|:---|
+| 环境基线 | rt 内核 + cyclictest max <150 µs 再往下走 |
+| 网卡纪律 | 专用网口、脱离 NetworkManager；I210 + 专用驱动抖动最低 |
+| 组态事实来源 | `ethercat pdos` 回读为准，文档与固件可能不一致 |
+| CSP 模式号 | 0x6060 = 8；目标位置 0x607A 每周期下发 |
+| 使能安全 | 状态机逐级推进 + 未使能时目标跟随实际位置 |
+| 退出纪律 | 先 Quick Stop（0x0002）再 release 主站 |
+| 实时循环 | 绝对时间唤醒（TIMER_ABSTIME）防漂移累积 |
+| 联调顺序 | 先小幅慢速验证方向与安全，再全行程 |
+
+## <span class="blue"> 本节自查
 
 读完本篇，你应能独立完成以下动作：
 
@@ -310,9 +333,9 @@ ethercat dc
 - 用 `ethercat dc` 验证 DC 同步生效
 - 按排障表定位"注册失败""SAFEOP+E""使能飞车"三类经典故障
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- IgH EtherCAT Master 1.5 文档与 examples（gitlab.com/etherlab.org/ethercat）
-- rt-tests / cyclictest：wiki.linuxfoundation.org/realtime
-- CiA 402 — CSP 模式对象定义（0x6060/0x607A/0x6040/0x6041/0x6064）
-- 所用伺服的 EtherCAT 手册与 ESI 文件（默认 PDO 映射以它为准）
+`B-D.13.1 I2S 与 PCM 物理层` 开启音频接口组。工业以太网解决的是"控制数据怎么跑"，音频接口解决的是"连续采样流怎么跑"——I2S 的帧同步、位时钟与主从角色是另一套时序语言，麦克风阵列和 Codec 调试是嵌入式产品里极常见的一类活。
+
+> 💡
+> 深入阅读：IgH EtherCAT Master 1.5 文档与 examples（gitlab.com/etherlab.org/ethercat）、rt-tests/cyclictest（wiki.linuxfoundation.org/realtime）、CiA 402 的 CSP 对象定义（0x6060/0x607A/0x6040/0x6041/0x6064）、所用伺服型号的 EtherCAT 手册与 ESI 文件（默认 PDO 映射以它为准）。实时性调优的系统方法在 `B-E.15.6 PREEMPT_RT 与总线实时性调优`，多轴机器人组网在 `B-E.15.3 人形机器人 EtherCAT 全身总线实战`。

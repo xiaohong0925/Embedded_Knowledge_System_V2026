@@ -1,6 +1,6 @@
 # B-D.10.2 PCIe 枚举与配置空间
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.10 PCIe
 >
 > 难度：[I] Intermediate ~ [M] Master | 预计阅读时间：45 分钟
 
@@ -294,22 +294,35 @@ setpci -s 01:00.0 0x04.w=0x0006 # 写：使能 Memory Space + Bus Master
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 读完应能独立完成的动作 |
-|--------|------------------------|
-| 枚举动机 | 说清 PCI 时代手动配置的痛点，以及"发现→分配→交接"三阶段 |
-| BDF | 把 `02:01.0` 翻译成三段含义；解释为什么 PCIe 时代 Device 恒为 0、Bus 号才是主力 |
-| 枚举流程 | 复述 DFS 五阶段；解释 Secondary/Subordinate 的双重身份（枚举产物 + 路由表） |
-| 配置空间 | 默画 4 KB 三段布局；说出 Vendor ID 读回 0xFFFF 的真实含义 |
-| Header 寄存器 | 说出 Command 三个使能位各自管什么、不置位的症状 |
-| BAR | 完整演算一遍写全 1 探测；解释 prefetchable 的正确性含义；说清 PCI 域地址与 CPU 物理地址的关系 |
-| Capability | 手写遍历算法；说出 MSI/MSI-X 的结构差异与选型结论 |
-| 工具 | 给一段 `lspci -vvv` 输出，把每个字段反查到配置空间偏移 |
+枚举的本质是把资源分配从"人肉静态配置"升级为"启动时自动发现、自动分配、自动交接"。支撑这件事的是 PCIe 最成功的一个设计决策：每个设备上电自带一份标准格式的自述档案（配置空间），放在固定位置等 RC 来读。所以系统不需要任何硬编码清单就能识别一张从未见过的卡——读 Vendor ID 知道是谁，写全 1 读回知道要多少地址，统筹分配后写回 BAR，置上 Command 使能位，设备上线。这套流程二十年来没有变过，x86 的 BIOS 和 ARM 的内核 PCI 子系统做的是同一件事。
 
----
+本篇有三个一旦建立就一劳永逸的模型。一是 BDF 地址的空间分配逻辑：点对点时代 Device 恒为 0，Bus 号才是消耗品，所以枚举的核心工作是深度优先地分配 Bus 号，Secondary/Subordinate 既是枚举产物又是日后的路由表。二是 BAR 的双重身份：低 4 位是属性声明（空间类型/32 还是 64 位/能否预取），高位是地址窗口，写全 1 读回的自描述机制让"申请"和"分配"共用同一个寄存器。三是 PCI 域地址 ≠ CPU 物理地址——中间隔着 RC 的地址翻译，写驱动永远用 `pci_resource_start()`，对 BAR 原始值直接 ioremap 是移植性 bug。
 
-## <span class="blue"> 配套资源
+工具链的落点：lspci 显示的每一行都能反查到配置空间的具体偏移，sysfs 的 `resource` 文件是内核视角的分配结果，setpci 是寄存器级的最后手段（只读不写是生产纪律）。Vendor ID 读回 0xFFFF 的含义是"链路另一头没人"——先查物理层，别查驱动。
 
-- **规范**：PCIe Base Specification 第 7 章（Configuration Space）
-- **内核**：`drivers/pci/probe.c`（枚举实现）、`include/linux/ioport.h`（resource flags 位域）
-- **工具**：`man lspci` / `man setpci`；[pcilookup.com](https://pcilookup.com/)（Vendor/Device ID 反查）
-- **衔接**：B-D.10.1（链路与拓扑）；B-D.10.3（驱动侧怎么消费本篇的资源分配结果）；B-D.10.4（AER 扩展 Capability 详解）
+### 速查表
+
+| 项 | 要点 |
+|----|------|
+| BDF | Bus 8 位/Device 5 位/Function 3 位；PCIe 时代 Device 恒 0，Bus 号按 DFS 顺序分配 |
+| 枚举五阶段 | 扫 Bus 0 → 读 Vendor ID（0xFFFF=无设备）→ 遇桥递归 → 探 BAR → 统一分配写回 |
+| Command 三位 | Bit1 Memory Space 不置=BAR 访问不到；Bit2 Bus Master 不置=不能 DMA |
+| BAR 属性位 | Bit0 空间类型、Bit2 64 位标志（吃掉相邻 BAR）、Bit3 Prefetchable（寄存器区必须为 0） |
+| 大小探测 | 写全 1 读回，掩码取反 +1 |
+| MSI vs MSI-X | 32 向量连续 vs 2048 向量独立（表在 BAR 空间里）；新设备一律 MSI-X |
+| 地址纪律 | BAR 里是 PCI 域地址，驱动用 `pci_resource_start()`，禁止直接 ioremap BAR 原值 |
+| 工具 | lspci 反查偏移、sysfs `resource` 看分配结果、setpci 只读不写 |
+
+### 本节自查
+
+1. 为什么 PCIe 枚举的核心工作是分配 Bus 号而不是 Device 号？
+2. 向 BAR0 写 0xFFFFFFFF 读回 0xFFF00004，这个 BAR 的类型、大小、预取属性各是什么？
+3. 设备寄存器区被错标成 prefetchable 会发生什么？为什么这是正确性问题而不是性能问题？
+4. `lspci` 显示 `LnkSta: Speed 5GT/s, Width x1` 而 `LnkCap` 是 `8GT/s x4`，说明什么？
+5. 嵌入式 SoC 上 PCIe 设备的 BAR 地址和 CPU 物理地址之间隔着什么？设备树里哪个属性描述它？
+
+## <span class="blue"> 下一步
+
+下一篇 **B-D.10.3 PCIe Linux 驱动与 DMA**：枚举和配置空间是"系统怎么看设备"，下一篇换到驱动视角——`pci_driver` 的 probe 里做什么、`pci_enable_device()` 背后对应 Command 寄存器的哪几位、DMA 的 coherent/streaming 两种映射怎么选。本篇分配的 BAR 和中断向量，在那里变成驱动代码手里真正可用的资源。
+
+> 💡 本篇与三条已有知识的合流点：设备树 PCIe 节点的 `ranges` 属性描述的就是 PCI 域到 CPU 域的地址翻译，机制原理在第 11 章设备模型；MSI 的"特殊地址+数据"最终落在第 10 章讲的中断控制器上；枚举的 DFS 与"无设备读回全 1"的思路，和 B-B.3 I2C 的地址扫描（i2cdetect）是同一类"总线自发现"手法，只是一个靠枚举一个靠扫描。内核实现参考 `drivers/pci/probe.c`。

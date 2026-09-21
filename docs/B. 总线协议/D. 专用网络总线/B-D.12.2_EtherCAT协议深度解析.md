@@ -1,10 +1,10 @@
 # B-D.12.2 EtherCAT 协议深度解析
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.12 工业以太网
 >
-> 难度：[E] | 预计阅读时间：60 分钟
+> 难度：[E] Expert | 预计阅读时间：60 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 12.1 给出了工业以太网版图，EtherCAT 的结论性优势是集总帧与硬件透传。本节把这个机制拆到字节级：帧怎么封装、经过从站时发生了什么、Datagram 的寻址方式有哪几种、从站芯片（ESC）内部怎么组织、从站状态机怎么管。读完你应该能看懂 Wireshark 抓到的 0x88A4 帧，也能解释"为什么 EtherCAT 的抖动比标准以太网低三个数量级"。
 
@@ -12,7 +12,7 @@
 
 读完你应该能独立完成三件事：逐字节解码一个 EtherCAT Datagram 并核对 WKC、用 IgH 的 `ethercat` 命令行确认从站状态与对象字典读写、为给定从站规模估算周期时间下界并说明抖动预算花在哪里。
 
-## 飞读飞写：帧穿过从站时不停车
+## <span class="blue"> 飞读飞写：帧穿过从站时不停车
 
 标准以太网节点收到帧要整帧存储、查目的 MAC、决定是否上送——每个节点的存储转发延迟在 µs 级，且随负载波动。EtherCAT 从站的 ESC 芯片不这么做：帧还在总线上流动时，ESC 的硬件解析逻辑已经在逐字节处理；帧经过从站的几十纳秒内，该从站要读的数据被取出、要写的数据被插入对应位置。帧不减速、不停留、不整帧缓存。
 
@@ -41,7 +41,7 @@
 
 抖动预算也要交代去处：帧传输时间是确定量（长度固定），从站硬件延迟的波动在几十 ns 级，真正的抖动来源只剩两个——主站侧发包时刻的抖动（操作系统调度，PREEMPT_RT 补丁解决，见 12.5）和 PHY/线缆引入的物理层偏移（DC 单元负责补偿）。把这两个管住，µs 级抖动就是可重复的工程指标而不是宣传数字。
 
-## 帧结构：以太网壳里的 Datagram 序列
+## <span class="blue"> 帧结构：以太网壳里的 Datagram 序列
 
 EtherCAT 帧就是标准 IEEE 802.3 以太网帧，Ethertype 固定 0x88A4。帧头之后是 2 字节 EtherCAT 头，然后是一个或多个 Datagram，最后是以太网 FCS：
 
@@ -70,7 +70,7 @@ EtherCAT 帧就是标准 IEEE 802.3 以太网帧，Ethertype 固定 0x88A4。帧
 > ⚠️
 > 以太网最小帧长 64 字节，数据不足时 MAC 层自动填充。解析 EtherCAT 帧必须以头的 Len 字段为准，填充字节不是数据。自己写 ESC 固件或抓包分析时把填充当数据解读，是这一层最常见的误读。
 
-## Datagram 寻址：三种方式的分工
+## <span class="blue"> Datagram 寻址：三种方式的分工
 
 Cmd 字段决定寻址方式，常用的分三类：
 
@@ -85,7 +85,7 @@ Cmd 字段决定寻址方式，常用的分三类：
 > ⚠️
 > APRD 依赖物理顺序：网线把从站 1 和从站 2 对调后，"第 1 个位置"读到的就是原来从站 2 的数据。运行期循环通信绝不用 APRD——枚举完成、配置地址分配完之后，一切访问切到 FPRD/LRW。多轴系统里轴序错位的后果是控制指令发错电机，这条不是风格建议，是安全约束。
 
-## ESC：从站芯片内部
+## <span class="blue"> ESC：从站芯片内部
 
 ESC（EtherCAT Slave Controller）是从站的协议硬件，MCU 不用跑协议栈。以 Beckhoff ET1100 为参照，内部四块关键资源：
 
@@ -117,7 +117,7 @@ ESC（EtherCAT Slave Controller）是从站的协议硬件，MCU 不用跑协议
 
 常见 ESC 选型：ET1100（标杆，8 SM/8 FMMU）、AX58100（低成本、集成 PHY、寄存器兼容）、LAN9252（Microchip，SPI 接口，适合小型 IO 从站）、XMC4300/RZ/T1（MCU 内置 ESC 的单芯片方案）。从站固件侧有开源 SOES 协议栈可评估。
 
-## CoE：CANopen 的应用层借尸还魂
+## <span class="blue"> CoE：CANopen 的应用层借尸还魂
 
 ESC 的邮箱区（SM0/SM1）里跑的主力协议是 CoE（CANopen over EtherCAT）。它的含义非常直白：**11.4 学的对象字典、SDO、PDO 映射、CiA 402 状态机，原封不动搬到 EtherCAT 上**——索引 0x6040 还是控制字、0x6041 还是状态字、0x1018 还是身份条目，SDO 变成走邮箱的读写事务，PDO 映射变成配置 SM2/SM3 过程数据区里摆哪些条目。
 
@@ -129,7 +129,7 @@ ESC 的邮箱区（SM0/SM1）里跑的主力协议是 CoE（CANopen over EtherCA
 
 > ESI 文件（EtherCAT Slave Information）：从站的 XML 设备描述，写清身份、SM/FMMU 默认配置、PDO 映射选项与 DC 能力。主站组态工具（IgH 的 ethercat XML、TwinCAT）靠它理解陌生从站——与 CANopen 的 EDS、PROFINET 的 GSDML 同位同工，三者格式互不兼容但角色一致。
 
-## AL 状态机：从站的四段人生
+## <span class="blue"> AL 状态机：从站的四段人生
 
 EtherCAT 从站有一台与 CANopen NMT 神似的状态机，叫 AL（Application Layer）状态机，存在 ESC 的 AL Status 寄存器里。四个状态，通信能力逐级开放：
 
@@ -146,7 +146,7 @@ EtherCAT 从站有一台与 CANopen NMT 神似的状态机，叫 AL（Applicatio
 
 从站固件侧的状态机实现不需要自己写——SOES 开源栈和 Beckhoff SSC 工具生成的代码都内置了完整的 AL 状态处理，从站开发者要填的只有"PDO 映射内容"和"状态迁移时的应用回调"两个空洞。
 
-## 拓扑与线缆冗余
+## <span class="blue"> 拓扑与线缆冗余
 
 ESC 至少两个端口（Port 0 进、Port 1 出），帧自动向"下一个有链接的端口"转发，因此线型（菊花链）是天然拓扑，树型通过多端口 ESC 分叉，星型要经过交换机——交换机的存储转发会破坏飞读飞写，实时段不用星型。
 
@@ -168,7 +168,7 @@ ESC 至少两个端口（Port 0 进、Port 1 出），帧自动向"下一个有�
 
 冗余不是所有产品都要上的配置，决策依据很朴素：断线的后果。教学机械臂断线急停即可，冗余是浪费；无人产线上的 24 轴伺服链断一站停全线，双端口冗余的成本远低于一次非计划停机。
 
-## 两个观察工具：IgH 命令行与 Wireshark
+## <span class="blue"> 两个观察工具：IgH 命令行与 Wireshark
 
 IgH 主站自带的 `ethercat` 命令行是协议层的万用表。扫完一条伺服链的典型输出：
 
@@ -192,7 +192,7 @@ IgH 主站自带的 `ethercat` 命令行是协议层的万用表。扫完一条�
 
 抓包侧，Wireshark 内置 EtherCAT dissector，按 `eth.type == 0x88a4` 过滤后直接把帧解到 Datagram 级：每个 Datagram 的 Cmd（`LRW`）、地址、Len、WKC 都是独立字段，WKC 与预期不符的 Datagram 在专家信息里会被标黄——比人工数字节快得多。注意 PC 网卡发出的是完整帧，抓到"主站→从站"方向的帧里 WKC 恒为 0，WKC 的有效值只在环回帧里。
 
-## 排障：协议层故障
+## <span class="blue"> 排障：协议层故障
 
 | 症状 | 优先怀疑 | 验证方法 |
 |:---|:---|:---|
@@ -209,7 +209,7 @@ IgH 主站自带的 `ethercat` 命令行是协议层的万用表。扫完一条�
 
 排障总原则：**先 AL 状态、再 WKC、最后抓包**。`ethercat slaves` 一行能把"哪几站不在 OP"直接点名，WKC 差值给出缺席站数，这两步覆盖八成协议层故障；Wireshark 留给字节级的疑难杂症。怀疑主站栈本身有问题时，用 TwinCAT 免费运行时交叉验证——同一条链路两套主站行为不一致，问题在实现；一致，问题在组态或从站。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
 EtherCAT 的性能不是调出来的，是机制决定的：飞读飞写让帧穿过从站只花 0.3 µs 且不停车，周期时间因此可以逐站计算而非统计——这就是"确定性"三个字的准确含义，也是它比标准以太网方案抖动低三个数量级的全部原因。围绕这个核心机制，本节的知识其实是一张分工表：三种寻址对应设备生命周期的三个阶段（APRD 枚举、FPRD 配置、LRW 实时循环）；ESC 的四块资源各司其职（PDM 存数据、SM 管通道、FMMU 做逻辑地址映射、DC 对时间）；CoE 把 CANopen 的对象字典与 CiA 402 原样搬进邮箱，换总线不换应用层；AL 状态机按 INIT→PRE-OP→SAFE-OP→OP 逐级放行，SAFE-OP 的"只进不出"是保护不是故障。诊断侧记住三件套：`ethercat slaves` 点名 AL 状态、WKC 差值报缺席站数、Wireshark 解 0x88A4 到 Datagram 级——先状态、再计数、最后才抓包。下一节 12.3 把 DC 分布式时钟单独展开，多轴同步的最后一块拼图在那里。
 
@@ -225,7 +225,7 @@ EtherCAT 的性能不是调出来的，是机制决定的：飞读飞写让帧�
 | ESI 文件 | 从站 XML 描述；与 EDS/GSDML 同位同工 |
 | 诊断顺序 | AL 状态 → WKC → Wireshark 抓包 |
 
-## 本节自查
+## <span class="blue"> 本节自查
 
 读完本节，你应能独立完成以下动作：
 
@@ -240,11 +240,9 @@ EtherCAT 的性能不是调出来的，是机制决定的：飞读飞写让帧�
 - 解释 ESI 文件在组态流程中的角色，并举出它在 CANopen/PROFINET 里的对应物
 - 画出线型冗余断线后的数据路径，解释为什么两段都仍可达
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- ETG.1000 系列 — EtherCAT 规范（帧格式、Datagram、ESC 寄存器、AL 状态机与错误码）
-- IEC 61158 Type 12 — EtherCAT 国际标准
-- Beckhoff ET1100 Datasheet — ESC 寄存器级参考
-- SOEM（OpenEtherCATsociety/SOEM）、SOES（开源从站栈）、IgH EtherCAT Master 文档
-- Wireshark EtherCAT dissector 文档
-- 本书关联：11.4（CANopen 对象字典与 NMT——CoE 的应用层来源）、12.1（工业以太网版图）、12.3（DC 分布式时钟专题）、12.5（IgH 主站实战）、E.15.3（机器人关节伺服组网）
+`B-D.12.3 EtherCAT 分布式时钟与 Linux 驱动` 把本节提到的 DC 单元单独展开：64 位本地时钟怎么对齐、传播延迟怎么测量补偿、SYNC0 信号怎么让 20 个轴在同一微秒采样——多轴同步的最后一块拼图，以及 IgH 驱动侧对应的配置接口。
+
+> 💡
+> 深入阅读：ETG.1000 系列规范（帧格式、Datagram、ESC 寄存器、AL 状态机与错误码）、IEC 61158 Type 12、Beckhoff ET1100 Datasheet（ESC 寄存器级参考）、SOEM/SOES 开源主从站栈、IgH EtherCAT Master 文档、Wireshark EtherCAT dissector 文档。本篇引用的本书章节：11.4（CANopen，CoE 的应用层来源）、12.1（工业以太网版图）、12.5（IgH 主站实战）、E.15.3（机器人关节伺服组网）。

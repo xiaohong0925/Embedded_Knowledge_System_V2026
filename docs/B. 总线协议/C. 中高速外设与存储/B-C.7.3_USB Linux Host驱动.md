@@ -1,10 +1,10 @@
 # B-C.7.3 USB Linux Host 驱动
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.7 USB
 >
-> 难度：[E] | 预计阅读时间：45 分钟
+> 难度：[E] Expert | 预计阅读时间：45 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前两节讲了 USB 的物理层和枚举协议——那是"总线上发生了什么"。本节把视角抬到内核内部：设备插进开发板的 USB 口之后，Linux 的 USB 子系统是哪些模块、哪些数据结构在协作，最终让 `uvcvideo`、`usb-storage`、`cdc_acm` 这些驱动接管设备的。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：USB 子系统的四大核心数据结构及其分层关系、xHCI/EHCI/OHCI 三代控制器驱动的分工、URB 的同步/异步用法与 DMA 缓冲区管理、热插拔到 udev 的完整事件链、设备树中 USB 控制器节点的配置要点，以及 UVC 摄像头 + EC20 4G 模块两个真实设备的完整点亮流程。
 
-## USB 子系统的四大核心数据结构
+## <span class="blue"> USB 子系统的四大核心数据结构
 
 Linux USB 子系统的结构与网络子系统高度对称：有总线、有设备、有驱动，还有负责底层收发的控制器。四个角色对应四个结构体：
 
@@ -78,7 +78,7 @@ struct usb_driver;    /* 设备驱动，按 interface 匹配的驱动 */
 
 > ⚠️ VID/PID 只是识别"谁家的什么产品"，真正决定驱动匹配的是 interface 级的 `bInterfaceClass/SubClass/Protocol`。一个 4G 模块的多个 interface 会分别绑定 `cdc_acm`、`cdc_ether`、`qmi_wwan` 等不同驱动——排查"驱动没加载"问题时，先看 `lsusb -v` 里的接口类别，而不是只看 VID/PID。
 
-## 控制器驱动：xHCI / EHCI / OHCI
+## <span class="blue"> 控制器驱动：xHCI / EHCI / OHCI
 
 三代控制器对应三代 USB 标准：
 
@@ -104,7 +104,7 @@ Root Hub（xHCI 虚拟）
 └─ Port 3 ──→ EC20 4G 模块      （只走 D+/D-，480M）
 ```
 
-## URB：USB 世界的传输请求块
+## <span class="blue"> URB：USB 世界的传输请求块
 
 URB（USB Request Block）是 USB 子系统数据传输的基本单元，地位等同网络子系统的 `sk_buff`。任何一次 USB 传输——控制、批量、中断、等时——都封装为一个 URB，提交给 HCD 调度，完成后回调通知。
 
@@ -177,7 +177,7 @@ static void my_callback(struct urb *urb)
 
 > 🔴 URB 完成回调运行在中断上下文（或 tasklet），不能睡眠。回调里重新提交 URB 时内存分配标志必须用 `GFP_ATOMIC` 而不是 `GFP_KERNEL`；在回调里调用任何可能睡眠的函数（`kmalloc(GFP_KERNEL)`、`mutex_lock`、I2C/SPI 传输等）都会触发内核调度告警，严重时直接死锁。
 
-## DMA 与缓存一致性
+## <span class="blue"> DMA 与缓存一致性
 
 批量传输走 DMA，缓冲区管理有两套方案：
 
@@ -201,7 +201,7 @@ kfree(buf);
 
 绝大多数 USB 设备驱动用方案 A 就够了。只有 USB 3.0 SSD、高清视频采集这类对带宽极度敏感的场景，才值得上流式 DMA 做优化。
 
-## 热插拔：从引脚电平到设备节点的完整链条
+## <span class="blue"> 热插拔：从引脚电平到设备节点的完整链条
 
 设备插入后，内核到用户空间的完整事件链：
 
@@ -253,7 +253,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="0125", \
 
 udev 规则的价值在于**设备命名的稳定性**：ttyUSB0/1/2 的编号按枚举顺序分配，插拔顺序一变编号就乱；用 `SYMLINK+="ec20-at"` 给接口 2 固定一个名字，应用程序永远打开 `/dev/ec20-at` 就不会错。
 
-## 设备树中的 USB 控制器节点
+## <span class="blue"> 设备树中的 USB 控制器节点
 
 以 RK3399 为例，USB 控制器的设备树描述涉及两个角色：xHCI 控制器本体和 USB PHY：
 
@@ -327,7 +327,7 @@ tcphy0: usb3-phy@ff7c0000 {
 
 > ⚠️ USB 子系统 bring-up 最常见的现象是"xHCI 驱动加载成功、没有任何报错，但插设备毫无反应"。此时按顺序查：PHY 节点的 `status` 是否 `okay` → 时钟是否使能（`/sys/kernel/debug/clk/clk_summary`）→ 复位是否释放 → VBUS 供电是否打开（很多板子的 VBUS 由 GPIO 或稳压器控制，设备树里要写 `vbus-supply`）。`dmesg | grep -i xhci` 里出现 `failed to initialize PHY` 或 `-ENODEV` 时直接锁定 PHY 配置。
 
-## 实战一：UVC 摄像头（Host 端现成驱动）
+## <span class="blue"> 实战一：UVC 摄像头（Host 端现成驱动）
 
 场景：RK3399 开发板接罗技 C920 摄像头做视频采集。UVC（USB Video Class）是标准设备类，内核 `uvcvideo` 驱动直接接管，你要做的是验证链路并用 V4L2 API 取图。
 
@@ -471,7 +471,7 @@ int main(void)
 
 缓冲区队列是 V4L2 的核心机制：申请的一组缓冲区在"驱动队列"和"应用手里"之间循环——`QBUF` 把空缓冲区交给驱动填数据，`DQBUF` 把填满的缓冲区取回来，处理完再 `QBUF` 回去。零拷贝、无停顿的连续采集就靠这个循环。
 
-## 实战二：EC20 4G 模块（多接口复合设备）
+## <span class="blue"> 实战二：EC20 4G 模块（多接口复合设备）
 
 EC20 通过 USB 枚举为一个复合设备，多个 interface 分别绑定不同驱动：CDC-ACM 接口生成 `/dev/ttyUSB0` 等串口（走 AT 指令），QMI 接口绑定 `qmi_wwan` 生成网卡（走数据业务）。
 
@@ -603,7 +603,7 @@ EC20 在搜网瞬间的电流可达 1.5A 以上，远超 USB 2.0 标准端口的
 | 模块信号 | `AT+CSQ` | 首位 > 10 | 天线、SIM 卡 |
 | 网络注册 | `AT+CREG?` | `0,1` | APN、SIM 欠费、制式覆盖 |
 
-## 调试命令速查
+## <span class="blue"> 调试命令速查
 
 ```bash
 # USB 拓扑树：总线/端口/设备/接口/驱动/速率一目了然
@@ -627,22 +627,36 @@ cat /sys/kernel/debug/usb/devices
 cat /sys/kernel/debug/usb/xhci/*
 ```
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| 子系统结构 | 画出 `usb_hcd → usb_bus → usb_device → usb_driver` 四层关系，说清每层职责 |
-| 匹配粒度 | 解释"驱动绑接口不绑设备"，并用 `lsusb -t` 输出指出一个复合设备的各接口绑定情况 |
-| URB 使用 | 写出一个异步批量传输的完整代码骨架（分配/填充/提交/回调重提交），说明回调里为什么必须 `GFP_ATOMIC` |
-| DMA 方案 | 说出一致性 DMA 与流式 DMA 的区别和各自的适用场景 |
-| 热插拔链路 | 从电平变化开始，按顺序说出到设备节点生成的每一环 |
-| 设备树 | 检查一个 USB 控制器节点的 PHY/时钟/复位/VBUS 配置，定位"插设备无反应" |
-| 实战验证 | 用 `v4l2-ctl` 从 UVC 摄像头抓一帧图；用 AT 指令确认 4G 模块的信号与注册状态 |
+USB Host 侧的内核图景可以收束成一条链：控制器驱动（xHCI/EHCI/OHCI）碰硬件，USB Core 管枚举与匹配，`usb_driver` 按接口绑定，URB 承载一切数据传输。写驱动时真正要掌握的只有两件事——URB 的同步/异步分工（配置用同步、数据流必须异步，回调里 GFP_ATOMIC），以及 DMA 缓冲区的两套方案（一致性 DMA 是默认答案，流式 DMA 留给带宽敏感场景）。调试时要记住两条分界线：驱动绑在接口而不是设备上（`lsusb -t` 的 If 列是证据）；"插设备无反应"先查 PHY/时钟/复位/VBUS 再怀疑驱动。两个实战（UVC 摄像头、EC20 4G 模块）演示了这条链的完整走法——从 lsusb 确认识别，到节点生成，到用户态取数据，以及那个翻过最多车的环节：供电。
 
-## 配套资源
+速查表：
 
-- 内核文档：`Documentation/driver-api/usb.rst`（USB 驱动 API 参考）
-- 规范原文：usb.org 的 USB 3.2 Specification 与 xHCI Specification
-- EC20 AT 指令手册：《Quectel_EC2x&EG9x&EM05_TCP(IP)_AT_Commands_Manual》
-- 《Linux Device Drivers》第 3 版第 13 章：USB Drivers
-- 调试工具包：`lsusb`（usbutils）、`v4l2-ctl`（v4l-utils）、`minicom`、`udevadm`
+| 主题 | 要点 |
+|------|------|
+| 四大结构 | `usb_hcd`（控制器）→ `usb_bus`（逻辑总线）→ `usb_device`（设备）→ `usb_driver`（按接口匹配） |
+| 控制器三代 | OHCI（USB 1.1）→ EHCI（USB 2.0）→ xHCI（统一 2.0/3.x，主流） |
+| URB | USB 的 skb；`usb_control_msg`/`usb_bulk_msg` 同步；`usb_submit_urb` + 回调异步 |
+| 回调纪律 | 中断上下文，重新提交用 GFP_ATOMIC，禁睡眠 |
+| DMA | 一致性 DMA（`usb_alloc_coherent`）默认；流式 DMA（`dma_map_single`）带宽敏感场景 |
+| 热插拔链 | 电平变化 → xHCI 中断 → 枚举 → device_add → uevent → udev 规则收尾（命名稳定靠 SYMLINK） |
+| 设备树 | compatible/phys/extcon/dma-coherent/power-domains 五关键属性；无反应先查 PHY |
+| 供电 | 4G 模块搜网瞬态 1.5A+，枚举成功但拨号掉线先量电源 |
+
+本节自查：
+
+1. 画出 `usb_hcd → usb_bus → usb_device → usb_driver` 四层关系，说清每层职责。
+2. 解释"驱动绑接口不绑设备"，并用 `lsusb -t` 输出指出一个复合设备各接口的绑定情况。
+3. 写出一个异步批量传输的完整代码骨架（分配/填充/提交/回调重提交），说明回调里为什么必须 `GFP_ATOMIC`。
+4. 一致性 DMA 与流式 DMA 的区别是什么？各自适用什么场景？
+5. 从电平变化开始，按顺序说出热插拔到设备节点生成的每一环。
+6. "xHCI 加载成功但插设备毫无反应"按什么顺序排查？
+
+---
+
+## <span class="blue"> 下一步
+
+Host 侧看完了，翻到对面：**B-C.7.4 USB Gadget 模式与 ConfigFS**——嵌入式设备自己当 USB 设备（被 PC 识别为 U 盘/串口/网卡）的实现方法，Gadget 框架分层、ConfigFS 配置、FunctionFS 用户态功能。产线烧录、调试口复用都靠这一面。
+
+> 💡 螺旋衔接：URB 回调的"中断上下文只调度、不下重活"与第二部第 10 章顶半部/底半部是同一纪律；`usb_driver` 的 id_table 匹配回看第二部第 11 章设备模型（usb_bus_type 是又一个 bus 实例）；V4L2 取帧七步骨架在 C.9.2 MIPI CSI-2 篇会原样复用——USB 摄像头和 MIPI 摄像头在用户态看来没有区别。

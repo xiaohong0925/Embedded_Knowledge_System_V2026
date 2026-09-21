@@ -1,10 +1,10 @@
 # B-D.13.4 实战：I2S Codec 声卡注册与放音/录音
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.13 音频接口
 >
-> 难度：[I] | 预计阅读时间：70 分钟
+> 难度：[I] Intermediate | 预计阅读时间：70 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 13.1 讲了 I2S 的时序，13.2 讲了 ASoC 的三层架构与接口选型，本篇把一颗真实的 Codec 跑起来：以 WM8960（带耳机/扬声器功放、录音 PGA，内核有现成驱动 `snd-soc-wm8960`）为例，从接线、设备树、内核配置到 `aplay` 出声、`arecord` 录音，每一步带真实输出样本和验证判据。ES8388、TLV320AIC31xx 等同类 Codec 流程一致，寄存器细节换数据手册。
 
@@ -12,7 +12,7 @@
 
 读完你应该能独立完成三件事：为一颗内核已收录的 Codec 写出完整设备树并解释每个属性的失配症状、按六层流程逐级定位"没声"停在哪一层、把音量通路配置持久化并验证 DAPM 功耗达到产品级状态。
 
-## 场景与硬件
+## <span class="blue"> 场景与硬件
 
 ```
  ┌──────────────── SoC ────────────────┐      ┌────── WM8960 ──────┐
@@ -37,7 +37,7 @@
 - MCLK 必须接。WM8960 支持内部 PLL 从 BCLK 生成系统时钟，但首次 bring-up 建议直接供 12.288 MHz MCLK（256×48 kHz），少一个变量。
 - 模拟侧：耳机输出 HP_L/HP_R 经耦合电容到插座；扬声器接 SPK 差分对；麦克风差分进 MICP/MICN，MICBIAS 由 Codec 内部提供。
 
-## 先分清三个时钟：MCLK、BCLK、LRCK
+## <span class="blue"> 先分清三个时钟：MCLK、BCLK、LRCK
 
 新手最容易在这里栽跟头，I2S 接口其实有三个时钟，各管一层：
 
@@ -51,7 +51,7 @@
 
 时钟由谁出（主从）是另一个正交问题：本篇方案 SoC 出 BCLK/LRCK（SoC 主）、WM8960 收（Codec 从），MCLK 由 SoC 时钟树供给 Codec。两边都配成主或都配成从，数据线会"永远安静"且无任何报错——排障表里有对应条目。
 
-## 内核配置
+## <span class="blue"> 内核配置
 
 ```
 CONFIG_SND=y
@@ -68,7 +68,7 @@ CONFIG_SND_SOC_ROCKCHIP_I2S=y
 
 确认 Codec 驱动编译进去的直接判据：`grep WM8960 .config`；模块形式则确认 `snd-soc-wm8960.ko` 在根文件系统里且能 `modprobe`。
 
-## 设备树：三处修改
+## <span class="blue"> 设备树：三处修改
 
 ```dts
 /* 1. I2C 总线上声明 Codec */
@@ -115,7 +115,7 @@ CONFIG_SND_SOC_ROCKCHIP_I2S=y
 > ⚠️
 > WM8960 的 I2C 地址是固定的 0x1A，但模块板有时把地址脚拉成别的值（少数模块到 0x1B）。probe 报 `-121`（远程 IO 错误）时先 `i2cdetect -y 1` 确认芯片真实挂在哪个地址。
 
-## 分层验证：每一层都有判据
+## <span class="blue"> 分层验证：每一层都有判据
 
 上电后按顺序验证，任何一步失败先停下排障——不要跳层，下层没通时上层的所有现象都是误导。
 
@@ -238,7 +238,7 @@ WM8960 寄存器是 9 位有效数据，读回值只取低 9 位对照数据手�
 > 💡
 > I2S 这一组信号的信号完整性要求不高——BCLK 才 3 MHz 量级，普通走线即可。真正要小心的是 MCLK（12.288 MHz 连续时钟）不要贴着模拟输入走线长距离平行走，它会串进麦克风通路变成固定频率的底噪。录音底噪里出现稳定的 12 kHz 左右啸叫时，先怀疑 MCLK 串扰再怀疑增益。
 
-## 换一颗 Codec 时的差异清单
+## <span class="blue"> 换一颗 Codec 时的差异清单
 
 本篇流程的内核通用性来自于：变化的部分全部被封装在数据手册和设备树里。换到 ES8388 或 TLV320AIC31xx 时，对照这张清单逐项替换：
 
@@ -255,7 +255,7 @@ WM8960 寄存器是 9 位有效数据，读回值只取低 9 位对照数据手�
 
 一个真实差异案例能说明清单的用法：ES8388 与 WM8960 管脚近似但 I2C 地址可配（CE 脚电平决定 0x10/0x11）、默认就是 I2S 格式、MCLK 支持 256/384/512fs 三档、且要求 AVDD 先上电。换芯后设备树只改四处——compatible、reg 地址、mclk-fs、regulator 声明，随后从第 1 层重新走一遍验证流程，大约半小时就能出声。这正是 ASoC 分层设计的回报：Machine 和 Platform 完全不动，变的只有 Codec 这一个插头。
 
-## 排障：bring-up 全流程对照表
+## <span class="blue"> 排障：bring-up 全流程对照表
 
 | 症状 | 判据层 | 优先怀疑 | 动作 |
 |:---|:---|:---|:---|
@@ -292,7 +292,7 @@ Its setup is:
 
 读法：WAV 文件是 44.1 kHz，硬件协商成 48 kHz——`plughw` 插件层做了重采样转换。如果用 `hw:0` 直开而驱动只声明支持 48 kHz，44.1 kHz 的文件会直接报参数错误。"声音慢半拍"类问题先在这里看 rate 一行是否符合预期，再上示波器量 BCLK 验证（48 kHz × 64 = 3.072 MHz 为基准）。
 
-## 从能响到能用
+## <span class="blue"> 从能响到能用
 
 声卡响起来之后还有三件事才算产品级：
 
@@ -314,7 +314,7 @@ Its setup is:
 
 到这里，13.1 的时序、13.2 的架构、本篇的实操形成闭环：线接对（13.1）→ 驱动组织对（13.2）→ 每一层可验证（本篇）。换任何一颗内核已收录的 Codec，流程不变，只有寄存器和控件名变。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
 本篇把一颗 Codec 从焊接好到出产品级声音的全过程走了一遍，方法比 WM8960 这个具体型号重要。核心纪律只有三条：**控制面与数据面分开验证**——I2C 通只证明寄存器能读写，I2S 通才证明音频能流动，"probe 成功但无声"永远落在数据面或时钟上；**三个时钟各司其职**——MCLK 喂 Codec 内部电路、BCLK 给比特打拍、LRCK 标左右声道，`mclk-fs` 声明的倍率把三者锁成整数关系，主从配置冲突会让数据线静默且零报错；**排障严格按层走**——i2cdetect → dmesg probe → aplay/arecord -l → speaker-test → amixer 通路 → arecord 闭环，每一层都有明确判据和失败出口，跳层排查得到的现象全是误导。能响之后用 `alsactl store` 固化控件、用 DAPM debugfs 确认功放断电，才算从实验台走到产品。这套流程对任何内核已收录的 I2S Codec 原样适用。
 
@@ -329,7 +329,7 @@ Its setup is:
 | 录音全零 | 先查 MICBIAS，再查 Input PGA 通路 |
 | 产品化 | alsactl 固化控件 + DAPM 确认断电 + 定应用层方案 |
 
-## 本节自查
+## <span class="blue"> 本节自查
 
 读完本篇，你应能独立完成以下动作：
 
@@ -341,10 +341,9 @@ Its setup is:
 - 用 `aplay -v` 与示波器三线检查定位"probe 成功但无声"
 - 用 DAPM debugfs 输出验证不放音时功放已断电
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- WM8960 数据手册（Cirrus Logic）——寄存器图、时序、模拟通路
-- 内核源码：`sound/soc/codecs/wm8960.c`、`sound/soc/generic/simple-card.c`
-- 设备树绑定：`Documentation/devicetree/bindings/sound/wlf,wm8960.yaml`、`Documentation/devicetree/bindings/sound/simple-card.yaml`
-- alsa-utils/alsa-lib 文档（alsactl、asound.state 格式）
-- 本书关联：13.1（I2S/PCM 时序——杂音与左右反的判据来源）、13.2（ASoC 三层与接口选型）、13.3（数字麦 PDM/PDM 麦克风阵列）
+`B-D.14.1 车载以太网与 TSN` 开启车载与高速管理面组。音频组的 I2S/SPDIF 解决的是"声音怎么跑"，下一组的车载以太网、CAN XL、车载 SerDes、光模块管理面解决的是"汽车与数据中心里高速数据怎么跑"——TSN 时间敏感网络正是 12.1 里提到的以太网实时化标准方向，在那里展开为完整机制。
+
+> 💡
+> 深入阅读：WM8960 数据手册（Cirrus Logic，寄存器图/时序/模拟通路）、内核源码 `sound/soc/codecs/wm8960.c` 与 `sound/soc/generic/simple-card.c`、绑定 `Documentation/devicetree/bindings/sound/wlf,wm8960.yaml` 与 `simple-card.yaml`、alsa-utils/alsa-lib 文档（alsactl 与 asound.state 格式）。本篇引用的本书章节：13.1（I2S/PCM 时序——杂音与左右反的判据来源）、13.2（ASoC 三层与接口选型）、13.3（SPDIF 与四接口选型）。

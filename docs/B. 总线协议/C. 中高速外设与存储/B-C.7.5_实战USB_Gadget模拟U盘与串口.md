@@ -1,10 +1,10 @@
 # B-C.7.5 实战：USB Gadget 模拟 U 盘与串口 + Host 端枚举观察
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.7 USB
 >
-> 难度：[M] | 预计阅读时间：40 分钟（含动手 60~90 分钟）
+> 难度：[M] Master | 预计阅读时间：40 分钟（含动手 60~90 分钟）
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前四节把 USB 的物理层、枚举协议、Host 驱动、Gadget 框架都讲完了，这一节把它们全部跑起来：把你的开发板变成一个"U 盘 + 虚拟串口"双功能 USB 设备，插到电脑上，然后从 Host 侧一步步观察枚举过程——亲眼看到 B-C.7.2 里讲的 8 步在总线上真实发生。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：实验环境准备（含无 OTG 板的替代方案）、磁盘镜像制作、双功能 Gadget 的完整配置脚本、Host 侧用 dmesg / lsusb / usbmon 对照枚举 8 步、串口与 U 盘两个功能的双向验证，以及一份"故意制造故障"的实验清单。
 
-## 实验准备
+## <span class="blue"> 实验准备
 
 ### 硬件方案
 
@@ -45,7 +45,7 @@ CONFIG_USB_CONFIGFS_ACM=y
 
 Host 侧（PC）需要：`lsusb`（usbutils 包）、`dmesg`、可选的 Wireshark。Host 是 Linux 时装 `tcpdump` 用于 usbmon 抓包。
 
-## 任务一：制作 U 盘镜像
+## <span class="blue"> 任务一：制作 U 盘镜像
 
 B-C.7.4 的实例直接把 eMMC 分区导出为 U 盘，那是最贴近产品的做法，但实验阶段有更安全的玩法：**用一个镜像文件当 U 盘**。不碰真实分区，随便折腾，坏了重做就是。
 
@@ -73,7 +73,7 @@ umount /mnt/img
 
 > loop 设备：把普通文件"包装"成块设备的内核机制。`mount -o loop` 让镜像文件可以像真实分区一样被格式化和挂载。Gadget 的 `lun.0/file` 接受块设备，也直接接受镜像文件——写文件路径即可，Gadget 内部自己建 loop 映射。
 
-## 任务二：配置双功能 Gadget
+## <span class="blue"> 任务二：配置双功能 Gadget
 
 把下面脚本存为 `/root/start_gadget.sh`，`chmod +x` 后执行：
 
@@ -125,7 +125,7 @@ echo "UDC=$UDC，Gadget 已使能"
 
 执行后用 USB 线把板子连到 PC。检查点：`dmesg | tail -5` 应看到 Gadget 绑定日志；`cat /sys/kernel/config/usb_gadget/lab_gadget/UDC` 应回显 UDC 名。
 
-## 任务三：Host 侧观察枚举（本节的核心）
+## <span class="blue"> 任务三：Host 侧观察枚举（本节的核心）
 
 现在切到 PC（Host 侧）。以下命令以 Linux PC 为例；Windows 用设备管理器 + USBView 也能看到等价信息。
 
@@ -188,7 +188,7 @@ tcpdump -i usbmon1 -w /tmp/enum.pcap &
 
 到这里，枚举从"文档里的流程"变成"你亲眼抓到的包"。这个对照体验是后续所有 USB 排障的底气。
 
-## 任务四：验证两个功能
+## <span class="blue"> 任务四：验证两个功能
 
 ### U 盘功能
 
@@ -226,7 +226,7 @@ echo "hello gadget" > /dev/ttyACM0
 
 > ⚠️ 串口不通时最常见的原因：板子端没有任何进程打开 `/dev/ttyGS0` 时，Gadget 侧的端点是关闭的，Host 发来的数据会被丢弃（不是缓存）。先 `cat /dev/ttyGS0` 占住端口再发。另一个坑是 Host 端打开 ttyACM0 时默认带流控/回显配置，用 `stty -F /dev/ttyACM0 raw -echo` 关掉。
 
-## 任务五：故意制造故障，训练排障直觉
+## <span class="blue"> 任务五：故意制造故障，训练排障直觉
 
 环境搭好后，做三个"破坏实验"，把 B-C.7.2 排障节的错误码亲眼看一遍：
 
@@ -238,7 +238,7 @@ echo "hello gadget" > /dev/ttyACM0
 
 每个实验做完，恢复原配置，确认功能回来。这个过程练的是"症状 → 定位"的肌肉记忆。
 
-## 排障速查
+## <span class="blue"> 排障速查
 
 | 症状 | 第一怀疑 | 验证手段 |
 |------|---------|---------|
@@ -249,20 +249,35 @@ echo "hello gadget" > /dev/ttyACM0
 | 盘能识别打不开 | 镜像未格式化 | 板端重新 `mkfs.vfat` |
 | 无 UDC 板子想做实验 | 硬件限制 | PC 上 `modprobe dummy_hcd` 后用 `g_serial` 等本机模拟 |
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 完成本实战你应能独立做到 |
-|--------|------------------------|
-| 环境确认 | 判断一块板子能否做 USB Device（UDC 存在 + dr_mode 正确） |
-| 镜像制作 | 用 dd + mkfs.vfat + loop 挂载制作可导出的 U 盘镜像 |
-| Gadget 配置 | 不看脚本配出"存储 + 串口"双功能 Gadget |
-| 枚举观察 | 在 Host dmesg 里指出枚举 8 步对应的日志行，用 usbmon 抓到 SET_CONFIGURATION |
-| 功能验证 | 双向验证 U 盘文件读写和串口收发 |
-| 故障复现 | 复现三类典型故障并从症状反推根因 |
+这个实战把 USB 组前四篇全部变成了你亲手抓到的东西：镜像文件代替真实分区让你可以无风险折腾，双功能 Gadget 脚本把 ConfigFS 五步变成了肌肉记忆，Host 侧 dmesg 的每一行都找到了枚举八步里的对应位置，usbmon 抓包让三阶段握手从课本时序变成了真实数据。最有长期价值的是任务五的破坏实验——只充电线、坏镜像、重复绑定三个故障亲手制造一遍之后，"症状 → 定位"的反射就建立起来了。这套环境别拆：以后调任何 USB 设备问题，它都是你的对照实验台。
 
-## 配套资源
+速查表：
 
-- pid.codes（开源硬件 VID/PID 申请）：https://pid.codes
-- 内核 ConfigFS Gadget 文档：`Documentation/usb/gadget_configfs.rst`
-- Wireshark USB 抓包指南：https://wiki.wireshark.org/CaptureSetup/USB
-- Windows 侧 USB 分析工具：USBView（Windows SDK 自带）
+| 环节 | 要点 |
+|------|------|
+| 环境判断 | `ls /sys/class/udc/` 有内容 + 设备树 `dr_mode` 为 otg/peripheral |
+| 镜像制作 | dd 建空白 → mkfs.vfat 格式化 → loop 挂载放文件 → umount |
+| 配置顺序 | 建 Gadget → 写描述符 → 建功能 → ln -s 挂配置 → 最后写 UDC |
+| 枚举对照 | dmesg 每行对应 8 步中的哪一步；usbmon + Wireshark 看三阶段 |
+| 双向验证 | U 盘：PC 写文件 → 板端 loop 挂载确认；串口：ttyGS0 ↔ ttyACM0 互发 |
+| 串口纪律 | 板端先 `cat /dev/ttyGS0` 占住端口；Host 端 `stty raw -echo` |
+| 破坏实验 | 电源线（无连接）/ 坏镜像（功能级失败不影响其他接口）/ 重复绑定（busy） |
+
+本节自查：
+
+1. 不看脚本，从零配出一个"U 盘 + 串口"双功能 Gadget，说出每一步在创建什么内核对象。
+2. 在 Host 的 dmesg 输出里指出枚举 8 步各自对应哪些日志行。
+3. 用 usbmon 抓一次枚举，在 Wireshark 里找到 SET_CONFIGURATION 并展开它的三阶段。
+4. 双向验证 U 盘文件读写与串口收发，说出验证失败的两种典型根因。
+5. 三个破坏实验各自对应哪一层知识（物理层/功能配置/框架约束）？
+6. 为什么同一个物理设备能同时绑 usb-storage 和 cdc_acm 两个驱动？
+
+---
+
+## <span class="blue"> 下一步
+
+USB 组（物理层 → 枚举 → Host 驱动 → Gadget → 实战）到此收口。下一组换赛道进存储：**B-C.8.1 eMMC 协议深度解析**——嵌入式产品的主力存储介质，物理接口与速度模式、JEDEC 标准演进、分区结构（Boot1/Boot2/RPMB/User 四个世界）、命令集与 EXT_CSD 配置中心。
+
+> 💡 螺旋衔接：mass_storage 导出的 loop 镜像背后是第 12 章块层的块设备抽象；本实战"故意制造故障"的训练法在第 24 章启动优化与 D 扩展驱动专题里会反复用到——可重复的故障复现环境是调试能力的基础设施。

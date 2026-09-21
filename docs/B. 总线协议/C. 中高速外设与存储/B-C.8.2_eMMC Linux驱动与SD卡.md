@@ -1,10 +1,10 @@
 # B-C.8.2 eMMC Linux 驱动与 SD 卡
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.8 存储接口
 >
-> 难度：[I] | 预计阅读时间：35 分钟
+> 难度：[I] Intermediate | 预计阅读时间：35 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 上一节讲了 eMMC 的协议与寄存器——芯片这一侧。本节进入内核：Linux 的 MMC 子系统如何用同一套框架同时驱动焊死的 eMMC 和可插拔的 SD 卡，设备树怎么把一颗 eMMC 描述给内核，高速模式怎么协商，以及 U-Boot 阶段怎么把引导程序烧进 Boot 分区。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：MMC 子系统的三层架构与三个核心数据结构、eMMC/SD 的设备树配置要点、HS200 与 HS400 的差异与协商行为、SD 模式与 SPI 模式、eMMC 与 SD 卡的选型对比、U-Boot 下 mmc 命令实战、Boot1 烧录 + User Area 部署 rootfs 的完整案例。
 
-## Linux MMC 子系统架构
+## <span class="blue"> Linux MMC 子系统架构
 
 MMC 子系统分三层，核心由三个数据结构撑起：
 
@@ -45,7 +45,7 @@ MMC 子系统分三层，核心由三个数据结构撑起：
 
 这套分层让"检测卡 → 跑 B-C.8.1 的初始化流程 → 协商速度 → 注册块设备"的全过程对上层透明——上层只看到 `/dev/mmcblkN`，不关心下面接的是 eMMC 还是 SD 卡、跑在什么模式。
 
-## 设备树：eMMC 节点怎么写
+## <span class="blue"> 设备树：eMMC 节点怎么写
 
 ```dts
 &mmc1 {                                     /* SoC 的第 2 个 MMC 控制器 */
@@ -79,7 +79,7 @@ MMC 子系统分三层，核心由三个数据结构撑起：
 
 pinctrl 里高速状态组通常配更高的 slew-rate（压摆率）和驱动强度：200MHz 下信号边沿必须足够陡，否则采样窗口内电平还没翻转到位。
 
-## HS200 与 HS400：差在 DATA STROBE
+## <span class="blue"> HS200 与 HS400：差在 DATA STROBE
 
 | 维度 | HS200 | HS400 |
 |------|-------|-------|
@@ -100,7 +100,7 @@ mmc1: new HS400 MMC card at address 0001
 
 > 💡 板子实测速度远低于预期时，先看这行日志确认协商到了什么模式。协商到了 HS400 但速度还是低，查 vqmmc 供电是否真给了 1.8V、示波器看信号质量；只协商到 HS200 或更低，查设备树 capability 声明和卡本身的 CARD_TYPE。
 
-## SD 卡：SD 模式与 SPI 模式
+## <span class="blue"> SD 卡：SD 模式与 SPI 模式
 
 SD 卡支持两种通信模式。**SD 模式**是原生模式：CMD 传命令、DAT0~DAT3 传数据、CLK 同步，支持完整命令集，Linux 下默认走这条。**SPI 模式**通过特定的复位序列（CMD0 时拉低 CS）进入，卡表现得像个 SPI 从设备，任何带 SPI 控制器的 MCU 都能驱动——代价是只有单 bit 数据、速度上限约 20~25 Mbit/s、不支持 SDHC/SDXC 的高级特性。嵌入式 Linux 里几乎总是 SD 模式，SPI 模式的主场是没有 SD 控制器的单片机。
 
@@ -116,7 +116,43 @@ SD 卡与 eMMC 在驱动层面的最大区别是**可插拔**。卡槽的机械�
 };
 ```
 
-## eMMC 与 SD 卡：选型对比
+## <span class="blue"> SDIO：WiFi/BT 模组的挂载方式
+
+SD 总线还有第三个角色——**SDIO**。它复用 SD 的物理接口（CLK/CMD/DAT0~3 同样的线），但挂的不是存储卡而是功能设备：嵌入式产品里的 WiFi/BT 二合一模组（AP6255、RTL8723BS、QCA9377 等）几乎全部走 SDIO。这是 SD 协议族在嵌入式最高频的非存储用途，设备树里那个 `no-sdio` 属性就是为区分它准备的。
+
+与存储卡的三个关键差异：
+
+1. **可插拔语义反过来**：SDIO 模组焊死在板子上，要 `non-removable`；但它的"就绪"比存储卡慢——模组内部要先跑自己的固件初始化，Host 轮询到就绪可能需要几百毫秒。
+2. **中断走数据线**：SDIO 设备用 DAT1 线在数据传输间隙上报中断（`cap-sdio-irq` 声明），不占用额外 GPIO——这是 SDIO 相对 SPI 挂无线模组的结构性优势。
+3. **驱动分两层**：MMC 子系统识别出 SDIO 设备后挂到 `sdio_bus_type`，再由具体驱动接管——Broadcom 系走 `brcmfmac`，Realtek 系走 `rtw88`/`rtl8xxx`。驱动 probe 后还要经 `request_firmware()` 把模组固件（`.bin` + NVRAM/配置文件）灌进去，模组才真正能工作。
+
+典型设备树节点：
+
+```dts
+&mmc2 {                                     /* WiFi/BT 模组槽位 */
+    bus-width = <4>;
+    non-removable;                          /* 焊死的模组 */
+    cap-sdio-irq;                           /* 数据线中断 */
+    keep-power-in-suspend;                  /* 休眠不断电（WoWLAN 唤醒） */
+
+    mmc-pwrseq = <&wifi_pwrseq>;            /* 上电时序：先 WL_REG_ON 拉高，再等模组就绪 */
+    vmmc-supply = <&vcc_3v3_wifi>;
+
+    status = "okay";
+};
+
+wifi_pwrseq: wifi-pwrseq {
+    compatible = "mmc-pwrseq-simple";
+    reset-gpios = <&gpio1 18 GPIO_ACTIVE_LOW>;  /* WL_REG_ON */
+    post-power-on-delay-ms = <200>;             /* 模组内部初始化等待 */
+};
+```
+
+`mmc-pwrseq` 是 SDIO 设备树里最易漏的件：模组的上电使能脚（常叫 WL_REG_ON / WIFI_EN）拉高的时机和等待时长不对，MMC 子系统就永远探测不到设备——现象是 dmesg 里 SDIO 槽位一片安静，没有任何报错。
+
+调试路径：`dmesg | grep -i "mmc\|sdio\|brcm"` 看探测与固件加载 → `ls /sys/bus/sdio/devices/` 确认设备挂上了总线 → `ip link` 看 `wlan0` 是否出现。固件加载失败（`Direct firmware load ... failed with error -2`）是最常见问题：根文件系统里缺 `/lib/firmware/brcm/` 下的模组固件或 NVRAM 文件，与总线本身无关——Buildroot/Yocto 里勾选对应 firmware 包即可。
+
+## <span class="blue"> eMMC 与 SD 卡：选型对比
 
 | 维度 | eMMC | SD 卡 |
 |------|------|-------|
@@ -132,7 +168,7 @@ SD 卡与 eMMC 在驱动层面的最大区别是**可插拔**。卡槽的机械�
 
 > ⚠️ 消费级 SD 卡长期读写后常出现"突然变只读"——这是卡内控制器检测到大量坏块后触发的最后保护手段，数据还能读出、写入全部拒绝。工业产品若不得不用 SD 卡存系统，选型时认准工业级（宽温 + pSLC + 寿命监测），并设计成"系统只读、数据分区可写、配合只读保护预案"的架构。
 
-## U-Boot 下的 mmc 命令
+## <span class="blue"> U-Boot 下的 mmc 命令
 
 烧录与调试 eMMC 的主战场在 U-Boot 命令行：
 
@@ -151,7 +187,7 @@ SD 卡与 eMMC 在驱动层面的最大区别是**可插拔**。卡槽的机械�
 
 > ⚠️ Boot 分区写保护是最隐蔽的坑：部分 eMMC 出厂默认带临时写保护，此时 `mmc write` 返回成功但数据根本没进去——烧完启动后加载的还是旧固件。烧录前先 `mmc bootpart enable 0 0 <dev>` 清保护，写完用"读回比较"验证，不要相信"写入成功"的返回。
 
-## 实战：Boot1 烧 U-Boot + User Area 部署 rootfs
+## <span class="blue"> 实战：Boot1 烧 U-Boot + User Area 部署 rootfs
 
 场景：工业网关，8GB eMMC（三星 KLMAG1JETD），要求 Boot1 放 U-Boot，User Area 用 GPT 划分 kernel + rootfs 两个分区。
 
@@ -314,23 +350,36 @@ fi
 
 量产产品里把这个值上报到运维平台，配合设备序列号做批次寿命画像，往往还能发现某一批次芯片或某一种写模式的异常磨损。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
-| 自查项 | 读完本节你应能独立做到 |
-|--------|----------------------|
-| 子系统架构 | 画出 MMC 子系统三层结构，说清 mmc_host/mmc_card/mmc_bus_ops 的分工 |
-| 设备树 | 写出 eMMC 节点的完整属性集，解释 vmmc/vqmmc 两路供电的区别 |
-| 高速协商 | 从 dmesg 确认协商模式，速度不达预期时按模式→供电→信号的顺序排查 |
-| SD 卡差异 | 说出 SD/SPI 两种模式的取舍，写带卡检测的 SD 槽节点 |
-| 选型 | 给定产品需求（可插拔？启动盘？温度范围？）在 eMMC 与 SD 间做选择 |
-| 烧录 | 在 U-Boot 下完成 Boot1 写入、启动分区配置、读回验证三步 |
-| 部署 | 用 parted + mkfs + tar 在 User Area 建好 kernel/rootfs 分区 |
-| 运维 | 用 mmc-utils 读寿命估计并写进周期巡检脚本 |
+MMC 子系统用同一套三层框架接管了焊死的 eMMC、可插拔的 SD 卡和功能型的 SDIO 模组——上层只看块设备或网卡，不关心底下是什么。工程上的三个高频抓手：设备树的 capability 声明与双路供电（vqmmc 不给 1.8V，高速协商必失败）；协商日志一眼定位速度问题（`new HS400 MMC card` 是分水岭）；U-Boot 的 mmc 命令是烧录主战场（先清写保护、写完读回比较，不信"写入成功"的返回值）。SDIO 补上了 SD 协议族的第三块拼图——WiFi/BT 模组，`mmc-pwrseq` 上电时序和固件文件是它独有的两个坑。最后记住消费级 SD 卡"突然变只读"的保护机制，工业产品的存储选型从第一天就要想清楚。
 
-## 配套资源
+速查表：
 
-- JEDEC eMMC 5.1 规范（JESD84-B51）
-- 内核设备树绑定文档：`Documentation/devicetree/bindings/mmc/`
-- U-Boot mmc 命令参考：`doc/usage/mmc.rst`
-- mmc-utils 源码：每个 EXT_CSD 字段的解析都在里面
-- Rockchip RK3568 TRM 的 SDMMC 控制器章节
+| 主题 | 要点 |
+|------|------|
+| 三层架构 | 控制器驱动（dw_mmc/sdhci）→ mmc_core（mmc_host/mmc_card/mmc_bus_ops）→ 块设备 |
+| 设备树关键 | bus-width、non-removable、cap-mmc-hs200-1_8v/mmc-hs400-1_8v、vmmc/vqmmc 双路供电 |
+| 高速协商 | 自动降级：HS400 → HS200 → HS；dmesg 一行可见结果 |
+| SDIO | WiFi/BT 模组；cap-sdio-irq + mmc-pwrseq + 固件文件三件套；挂 sdio_bus_type |
+| U-Boot | `mmc dev 1 1` 切 Boot1 → `mmc write` → `mmc partconf` 设启动分区 → `cmp.b` 验证 |
+| 写保护坑 | `mmc write` 返回成功≠数据进去了，先 `mmc bootpart enable 0 0` 清保护 |
+| 性能验证 | dd conv=fsync 写真速度、drop_caches 后读、oflag=direct 绕过页缓存 |
+| 寿命运维 | `mmc extcsd read` 读 LIFE_TIME_EST，cron 巡检 + 预警阈值 0x08 |
+
+本节自查：
+
+1. 画出 MMC 子系统三层结构，说清 mmc_host/mmc_card/mmc_bus_ops 的分工。
+2. eMMC 节点的 vmmc 和 vqmmc 分别对应什么？漏配 vqmmc 的现象是什么？
+3. 板子实测速度远低于预期，按什么顺序排查？每一步看什么证据？
+4. SDIO 模组与存储卡在设备树上的三个差异是什么？`mmc-pwrseq` 解决什么问题？
+5. 在 U-Boot 下完成 Boot1 烧录的完整命令序列，指出防写保护假成功的关键步骤。
+6. 消费级 SD 卡"突然变只读"的机制是什么？工业产品的存储架构怎么规避？
+
+---
+
+## <span class="blue"> 下一步
+
+eMMC 之上还有一代：**B-C.8.3 UFS 闪存**——为性能设计的协议栈（SCSI 命令集、全双工差分）、LU 逻辑单元分区模型、Linux ufshcd 驱动，以及它与 eMMC 的代际差距到底在哪。
+
+> 💡 螺旋衔接：`mmc_bus_ops` 的 `set_ios`/`request` 操作集是第二部第 11 章"驱动模型操作集"模式的又一个实例；SDIO 固件经 `request_firmware()` 加载的机制在第 4 章根文件系统部署时会再遇到（/lib/firmware 布局）；寿命巡检脚本与第 21 章 OTA 的设备健康管理组成运维闭环；B-C.8.5 实战篇会把本篇的 dd 测速升级为 fio 标准化测试并直面掉电问题。

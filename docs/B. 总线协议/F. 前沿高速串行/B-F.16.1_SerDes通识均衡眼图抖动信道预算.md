@@ -293,23 +293,34 @@ SerDes 是模拟电路，但它在软件世界里留了四个把手，按排查�
 
 ## <span class="blue"> 本节总结
 
-| 自查项 | 确认标准 |
-|--------|----------|
-| 并行之死 | skew/引脚/EMI 三堵墙的机理；1.5 cm 走线差 = 100 ps 的量化直觉 |
-| SerDes 架构 | 无随路时钟；CDR 从跳变沿锁相位；跳变密度铁律 |
-| 编码演进 | 8b/10b（码表、直流平衡）→ 64b/66b（扰码）→ PAM4+FEC（信噪比换带宽） |
-| 信道 | 趋肤效应/介质损耗 → 低通特性；ISI 是核心矛盾；dB 心算（−6 dB ≈ 减半） |
-| 均衡 | FFE/CTLE/DFE 的位置、机制、代价；PCIe preset 与链路训练 |
-| 眼图 | 眼高/眼宽/mask 的读法；眼图 ≠ 误码率；on-die scan 的存在 |
-| 抖动 | DJ/RJ 分解树；RJ 必须带 BER 前提；水平收缩先查 ISI 再查 PJ |
-| 预算 | 账本模型；redriver/retimer 分界；软件四把手与排查分界 |
-| 词汇体系 | lane/link 与 link up/down 的训练语义；MAC/PCS/PMA/PHY/PIPE 分层；弹性缓冲；PRBS 测试码型；极性反转 |
+SerDes 的全貌可以收成一条因果链：并行总线撞上 skew/引脚/EMI 三堵墙，于是把数据串行化推上差分对；串行化废掉了随路时钟，于是接收端必须用 CDR 从数据跳变里抠时钟，而 CDR 锁得住的前提是跳变密度，于是有了编码——8b/10b 用码表逐字保证，64b/66b/128b/130b 用扰码统计保证，PAM4 频率见顶后换维度、靠 FEC 兜底。信号上了信道就要付衰减的账，趋肤效应和介质损耗把信道变成低通滤波器，ISI 成为核心矛盾；均衡三件套（FFE 开环预设、CTLE 模拟粗调、DFE 数字精修）把信道反着做一遍，PCIe 把它标准化成链路训练里的 preset 协商。最后留给工程师两张体检单和一本账：眼图管快速筛查、误码率管最终判决，信道预算决定要不要上 redriver 或 retimer——而软件工程师全程不碰烙铁，靠参考时钟配置、PHY tuning 寄存器、lspci 的 LnkCap/LnkSta 对比和误码计数这四个把手参与排查。
+
+关键结论速查：
+
+| 问题 | 一句话答案 |
+|------|-----------|
+| 为什么串行取代并行 | skew、引脚数、EMI 三堵墙在 GHz 时代同时撞死 |
+| CDR 为什么存在 | 串行链路没有随路时钟，接收端从跳变沿自己锁相位 |
+| 编码为什么存在 | 保证跳变密度让 CDR 锁得住，顺带做直流平衡 |
+| 信道损伤的本质 | 低通滤波（趋肤效应+介质损耗），后果是 ISI |
+| 均衡三件套的各自位置 | FFE 在发送端、CTLE 在接收模拟前端、DFE 在判决器之后 |
+| 眼图和误码率的分工 | 眼图是快速体检，BERT/误码计数才是合规判决 |
+| redriver 和 retimer 怎么选 | 预算差几 dB 用 redriver；要清零重分段用 retimer |
+| 软件零成本巡检手段 | `lspci -vv` 对比 LnkCap 与 LnkSta |
+
+### 本节自查
+
+- 不用翻书，能向同事讲清 CDR 的工作原理和"跳变密度铁律"的由来
+- 看到 GT/s 与 Gbps 数值不一致时，能说出差值来自编码开销还是 PAM4
+- 给出"8 GHz 处插损 −24 dB"，能用心算翻译成"高频电压只剩约 1/16"
+- 拿到一张眼图报告，能说出眼高、眼宽、mask 各自的含义，并指出眼图通过为什么不等于零误码
+- 链路不稳时，能按"先查 DDJ/ISI（均衡），再查 PJ（电源与参考时钟）"的顺序分配调查方向
+- 距离超标时，能在 DAC/AEC/AOC/光模块里选出正确档位的器件并说清理由
 
 ---
 
-## <span class="blue"> 配套资源
+## <span class="blue"> 下一步
 
-- **规范**：PCIe Base Specification 的 Physical Layer 章节（preset、链路训练、抖动定义均出自这里）
-- **读物**：Howard Johnson《High-Speed Digital Design》，信号完整性经典，按需查阅对应章节
-- **工具**：`lspci -vv`（LnkCap/LnkSta 对比）；所用 SoC 原厂的 PHY tuning 指南
-- **器件手册**：任一款 PCIe retimer（Astera Labs / Parade / TI），重点看典型应用框图
+本篇给了你高速串行的物理层通用语言——从下一篇开始，这套语言被逐个套用到具体协议上。下一篇 [B-F.16.2 当代 PCIe：Gen4/5/6 演进与行业阶段](B-F.16.2_当代PCIe_Gen4_Gen5_Gen6演进与行业阶段.md) 沿着编码一节埋下的伏笔展开：PCIe 从 NRZ 走到 PAM4 之后，FLIT、FEC 这些新机制各在解决什么问题，以及行业现在走到了哪个阶段。
+
+> 💡 想立刻动手验证本篇概念的，两个零成本入口：`lspci -vv` 对比手边任意 PCIe 设备的 LnkCap/LnkSta；向原厂或 PHY 驱动索取片内眼图扫描结果。深入读物备查：PCIe Base Specification 的 Physical Layer 章节（preset、链路训练、抖动定义均出自这里）；信号完整性系统性读物选 Howard Johnson《High-Speed Digital Design》；器件侧可读任一款 PCIe retimer（Astera Labs / Parade / TI）手册的典型应用框图。

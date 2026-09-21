@@ -1,10 +1,10 @@
 # B-C.8.5 实战：eMMC 分区、掉电可靠性与 fio 性能/寿命测试
 
-> 所属章节：第五部 B. 总线协议 > C. 中高速外设与存储
+> 所属章节：第五部 B. 总线协议 > B-C.8 存储接口
 >
-> 难度：[M] | 预计阅读时间：40 分钟（含动手 60~90 分钟）
+> 难度：[M] Master | 预计阅读时间：40 分钟（含动手 60~90 分钟）
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 前两节讲了 eMMC 的协议和 Linux 驱动——都是"它是什么"。这一节解决"怎么用得放心"：嵌入式产品的存储翻车，十有八九不在读写速度，而在**分区规划不合理**（Bootloader 升级变砖）、**掉电丢数据**（日志写一半断电，文件系统损坏）、**寿命耗尽无预警**（设备在客户现场批量死亡）。
 
@@ -12,7 +12,7 @@
 
 本节覆盖：产品级 eMMC 分区布局设计、mmc-utils 的 EXT_CSD/Boot 分区/寿命读取、fio 的四种标准测试模式与结果解读、掉电实验的设计与数据保护方案选型。
 
-## 准备工作
+## <span class="blue"> 准备工作
 
 硬件：任意一块以 eMMC 为系统盘的开发板（RK3566/3568、i.MX8M、树莓派 CM4 等均可）。软件：
 
@@ -25,7 +25,7 @@ Buildroot 里对应 `BR2_PACKAGE_MMC_UTILS`、`BR2_PACKAGE_FIO`。
 
 > ⚠️ 本实战的所有破坏性操作（分区、写裸设备、断电）都只针对**实验板**。先确认 `lsblk` 里 eMMC 设备名（通常 `/dev/mmcblk0` 或 `mmcblk1`），下面命令里的设备名按你的实际情况替换。写错设备名把 SD 卡或 U 盘格了，别怪没人提醒。
 
-## 任务一：产品级分区布局
+## <span class="blue"> 任务一：产品级分区布局
 
 先想清楚再动手。一个要 OTA 升级、要记日志的工业设备，eMMC User Area 的分区应该长这样：
 
@@ -66,7 +66,7 @@ lsblk /dev/mmcblk0
 parted /dev/mmcblk0 print
 ```
 
-## 任务二：EXT_CSD 与 Boot 分区实操
+## <span class="blue"> 任务二：EXT_CSD 与 Boot 分区实操
 
 mmc-utils 是用户态操作 eMMC 的瑞士军刀，它把 B-C.8.1 讲的 CMD6/CMD8 包装成了命令。
 
@@ -127,7 +127,7 @@ mmc extcsd read /dev/mmcblk0 | grep -E "LIFE_TIME|PRE_EOL"
 
 `PRE_EOL_INFO` 是更早期的预警字段（0x01 正常，0x02 = 80% 保留块已消耗，0x03 = 危险）。巡检脚本把三个值都记下来，趋势比单点值更有诊断价值——某个月 LIFE_TIME 从 0x03 跳到 0x05，说明这两个月写入量异常，该去查是不是哪个服务在疯狂写日志。
 
-## 任务三：fio 标准化性能测试
+## <span class="blue"> 任务三：fio 标准化性能测试
 
 `dd` 只能测顺序吞吐，而且容易被页缓存骗。fio（Flexible I/O Tester）是存储性能测试的行业标准工具，四个测试构成一套完整基准：
 
@@ -165,7 +165,7 @@ fio --name=randwrite --filename=testfile --size=1G \
 
 顺带做一个对照实验加深理解：把 `direct=1` 去掉重跑顺序读，会看到带宽"飙升"到 GB/s 级——那是页缓存的速度不是 eMMC 的速度。这个对照能让你以后看任何人的测试报告时先问一句：direct 开了吗？
 
-## 任务四：掉电实验——直面嵌入式存储的头号杀手
+## <span class="blue"> 任务四：掉电实验——直面嵌入式存储的头号杀手
 
 实验室里跑得好好的设备，到现场批量死机，最大的单一原因是**写入中断电**。这个实验就是要在可控环境下把它复现出来，看清楚地层发生了什么。
 
@@ -215,30 +215,48 @@ dmesg | grep -i "ext4\|mmc"       # 有没有恢复日志
 
 工程上的标准答案几乎总是组合：rootfs 只读 + 数据分区隔离 + 应用层 fsync 纪律 + 寿命巡检。超级电容留给"数据丢了就出事故"的场景。
 
-## 排障速查
+## <span class="blue"> 排障速查
 
-| 症状 | 第一怀疑 |
-|------|---------|
-| fio 带宽只有几十 MB/s | 协商模式降级（查 dmesg 的 HS400 行）；忘加 `direct=1` 的反向——检查是否被缓存骗了 |
-| 随机写 IOPS 极低且波动大 | eMMC Cache 没开（EXT_CSD 查 CACHE_CTRL）；写放大严重 |
-| Boot 分区 dd 写不动 | 写保护没解：`mmc writeprotect none` |
-| 掉电后必现 fsck 长修复 | 挂载缺 journal；考虑 data=journal 或换 F2FS/UBIFS |
-| LIFE_TIME 增长异常快 | 找写入大户：`iostat -x 1` 看哪个进程在狂写 |
+| 症状 | 根因 | 定位动作 |
+|------|------|----------|
+| fio 带宽只有几十 MB/s | 协商模式降级；或忘加 `direct=1` 的反向——被页缓存骗了 | `dmesg` 查 HS400 协商行；核对 fio 参数 |
+| 随机写 IOPS 极低且波动大 | eMMC Cache 没开；写放大严重 | `mmc extcsd read` 查 CACHE_CTRL；检查分区对齐 |
+| Boot 分区 dd 写不动 | 写保护没解 | `mmc writeprotect none /dev/mmcblk0bootN` |
+| 掉电后必现 fsck 长修复 | 挂载缺 journal 保护 | 考虑 `data=journal` 或换 F2FS/UBIFS |
+| LIFE_TIME 增长异常快 | 某个进程在疯狂写盘 | `iostat -x 1` 找写入大户 |
 
-## 本节总结
+---
 
-| 自查项 | 完成本实战你应能独立做到 |
-|--------|------------------------|
-| 分区设计 | 为一个带 OTA 的产品设计 A/B 分区布局并说出每条设计理由 |
-| Boot 操作 | 用 mmc-utils 完成 Boot 分区的解锁、写入、读回验证、启动切换 |
-| 性能基准 | 用 fio 跑齐四种标准测试，解读结果并识别"页缓存骗局" |
-| 掉电验证 | 设计并执行断电实验，把观察到的现象映射到根因 |
-| 防护选型 | 针对给定产品的可靠性等级，给出分层的掉电保护组合方案 |
-| 寿命运维 | 建立 PRE_EOL + LIFE_TIME 的巡检机制并设定预警阈值 |
+## <span class="blue"> 本节总结
 
-## 配套资源
+这个实战把嵌入式存储的三大翻车根源逐个拆开：分区、掉电、寿命。产品级分区的三条设计逻辑（A/B 双槽任意时刻可启动、rootfs 只读免疫掉电、写入集中到 data 分区隔离风险）几乎可以直接搬进你的下一个产品。fio 四件套是性能验证的行业标准姿势，`direct=1` 和 `iodepth=32` 两个参数决定你测的是设备还是幻觉。掉电实验是大多数工程师从没做过但最该做的一次实验——亲手拔一次电，看到 ext4 journal 兜住什么、兜不住什么，防护策略的取舍（只读 rootfs + 分区隔离 + fsync 纪律 + 寿命巡检）就不再是纸上谈兵。最后记住两条铁律：烧录不信返回码、信 cmp 读回比对；寿命看趋势不看单点。
 
-- mmc-utils 源码与 man 页（每个子命令都对应一条 MMC 命令）
-- fio 官方文档：https://fio.readthedocs.io/
-- 内核 ext4 挂载选项文档：`Documentation/filesystems/ext4/`（`data=journal`、`commit` 等）
-- JEDEC JESD84-B51 第 6.6 节：断电通知与可靠写（Reliable Write）机制
+速查表：
+
+| 环节 | 要点 |
+|------|------|
+| 分区布局 | boot_a/b + rootfs_a/b（只读）+ data（可写）；4MiB 起对齐擦除块 |
+| EXT_CSD 实操 | `mmc extcsd read` 核对 HS_TIMING/BUS_WIDTH/CARD_TYPE/LIFE_TIME |
+| Boot 烧录 | 解写保护 → dd 写 → cmp 读回验证 → `mmc bootpart enable` 切启动 |
+| fio 四件套 | 顺序读写 1M 块测带宽、随机 4K + iodepth=32 测 IOPS；必须 direct=1 |
+| 参考量级 | HS400 eMMC：顺读 250~330 MB/s、随读 8~15K IOPS；差一个数量级即异常 |
+| 掉电实验 | 持续写 + 直接拔电；跑 10~20 次看分布；现象映射到 journal/元数据/芯片保护 |
+| 防护组合 | rootfs 只读 + data 隔离 + 应用 fsync + 寿命巡检；超级电容/PLP 留给高可靠 |
+| 寿命运维 | PRE_EOL（早期预警）+ LIFE_TIME_A/B 双看，趋势比单点有价值 |
+
+本节自查：
+
+1. 为一个带 OTA 的工业设备设计分区布局，说出 A/B 双槽、只读 rootfs、data 隔离三条理由。
+2. 用 mmc-utils 完成 Boot 分区的解锁、写入、读回验证、启动切换四步，指出防"假成功"的关键动作。
+3. 用 fio 跑齐四种标准测试，解释 `direct=1` 和 `iodepth=32` 各自防什么。
+4. 设计一次掉电实验，预判五种可能现象各自的根因与严重程度。
+5. 针对"数据丢了就出事故"和"丢几行日志无所谓"两类产品，分别给出掉电防护组合。
+6. 建立 PRE_EOL + LIFE_TIME 的巡检机制，说明为什么趋势比单点值更有诊断价值。
+
+---
+
+## <span class="blue"> 下一步
+
+存储组（eMMC → 驱动 → UFS → SPI NAND → 实战）到此收口。下一组换到显示与摄像管道：**B-C.9.1 MIPI D-PHY 物理层**——摄像头和屏幕的差分物理层，LP/HS 双模式电气、长短包结构、带宽速算。
+
+> 💡 螺旋衔接：A/B 双槽分区是第 21 章 OTA 架构的存储侧地基；rootfs 只读 + overlay 的思路回看第 5 章根文件系统；掉电实验的"症状→根因"映射法与 B-C.7.5 的破坏实验是同一训练法；写放大概念在第 12 章文件系统选型时还会用到。

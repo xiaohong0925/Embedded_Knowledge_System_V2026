@@ -1,10 +1,10 @@
 # B-D.13.2 I2S Linux 驱动与 ASoC
 
-> 所属章节：第五部 B. 总线协议 > D. 专用网络总线
+> 所属章节：第五部 B. 总线协议 > B-D.13 音频接口
 >
-> 难度：[I] | 预计阅读时间：55 分钟
+> 难度：[I] Intermediate | 预计阅读时间：55 分钟
 
-## 本节导读
+## <span class="blue"> 本节导读
 
 13.1 解决了线怎么接、时序怎么对，本节解决 Linux 里驱动怎么组织。嵌入式音频硬件是"SoC 内部 I2S 控制器 + 外部 Codec"的两片结构，内核为此专门设计了 ASoC（ALSA System on Chip）框架：Platform 驱动管 SoC 侧，Codec 驱动管芯片侧，Machine 层把两边粘起来——你在项目里真正要写的基本只有 Machine 层，而且多数情况设备树就够了。
 
@@ -12,7 +12,7 @@
 
 读完你应该能独立完成三件事：为"SoC + 一颗或多颗 Codec"的板子写出 simple-audio-card 设备树并预判每个属性的失配症状、用 aplay/amixer/debugfs 三层工具验证声卡各环节状态、诊断 xrun 类断续故障并调整缓冲参数。
 
-## ASoC 三层架构
+## <span class="blue"> ASoC 三层架构
 
 ```
  用户空间：aplay / arecord / amixer / 你的应用
@@ -44,7 +44,7 @@
 
 Machine 层的核心抽象是 dai_link：一条 dai_link 描述一对"CPU DAI ↔ Codec DAI"的连接关系，包括格式、时钟主从、MCLK 倍率。一张声卡可以有多条 dai_link——录放用不同 I2S 口的板子就是两条。设备树里的 `dai-link@0/@1` 与之一一对应。
 
-## 设备树：simple-audio-card 完整配置
+## <span class="blue"> 设备树：simple-audio-card 完整配置
 
 以"SoC 的 I2S0 接 INMP441 麦克风（录音）、I2S1 接 MAX98357A 功放（放音）"为例：
 
@@ -138,7 +138,7 @@ Machine 层的核心抽象是 dai_link：一条 dai_link 描述一对"CPU DAI �
 
 `mapping ok` 一行一条 dai_link——缺哪条查哪条的设备树；出现 `probe of sound failed with error -517` 是依赖未就绪的推迟（EPROBE_DEFER），反复刷且最终失败时按 13.4 第 2 层的方法查时钟与 regulator。
 
-## DAPM：音频通路的自动电源管理
+## <span class="blue"> DAPM：音频通路的自动电源管理
 
 Codec 内部由几十个小模块组成：DAC、ADC、PGA、混音器、输出驱动，每个都能独立上下电。DAPM（Dynamic Audio Power Management）把这些模块建模为 Widget，模块间的信号流向建模为 Route：
 
@@ -167,7 +167,7 @@ ALSA 启动放音流时，DAPM 沿放音通路反向把途径的 Widget 全部�
 
 读法：`On/Off` 是电源状态，`in/out` 是激活的输入输出路径数。放音时录音侧全 Off 是 DAPM 正常工作的证据；放音无声且 `HPL` 显示 Off，就沿"DAC→Mixer→HPL"的 in 计数往回找断在哪一环——断点 Widget 的上游就是缺的 Route 或没开的 kcontrol。
 
-## ALSA 用户态工具链
+## <span class="blue"> ALSA 用户态工具链
 
 | 工具 | 用途 | 常用形式 |
 |:---|:---|:---|
@@ -181,7 +181,7 @@ ALSA 启动放音流时，DAPM 沿放音通路反向把途径的 Widget 全部�
 
 工具读出的信息链：`aplay -l` 证明声卡注册 → `aplay -v` 证明流参数协商成功 → 示波器证明时钟与数据在线——三层各管一段，排障时按这个顺序收敛。
 
-## xrun：音频流的欠载与过载
+## <span class="blue"> xrun：音频流的欠载与过载
 
 "有声但每隔几秒咔哒/断续一下"是独立的一类故障，与无声不同源——它来自缓冲区的供需失衡：
 
@@ -197,7 +197,7 @@ underrun!!! (at least 12.345 ms long)        ← 每次欠载打印一行，附�
 
 低延迟产品（对讲、VoIP）把 buffer 压小换延迟，xrun 风险随之上升——延迟与抗抖动是这笔账的两端，按产品形态选平衡点，不是越小越好。
 
-## 排障：ASoC 层系统化流程
+## <span class="blue"> 排障：ASoC 层系统化流程
 
 "没声音"按从软件到硬件的顺序排查，每步有明确出口：
 
@@ -218,7 +218,7 @@ underrun!!! (at least 12.345 ms long)        ← 每次欠载打印一行，附�
 
 录音侧对称，把 aplay 换 arecord、通路换成 ADC/PGA/MIC Bias。MIC Bias 未开导致麦克风无供电而无声，是录音侧的专属高发坑。断续类故障不进这张表——那是 xrun，回上一节调缓冲。
 
-## 本节总结
+## <span class="blue"> 本节总结
 
 ASoC 把"一块板子的音频"拆成三份各归其主：Platform 归 SoC 厂商、Codec 归芯片厂商、Machine 归板级开发者——你的工作量被收敛到一条 dai_link 的设备树描述，这是分层设计给一线工程师的直接红利。围绕这条 dai_link，本篇的硬知识是四组对应：`format` 对错决定有没有声、`bitclock/frame-master` 配反导致数据线静默、`mclk-fs` 失配让 Codec 内部时钟错乱、`slot-width` 错位引入杂音——每个属性都对应一类可观察症状，排障因此可以按属性倒查。DAPM 把上下电从驱动代码里拿出来交给通路拓扑，kcontrol 是你在用户态拧它的手柄；xrun 则是另一个维度的问题——缓冲供需失衡，解法在 period/buffer 参数与调度优先级。排障五步流（注册→协商→通路→时钟→格式）与 13.4 的六层实战互相印证：本节给地图，实战篇给脚步。
 
@@ -232,7 +232,7 @@ ASoC 把"一块板子的音频"拆成三份各归其主：Platform 归 SoC 厂�
 | xrun | 缓冲供需失衡；加大 buffer/period、提实时优先级 |
 | 排障五步 | 注册→协商→通路→时钟→格式，从软件到硬件 |
 
-## 本节自查
+## <span class="blue"> 本节自查
 
 读完本节，你应能独立完成以下动作：
 
@@ -244,10 +244,9 @@ ASoC 把"一块板子的音频"拆成三份各归其主：Platform 归 SoC 厂�
 - 在 debugfs 里读 DAPM 实况，沿 in/out 计数定位未上电的 Widget
 - 解释 xrun 的成因，为一例断续故障给出缓冲与调度两侧的调整动作
 
-## 参考资料
+## <span class="blue"> 下一步
 
-- 内核文档：`Documentation/sound/soc/`（ASoC 架构、DAPM、Machine 编写指南）
-- 设备树绑定：`Documentation/devicetree/bindings/sound/simple-card.yaml`
-- 内核源码：`sound/soc/generic/simple-card.c`、`sound/soc/codecs/`（各 Codec 驱动）
-- ALSA 工具源码：alsa-utils（aplay/amixer 的参数细节）；`alsactl` 状态文件格式
-- 本书关联：13.1（I2S 时序与四种 format）、13.4（WM8960 完整实战——本节的地图在那里落地为脚步）、B-C.7.4（USB Gadget——USB Audio 设备端）
+`B-D.13.3 SPDIF 与音频接口选型` 补音频接口的最后一块版图：SPDIF 的光纤/同轴传输、它与 I2S 的定位差异，以及"板内 I2S、板间 SPDIF、桌面 USB"的选型逻辑——看完就能回答"这个产品该用哪种音频接口"。
+
+> 💡
+> 深入阅读：内核文档 `Documentation/sound/soc/`（ASoC 架构、DAPM、Machine 编写指南）、绑定 `Documentation/devicetree/bindings/sound/simple-card.yaml`、内核源码 `sound/soc/generic/simple-card.c` 与 `sound/soc/codecs/`（各 Codec 驱动）、alsa-utils 源码（aplay/amixer 参数细节与 alsactl 状态文件格式）。本篇引用的本书章节：13.1（I2S 时序与四种 format）、13.4（WM8960 完整实战——本节的地图在那里落地为脚步）、B-C.7.4（USB Gadget，USB Audio 设备端）。
