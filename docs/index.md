@@ -39,25 +39,25 @@
 
     **[→ 进入第二部目录](02-核心机制深度解析/README.md)**
 
-??? details "第三部 系统设计与决策 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年7月2日</span>"
+??? details "第三部 系统设计与决策 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年9月22日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
     | 第16章 内核版本与启动架构设计 | 一套内核版本与启动链方案怎么定下来，并在十年后仍然成立？ | 能用五维评分卡做版本选型、BSP 策略裁决、启动时间预算分配、DTS 组织裁决，并用 14 项评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
     | 第17章 存储架构设计 | 一套存储方案怎么设计出来，并被证明是对的？ | 能完成数据生命周期分类、介质/文件系统/分区/断电四域决策与评审清单 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月7日 |
     | 第18章 构建系统设计 | 一套构建流程怎么设计出来，并被证明它能撑五年？ | 能完成构建系统选型、TCO测算、Layer组织、CI/CD分层与SBOM合规闭环，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
-    | 第19章 安全架构设计 | 安全要做什么程度？TrustZone值得投入吗？ | 能设计安全启动链和运行时安全方案 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
-    | 第20章 实时性设计 | 需要硬实时吗？PREEMPT_RT够了吗？ | 能评估实时需求并选择PREEMPT_RT/Xenomai | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 第19章 安全架构设计 | 安全要做什么程度？TrustZone值得投入吗？ | 能做威胁模型三问法与分级、安全启动信任链、运行时最小权限、密钥载体选型、Safety/Security分辨，智能门锁$3预算实战（6节骨架待加厚） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
+    | 第20章 实时性设计 | 需要硬实时吗？PREEMPT_RT够了吗？ | 能做实时需求评估、按决策树选PREEMPT_RT/Xenomai/混合关键性方案、做延迟预算设计，工业运动控制器实战（5节骨架待加厚） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
     | 第21章 OTA与更新架构设计 | 一套OTA方案怎么设计出来，并被证明变砖了也能自己爬回来？ | 能完成失败模式枚举、RAUC/SWUpdate/Mender选型、A/B/recovery/差分分区决策、bootcount回滚落地、签名与灰度策略，并用断电测试矩阵与评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
     | 第22章 驱动架构设计 | 怎么设计"硬件变更时影响范围最小"的驱动层？ | 能做驱动放置量化决策、错误分级、电源依赖图、HAL位置裁决、总线故障域分析与多媒体带宽预算，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
 
     **[→ 进入第三部目录](03-系统设计与决策/README.md)**
 
-??? details "第四部 系统思维与全链路实战 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年7月2日</span>"
+??? details "第四部 系统思维与全链路实战 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年9月22日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
     |:---|:---|:--- |:--- |:---|:---:|
-    | 第23章 系统调试方法论 | 出了问题怎么系统调试？ | 掌握系统调试方法论和工具链 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 第23章 系统调试方法论 | 出了问题怎么系统调试？ | 掌握症状分类、信息收集四件套（pstore/看门狗/监控/远程日志）、假设树验证法与跨层误判陷阱，仓库机器人偶发死机完整排查实战 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
     | 第24章 启动全链路优化 | 每一毫秒启动时间去了哪里？愿不愿付代价消灭它？ | 能搭五层测量基础设施、按优化经济学三问排序、执行Bootloader/内核/用户空间三段优化，并用感知口径与CI门禁收口 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
-    | 第25章 Camera全链路：从Sensor到屏幕 | Camera从Sensor到屏幕怎么走？ | 掌握V4L2、DRM/KMS、端到端延迟分析 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 第25章 Camera全链路：从Sensor到屏幕 | 一帧图像怎么从Sensor走到屏幕，慢在哪、坏在哪、怎么修？ | 掌握media-ctl拓扑、V4L2/VB2采集、DMA-BUF零拷贝、DRM/KMS atomic、七段延迟测量与预算表、四类故障排查，智能门铃300→120ms实战 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
     | 第26章 网络全链路：从PHY到Socket | 网络从PHY到Socket怎么走？ | 掌握网络全链路优化和延迟分析 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
     | 第27章 工业通信全链路 | 确定性怎么从传感器一路保证到执行器？ | 能画时间预算表、按三类失败姿势分诊、配置EtherCAT/CAN/TSN链路与RT调度协同，并用cyclictest烤机与SMI排查链验收 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
     | 第28章 功耗全链路 | 功耗怎么优化？ | 能进行系统级功耗分析和优化 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
@@ -89,15 +89,15 @@
 
     **[→ 进入A扩展目录](A.%20应用层编程/README.md)**
 
-??? details "B. 总线协议 <span class="tag tag-15">返工加厚中</span> <span class="meta">最后更新： 2026年9月9日</span>"
+??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年9月21日</span>"
     | 章节 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
     |------|---------|------|------------|------------|
     | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
-    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；B.4.4/B.5.1/B.6.4 已加厚返工 | <span class="tag tag-15">返工中</span> | 否 | 2026年9月9日 |
-    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战）；C.7.1/C.9.1 已加厚返工 | <span class="tag tag-15">返工中</span> | 否 | 2026年9月9日 |
-    | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇）；D.10.5/D.11.2/D.11.4/D.12.1~12.2/D.12.4/D.13.1~13.4/D.14 全组已加厚返工 | <span class="tag tag-15">返工中</span> | 否 | 2026年9月9日 |
-    | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优；全组 6 篇已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月9日 |
-    | F. 前沿高速串行 | SerDes 通识、JESD204C、USB4/Thunderbolt、Aurora；F.16.1/F.16.5/F.16.6 已加厚返工 | <span class="tag tag-15">返工中</span> | 否 | 2026年9月9日 |
+    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
+    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
+    | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
+    | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优；全组 6 篇已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
+    | F. 前沿高速串行 | SerDes 通识、JESD204C、USB4/Thunderbolt、Aurora；全组已加厚返工（含新写 2 篇） | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
     | 知识图谱 | B.99 全局结构图、跨场景关联、选型速查、10 道自测题 | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
 
     **[→ 进入B扩展目录](B.%20总线协议/README.md)**
