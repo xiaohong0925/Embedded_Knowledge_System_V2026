@@ -1,47 +1,54 @@
 # 第26章：网络全链路：从PHY到Socket
 
-> 所属：第 四 部 系统思维与全链路实战
-> 
-> BIEM：[E] | 核心问题：网络全链路：从PHY到Socket
+> 所属：第四部 系统思维与全链路实战
+>
+> 难度：[M] ~ [E] | 核心问题：一个网络包从网线到应用的完整旅程上，慢在哪、丢在哪、怎么修？
 
 ## 核心问题
 
-网络全链路：从PHY到Socket
+一个网络包从 RJ45 接口到应用程序 read() 返回，中间经过哪些环节？吞吐不达标、偶发丢包、延迟抖动、连接建立慢——这些高发故障各在哪一段收敛？本章追踪一个包的完整旅程（收发双向），把 PHY、MAC、NAPI、qdisc、Netfilter、socket 六段从黑盒变成可观测、可分诊、可优化的工程对象。
 
 ## 本章简介
 
-核心链路：PHY → MAC → 驱动 → Netfilter → 协议栈 → Socket → 应用
+网络链路是嵌入式系统里故障表象最模糊的一条链路——几乎从不"完全不通"，全是 degraded 运行：吞吐上不去、包偶发丢、延迟偶发尖刺。没有明确报错意味着只能靠观测手段分层收敛，这正是本章的主线：**每一段的计数器和测量工具备齐，任何症状都能一分钟归口**。
 
-本章追踪一个网络数据包从网线上进入系统到被应用程序读取的完整旅程，以及反向的发送路径。理解这条链路的每个环节是诊断网络性能问题和设计高性能网络应用的基础。
-
-硬件层：RJ45 → PHY → MAC（SoC内置或外挂）→ DMA → DDR（Ring Buffer）
-
-内核接收路径（Rx）：PHY → MAC → NAPI poll → netif_receive_skb → TC/Netfilter → IP层 → TCP/UDP → Socket → Userspace
-
-内核发送路径（Tx）：Userspace → Socket → TCP/UDP → IP → TC/Netfilter → dev_queue_xmit → NIC Driver → MAC → PHY
-
+本章的定位是**链路实战层**，与存量内容分工明确：内核机制（sk_buff、NAPI 内部、XDP 开发、RSS/RPS 原理、socket 调参大全）在第 14 章，工业总线协议在 B 扩展 D 板块，确定性工业通信（EtherCAT/TSN）在第 27 章。本章回答的是"包怎么走完、坏在哪怎么查、慢在哪怎么抠"。全章以工业网关确定性调优案收口（抖动 18.3ms → p99.9 287μs）。
 
 ## 子节清单
 
-- 网络硬件架构（PHY/MAC/交换机）
-- 内核网络路径
-- Netfilter与eBPF加速
-- Socket层到应用
-- 端到端延迟与吞吐量分析
+| 节 | 主题 | 难度 |
+|----|------|------|
+| [26.1 网络硬件层：PHY/MAC/接口](26.1_网络硬件层_PHY_MAC_接口.md) | PHY/MAC 分工、RGMII/SGMII 选型与延迟坑、MDIO 寄存器、ethtool 链路诊断、DSA 与硬件时间戳 | [M]~[E] |
+| [26.2 收包路径实战：Rx 全程](26.2_收包路径实战_Rx全程.md) | 收包七站、ring buffer 交接协议、NAPI 中断指纹、丢包三位置计数器 | [E] |
+| [26.3 发包路径实战：Tx 与多队列](26.3_发包路径实战_Tx与多队列.md) | qdisc 排队层、多核锁竞争证据链、MQ/XPS 配置、tx timeout 分诊 | [E] |
+| [26.4 Netfilter 与 XDP 的链路位置](26.4_Netfilter与XDP的链路位置.md) | 规则数开销实测、观测三件套、conntrack 表满、XDP 决策边界、四级提速阶梯 | [E] |
+| [26.5 Socket 层到应用](26.5_Socket层到应用.md) | 接收队列观测、UDP 丢包 vs TCP 关窗、listen backlog、取包节奏三级、epoll 两坑、扯皮二分法 | [E] |
+| [26.6 端到端延迟与吞吐测量](26.6_端到端延迟与吞吐测量.md) | 六段延迟分解、SO_TIMESTAMPING/cyclictest 工具箱、iperf3 分诊树、ROS2/DDS 场景差异 | [E] |
+| [26.7 常见故障排查](26.7_常见故障排查.md) | 四类故障分诊路径、conntrack 工单实录、症状-入口速查表 | [M]~[E] |
+| [26.8 综合实战：工业网关确定性调优](26.8_综合实战_工业网关确定性调优.md) | EtherNet/IP 网关 p99.9 <500μs 五步调优完整复盘，全章收口 | [E] |
 
 ## 学习目标
 
-掌握本章核心知识，能够在实际项目中应用相关技术。
+- 能用 phytool/ethtool 完成链路层分诊（link、协商、线缆、RGMII 延迟）
+- 能用 NAPI 指纹与三组计数器定位收包侧丢包归属（硬件/协议栈/应用）
+- 能用 perf+MQ+XPS 消除发包侧多核锁竞争，分诊 tx timeout
+- 能量化 Netfilter 规则开销，治理 conntrack 表满，判断 XDP 的适用边界
+- 能用 ss/nstat 诊断 socket 交接面故障，区分 UDP 丢包与 TCP 关窗
+- 能用 SO_TIMESTAMPING/cyclictest/ping-mdev 建立延迟分段测量，按分诊树排查吞吐问题
+- 能执行确定性调优五步（RT/隔离/busy polling/budget/固化）并用 max+分位数+时长+负载验收
 
 ## 前置知识
 
-- 第25章相关内容
+- 第 14 章（网络子系统机制：sk_buff、NAPI、XDP 原理——本章的行为观测建立在其上）
+- 第 10 章（中断与时间：softirq、ksoftirqd 的机制背景）
+- 第 20 章（实时性设计：PREEMPT_RT 决策树，26.8 的先修）
 
 ## 后续衔接
 
-- 前置：已完成前序章节
-- 后续：继续学习后续章节
+- 第 27 章（工业通信全链路）：TSN/EtherCAT 的硬件级确定性（已写）
+- B 扩展 D 板块：工业以太网协议细节（EtherCAT/PROFINET 等）
+- 第 14.7.1 节：UDP 丢包排查的协议栈深挖实战
 
 ---
 
-*本章为第 四 部第 26 章，共 5 个 .md 文件。建议按顺序阅读。*
+*本章为第四部第 26 章，共 8 个 .md 文件。建议按顺序阅读。*
