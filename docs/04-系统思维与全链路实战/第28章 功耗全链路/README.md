@@ -40,7 +40,6 @@
 
 - 第 15 章（电源管理机制：Runtime PM、cpuidle/cpufreq、suspend、Thermal——本章全部优化手段建立在其上）
 - 第 23 章（调试方法论：观测先行、分诊收敛的通用方法论）
-- 第 12 章（时钟与电源子系统：regulator/clock framework 的基本概念）
 
 ## 后续衔接
 
