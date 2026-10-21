@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3.2,
-  "generatedAt": "2026-09-29T06:24:00.195Z",
+  "generatedAt": "2026-10-20T04:15:12.485Z",
   "source": "desktop-rich",
   "usageSource": "transcript-ratio",
   "availability": {
@@ -25,75 +25,75 @@
     "userContextLimit": "fallback"
   },
   "session": {
-    "id": "8bb2709f-6409-4052-bd35-4aaeba537c6c",
+    "id": "bc989a42-c7ae-4387-a4ae-8a99698fc17d",
     "title": "1. docs/AGENTS.md是项目代码架构",
     "titleSource": "first-user",
-    "model": "qmodel_38max",
+    "model": "qfmodel",
     "modelSource": "runtime-config",
     "cwd": "E:\\HongWork\\MySelf\\MyKnowledge\\Embedded_Knowledge_System_V2026",
-    "turns": 30,
-    "roundTrips": 154,
+    "turns": 32,
+    "roundTrips": 182,
     "compactions": 8,
     "startedAt": "2026-09-02T08:46:32.032Z",
-    "endedAt": "2026-09-29T04:11:00.163Z"
+    "endedAt": "2026-09-30T01:54:14.848Z"
   },
   "context": {
     "contextWindow": 200000,
     "contextWindowSource": "runtime-config",
     "systemPromptTokens": 22523,
-    "netContextTokens": 60115,
-    "peakContextTokens": 60115,
-    "peakContextRatio": 0.300575,
+    "netContextTokens": 139195,
+    "peakContextTokens": 139195,
+    "peakContextRatio": 0.695975,
     "peakSessionTokens": 153104,
     "peakSessionRatio": 0.76552,
     "peakSessionNotable": true,
     "peakAdvice": {
-      "level": "low",
-      "tone": "info",
-      "text": "低于盈亏线（39%）。此时压缩在 token 上是亏的：省下的还不够付摘要输出加压缩后重读，别压"
+      "level": "sweet",
+      "tone": "success",
+      "text": "正处性价比区间（65–85%）。此时压一次每轮省得最多，且第一轮就回本"
     },
     "userContextLimit": 200000,
     "userContextLimitSource": "default",
-    "peakUserRatio": 0.300575,
+    "peakUserRatio": 0.695975,
     "peakUserAdvice": {
-      "level": "low",
-      "tone": "info",
-      "text": "低于盈亏线（39%）。此时压缩在 token 上是亏的：省下的还不够付摘要输出加压缩后重读，别压"
+      "level": "sweet",
+      "tone": "success",
+      "text": "正处性价比区间（65–85%）。此时压一次每轮省得最多，且第一轮就回本"
     },
-    "currentContextTokens": 60115,
-    "netUserRatio": 0.300575,
+    "currentContextTokens": 139195,
+    "netUserRatio": 0.695975,
     "netUserAdvice": {
-      "level": "low",
-      "tone": "info",
-      "text": "低于盈亏线（39%）。此时压缩在 token 上是亏的：省下的还不够付摘要输出加压缩后重读，别压"
+      "level": "sweet",
+      "tone": "success",
+      "text": "正处性价比区间（65–85%）。此时压一次每轮省得最多，且第一轮就回本"
     },
-    "netWindowRatio": 0.300575,
+    "netWindowRatio": 0.695975,
     "observedAutoCompactions": 8,
     "observedAutoTriggerTokens": 173819,
     "autoTriggerRatio": 0.869095,
     "thresholdNotEnforced": false
   },
   "totals": {
-    "billedInputTokens": 12762767,
-    "netContextTokens": 60115,
-    "peakContextTokens": 60115,
-    "amplification": 212.31,
-    "attributedTokens": 12762767,
+    "billedInputTokens": 15765644,
+    "netContextTokens": 139195,
+    "peakContextTokens": 139195,
+    "amplification": 113.26,
+    "attributedTokens": 15765644,
     "coverage": 1,
-    "credits": 973.442,
-    "originalCredits": 973.442,
+    "credits": 1137.576,
+    "originalCredits": 1137.576,
     "outputTokens": 0,
     "cachedTokens": 0,
     "cachedTrips": 0,
     "cachedShare": 0,
-    "toolCalls": 219,
-    "fileReads": 192
+    "toolCalls": 253,
+    "fileReads": 202
   },
   "creditsCoverage": {
-    "trips": 154,
-    "roundTrips": 154,
-    "tokens": 12762767,
-    "tokenShare": 0.9999999902058856,
+    "trips": 182,
+    "roundTrips": 182,
+    "tokens": 15765644,
+    "tokenShare": 0.9999999920713674,
     "full": true
   },
   "compactionCost": {
@@ -221,11 +221,11 @@
   },
   "proxy": {
     "matched": 0,
-    "requests": 154,
+    "requests": 182,
     "breakdown": {
       "proxy": 0,
       "transcriptTokens": 0,
-      "transcriptRatio": 154
+      "transcriptRatio": 182
     },
     "logPath": "C:\\Users\\75672\\.qoder-credits-proxy\\usage.jsonl",
     "logExists": false,
@@ -242,84 +242,93 @@
     {
       "key": "tool_result",
       "label": "工具返回",
-      "tokens": 1519235,
-      "share": 0.1190365212583894
+      "tokens": 1732399,
+      "share": 0.10988442006716413
     },
     {
       "key": "system",
       "label": "系统提示词",
-      "tokens": 3468542,
-      "share": 0.2717703770663525
+      "tokens": 4099186,
+      "share": 0.2600075201495099
     },
     {
       "key": "compact_summary",
       "label": "压缩摘要",
-      "tokens": 740709,
-      "share": 0.05803672058030059
+      "tokens": 939807,
+      "share": 0.05961110576760344
     },
     {
       "key": "assistant_thinking",
       "label": "模型思考",
-      "tokens": 780870,
-      "share": 0.061183468526431445
+      "tokens": 1132887,
+      "share": 0.07185794660714025
     },
     {
       "key": "assistant_tool_use",
       "label": "工具调用",
-      "tokens": 247078,
-      "share": 0.019359313546281808
+      "tokens": 310422,
+      "share": 0.01968977027543227
     },
     {
       "key": "assistant_text",
       "label": "模型回复",
-      "tokens": 185472,
-      "share": 0.014532303313384957
+      "tokens": 240658,
+      "share": 0.015264722518982837
     },
     {
       "key": "user_input",
       "label": "用户输入",
-      "tokens": 823686,
-      "share": 0.0645381859980024
+      "tokens": 1018886,
+      "share": 0.06462695624385986
     },
     {
       "key": "attachment",
       "label": "附件/技能",
-      "tokens": 4997173,
-      "share": 0.39154309991674274
+      "tokens": 6291399,
+      "share": 0.39905755044167457
     }
   ],
   "byCategoryDetail": [
     {
       "key": "tool_result",
       "label": "工具返回",
-      "tokens": 1519235,
-      "share": 0.1190365212583894,
+      "tokens": 1732399,
+      "share": 0.10988442006716413,
       "children": [
         {
           "tool": "Agent",
           "label": "（无路径）",
           "kind": "other",
           "tokens": 450085,
-          "share": 0.035265468189621334,
-          "catShare": 0.29625755034517115,
+          "share": 0.02854846612355632,
+          "catShare": 0.25980449372264763,
           "trips": 129
         },
         {
           "tool": "Grep",
           "label": "App/ftest",
           "kind": "search",
-          "tokens": 156759,
-          "share": 0.01228251414581353,
-          "catShare": 0.10318273766714169,
-          "trips": 79
+          "tokens": 188764,
+          "share": 0.011973148998700278,
+          "catShare": 0.10896129761964424,
+          "trips": 344
+        },
+        {
+          "tool": "Bash",
+          "label": "（无路径）",
+          "kind": "shell",
+          "tokens": 186454,
+          "share": 0.011826631004547311,
+          "catShare": 0.1076279148337733,
+          "trips": 726
         },
         {
           "tool": "Grep",
           "label": "Utils/icp_log.h",
           "kind": "search",
           "tokens": 104829,
-          "share": 0.008213678428557502,
-          "catShare": 0.06900133120261713,
+          "share": 0.006649221814003002,
+          "catShare": 0.0605110516116737,
           "trips": 40
         },
         {
@@ -327,8 +336,8 @@
           "label": "Udd/device/arm/ddl_arm.c",
           "kind": "search",
           "tokens": 101473,
-          "share": 0.007950667307026534,
-          "catShare": 0.06679183180906499,
+          "share": 0.006436306333829251,
+          "catShare": 0.05857342041660882,
           "trips": 121
         },
         {
@@ -336,8 +345,8 @@
           "label": "Utils/ndd_ftest.h",
           "kind": "search",
           "tokens": 98307,
-          "share": 0.007702633256225256,
-          "catShare": 0.06470815153868077,
+          "share": 0.006235515246675254,
+          "catShare": 0.05674612691102114,
           "trips": 74
         },
         {
@@ -345,8 +354,8 @@
           "label": "Udd/device/cpld/ddl_mbcpld_ef3l190.c",
           "kind": "search",
           "tokens": 74021,
-          "share": 0.0057997766906644314,
-          "catShare": 0.04872266619817468,
+          "share": 0.0046950951420050594,
+          "catShare": 0.04272757811467084,
           "trips": 96
         },
         {
@@ -354,8 +363,8 @@
           "label": "platform_cmd_echo",
           "kind": "search",
           "tokens": 70577,
-          "share": 0.005529919558636735,
-          "catShare": 0.0464556549551132,
+          "share": 0.004476637608690358,
+          "catShare": 0.04073951162461543,
           "trips": 40
         },
         {
@@ -363,8 +372,8 @@
           "label": "Udd/control/udd_ctrl_eeprom_fru.c",
           "kind": "search",
           "tokens": 63656,
-          "share": 0.004987609043649848,
-          "catShare": 0.04189982192795586,
+          "share": 0.00403762079818597,
+          "catShare": 0.03674425178490339,
           "trips": 64
         },
         {
@@ -372,8 +381,8 @@
           "label": "Udd/bus/ddi_bus_udd_npcp.c",
           "kind": "search",
           "tokens": 46864,
-          "share": 0.0036719187460101154,
-          "catShare": 0.030846993067275372,
+          "share": 0.0029725295965238895,
+          "catShare": 0.02705141998025748,
           "trips": 139
         },
         {
@@ -381,8 +390,8 @@
           "label": "Udd/device/cpld/ddl_ibcpld_ef3l190.c",
           "kind": "search",
           "tokens": 37808,
-          "share": 0.002962337207568918,
-          "catShare": 0.02488595244764127,
+          "share": 0.002398101819096812,
+          "catShare": 0.021823856536086112,
           "trips": 59
         },
         {
@@ -390,8 +399,8 @@
           "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/printf_report.txt",
           "kind": "search",
           "tokens": 32533,
-          "share": 0.002549049092951505,
-          "catShare": 0.021414008625288635,
+          "share": 0.0020635325550228964,
+          "catShare": 0.018779118584432746,
           "trips": 9
         },
         {
@@ -399,8 +408,8 @@
           "label": "Udd/api/nsa_upgrade.c",
           "kind": "search",
           "tokens": 26078,
-          "share": 0.0020433002636375346,
-          "catShare": 0.017165322390446852,
+          "share": 0.0016541135380098919,
+          "catShare": 0.01505321261193221,
           "trips": 73
         },
         {
@@ -408,8 +417,8 @@
           "label": "Script/check_printf.sh",
           "kind": "search",
           "tokens": 24814,
-          "share": 0.001944245678541944,
-          "catShare": 0.016333186302728234,
+          "share": 0.0015739258469865064,
+          "catShare": 0.014323466839288802,
           "trips": 39
         },
         {
@@ -417,82 +426,73 @@
           "label": "docs/*IB*",
           "kind": "search",
           "tokens": 20168,
-          "share": 0.0015802449060035892,
-          "catShare": 0.013275294752384386,
+          "share": 0.0012792561812419911,
+          "catShare": 0.01164183403306927,
           "trips": 24
-        },
-        {
-          "tool": "Grep",
-          "label": "Udd/device/memory/ddl_eeprom.c",
-          "kind": "search",
-          "tokens": 19963,
-          "share": 0.0015641683457935588,
-          "catShare": 0.013140239056535098,
-          "trips": 178
         },
         {
           "tool": null,
           "label": "其他 68 项",
           "kind": null,
-          "tokens": 191301,
-          "share": 0.014988990397686986,
-          "catShare": 0.12591925771378001,
-          "trips": 2618
+          "tokens": 205967,
+          "share": 0.013064317460089469,
+          "catShare": 0.11889144477537605,
+          "trips": 2404
         }
       ]
     },
     {
       "key": "system",
       "label": "系统提示词",
-      "tokens": 3468542,
-      "share": 0.2717703770663525,
+      "tokens": 4099186,
+      "share": 0.2600075201495099,
       "children": []
     },
     {
       "key": "compact_summary",
       "label": "压缩摘要",
-      "tokens": 740709,
-      "share": 0.05803672058030059,
+      "tokens": 939807,
+      "share": 0.05961110576760344,
       "children": []
     },
     {
       "key": "assistant_thinking",
       "label": "模型思考",
-      "tokens": 780870,
-      "share": 0.061183468526431445,
+      "tokens": 1132887,
+      "share": 0.07185794660714025,
       "children": []
     },
     {
       "key": "assistant_tool_use",
       "label": "工具调用",
-      "tokens": 247078,
-      "share": 0.019359313546281808,
+      "tokens": 310422,
+      "share": 0.01968977027543227,
       "children": [
+        {
+          "tool": "Bash",
+          "label": "（无路径）",
+          "kind": "shell",
+          "tokens": 86573,
+          "share": 0.005491275366307515,
+          "catShare": 0.27888976303391433,
+          "trips": 726
+        },
         {
           "tool": "Agent",
           "label": "（无路径）",
           "kind": "other",
           "tokens": 42164,
-          "share": 0.0033036614594356127,
-          "catShare": 0.17064972120719235,
+          "share": 0.0026744141535643374,
+          "catShare": 0.1358275955561205,
           "trips": 129
-        },
-        {
-          "tool": "Bash",
-          "label": "（无路径）",
-          "kind": "shell",
-          "tokens": 28413,
-          "share": 0.0022262709623144285,
-          "catShare": 0.11499741233035668,
-          "trips": 420
         },
         {
           "tool": "Edit",
           "label": "Udd/device/cpld/ddl_mbcpld_ef3l190.c",
           "kind": "write",
           "tokens": 24268,
-          "share": 0.001901502484492136,
-          "catShare": 0.09822158621204535,
+          "share": 0.0015393239349749523,
+          "catShare": 0.07817886717020918,
           "trips": 83
         },
         {
@@ -500,8 +500,8 @@
           "label": "Udd/control/udd_ctrl_eeprom_fru.c",
           "kind": "write",
           "tokens": 23560,
-          "share": 0.0018459556102077886,
-          "catShare": 0.09535232774626592,
+          "share": 0.0014943570554697815,
+          "catShare": 0.07589509854944078,
           "trips": 120
         },
         {
@@ -509,8 +509,8 @@
           "label": "Udd/device/cpld/ddl_ibcpld_ef3l190.c",
           "kind": "write",
           "tokens": 17399,
-          "share": 0.001363266944707891,
-          "catShare": 0.07041917790363611,
+          "share": 0.0011036059404936898,
+          "catShare": 0.05604971135040128,
           "trips": 118
         },
         {
@@ -518,8 +518,8 @@
           "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest/ftest_prbs.c",
           "kind": "search",
           "tokens": 8306,
-          "share": 0.0006507608629843826,
-          "catShare": 0.03361487283258394,
+          "share": 0.000526810656576325,
+          "catShare": 0.026755551192674313,
           "trips": 125
         },
         {
@@ -527,8 +527,8 @@
           "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest/ftest_prbs.c",
           "kind": "read",
           "tokens": 8167,
-          "share": 0.0006398836502550727,
-          "catShare": 0.033053013410073634,
+          "share": 0.0005180052229591753,
+          "catShare": 0.02630834264255036,
           "trips": 193
         },
         {
@@ -536,8 +536,8 @@
           "label": "App/ftest/ftest_qdma.c",
           "kind": "write",
           "tokens": 7351,
-          "share": 0.0005759542515721298,
-          "catShare": 0.029750757959222624,
+          "share": 0.00046625243570605024,
+          "catShare": 0.023679932735823358,
           "trips": 17
         },
         {
@@ -545,8 +545,8 @@
           "label": "Udd/device/memory/ddl_eeprom.c",
           "kind": "write",
           "tokens": 6881,
-          "share": 0.0005391330894449875,
-          "catShare": 0.027848770988501016,
+          "share": 0.00043644458815488506,
+          "catShare": 0.022166057909748942,
           "trips": 27
         },
         {
@@ -554,17 +554,26 @@
           "label": "（无路径）",
           "kind": "other",
           "tokens": 6503,
-          "share": 0.0005095012345267143,
-          "catShare": 0.02631814569812421,
+          "share": 0.0004124567028455552,
+          "catShare": 0.020947766128089077,
           "trips": 11
+        },
+        {
+          "tool": "Grep",
+          "label": "App/ftest",
+          "kind": "search",
+          "tokens": 6010,
+          "share": 0.0003812043349314498,
+          "catShare": 0.019360527299147518,
+          "trips": 344
         },
         {
           "tool": "Edit",
           "label": "Udd/bus/ddi_bus_udd_npcp.c",
           "kind": "write",
           "tokens": 5785,
-          "share": 0.0004532451793168944,
-          "catShare": 0.023412254687302465,
+          "share": 0.0003669157198713064,
+          "catShare": 0.018634840058500943,
           "trips": 52
         },
         {
@@ -572,8 +581,8 @@
           "label": "Udd/device/memory/ddl_eeprom.c",
           "kind": "search",
           "tokens": 4204,
-          "share": 0.0003294333453916514,
-          "catShare": 0.017016788565569933,
+          "share": 0.00026668628501722925,
+          "catShare": 0.013544408151373135,
           "trips": 178
         },
         {
@@ -581,8 +590,8 @@
           "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/docs",
           "kind": "search",
           "tokens": 4087,
-          "share": 0.000320249447792426,
-          "catShare": 0.016542396868918622,
+          "share": 0.0002592516413572067,
+          "catShare": 0.013166818999441837,
           "trips": 88
         },
         {
@@ -590,101 +599,92 @@
           "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/docs/YLS16002_ftest_mt_port_prbs_测试指南.md",
           "kind": "read",
           "tokens": 3898,
-          "share": 0.0003054376008252302,
-          "catShare": 0.015777295000415612,
+          "share": 0.0002472610019845317,
+          "catShare": 0.012557840875017694,
           "trips": 75
-        },
-        {
-          "tool": "Grep",
-          "label": "/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP",
-          "kind": "search",
-          "tokens": 3880,
-          "share": 0.00030398774662543604,
-          "catShare": 0.01570240318173991,
-          "trips": 69
         },
         {
           "tool": null,
           "label": "其他 68 项",
           "kind": null,
-          "tokens": 52213,
-          "share": 0.004091069676389038,
-          "catShare": 0.21132307540805223,
-          "trips": 2077
+          "tokens": 55267,
+          "share": 0.0035055052352182627,
+          "catShare": 0.17803687834754603,
+          "trips": 2095
         }
       ]
     },
     {
       "key": "assistant_text",
       "label": "模型回复",
-      "tokens": 185472,
-      "share": 0.014532303313384957,
+      "tokens": 240658,
+      "share": 0.015264722518982837,
       "children": []
     },
     {
       "key": "user_input",
       "label": "用户输入",
-      "tokens": 823686,
-      "share": 0.0645381859980024,
+      "tokens": 1018886,
+      "share": 0.06462695624385986,
       "children": []
     },
     {
       "key": "attachment",
       "label": "附件/技能",
-      "tokens": 4997173,
-      "share": 0.39154309991674274,
+      "tokens": 6291399,
+      "share": 0.39905755044167457,
       "children": []
     }
   ],
   "byTool": [
     {
       "tool": "Grep",
-      "tokens": 1038510,
-      "calls": 127,
-      "perCall": 8177,
-      "share": 0.0813702629767344
+      "tokens": 1083641,
+      "calls": 137,
+      "perCall": 7910,
+      "share": 0.06873432282430873
     },
     {
       "tool": "Agent",
       "tokens": 492249,
       "calls": 5,
       "perCall": 98450,
-      "share": 0.038569129649056955
+      "share": 0.03122288027712066
+    },
+    {
+      "tool": "Bash",
+      "tokens": 273028,
+      "calls": 45,
+      "perCall": 6067,
+      "share": 0.01731790637085483
     },
     {
       "tool": "Edit",
       "tokens": 100747,
       "calls": 36,
       "perCall": 2799,
-      "share": 0.007893835201601708
+      "share": 0.006390299020733985
     },
     {
       "tool": "Read",
       "tokens": 48255,
       "calls": 23,
       "perCall": 2098,
-      "share": 0.0037809574908666765
-    },
-    {
-      "tool": "Bash",
-      "tokens": 41652,
-      "calls": 21,
-      "perCall": 1983,
-      "share": 0.0032635823132603735
+      "share": 0.0030607997676996906
     },
     {
       "tool": "Glob",
       "tokens": 37214,
       "calls": 6,
       "perCall": 6202,
-      "share": 0.0029158442066055993
+      "share": 0.0023604643246547445
     },
     {
       "tool": "AskUserQuestion",
       "tokens": 7686,
       "calls": 1,
       "perCall": 7686,
-      "share": 0.0006022229665453625
+      "share": 0.00048751775722369843
     }
   ],
   "byFile": [
@@ -693,12 +693,12 @@
       "label": "App/ftest",
       "kind": "search",
       "tool": "Grep",
-      "selfTokens": 11398,
-      "reads": 9,
-      "trips": 158,
-      "billed": 158193,
-      "perRead": 17577,
-      "share": 0.012394883884697623
+      "selfTokens": 13148,
+      "reads": 19,
+      "trips": 688,
+      "billed": 194774,
+      "perRead": 10251,
+      "share": 0.012354353333631756
     },
     {
       "attr": "file:Udd/device/arm/ddl_arm.c",
@@ -710,7 +710,7 @@
       "trips": 280,
       "billed": 105686,
       "perRead": 8807,
-      "share": 0.00828081067167624
+      "share": 0.00670356740097121
     },
     {
       "attr": "file:Utils/icp_log.h",
@@ -722,7 +722,7 @@
       "trips": 80,
       "billed": 105637,
       "perRead": 105637,
-      "share": 0.008276987612155635
+      "share": 0.006700472518333456
     },
     {
       "attr": "file:Udd/device/cpld/ddl_mbcpld_ef3l190.c",
@@ -734,7 +734,7 @@
       "trips": 402,
       "billed": 104037,
       "perRead": 11560,
-      "share": 0.008151578381413485
+      "share": 0.0065989499423060325
     },
     {
       "attr": "file:Utils/ndd_ftest.h",
@@ -746,7 +746,7 @@
       "trips": 148,
       "billed": 99924,
       "perRead": 49962,
-      "share": 0.007829324133986636
+      "share": 0.006338075354837913
     },
     {
       "attr": "file:Udd/control/udd_ctrl_eeprom_fru.c",
@@ -758,7 +758,7 @@
       "trips": 402,
       "billed": 92713,
       "perRead": 4636,
-      "share": 0.007264299165360724
+      "share": 0.005880670505168923
     },
     {
       "attr": "file:platform_cmd_echo",
@@ -770,7 +770,7 @@
       "trips": 80,
       "billed": 71280,
       "perRead": 71280,
-      "share": 0.005584971022635112
+      "share": 0.0045212034385429265
     },
     {
       "attr": "file:Udd/device/cpld/ddl_ibcpld_ef3l190.c",
@@ -782,7 +782,7 @@
       "trips": 420,
       "billed": 61480,
       "perRead": 8783,
-      "share": 0.004817106219168014
+      "share": 0.0038995935903089213
     },
     {
       "attr": "file:Udd/bus/ddi_bus_udd_npcp.c",
@@ -794,7 +794,7 @@
       "trips": 442,
       "billed": 58068,
       "perRead": 7259,
-      "share": 0.004549812029314481
+      "share": 0.0036832108364198693
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/printf_report.txt",
@@ -806,7 +806,7 @@
       "trips": 30,
       "billed": 33265,
       "perRead": 11088,
-      "share": 0.002606396571473307
+      "share": 0.0021099570782717575
     },
     {
       "attr": "file:Udd/device/memory/ddl_eeprom.c",
@@ -818,7 +818,7 @@
       "trips": 470,
       "billed": 32893,
       "perRead": 4112,
-      "share": 0.0025772782416457643
+      "share": 0.002086384907098916
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest/ftest_prbs.c",
@@ -830,7 +830,7 @@
       "trips": 636,
       "billed": 30002,
       "perRead": 3334,
-      "share": 0.002350743371854945
+      "share": 0.001902998059056707
     },
     {
       "attr": "file:Udd/api/nsa_upgrade.c",
@@ -842,7 +842,7 @@
       "trips": 146,
       "billed": 27487,
       "perRead": 13744,
-      "share": 0.002153702809648965
+      "share": 0.0017434877475855151
     },
     {
       "attr": "file:Script/check_printf.sh",
@@ -854,7 +854,7 @@
       "trips": 78,
       "billed": 25677,
       "perRead": 25677,
-      "share": 0.0020118481013007045
+      "share": 0.0016286520586341598
     },
     {
       "attr": "file:App/ftest/ftest_qdma.c",
@@ -866,7 +866,7 @@
       "trips": 188,
       "billed": 22102,
       "perRead": 3684,
-      "share": 0.0017317327165677168
+      "share": 0.001401890158615202
     },
     {
       "attr": "file:App/ftest/ftest_atc.c",
@@ -878,7 +878,7 @@
       "trips": 180,
       "billed": 21477,
       "perRead": 2386,
-      "share": 0.0016828008214521102
+      "share": 0.0013622783053836485
     },
     {
       "attr": "file:docs/*IB*",
@@ -890,7 +890,7 @@
       "trips": 48,
       "billed": 20344,
       "perRead": 20344,
-      "share": 0.0015940261115792022
+      "share": 0.0012904124851481715
     },
     {
       "attr": "file:Udd/device/cpld/ddl_cpld_ef3l90.c",
@@ -902,7 +902,7 @@
       "trips": 102,
       "billed": 18111,
       "perRead": 9055,
-      "share": 0.0014190490264837416
+      "share": 0.0011487632275972248
     },
     {
       "attr": "file:Udd",
@@ -914,7 +914,7 @@
       "trips": 90,
       "billed": 11750,
       "perRead": 979,
-      "share": 0.0009206487074643298
+      "share": 0.000745293052552652
     },
     {
       "attr": "file:Udd/device/pll/ddl_sky63104.c",
@@ -926,7 +926,19 @@
       "trips": 158,
       "billed": 11700,
       "perRead": 3900,
-      "share": 0.0009167294085346851
+      "share": 0.0007421202611942777
+    },
+    {
+      "attr": "file:Script",
+      "label": "Script",
+      "kind": "search",
+      "tool": "Grep",
+      "selfTokens": 1325,
+      "reads": 5,
+      "trips": 66,
+      "billed": 10302,
+      "perRead": 2060,
+      "share": 0.0006534607975607892
     },
     {
       "attr": "file:App/ftest/ftest_prbs.c",
@@ -938,7 +950,7 @@
       "trips": 96,
       "billed": 8989,
       "perRead": 4494,
-      "share": 0.0007042948029778171
+      "share": 0.0005701480047194257
     },
     {
       "attr": "file:**/ftest_prbs*",
@@ -950,7 +962,7 @@
       "trips": 82,
       "billed": 8614,
       "perRead": 8614,
-      "share": 0.0006749133286989207
+      "share": 0.0005463628101318752
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Udd/platform/udd_model.h",
@@ -962,7 +974,7 @@
       "trips": 192,
       "billed": 8567,
       "perRead": 2856,
-      "share": 0.0006712672730901228
+      "share": 0.00054341121752937
     },
     {
       "attr": "file:App/ftest/ftest_clk.c",
@@ -974,7 +986,7 @@
       "trips": 14,
       "billed": 7307,
       "perRead": 7307,
-      "share": 0.0005725512453210165
+      "share": 0.0004634975989304321
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/docs/YLS16002_ftest_mt_port_prbs_测试指南.md",
@@ -986,7 +998,7 @@
       "trips": 150,
       "billed": 6931,
       "perRead": 3466,
-      "share": 0.0005430909173335772
+      "share": 0.0004396485698741331
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/docs",
@@ -998,7 +1010,7 @@
       "trips": 176,
       "billed": 6010,
       "perRead": 2003,
-      "share": 0.000470875701419359
+      "share": 0.0003811881622581893
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/docs/YLS16002_IB1_IB8_ftest_port_prbs_cmd_ref.md",
@@ -1010,7 +1022,7 @@
       "trips": 122,
       "billed": 5941,
       "perRead": 2971,
-      "share": 0.00046552208856532104
+      "share": 0.000376854250274366
     },
     {
       "attr": "file:App/ftest/ftest_upgrade.c",
@@ -1022,7 +1034,7 @@
       "trips": 12,
       "billed": 5932,
       "perRead": 5932,
-      "share": 0.0004647709650511698
+      "share": 0.00037624619300760713
     },
     {
       "attr": "file:docs/*port_prbs*",
@@ -1034,7 +1046,7 @@
       "trips": 78,
       "billed": 5607,
       "perRead": 5607,
-      "share": 0.0004393201946856674
+      "share": 0.00035564302245869636
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP",
@@ -1046,7 +1058,7 @@
       "trips": 138,
       "billed": 5493,
       "perRead": 1373,
-      "share": 0.0004304181943866177
+      "share": 0.00034843658321329025
     },
     {
       "attr": "file:App/ftest/ftest_device.c",
@@ -1058,7 +1070,7 @@
       "trips": 12,
       "billed": 4772,
       "perRead": 4772,
-      "share": 0.0003738916424206285
+      "share": 0.00030267662491058393
     },
     {
       "attr": "file:App/ftest/ftest_extern_lpbk.c",
@@ -1070,7 +1082,7 @@
       "trips": 10,
       "billed": 4216,
       "perRead": 4216,
-      "share": 0.0003303228574127953
+      "share": 0.0002674063719778101
     },
     {
       "attr": "file:docs/ICP2P0-1-17_打印与日志接口统一化设计方案.md",
@@ -1082,7 +1094,7 @@
       "trips": 146,
       "billed": 3899,
       "perRead": 1949,
-      "share": 0.00030546614527486354
+      "share": 0.0002472841095822812
     },
     {
       "attr": "file:App",
@@ -1094,7 +1106,7 @@
       "trips": 122,
       "billed": 3210,
       "perRead": 803,
-      "share": 0.00025154230412725723
+      "share": 0.00020363112462892872
     },
     {
       "attr": "file:App/ftest/ftest_ilkn_prbs.c",
@@ -1106,7 +1118,7 @@
       "trips": 14,
       "billed": 2798,
       "perRead": 2798,
-      "share": 0.0002192440525193748
+      "share": 0.00017748471032585437
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Udd/platform",
@@ -1118,7 +1130,7 @@
       "trips": 70,
       "billed": 2623,
       "perRead": 2623,
-      "share": 0.00020550233721780374
+      "share": 0.000166360374994276
     },
     {
       "attr": "file:App/ftest/ftest_versal_ddr.c",
@@ -1130,7 +1142,7 @@
       "trips": 8,
       "billed": 2392,
       "perRead": 2392,
-      "share": 0.0001873926997686892
+      "share": 0.0001517000742024071
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Udd/device/cpld/ddl_eth_cpld_machxo3.c",
@@ -1142,7 +1154,7 @@
       "trips": 10,
       "billed": 2150,
       "perRead": 1075,
-      "share": 0.00016842789992859594
+      "share": 0.00013634749351742223
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Udd/control/udd_ctrl_qsfp.c",
@@ -1154,19 +1166,7 @@
       "trips": 10,
       "billed": 1841,
       "perRead": 921,
-      "share": 0.00014426483547305905
-    },
-    {
-      "attr": "file:Script",
-      "label": "Script",
-      "kind": "search",
-      "tool": "Grep",
-      "selfTokens": 1325,
-      "reads": 5,
-      "trips": 10,
-      "billed": 1752,
-      "perRead": 350,
-      "share": 0.00013730523089230083
+      "share": 0.00011678675995956697
     },
     {
       "attr": "file:App/ftest/ftest_power.c",
@@ -1178,7 +1178,7 @@
       "trips": 12,
       "billed": 1631,
       "perRead": 1631,
-      "share": 0.0001278120153890717
+      "share": 0.00010346770307709197
     },
     {
       "attr": "file:define MBCPLD_EF3L90_FLASH_PAGE_SIZE",
@@ -1190,7 +1190,7 @@
       "trips": 48,
       "billed": 1374,
       "perRead": 1374,
-      "share": 0.00010763442556481923
+      "share": 0.00008713333211523938
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest",
@@ -1202,7 +1202,7 @@
       "trips": 44,
       "billed": 1315,
       "perRead": 1315,
-      "share": 0.00010299701846153341
+      "share": 0.00008337921040962548
     },
     {
       "attr": "file:define EF3L90_FLASH_PAGE_SIZE",
@@ -1214,7 +1214,7 @@
       "trips": 48,
       "billed": 1284,
       "perRead": 1284,
-      "share": 0.00010057643044581471
+      "share": 0.00008141967099292863
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest/ftest_prbs.h",
@@ -1226,7 +1226,7 @@
       "trips": 36,
       "billed": 1109,
       "perRead": 1109,
-      "share": 0.00008687389987807836
+      "share": 0.00007032705689188735
     },
     {
       "attr": "file:App/ftest/ftest_sma.c",
@@ -1238,7 +1238,7 @@
       "trips": 10,
       "billed": 941,
       "perRead": 941,
-      "share": 0.0000737112528533245
+      "share": 0.00005967149489390131
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Script/config/HF8/YLS16002_VersionNote.txt",
@@ -1250,7 +1250,7 @@
       "trips": 26,
       "billed": 940,
       "perRead": 940,
-      "share": 0.00007361537718536215
+      "share": 0.00005959388063271585
     },
     {
       "attr": "file:App/ftest/ftest_emmc.c",
@@ -1262,7 +1262,7 @@
       "trips": 12,
       "billed": 906,
       "perRead": 906,
-      "share": 0.0000709605669854911
+      "share": 0.000057444731253840006
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/Script/common/build_release.sh",
@@ -1274,7 +1274,7 @@
       "trips": 26,
       "billed": 868,
       "perRead": 868,
-      "share": 0.00006803845467131957
+      "share": 0.00005507919270599496
     },
     {
       "attr": "file:Udd/device",
@@ -1286,7 +1286,7 @@
       "trips": 4,
       "billed": 735,
       "perRead": 735,
-      "share": 0.00005757008950088606
+      "share": 0.000046604733588361826
     },
     {
       "attr": "file:define EEPROM_FRU_CMP_STEP",
@@ -1298,7 +1298,7 @@
       "trips": 32,
       "billed": 536,
       "perRead": 536,
-      "share": 0.00004197785139831289
+      "share": 0.000033982343921839894
     },
     {
       "attr": "file:docs/*IB9*",
@@ -1310,7 +1310,7 @@
       "trips": 52,
       "billed": 467,
       "perRead": 467,
-      "share": 0.00003656014480199098
+      "share": 0.000029596546109633835
     },
     {
       "attr": "file:App/ftest/ftest_xc_ilkn.c",
@@ -1322,7 +1322,7 @@
       "trips": 14,
       "billed": 414,
       "perRead": 414,
-      "share": 0.000032426824544808195
+      "share": 0.00002625049799521466
     },
     {
       "attr": "file:Udd/api",
@@ -1334,7 +1334,7 @@
       "trips": 10,
       "billed": 361,
       "perRead": 90,
-      "share": 0.000028301975367654633
+      "share": 0.000022911307477012382
     },
     {
       "attr": "file:Udd/device/pll",
@@ -1346,7 +1346,7 @@
       "trips": 18,
       "billed": 291,
       "perRead": 145,
-      "share": 0.00002277477753811189
+      "share": 0.000018436873190575385
     },
     {
       "attr": "file:Udd/device/arm",
@@ -1358,7 +1358,7 @@
       "trips": 10,
       "billed": 192,
       "perRead": 192,
-      "share": 0.00001504291179413814
+      "share": 0.000012177693358427797
     },
     {
       "attr": "file:App/ftest/ftest_prbs_sweep.c",
@@ -1370,7 +1370,7 @@
       "trips": 10,
       "billed": 185,
       "perRead": 185,
-      "share": 0.000014466694485231911
+      "share": 0.000011711227969831098
     },
     {
       "attr": "file:.",
@@ -1382,7 +1382,7 @@
       "trips": 8,
       "billed": 105,
       "perRead": 105,
-      "share": 0.000008194147011402485
+      "share": 0.000006633410539415724
     },
     {
       "attr": "file:Utils",
@@ -1394,7 +1394,7 @@
       "trips": 4,
       "billed": 99,
       "perRead": 99,
-      "share": 0.00000777974182444406
+      "share": 0.000006297936971400246
     },
     {
       "attr": "file:Udd/device/fpga",
@@ -1406,7 +1406,7 @@
       "trips": 8,
       "billed": 95,
       "perRead": 95,
-      "share": 0.000007425295960789582
+      "share": 0.000006011002294203685
     },
     {
       "attr": "file:App/ftest/*.c",
@@ -1418,7 +1418,7 @@
       "trips": 2,
       "billed": 13,
       "perRead": 13,
-      "share": 0.0000010462551674978952
+      "share": 8.469752916735662e-7
     },
     {
       "attr": "file:/home1/hyt/codeSpace/hyt_debug/YL16002/sempICP/App/ftest/ftest_platform.c",
@@ -1448,103 +1448,103 @@
   "byAttr": [
     {
       "attr": "attachment",
-      "tokens": 4997173,
-      "share": 0.39154309991674274
+      "tokens": 6291399,
+      "share": 0.39905755044167457
     },
     {
       "attr": "system",
-      "tokens": 3468542,
-      "share": 0.2717703770663525
-    },
-    {
-      "attr": "tool_result|Grep",
-      "tokens": 980589,
-      "share": 0.07683197780739104
-    },
-    {
-      "attr": "user_input",
-      "tokens": 823686,
-      "share": 0.0645381859980024
+      "tokens": 4099186,
+      "share": 0.2600075201495099
     },
     {
       "attr": "assistant_thinking",
-      "tokens": 780870,
-      "share": 0.061183468526431445
+      "tokens": 1132887,
+      "share": 0.07185794660714025
+    },
+    {
+      "attr": "tool_result|Grep",
+      "tokens": 1020536,
+      "share": 0.06473166604931738
+    },
+    {
+      "attr": "user_input",
+      "tokens": 1018886,
+      "share": 0.06462695624385986
     },
     {
       "attr": "compact_summary",
-      "tokens": 740709,
-      "share": 0.05803672058030059
+      "tokens": 939807,
+      "share": 0.05961110576760344
     },
     {
       "attr": "tool_result|Agent",
       "tokens": 450085,
-      "share": 0.035265468189621334
+      "share": 0.02854846612355632
     },
     {
       "attr": "assistant_text",
-      "tokens": 185472,
-      "share": 0.014532303313384957
+      "tokens": 240658,
+      "share": 0.015264722518982837
+    },
+    {
+      "attr": "tool_result|Bash",
+      "tokens": 186454,
+      "share": 0.011826631004547311
     },
     {
       "attr": "tool_use|Edit",
       "tokens": 89671,
-      "share": 0.0070260155644981635
+      "share": 0.00568777270297766
+    },
+    {
+      "attr": "tool_use|Bash",
+      "tokens": 86573,
+      "share": 0.005491275366307515
     },
     {
       "attr": "tool_use|Grep",
-      "tokens": 57921,
-      "share": 0.004538285169343472
+      "tokens": 63104,
+      "share": 0.004002656774991592
     },
     {
       "attr": "tool_use|Agent",
       "tokens": 42164,
-      "share": 0.0033036614594356127
+      "share": 0.0026744141535643374
     },
     {
       "attr": "tool_result|Glob",
       "tokens": 35334,
-      "share": 0.0027685579503226357
-    },
-    {
-      "attr": "tool_use|Bash",
-      "tokens": 28413,
-      "share": 0.0022262709623144285
+      "share": 0.0022412316329079468
     },
     {
       "attr": "tool_result|Read",
       "tokens": 27729,
-      "share": 0.002172664590986217
+      "share": 0.0017588378847008968
     },
     {
       "attr": "tool_use|Read",
       "tokens": 20526,
-      "share": 0.001608292899880468
-    },
-    {
-      "attr": "tool_result|Bash",
-      "tokens": 13239,
-      "share": 0.0010373113509459467
+      "share": 0.0013019618829988003
     },
     {
       "attr": "tool_result|Edit",
       "tokens": 11076,
-      "share": 0.0008678196371035501
+      "share": 0.0007025263177563291
     },
     {
       "attr": "tool_use|AskUserQuestion",
       "tokens": 6503,
-      "share": 0.0005095012345267143
+      "share": 0.0004124567028455552
     },
     {
       "attr": "tool_use|Glob",
       "tokens": 1880,
-      "share": 0.00014728625628296433
+      "share": 0.00011923269174679827
     },
     {
       "attr": "tool_result|AskUserQuestion",
       "tokens": 1183,
-      "share": 0.00009272173201864836
+      "share": 0.00007506105437814331
     }
   ],
   "byRequest": [
@@ -3241,11 +3241,319 @@
       "credits": 7.583,
       "originalCredits": 7.583,
       "afterCompact": false
+    },
+    {
+      "index": 155,
+      "time": "09:35",
+      "ratio": 0.34033,
+      "inputTokens": 68066,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 24.003,
+      "originalCredits": 24.003,
+      "afterCompact": false
+    },
+    {
+      "index": 156,
+      "time": "09:35",
+      "ratio": 0.357315,
+      "inputTokens": 71463,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.538,
+      "originalCredits": 4.538,
+      "afterCompact": false
+    },
+    {
+      "index": 157,
+      "time": "09:36",
+      "ratio": 0.371725,
+      "inputTokens": 74345,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.627,
+      "originalCredits": 4.627,
+      "afterCompact": false
+    },
+    {
+      "index": 158,
+      "time": "09:36",
+      "ratio": 0.383035,
+      "inputTokens": 76607,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 3.086,
+      "originalCredits": 3.086,
+      "afterCompact": false
+    },
+    {
+      "index": 159,
+      "time": "09:36",
+      "ratio": 0.390245,
+      "inputTokens": 78049,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 3.47,
+      "originalCredits": 3.47,
+      "afterCompact": false
+    },
+    {
+      "index": 160,
+      "time": "09:37",
+      "ratio": 0.39773,
+      "inputTokens": 79546,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 3.264,
+      "originalCredits": 3.264,
+      "afterCompact": false
+    },
+    {
+      "index": 161,
+      "time": "09:37",
+      "ratio": 0.403665,
+      "inputTokens": 80733,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 3.77,
+      "originalCredits": 3.77,
+      "afterCompact": false
+    },
+    {
+      "index": 162,
+      "time": "09:38",
+      "ratio": 0.41923,
+      "inputTokens": 83846,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.335,
+      "originalCredits": 4.335,
+      "afterCompact": false
+    },
+    {
+      "index": 163,
+      "time": "09:38",
+      "ratio": 0.428155,
+      "inputTokens": 85631,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.877,
+      "originalCredits": 4.877,
+      "afterCompact": false
+    },
+    {
+      "index": 164,
+      "time": "09:43",
+      "ratio": 0.444045,
+      "inputTokens": 88809,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.641,
+      "originalCredits": 4.641,
+      "afterCompact": false
+    },
+    {
+      "index": 165,
+      "time": "09:44",
+      "ratio": 0.458955,
+      "inputTokens": 91791,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 5.018,
+      "originalCredits": 5.018,
+      "afterCompact": false
+    },
+    {
+      "index": 166,
+      "time": "09:44",
+      "ratio": 0.472105,
+      "inputTokens": 94421,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.085,
+      "originalCredits": 4.085,
+      "afterCompact": false
+    },
+    {
+      "index": 167,
+      "time": "09:44",
+      "ratio": 0.499605,
+      "inputTokens": 99921,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 5.552,
+      "originalCredits": 5.552,
+      "afterCompact": false
+    },
+    {
+      "index": 168,
+      "time": "09:45",
+      "ratio": 0.51975,
+      "inputTokens": 103950,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 6.408,
+      "originalCredits": 6.408,
+      "afterCompact": false
+    },
+    {
+      "index": 169,
+      "time": "09:48",
+      "ratio": 0.54598,
+      "inputTokens": 109196,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 13.609,
+      "originalCredits": 13.609,
+      "afterCompact": false
+    },
+    {
+      "index": 170,
+      "time": "09:49",
+      "ratio": 0.60478,
+      "inputTokens": 120956,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 9.831,
+      "originalCredits": 9.831,
+      "afterCompact": false
+    },
+    {
+      "index": 171,
+      "time": "09:50",
+      "ratio": 0.624275,
+      "inputTokens": 124855,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 5.538,
+      "originalCredits": 5.538,
+      "afterCompact": false
+    },
+    {
+      "index": 172,
+      "time": "09:50",
+      "ratio": 0.635255,
+      "inputTokens": 127051,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 5.124,
+      "originalCredits": 5.124,
+      "afterCompact": false
+    },
+    {
+      "index": 173,
+      "time": "09:50",
+      "ratio": 0.645645,
+      "inputTokens": 129129,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 5.098,
+      "originalCredits": 5.098,
+      "afterCompact": false
+    },
+    {
+      "index": 174,
+      "time": "09:51",
+      "ratio": 0.652965,
+      "inputTokens": 130593,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.728,
+      "originalCredits": 4.728,
+      "afterCompact": false
+    },
+    {
+      "index": 175,
+      "time": "09:51",
+      "ratio": 0.66144,
+      "inputTokens": 132288,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.478,
+      "originalCredits": 4.478,
+      "afterCompact": false
+    },
+    {
+      "index": 176,
+      "time": "09:51",
+      "ratio": 0.665115,
+      "inputTokens": 133023,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.638,
+      "originalCredits": 4.638,
+      "afterCompact": false
+    },
+    {
+      "index": 177,
+      "time": "09:51",
+      "ratio": 0.671655,
+      "inputTokens": 134331,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.204,
+      "originalCredits": 4.204,
+      "afterCompact": false
+    },
+    {
+      "index": 178,
+      "time": "09:52",
+      "ratio": 0.67396,
+      "inputTokens": 134792,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.176,
+      "originalCredits": 4.176,
+      "afterCompact": false
+    },
+    {
+      "index": 179,
+      "time": "09:52",
+      "ratio": 0.67845,
+      "inputTokens": 135690,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.544,
+      "originalCredits": 4.544,
+      "afterCompact": false
+    },
+    {
+      "index": 180,
+      "time": "09:52",
+      "ratio": 0.68345,
+      "inputTokens": 136690,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.643,
+      "originalCredits": 4.643,
+      "afterCompact": false
+    },
+    {
+      "index": 181,
+      "time": "09:53",
+      "ratio": 0.68955,
+      "inputTokens": 137910,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 4.745,
+      "originalCredits": 4.745,
+      "afterCompact": false
+    },
+    {
+      "index": 182,
+      "time": "09:54",
+      "ratio": 0.695975,
+      "inputTokens": 139195,
+      "outputTokens": null,
+      "usageSource": "transcript-ratio",
+      "credits": 7.1,
+      "originalCredits": 7.1,
+      "afterCompact": false
     }
   ],
   "identity": {
-    "sumAttributed": 12762767,
-    "billedInputTokens": 12762767,
+    "sumAttributed": 15765644,
+    "billedInputTokens": 15765644,
     "absDiff": 0,
     "ok": true
   },
@@ -3253,13 +3561,13 @@
   "selfCmd": "\"C:\\Users\\75672\\.qoder-cn\\plugins\\cache\\qoder-marketplace\\qoder-credits-inspector\\2.7.4\\bin\\credits-inspector.cmd\" cli",
   "linkHealth": {
     "matched": 0,
-    "requests": 154,
+    "requests": 182,
     "coverage": 0,
     "usageSource": "transcript-ratio",
     "breakdown": {
       "proxy": 0,
       "transcriptTokens": 0,
-      "transcriptRatio": 154
+      "transcriptRatio": 182
     },
     "logRecords": 0,
     "lastRecordAt": null,
@@ -3352,15 +3660,15 @@
       "originalCredits": 266.6
     },
     "combined": {
-      "roundTrips": 281,
-      "billedInputTokens": 17276559,
-      "credits": 1240.042,
-      "originalCredits": 1240.042
+      "roundTrips": 309,
+      "billedInputTokens": 20279436,
+      "credits": 1404.176,
+      "originalCredits": 1404.176
     }
   },
   "manual": null,
   "artifacts": {
     "report": "report.json",
-    "canvas": "1. docs_AGENTS.md是项目代码架构__8bb2709f.canvas.tsx"
+    "canvas": "1. docs_AGENTS.md是项目代码架构__bc989a42.canvas.tsx"
   }
 }

@@ -236,12 +236,29 @@ UCIe 2.0/3.0 的 DFx 与管理面让 die 间链路像 PCIe 链路一样可观测
 
 ## <span class="blue"> 本节自查
 
-1. 能用一句话说清广播式一致性为什么在 128 核上不可行，目录式把流量从什么量级降到什么量级吗？
-2. ReadShared 事务中 HN-F 的目录起什么作用？目录无记录时找谁要数据？
-3. `dma_map_single` 与 `dma_alloc_coherent` 各自适合什么缓冲区？"DMA 读到旧值"的双向版本分别缺了哪一步维护？
-4. 拆 Chiplet 的三条硬约束分别是什么？三种封装形态的凸点间距量级？
-5. UCIe 主带与边带各管什么？为什么说"这个 die 间接口是 UCIe 还是 PCIe"是个伪问题？
-6. `numactl --hardware` 输出里 `10` 和 `21` 的差距从哪来？绑核不绑内存的后果是什么？
+**一致性**
+
+??? details "Q1. 广播式一致性为什么在 128 核上不可行？目录式把流量降到什么量级？"
+    广播嗅探下，一个核对某地址的操作要向簇内**所有核**广播询问"你缓存了吗"，一致性流量随核数平方级增长——核数从 8 涨到 128，广播流量涨 256 倍，互连带宽被一致性流量本身吃掉。CHI 的目录式让 HN-F 记录每个 cache line 的缓存者清单，失效时按清单**点对点**发送，流量只跟"这行数据实际被几个人缓存"有关，与核数脱钩。
+
+??? details "Q2. ReadShared 事务中 HN-F 的目录起什么作用？目录无记录时找谁要数据？"
+    HN-F 是一致性"管家"：收到 ReadShared 后先查目录——若显示数据被某 RN-F（如 CPU1）缓存且已修改，就向**持有者**点对点发 SnoopShared 取回最新数据再转发给请求方；目录显示无人缓存时，才直接向 SN-F（DDR 控制器）发 ReadNoSnoop 取数。目录的价值是把"问谁"从全网变成清单。
+
+??? details "Q3. `dma_map_single` 与 `dma_alloc_coherent` 各自适合什么缓冲区？"DMA 读到旧值"的双向版本分别缺了哪步维护？"
+    `dma_map_single`/`dma_unmap_single` 适合流式 DMA（收发缓冲区）：映射/解除时由驱动做 cache 清理与失效；`dma_alloc_coherent` 适合长期共享区域（描述符环）：分配时直接给非缓存（或硬件一致）映射。双向旧值：CPU 写的数据还在 cache、DMA 从 DDR 读走旧内容——缺的是 DMA 前的 cache 清理（clean/writeback）；DMA 写进 DDR 的新数据、CPU 读到 cache 旧副本——缺的是 DMA 后的 cache 失效（invalidate）。`kmalloc` 的 buffer 直交 DMA 是这两类事故的共同根源。
+
+**Chiplet 与 UCIe**
+
+??? details "Q4. 拆 Chiplet 的三条硬约束是什么？三种封装形态的凸点间距量级？"
+    ① 光罩极限：单次曝光约 858 mm²，单 die 堆不下更多核与缓存；② 良率：缺陷密度固定时 die 越大良率越低，成本随面积超线性下降；③ 工艺混搭：计算逻辑要先进工艺、IO/模拟在成熟工艺更好更便宜，单芯片被迫全用先进工艺等于拿黄金做螺丝。封装形态：2D 基板走线约 110 μm、2.5D 硅中介层 40~55 μm（CoWoS/EMIB）、3D 混合键合 <10 μm（SoIC/Foveros Direct）——间距每小一个量级，带宽密度与能耗改善一个量级。
+
+??? details "Q5. UCIe 主带与边带各管什么？为什么说"这个 die 间接口是 UCIe 还是 PCIe"是个伪问题？"
+    主带（mainband）是高速数据通路，跑映射后的 PCIe/CXL/自定义流协议（3.0 达 48/64 GT/s）；边带（sideband）是独立管理通路，管链路训练、参数协商、寄存器访问与遥测上报（3.0 延伸至 100 mm 支持跨基板大封装）。说"UCIe 还是 PCIe"是伪问题，因为两者不互斥：**UCIe 是承载层（物理+适配），PCIe/CXL 是被承载的协议**——die 间通信复用 PCIe 的事务模型，B-D.10 的 PCIe 知识在 Chiplet 时代仍是通用语言。
+
+**软件视角**
+
+??? details "Q6. `numactl --hardware` 输出里 node distances 的 10 和 21 从哪来？绑核不绑内存的后果是什么？"
+    10 是本地节点访问的相对代价，21 是跨 die 访问的相对代价——差距的物理来源就是 die 间互连的转发延迟（NoC 多跳延迟在多 die 系统里放大成体系结构级事实），内核经 ACPI SRAT/SLIT 表获知。绑核不绑内存（或反之）的后果：进程在本地核上跑、访存却全部跨 die 走远端内存，NUMA 收益归零——`--cpunodebind` 与 `--membind` 必须成对使用，用 `numastat` 看跨节点命中率验证。
 
 ---
 
