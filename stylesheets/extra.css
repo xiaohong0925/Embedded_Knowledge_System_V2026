@@ -1,0 +1,587 @@
+/* ========================================
+   Linux知识体系 V2026 - 自定义样式
+   颜色标签 + BIEM难度徽章 + 全局美化
+   ======================================== */
+
+/* --- 四色标记系统 --- */
+
+span.red {
+    color: #E53935;
+    font-weight: 600;
+}
+
+span.green {
+    color: #43A047;
+    font-weight: 600;
+}
+
+span.blue {
+    color: #1E88E5;
+    font-weight: 600;
+}
+
+span.orange {
+    color: #FB8C00;
+    font-weight: 600;
+}
+
+/* --- BIEM 难度徽章 --- */
+
+span.badge-b {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #43A047;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+span.badge-i {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #1E88E5;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+span.badge-e {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #FB8C00;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+span.badge-m {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #E53935;
+    color: white;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 4px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+
+/* --- 代码块优化 --- */
+
+.md-typeset code {
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.85em;
+}
+
+.md-typeset pre > code {
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 0.82em;
+    line-height: 1.6;
+}
+
+/* --- 表格美化 --- */
+
+.md-typeset table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.9em;
+}
+
+.md-typeset table th {
+    background-color: #f0f0f0;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid #ddd;
+}
+
+.md-typeset table td {
+    padding: 10px 16px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.md-typeset table tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.md-typeset table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* --- 引用块优化 --- */
+
+.md-typeset blockquote {
+    border-left: 4px solid #1E88E5;
+    padding: 12px 20px;
+    margin: 16px 0;
+    background-color: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+    color: #555;
+}
+
+.md-typeset blockquote p {
+    margin: 0;
+}
+
+/* --- Mermaid 图表容器 --- */
+
+.mermaid {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* --- 暗色模式适配 --- */
+
+[data-md-color-scheme="slate"] span.red {
+    color: #EF5350;
+}
+
+[data-md-color-scheme="slate"] span.green {
+    color: #66BB6A;
+}
+
+[data-md-color-scheme="slate"] span.blue {
+    color: #42A5F5;
+}
+
+[data-md-color-scheme="slate"] span.orange {
+    color: #FFA726;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table th {
+    background-color: #2d2d2d;
+    border-bottom-color: #444;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table td {
+    border-top-color: #333;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table tr:hover {
+    background-color: #333;
+}
+
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+    background-color: #2a2a2a;
+    border-left-color: #42A5F5;
+    color: #ccc;
+}
+
+/* --- Admonition 样式增强 --- */
+
+.md-typeset .admonition {
+    border-radius: 8px;
+    font-size: 0.95em;
+}
+
+.md-typeset .admonition-title {
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+}
+
+/* --- Tabbed 内容 --- */
+
+.tabbed-set {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+[data-md-color-scheme="slate"] .tabbed-set {
+    border-color: #333;
+}
+
+/* --- 响应式优化 --- */
+
+@media screen and (max-width: 768px) {
+    span.badge-b, span.badge-i, span.badge-e, span.badge-m {
+        font-size: 0.7em;
+        padding: 1px 5px;
+    }
+
+    .md-typeset table {
+        font-size: 0.8em;
+    }
+
+    .md-typeset pre > code {
+        font-size: 0.75em;
+        padding: 10px;
+    }
+}
+
+/* --- 打印优化 --- */
+
+@media print {
+    span.red, span.green, span.blue, span.orange {
+        font-weight: 600;
+        text-decoration: underline;
+    }
+
+    span.badge-b { background-color: #43A047 !important; }
+    span.badge-i { background-color: #1E88E5 !important; }
+    span.badge-e { background-color: #FB8C00 !important; }
+    span.badge-m { background-color: #E53935 !important; }
+
+    .md-typeset pre > code {
+        border: 1px solid #ccc;
+        background-color: #f5f5f5 !important;
+    }
+}
+
+/* ========================================
+   三栏布局：只在桌面宽屏生效，移动端完全交给 Material 默认
+   ======================================== */
+
+/* 0. 图片全局自适应（防止任何情况下图片撑破容器） */
+.md-typeset img,
+.md-typeset svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* 1. 大屏桌面端（≥1220px）：三栏拉满 */
+@media screen and (min-width: 1220px) {
+    .md-grid {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .md-main__inner {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 8px;
+    }
+
+    .md-sidebar--primary {
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 280px !important;
+        left: 0 !important;
+        margin-left: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .md-sidebar--secondary {
+        width: 240px !important;
+        min-width: 240px !important;
+        max-width: 260px !important;
+        right: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .md-content {
+        flex: 1 1 auto !important;
+        max-width: none !important;
+        margin-left: 12px !important;
+        margin-right: 12px !important;
+    }
+
+    .md-content__inner {
+        max-width: none !important;
+    }
+}
+
+/* 2. 超大屏进一步加宽 */
+@media screen and (min-width: 1600px) {
+    .md-sidebar--primary {
+        width: 300px !important;
+        min-width: 300px !important;
+    }
+    .md-sidebar--secondary {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+}
+
+/* 3. 平板/小桌面（960px-1219px）：只放宽正文，不动侧边栏 */
+@media screen and (min-width: 960px) and (max-width: 1219px) {
+    .md-grid {
+        max-width: 100% !important;
+    }
+    .md-main__inner {
+        max-width: 100% !important;
+    }
+    .md-content,
+    .md-content__inner {
+        max-width: none !important;
+    }
+}
+
+/* 4. 移动端（<960px）：只重置正文和右侧目录，左侧导航抽屉完全交给 Material 默认 */
+@media screen and (max-width: 959px) {
+    .md-grid,
+    .md-main__inner,
+    .md-content,
+    .md-content__inner {
+        max-width: none !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* 只重置右侧目录栏，移动端本来就不需要它 */
+    .md-sidebar--secondary {
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+        left: auto !important;
+        right: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    /* 移动端表格横向滚动，避免撑破屏幕 */
+    .md-typeset table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+/* ========================================
+   首页大表格：居中 + 模块列伪合并 + 状态上色
+   ======================================== */
+
+/* 1. 表格整体居中，限制最大宽度 */
+.md-typeset table {
+    margin: 1.5rem auto;
+    max-width: 1100px;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 0.9rem;
+}
+
+/* 2. 表头 */
+.md-typeset table thead th {
+    background-color: rgba(0,0,0,0.04);
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--md-typeset-table-color);
+    white-space: nowrap;
+    text-align: left;
+}
+[data-md-color-scheme="slate"] .md-typeset table thead th {
+    background-color: rgba(255,255,255,0.06);
+}
+
+/* 3. 去掉斑马纹，避免合并处色差断裂 */
+.md-typeset table tbody tr:nth-child(even) {
+    background-color: transparent !important;
+}
+.md-typeset table tbody tr:hover td {
+    background-color: rgba(0,0,0,0.02);
+}
+[data-md-color-scheme="slate"] .md-typeset table tbody tr:hover td {
+    background-color: rgba(255,255,255,0.03);
+}
+
+/* 4. 单元格基础 */
+.md-typeset table tbody td {
+    padding: 0.55rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--md-typeset-table-color);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* 5. 模块行底色（第一列非空）—— 浅蓝底 */
+.md-typeset table tbody tr:has(> td:first-child:not(:empty)) {
+    background-color: #e3f2fd !important;
+}
+.md-typeset table tbody tr:has(> td:first-child:not(:empty)):hover {
+    background-color: #bbdefb !important;
+}
+[data-md-color-scheme="slate"] .md-typeset table tbody tr:has(> td:first-child:not(:empty)) {
+    background-color: #1e3a5f !important;
+}
+[data-md-color-scheme="slate"] .md-typeset table tbody tr:has(> td:first-child:not(:empty)):hover {
+    background-color: #0d47a1 !important;
+}
+
+/* 6. 模块列非空时：加粗 + 主题色左边条 */
+.md-typeset table tbody td:first-child:not(:empty) {
+    font-weight: 700;
+    color: var(--md-primary-fg-color);
+    border-left: 3px solid var(--md-primary-fg-color);
+}
+/* 空单元格视觉擦除，但保留左边条连贯 */
+.md-typeset table tbody td:empty {
+    border-top: none;
+    border-bottom: none;
+    background: transparent;
+    border-left: 3px solid var(--md-primary-fg-color);
+}
+
+/* 7. 章节列最小宽度，长文本自动折行 */
+.md-typeset table tbody td:nth-child(2) {
+    min-width: 300px;
+    max-width: 40%;
+    text-align: left;
+}
+
+/* 8. 状态标签通用 */
+.md-typeset .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.82em;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+/* 建设中 —— 橙黄（匹配截图） */
+.tag-wip { background: #fff3e0; color: #e65100; }
+/* 搁置 —— 灰蓝 */
+.tag-hold { background: #eceff1; color: #546e7a; }
+/* 建设完成 / L5完成 —— 绿色 */
+.tag-done, .tag-l5 { background: #e8f5e9; color: #2e7d32; }
+/* L3阶段 —— 粉红（匹配截图） */
+.tag-l3 { background: #ffcdd2; color: #b71c1c; }
+/* 无数据 */
+.tag-na { background: transparent; color: #9e9e9e; }
+
+/* 暗色模式 */
+[data-md-color-scheme="slate"] .tag-wip { background: #4e342e; color: #ffcc80; }
+[data-md-color-scheme="slate"] .tag-hold { background: #263238; color: #90a4ae; }
+[data-md-color-scheme="slate"] .tag-done, [data-md-color-scheme="slate"] .tag-l5 { background: #1b5e20; color: #a5d6a7; }
+[data-md-color-scheme="slate"] .tag-l3 { background: #5c1a1a; color: #ffcdd2; }
+[data-md-color-scheme="slate"] .tag-na { color: #757575; }
+
+/* 9. 快速链接列：蓝色链接，悬停下划线 */
+.md-typeset table td a {
+    color: var(--md-primary-fg-color);
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--md-primary-fg-color);
+    transition: border-bottom 0.2s;
+}
+.md-typeset table td a:hover {
+    border-bottom: 1px solid var(--md-primary-fg-color);
+}
+
+/* 10. 状态/复检/日期列居中 */
+.md-typeset table tbody td:nth-child(4),
+.md-typeset table tbody td:nth-child(5),
+.md-typeset table tbody td:nth-child(6) {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ========================================
+   首页折叠模块样式（与表格模块行统一）
+   ======================================== */
+
+/* details 容器去边框，像表格行 */
+.md-typeset details {
+    border: none;
+    box-shadow: none;
+    margin: 0.4rem 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* summary 样式：模仿原表格模块行（浅蓝底+左边条） */
+.md-typeset details > summary {
+    font-weight: 700;
+    font-size: 0.95rem;
+    background-color: #e3f2fd;
+    border-left: 3px solid var(--md-primary-fg-color);
+    padding: 0.6rem 1rem;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* summary 里的标签垂直居中 */
+.md-typeset details > summary .tag,
+.md-typeset details > summary .badge-b,
+.md-typeset details > summary .badge-i,
+.md-typeset details > summary .badge-e,
+.md-typeset details > summary .badge-m {
+    vertical-align: middle;
+    margin-left: 0.3rem;
+    flex-shrink: 0;
+}
+
+/* summary 右侧元信息（最后更新等） */
+.md-typeset details > summary .meta {
+    font-weight: 400;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* 展开后的内容区：内嵌表格去阴影，避免嵌套感太重 */
+.md-typeset details > table {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: none;
+    border: 1px solid var(--md-default-fg-color--lightest);
+    font-size: 0.85rem;
+}
+
+.md-typeset details > table th {
+    background-color: rgba(0,0,0,0.03);
+    padding: 0.5rem 0.75rem;
+}
+
+.md-typeset details > table td {
+    padding: 0.4rem 0.75rem;
+}
+
+/* 暗色模式 */
+[data-md-color-scheme="slate"] .md-typeset details > summary {
+    background-color: #1e3a5f;
+    border-left-color: var(--md-primary-fg-color);
+}
+
+[data-md-color-scheme="slate"] .md-typeset details > table {
+    border-color: #333;
+}
+
+[data-md-color-scheme="slate"] .md-typeset details > table th {
+    background-color: rgba(255,255,255,0.04);
+}
+
+/* 去掉 details 默认的蓝色左边框（Material 默认） */
+.md-typeset details {
+    border-left: none;
+}
+
+/* 右侧目录只显示二级标题，隐藏三级及以下 */
+.md-sidebar--secondary .md-nav[data-md-component="toc"] > .md-nav__list > .md-nav__item > .md-nav__list {
+    display: none;
+}
