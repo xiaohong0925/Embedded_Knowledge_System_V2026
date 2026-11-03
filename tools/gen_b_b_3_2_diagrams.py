@@ -59,17 +59,22 @@ def draw_tx(fname, title, cells, groups, figsize=(14, 3.4)):
 
     for i, (kind, levels, labels, color) in enumerate(cells):
         x0, x1 = i + 1.0, i + 2.0   # 0~1 为空闲段
-        if kind in ("start", "sr"):
-            if kind == "sr":
-                sda_to(x0, 1)       # 先回高，再在 SCL 高时下降
-            sda_to(x0 + 0.5, 0)     # SDA 在 SCL 高电平期间下降
+        if kind == "start":
             scl_to(x0, 1)
+            sda_to(x0 + 0.5, 0)     # SCL 已稳定为高，SDA 下降形成 START
+            scl_to(x1, 1)
+        elif kind == "sr":
+            scl_to(x0, 0)           # 先在 SCL 低电平期间释放 SDA
+            sda_to(x0 + 0.10, 1)
+            scl_to(x0 + 0.35, 1)    # 再拉高 SCL，留出建立时间
+            sda_to(x0 + 0.75, 0)    # SCL 稳定为高后，SDA 下降形成 Sr
             scl_to(x1, 1)
         elif kind == "stop":
-            sda_to(x0, 0)
-            sda_to(x0 + 0.5, 1)     # SDA 在 SCL 高电平期间上升
-            scl_to(x0, 1)
-            scl_to(x1, 1)
+            scl_to(x0, 0)           # 先在 SCL 低电平期间把 SDA 置低
+            sda_to(x0 + 0.10, 0)
+            scl_to(x0 + 0.35, 1)    # 再拉高 SCL，留出建立时间
+            sda_to(x0 + 0.75, 1)    # SCL 稳定为高后，SDA 上升形成 STOP
+            scl_to(x1, 1)           # STOP 后两线保持高，进入空闲
         else:
             lv = levels[0]
             sda_to(x0, lv)
@@ -80,7 +85,10 @@ def draw_tx(fname, title, cells, groups, figsize=(14, 3.4)):
         # 位标签
         if labels:
             for j, txt in enumerate(labels):
-                cx = x0 + (j + 0.5) / max(len(labels), 1) if len(labels) > 1 else x0 + 0.5
+                if kind in ("sr", "stop"):
+                    cx = x0 + 0.75  # 标签对准真正的 Sr / STOP 边沿
+                else:
+                    cx = x0 + (j + 0.5) / max(len(labels), 1) if len(labels) > 1 else x0 + 0.5
                 ax.text(cx, 0.5, txt, ha="center", va="center", fontsize=9.5,
                         color=color if color else GRAY)
         # 单元格底色

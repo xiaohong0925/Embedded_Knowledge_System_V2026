@@ -585,3 +585,334 @@ span.badge-m {
 .md-sidebar--secondary .md-nav[data-md-component="toc"] > .md-nav__list > .md-nav__item > .md-nav__list {
     display: none;
 }
+
+/* ========================================
+   阅读体验：中文排版、代码阅读与克制的导航
+   放在文件末尾，集中覆盖前面的初始美化规则。
+   ======================================== */
+
+body[data-md-color-scheme="default"] {
+    --md-text-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --md-code-font: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", "Microsoft YaHei", monospace;
+    --md-typeset-color: #273444;
+    --md-typeset-a-color: #2367a8;
+    --md-code-fg-color: #243142;
+    --md-code-bg-color: #f5f7fa;
+    --reader-muted-color: #5d6b7c;
+    --reader-border-color: #dfe5ec;
+    --reader-inline-code-bg: rgba(51, 65, 85, 0.055);
+}
+
+body[data-md-color-scheme="slate"] {
+    --md-text-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --md-code-font: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", "Microsoft YaHei", monospace;
+    --md-typeset-color: #d7e0ea;
+    --md-typeset-a-color: #7db9e8;
+    --md-code-fg-color: #dce5ef;
+    --md-code-bg-color: #17202b;
+    --reader-muted-color: #a4b1c0;
+    --reader-border-color: #344151;
+    --reader-inline-code-bg: rgba(148, 163, 184, 0.12);
+}
+
+html {
+    scroll-padding-top: 4.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+.md-typeset {
+    font-size: 17px;
+    line-height: 1.8;
+    letter-spacing: 0.002em;
+}
+
+.md-typeset p,
+.md-typeset li {
+    line-height: 1.85;
+}
+
+.md-typeset p {
+    margin-bottom: 1.15em;
+    text-wrap: pretty;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+    color: var(--md-typeset-color);
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.md-typeset h2 {
+    margin-top: 2.4em;
+    padding-bottom: 0.35em;
+    border-bottom: 1px solid var(--reader-border-color);
+}
+
+.md-typeset h3 {
+    margin-top: 2em;
+}
+
+.md-typeset strong {
+    font-weight: 650;
+}
+
+/* 行内代码只靠字体和极浅底色区分，不再把句子切成灰块。 */
+.md-typeset :not(pre) > code {
+    padding: 0.04em 0.24em;
+    border-radius: 3px;
+    background-color: var(--reader-inline-code-bg);
+    box-shadow: none;
+    color: inherit;
+    font-size: 0.9em;
+    line-height: inherit;
+}
+
+/* 代码块与正文同等重要，不再使用缩小字号。 */
+.md-typeset .highlight {
+    margin: 1.5em 0 1.75em;
+    border: 1px solid var(--reader-border-color);
+    border-radius: 8px;
+    background: var(--md-code-bg-color);
+    box-shadow: none;
+}
+
+.md-typeset .highlight pre,
+.md-typeset pre {
+    background: var(--md-code-bg-color);
+}
+
+.md-typeset pre > code {
+    display: block;
+    padding: 18px 20px;
+    border-radius: 7px;
+    font-size: 14px;
+    line-height: 1.75;
+    letter-spacing: 0;
+}
+
+.md-typeset .highlight .c,
+.md-typeset .highlight .c1,
+.md-typeset .highlight .ch,
+.md-typeset .highlight .cm,
+.md-typeset .highlight .cp,
+.md-typeset .highlight .cpf,
+.md-typeset .highlight .cs {
+    color: #667386;
+    font-style: normal;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .c,
+[data-md-color-scheme="slate"] .md-typeset .highlight .c1,
+[data-md-color-scheme="slate"] .md-typeset .highlight .ch,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cm,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cp,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cpf,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cs {
+    color: #9aa8b8;
+}
+
+/* 桌面端正文居中并限制阅读宽度，侧边栏退到次要层级。 */
+@media screen and (min-width: 1220px) {
+    .md-content__inner {
+        max-width: 940px !important;
+        margin-right: auto !important;
+        margin-left: auto !important;
+        padding-right: 32px;
+        padding-left: 32px;
+    }
+}
+
+.md-sidebar .md-nav__link {
+    line-height: 1.55;
+    transition: color 160ms ease, background-color 160ms ease;
+}
+
+.md-sidebar--secondary .md-nav__link {
+    color: var(--reader-muted-color);
+}
+
+.md-sidebar .md-nav__link--active,
+.md-sidebar .md-nav__link[aria-current="page"] {
+    color: var(--md-typeset-a-color);
+    font-weight: 600;
+}
+
+.md-sidebar .md-nav__link:hover {
+    color: var(--md-typeset-a-color);
+}
+
+.md-typeset a:focus-visible,
+.md-nav__link:focus-visible,
+.md-header__button:focus-visible {
+    outline: 2px solid var(--md-typeset-a-color);
+    outline-offset: 3px;
+}
+
+@media screen and (max-width: 959px) {
+    /* 只在正文容器留白，避免四层容器叠加 padding 后横向溢出。 */
+    .md-grid,
+    .md-main__inner,
+    .md-content {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    .md-content {
+        min-width: 0;
+    }
+
+    .md-content__inner {
+        padding-right: 16px !important;
+        padding-left: 16px !important;
+    }
+
+    .md-typeset {
+        font-size: 16px;
+    }
+
+    .md-typeset pre > code {
+        padding: 14px 16px;
+        font-size: 14px;
+    }
+}
+
+/* ========================================
+   正文组件：普通表格、代码标题与自检问答
+   首页的模块表格继续使用前面的彩色状态样式。
+   ======================================== */
+
+/* 普通教学表格不再继承首页的蓝色首列与模块行。 */
+.md-typeset table:not(:has(.tag)) {
+    overflow: hidden;
+    border: 1px solid var(--reader-border-color);
+    border-radius: 8px;
+    box-shadow: none;
+    font-size: 0.88em;
+}
+
+.md-typeset table:not(:has(.tag)) thead th {
+    padding: 0.75em 0.9em;
+    border-bottom: 1px solid var(--reader-border-color);
+    background: var(--md-code-bg-color);
+    color: var(--md-typeset-color);
+    font-weight: 650;
+    line-height: 1.55;
+    white-space: normal;
+}
+
+.md-typeset table:not(:has(.tag)) tbody td {
+    padding: 0.68em 0.9em;
+    border-top: 0;
+    border-bottom: 1px solid var(--reader-border-color);
+    line-height: 1.65;
+    vertical-align: top;
+}
+
+.md-typeset table:not(:has(.tag)) tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.md-typeset table:not(:has(.tag)) tbody tr,
+.md-typeset table:not(:has(.tag)) tbody tr:nth-child(even),
+.md-typeset table:not(:has(.tag)) tbody tr:has(> td:first-child:not(:empty)) {
+    background: transparent !important;
+}
+
+.md-typeset table:not(:has(.tag)) tbody tr:hover td {
+    background: var(--reader-inline-code-bg);
+}
+
+.md-typeset table:not(:has(.tag)) tbody td:first-child:not(:empty) {
+    border-left: 0;
+    color: var(--md-typeset-color);
+    font-weight: 600;
+}
+
+.md-typeset table:not(:has(.tag)) tbody td:nth-child(2) {
+    min-width: 0;
+    max-width: none;
+}
+
+.md-typeset table:not(:has(.tag)) tbody td:empty {
+    border-left: 0;
+}
+
+/* SuperFences 的 title 只承担来源、文件名或用途说明。 */
+.md-typeset .highlight .filename,
+.md-typeset .highlighttitle {
+    display: block;
+    margin: 0;
+    padding: 0.62em 1.15rem;
+    border-bottom: 1px solid var(--reader-border-color);
+    background: var(--md-code-bg-color);
+    color: var(--reader-muted-color);
+    font-family: var(--md-text-font);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+}
+
+.md-typeset .highlight .filename + pre {
+    border-top: 0;
+}
+
+/* 自检问答：撤销首页 summary 的 flex 布局，恢复自然中英混排。 */
+.md-typeset h2[id="本节自查"] ~ details {
+    margin: 0.75rem 0;
+    overflow: hidden;
+    border: 1px solid var(--reader-border-color);
+    border-radius: 8px;
+    background: transparent;
+}
+
+.md-typeset h2[id="本节自查"] ~ details > summary {
+    position: relative;
+    display: block;
+    padding: 0.8rem 2.8rem 0.8rem 1rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 0.94em;
+    font-weight: 600;
+    line-height: 1.75;
+    text-align: left;
+}
+
+.md-typeset h2[id="本节自查"] ~ details > summary::before {
+    display: none;
+}
+
+.md-typeset h2[id="本节自查"] ~ details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.md-typeset h2[id="本节自查"] ~ details > summary:hover {
+    background: var(--reader-inline-code-bg);
+}
+
+.md-typeset h2[id="本节自查"] ~ details[open] > summary {
+    border-bottom: 1px solid var(--reader-border-color);
+    background: var(--reader-inline-code-bg);
+}
+
+.md-typeset h2[id="本节自查"] ~ details > summary code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.md-typeset h2[id="本节自查"] ~ details > p {
+    margin: 0;
+    padding: 0.85rem 1rem 1rem;
+    font-size: 0.94em;
+    line-height: 1.8;
+}

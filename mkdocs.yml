@@ -10,14 +10,14 @@ theme:
   palette:
     - media: '(prefers-color-scheme: light)'
       scheme: default
-      primary: blue
+      primary: blue grey
       accent: blue
       toggle:
         icon: material/brightness-7
         name: 切换暗色模式
     - media: '(prefers-color-scheme: dark)'
       scheme: slate
-      primary: blue
+      primary: blue grey
       accent: light-blue
       toggle:
         icon: material/brightness-4
@@ -29,9 +29,8 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
-  font:
-    text: Roboto
-    code: Roboto Mono
+  # 不依赖在线字体服务；中英文与代码字体栈在 extra.css 中统一定义。
+  font: false
 plugins:
   - search:
       lang:
@@ -700,9 +699,10 @@ nav:
           - B.3 I2C:
               - B-B.3.1 I2C物理层与电气特性: B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md
               - B-B.3.2 I2C协议层与帧格式: B. 总线协议/B. 低速外设接口/B-B.3.2_I2C协议层与帧格式.md
-              - B-B.3.3 I2C Linux驱动框架与SMBus: B. 总线协议/B. 低速外设接口/B-B.3.3_I2C Linux驱动框架与SMBus.md
+              - B-B.3.3 I2C Linux驱动框架: B. 总线协议/B. 低速外设接口/B-B.3.3_I2C Linux驱动框架.md
               - B-B.3.4 I2C调试工具与故障排查: B. 总线协议/B. 低速外设接口/B-B.3.4_I2C调试工具与故障排查.md
               - B-B.3.5 实战AT24C02 EEPROM端到端读写: B. 总线协议/B. 低速外设接口/B-B.3.5_实战AT24C02_EEPROM端到端读写.md
+              - B-B.3.6 SMBus与PMBus: B. 总线协议/B. 低速外设接口/B-B.3.6_SMBus与PMBus.md
           - B.4 SPI:
               - B-B.4.1 SPI物理层与四种模式: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md
               - B-B.4.2 SPI协议层与时序: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md
