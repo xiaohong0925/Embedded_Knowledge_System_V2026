@@ -2,365 +2,769 @@
 
 > 所属章节：第五部 B. 总线协议 > B-B.3 I2C 总线
 >
-> 难度：[B→I] Beginner → Intermediate | 预计阅读时间：40 分钟
+> 难度：[B→I] Beginner → Intermediate | 预计阅读时间：50 分钟
 
-## <span class="blue">本节导读：同样两根线，协议各自增加了什么
+## <span class="blue">本节导读：可以只用 I2C，但不能省掉器件协议
 
-B-B.3.2 已经讲清 I2C 怎样传输地址和字节，B-B.3.3 又沿一笔 AT24C02 读取走通了 Linux I2C Core 与控制器。可到了系统管理和电源芯片资料中，同样的 SDA、SCL 又被称为 SMBus、PMBus，Linux 还同时提供 `i2c_smbus_*()` 和 pmbus 驱动。它们究竟是不是不同的硬件，软件又分别在哪一层工作？
+只用普通 I2C 读写电源芯片，再由自己的代码解析结果，当然可行。SMBus 和 PMBus 都不是绕不开的另一组引脚，也不要求换一套控制器寄存器。
 
-本篇只回答一个主问题：**I2C、SMBus、PMBus 如何逐层增加约束，一笔输出电压读取又怎样从 PMBus 命令变成 hwmon 中的 1500 mV？**
+真正的问题是：**省掉现成的 SMBus／PMBus 软件之后，哪些工作仍然必须有人完成？**
 
-先建立全文使用的责任线：
+一笔电压读取至少包含四类工作：
+
+1. 用 SDA、SCL 把地址、命令和字节送到芯片；
+2. 按约定组合“写命令、重复 START、读数据”的事务；
+3. 选择输出页，并按芯片规定解释命令和原始数据；
+4. 把结果变成其他软件能够直接使用的电压读数。
+
+I2C 提供第 1 项的传输基础，也能用消息组合承载第 2 项，但不统一器件的事务语义。SMBus 统一第 2 项的一部分事务格式，PMBus 规定第 3 项的电源命令与数据语义，Linux 的 pmbus 和 hwmon（硬件监控）则把第 3、4 项做成可复用的系统功能。
+
+本篇用同一颗真实器件、同一路输出、同一组预期字节，把三条软件路径走通：
+
+- **路径 A：原始 `i2c_transfer()` 加自行解析。** 自己构造每条消息，也自己处理 PAGE 和电压格式。
+- **路径 B：`i2c_smbus_*()` 加自行解析。** 固定事务交给辅助函数，PAGE 和电压格式仍由自己处理。
+- **路径 C：Linux pmbus 加 hwmon。** 器件驱动声明能力，pmbus 核心处理页、命令和解码，hwmon 导出毫伏值。
+
+贯穿实例选用德州仪器（TI）TPS40422 双路直流转换器。受控实验把它的 7 位地址配置为 `0x30`，读取第 1 页，也就是第二路输出的电压。PAGE 是选择输出页的命令，VOUT_MODE 描述电压数据格式，READ_VOUT 读取实测电压。假设芯片在该时刻测得 1.5 V，则：
 
 ```text
-I2C：两线电气基础、地址、START/STOP、逐字节收发与 ACK/NACK
-  ↓ 沿用基础并增加系统管理约束
-SMBus：固定事务格式、时钟低超时、时钟延展限制、可选 PEC
-  ↓ 以 SMBus 事务承载电源领域命令
-PMBus：PAGE、VOUT_MODE、READ_VOUT、状态与电源数据格式
-  ↓ 由 Linux 驱动解码并统一导出
-pmbus + hwmon：页选择与读取、数值转换、标准单位和 sysfs 文件
+VOUT_MODE = 0x17：线性模式，指数 -9
+READ_VOUT 线上返回：00 03
+软件组成原始字：0x0300 = 768
+电压：768 × 2^(-9) = 1.5 V
+hwmon 文本：1500，单位为 mV
 ```
 
-这里的箭头表示能力逐层承接，不表示所有下层设备都自动满足上层规范。普通 AT24C02 可以借用一种 SMBus 字节格式，却不会因此变成完整的 SMBus 器件；能执行 SMBus Word Data 的芯片，也不会自动理解 PMBus 的 `READ_VOUT`。
-
-阅读本篇需要 B-B.3.2 的重复 START 和读写方向，以及 B-B.3.3 的 `i2c_client`、`i2c_msg`、`i2c_transfer()`。规范边界参考 [SMBus 3.3.1](https://smbus.org/specs/SMBus_3_3_1_20241020.pdf) 与 [PMBus 1.3.1 Part II](https://pmbus.org/wp-content/uploads/2022/01/PMBus-Specification-Rev-1-3-1-Part-II-20150313.pdf)，Linux 调用链以本地 v6.6 源码为核对基准。
+这些数值来自 TPS40422 手册规定的格式和本例设定的测量结果，不是上板实录。阅读本篇需要 B-B.3.2 的重复 START、读写方向，以及 B-B.3.3 的 `i2c_client`、`i2c_msg` 和 `i2c_transfer()`。Linux 对象与调用关系以 v6.6 源码为核验基准。
 
 ---
 
-## <span class="blue">第一层：I2C 传字节，但不统一字节含义
+## <span class="blue">一、三层协议分别替软件做什么
 
-I2C 规定设备地址怎样上线、数据按什么节拍传输、接收方怎样应答，却没有统一规定所有器件的第一个数据字节必须是“命令”，也没有统一命令字后面的数据长度和数值格式。
+### I2C 把字节送到，却不规定字节代表什么
 
-以 AT24C02 为例，软件先写存储地址 `0x10`，再用重复 START 读一个字节。这里的 `0x10` 是 EEPROM 内部位置，是 AT24C02 自己规定的含义。换一颗传感器，同一个线上字节可能表示配置寄存器；换一颗电源芯片，它又可能表示 PMBus 命令码。
+I2C 规定设备地址、START／STOP、读写方向和逐字节应答。它没有统一规定所有器件的第一个数据字节必须是命令，也不认识“输出电压”。
 
-因此，“I2C 读成功”只说明地址、方向和字节传输完成。至于读回的是 EEPROM 内容、温度原始值还是输出电压编码，需要由更上层的器件协议解释。
+因此，下面这条结论只覆盖传输层：
 
-SMBus 和 PMBus 正是在这个空缺上工作：SMBus 先统一一批事务形状，PMBus 再规定电源设备使用哪些命令、命令返回什么电源语义。
+> 控制器成功发出 `0x8b`，并从地址 `0x30` 读回两个字节。
+
+软件仍然不知道 `0x8b` 为什么是 `READ_VOUT`，也不知道这两个字节能不能直接乘以某个固定系数。后两项属于器件协议。
+
+### SMBus 固定事务形状，并补上管理通道的约束
+
+SMBus（System Management Bus）沿用两线传输，把常见操作定义成固定事务。本例会用到两种：
+
+- **Byte Data**：一个命令码加一个数据字节。本例用它读写 PAGE、读取 VOUT_MODE。
+- **Word Data**：一个命令码加两个数据字节，低字节先传。本例用它读取 READ_VOUT。
+
+以 Word Data Read 为例，线上顺序是：
+
+```text
+S → 地址+W → 命令码 → Sr → 地址+R → 低字节 → 高字节 → P
+```
+
+`S`、`Sr`、`P` 分别表示 START、重复 START、STOP。Linux 看到 `i2c_smbus_read_word_data()` 后，能据此生成或执行这笔固定事务；但它仍然不知道命令 `0x8b` 的电源语义。
+
+SMBus 还规定了普通 I2C 没有统一规定的管理行为。`tTIMEOUT` 用于从持续拉低时钟的异常中恢复，`tLOW:SEXT` 限制从设备在一笔消息中累计延展时钟的时间。PEC（Packet Error Checking）则可在事务末尾增加 CRC-8（8 位循环冗余校验）校验字节，用于检错而不是纠错。
+
+这些能力都不能只凭函数名推定。控制器、外设和软件配置必须共同支持；一笔 PEC 校验通过，也只能说明事务字节未被发现损坏，不能证明页选对了、电压解码正确。
+
+### PMBus 让不同电源芯片说同一种命令语言
+
+PMBus（Power Management Bus）把 SMBus 事务承载的内容定义成电源命令。例如：
+
+- `PAGE (0x00)` 选择后续页相关命令作用于哪一路；
+- `VOUT_MODE (0x20)` 说明输出电压数据采用哪种格式；
+- `READ_VOUT (0x8b)` 读取当前测得的输出电压，而不是目标设定值。
+
+这就是 PMBus 存在的价值：软件可以围绕标准命令和统一监控接口组织代码，而不是给每家芯片都发明一套应用层寄存器解析流程。
+
+不过，PMBus 允许器件支持不同命令子集和数据格式，具体芯片手册仍是最终依据。不能看到一颗 I2C 电源芯片，就假设它一定支持上述三个命令。
 
 ---
 
-## <span class="blue">第二层：SMBus 把系统管理事务固定下来
+## <span class="blue">二、先把同一笔读取完整展开
 
-### 命令码不是设备地址
+TPS40422 有两个 PMBus 页。手册中的 PAGE 真值表规定：`PAGE=0` 选择第一路，`PAGE=1` 选择第二路，`PAGE=3` 表示同时选择两路；本例不使用广播式的 `PAGE=3`，只写 `1`。
 
-SMBus 的许多事务在设备地址之后发送一个 Command Code，本文译为命令码。它用于选择从设备内部的操作，与 I2C 地址承担的任务不同：
+地址也不是芯片永远固定的 `0x30`。ADDR0、ADDR1 两个引脚通过不同电阻选择两位八进制地址，共可配置 64 个地址。本例只是约定实验硬件已经把地址配置为 `0x30`。
 
-- **设备地址**选择总线上的哪颗芯片。
-- **命令码**选择这颗芯片要执行的哪项操作。
-- **数据字节**承载该操作的输入或输出。
+读取第二路电压时，软件需要完成下面这组有序操作：
 
-以 SMBus Byte Data Read 为例，线上顺序为：
+1. 读取当前 PAGE，保存旧值，避免用完芯片后把别的访问者留在错误上下文；
+2. 写入 `PAGE=1`，再读回 PAGE，确认选择已经生效；
+3. 读取 `VOUT_MODE`，本例应得到只读值 `0x17`；
+4. 读取 `READ_VOUT`，得到两字节测量值；
+5. 恢复第 1 步保存的旧 PAGE；
+6. 把原始字和 VOUT_MODE 一起解码为电压。
 
-```text
-S → 设备地址+W → Command Code → Sr → 设备地址+R → Data → NACK → P
-```
+注意第 3 步和第 4 步不能合并成一个“读寄存器”概念。前者告诉软件怎样解释数据，后者才是数据本身。TPS40422 的 VOUT_MODE 固定不变，正式驱动可以在初始化时缓存；教学代码每次读出，是为了让输入和输出都能被看见。
 
-`S`、`Sr`、`P` 分别是 START、重复 START、STOP。第一段写告诉从设备“接下来要读哪个命令”，第二段再切换方向取回一个字节。它与 B-B.3.2 的寄存器读取形状一致，所以普通 I2C 控制器可以在不提供专用 SMBus 硬件方法时实现它。
+三条路径在第 1～5 步上的责任划分如下：
 
-常见事务的差别不能只看函数名：
+- 路径 A 自己构造每一次 Byte Data、Word Data 对应的 `i2c_msg`；
+- 路径 B 用 SMBus 辅助函数完成同样的总线事务，但仍自己安排上述顺序；
+- 路径 C 由 pmbus 核心安排页选择、能力探测和读取，应用只读取 hwmon 属性。
 
-| 事务 | 命令码后的数据形状 | 读取时谁决定长度 |
-|---|---|---|
-| Byte | 没有独立命令码，只收发一个字节 | 固定为 1 字节 |
-| Byte Data | 一个命令码加一个字节 | 固定为 1 字节 |
-| Word Data | 一个命令码加两个字节，低字节在前 | 固定为 2 字节 |
-| SMBus Block | 数据前有 Count，最多 32 字节 | Block Read 由从设备返回 Count |
-| I2C Block | 没有 SMBus 的 Count 字段，Linux 接口同样最多 32 字节 | 调用方在读取前指定长度 |
-
-最后两行尤其容易混淆。SMBus Block Read 的线上数据包含长度字节，I2C Block Read 则按调用方预定长度接收；把二者只当作同一函数的两个别名，会直接导致缓冲区长度和字节解释错误。
-
-### 超时和延展限制让异常总线能够恢复
-
-普通 I2C 允许主设备在事务中暂停，也允许从设备通过时钟延展争取处理时间，但 I2C 本身没有与 SMBus 相同的统一恢复时限。若系统管理设备永久拉住 SCL，整个管理通道可能无法继续工作。
-
-SMBus 3.3.1 为事务中的时钟行为增加了明确约束：
-
-- `tTIMEOUT` 的检测窗口为 25～35 ms。检测到时钟异常持续拉低的设备应复位通信接口，并在规定时间内恢复接收新 START 的能力。
-- `tLOW:TEXT` 限制从设备在一笔消息中累计延展时钟的时间，上限为 25 ms。它约束正常延展的总时长，与检测异常低电平的 `tTIMEOUT` 不是同一个参数。
-
-现行规范列出 100 kHz、400 kHz、1 MHz 三类最高总线速率，事务中的最低工作频率为 10 kHz；总线空闲时不打时钟不属于违规。早期资料中的“10～100 kHz”只覆盖早期速率等级，不能概括现行规范。
-
-这些差异也提醒我们：I2C 与 SMBus 共享基本波形，不等于任意两类器件混挂就一定兼容。仍需检查电平、灌电流、速率、延展和超时条件，不能只检查引脚名称。
-
-### PEC 给整笔事务增加检错，但不负责纠错
-
-PEC（Packet Error Checking）是在事务末尾附加的 CRC-8 校验字节。CRC-8 是 8 位循环冗余校验，接收方根据地址、命令和数据重新计算校验值，再与收到的 PEC 比较，从而发现传输内容是否改变。
-
-PEC 有三个边界：
-
-1. 它检错，不把错误位自动改正确，也不能替代电源或通信故障处理。
-2. 它是可选能力，需要器件和主机实现共同支持并启用，不能由软件单方面向不支持 PEC 的器件追加一个字节。
-3. 它保护的是一笔事务的字节完整性，不保证命令本身合法，也不保证读取时的 PAGE 选择正确。
-
-Linux 用 `I2C_FUNC_SMBUS_PEC` 表示适配器的 PEC 能力，用 client 的 `I2C_CLIENT_PEC` 标志启用该外设的校验。pmbus 核心还会结合器件 `CAPABILITY` 的返回结果决定是否设置这个标志。
+所以，“不用 pmbus 驱动”并不等于“不用实现 PMBus”。它只是把 PMBus 的实现从通用驱动搬到了自己的代码里。
 
 ---
 
-## <span class="blue">SMBus 接口在 Linux 中怎样落回普通 I2C
+## <span class="blue">三、路径 B：SMBus 辅助函数消除了哪部分手工工作
 
-### 普通 I2C EEPROM 为什么能借用 Byte Data
+先看本例最关键的三个调用。它们还不是完整程序，只用来把函数参数与前面的操作一一对应：
 
-AT24C02 的“先写存储地址，再读一个字节”与 SMBus Byte Data Read 的字节形状一致，因此可以使用 `i2c_smbus_read_byte_data()`。这里复用的是**事务格式**，不是宣称 AT24C02 支持 SMBus 的全部超时、PEC 和系统管理规则。
+```c title="三个 SMBus 调用与 PMBus 命令的对应关系"
+s32 old_page;
+s32 mode;
+s32 word;
+int ret;
 
-沿用 B-B.3.3 的教学模块，可以把读取辅助函数替换为下面的版本，并把 `probe()` 中的能力检查改为 `I2C_FUNC_SMBUS_BYTE_DATA`：
+old_page = i2c_smbus_read_byte_data(client, 0x00);
+/* 返回负错误；非负值就是当前 PAGE，不是“读成功”的布尔值。 */
 
-```c title="教学代码 · 替换 B-B.3.3 的读取辅助函数"
-static int demo_read_reg_smbus(struct i2c_client *client,
-                               u8 reg, u8 *value)
-{
-    s32 ret;                   /* 负错误，或 0～255 的数据字节 */
+ret = i2c_smbus_write_byte_data(client, 0x00, 1);
+/* 写命令 0x00 的数据字节 1；成功返回 0，失败返回负错误。 */
 
-    ret = i2c_smbus_read_byte_data(client, reg);
-    if (ret < 0)
-        return ret;            /* 负数不能当作寄存器值 */
+mode = i2c_smbus_read_byte_data(client, 0x20);
+/* 本例预期非负返回值 0x17。 */
 
-    *value = (u8)ret;          /* 非负返回值才是一字节数据 */
-    return 0;                  /* 本辅助函数用 0 表示成功 */
-}
+word = i2c_smbus_read_word_data(client, 0x8b);
+/* 本例预期非负返回值 0x0300；辅助函数已组合低、高字节。 */
 ```
 
-`client` 提供器件地址和所属适配器，`reg` 在本例是 `0x10`，`value` 是调用者提供的接收位置。`u8` 是 8 位无符号整数，`s32` 则能同时表示负错误码和一字节非负数据。
+这里的 `client` 是 B-B.3.3 已建立的 I2C 外设对象，内含适配器和设备地址。`s32` 是 32 位有符号整数，用来同时容纳负错误码和非负数据。不能把 `word < 0` 的检查省掉，再把负错误强转成 `u16`，否则通信故障会伪装成某个很大的原始电压。
 
-这与 `i2c_transfer()` 的成功返回值不同：后者返回完成的消息数，本例手工构造两条消息时成功为 2；`i2c_smbus_read_byte_data()` 的非负返回值本身就是数据。能力检查只说明适配器能实现该事务，仍须由器件手册确认这种格式是否适用于外设。
+`i2c_smbus_read_word_data()` 内部调用 `i2c_smbus_xfer()`，并传入 `I2C_SMBUS_READ` 和 `I2C_SMBUS_WORD_DATA`。这两个常量分别说明方向和事务类型。Core 随后有两条执行路径：
 
-### 原生与模拟是两条软件路径，不是两组引脚
+- 控制器驱动提供 `algo->smbus_xfer()` 时，可由它原生执行 SMBus 事务；
+- 没有该方法时，Core 用 `i2c_smbus_xfer_emulated()` 构造普通 `i2c_msg`；
+- 原生方法返回 `-EOPNOTSUPP`，且控制器仍有 `master_xfer` 时，也会回退到模拟路径。
 
-Linux v6.6 的 `drivers/i2c/i2c-core-smbus.c` 中，上述辅助函数把地址、方向和事务类型交给 `i2c_smbus_xfer()`：
+因此，SMBus 辅助函数不是绕过 I2C Core 的另一套驱动。它只是把固定事务的表达和部分执行工作集中起来。对 Word Data Read，模拟路径同样形成“写命令、重复 START、读两字节”，并用 `msgbuf1[0] | (msgbuf1[1] << 8)` 组合返回值。
 
-```c title="源码节选 · i2c_smbus_read_byte_data()"
-status = i2c_smbus_xfer(client->adapter, client->addr, client->flags,
-                        I2C_SMBUS_READ, command,
-                        I2C_SMBUS_BYTE_DATA, &data);
-return (status < 0) ? status : data.byte;
-```
+路径 B 比路径 A 少写的是消息数组、方向标志、返回消息数和低高字节组合。**它没有替我写 PAGE 顺序、VOUT_MODE 判断、页恢复和电压换算。** 这正是下一节完整模块要保留的部分。
 
-`I2C_SMBUS_READ` 表示读，`I2C_SMBUS_BYTE_DATA` 表示“命令码加一字节数据”。随后 Core 根据控制器方法表选择路径：
+---
 
-```text
-                           ┌─ algo->smbus_xfer()
-i2c_smbus_xfer() ──────────┤    控制器原生执行 SMBus 事务
-                           │
-                           └─ i2c_smbus_xfer_emulated()
-                                → 构造普通 i2c_msg
-                                → __i2c_transfer()
-                                → master_xfer()
-```
+## <span class="blue">四、把路径 A 和路径 B 放进同一个教学模块
 
-原生路径由控制器驱动直接处理 SMBus 事务；模拟路径由 Core 拆成普通 I2C 消息。两条路径最终都到同一控制器和同一组 SDA、SCL，但原生 `smbus_xfer()` 不应被误写成又调用普通 `master_xfer()`。
+### 设备树先创建实验要操作的 client
 
-对 Byte Data Read，模拟路径准备两条消息：第一条写命令码，第二条读一个字节。相关源码片段为：
+下面片段放进目标板实际启用 I2C 控制器的设备树。`i2c2` 只是示例标签，必须替换为板级文件中连接 TPS40422 的控制器；100 kHz 是本例选择的工作速率。
 
-```c title="源码节选 · i2c_smbus_xfer_emulated()"
-int nmsgs = read_write == I2C_SMBUS_READ ? 2 : 1;
-struct i2c_msg msg[2] = {
-    { .addr = addr, .flags = flags, .len = 1, .buf = msgbuf0 },
-    { .addr = addr, .flags = flags | I2C_M_RD,
-      .len = 0, .buf = msgbuf1 },
+```dts title="board.dts 片段 · TPS40422 挂在 i2c2 的 0x30"
+&i2c2 {
+    status = "okay";
+    clock-frequency = <100000>;
+
+    pmbus@30 {
+        compatible = "ti,tps40422";
+        reg = <0x30>;             /* 由 ADDR0/ADDR1 电阻配置出的 7 位地址 */
+    };
 };
-msgbuf0[0] = command;
-
-case I2C_SMBUS_BYTE_DATA:
-    if (read_write == I2C_SMBUS_READ)
-        msg[1].len = 1;
-    break;
-
-status = __i2c_transfer(adapter, msg, nmsgs);
 ```
 
-`msgbuf0[0]` 保存本例的 `0x10`，`msgbuf1` 接收数据。`I2C_M_RD` 是普通 I2C 消息的读方向标志，`__i2c_transfer()` 是调用者已经持锁时使用的内部入口。于是，B-B.3.3 手写的两条消息与这里的模拟路径在线上形成相同的“写、重复 START、读”结构。
+`reg` 给出地址，`compatible` 描述器件型号。v6.6 的 `of_i2c_register_devices()` 遍历可用子节点，`of_i2c_get_board_info()` 读取这两个属性，`i2c_new_client_device()` 创建 `i2c_client`。其中 client 名称会从首个 compatible 去掉厂商前缀，得到 `"tps40422"`，后续可与驱动的 I2C ID 表匹配。
 
-选择接口时先看器件手册的字节序列，再看函数长短。固定 Byte Data、Word Data 等格式适合 `i2c_smbus_*()`；自定义组合、较长 EEPROM 连续读或不符合固定事务的格式仍使用 `i2c_transfer()`。
+节点名 `pmbus` 只用于可读性，不参与这里的驱动匹配。正式项目仍应使用目标内核水线对应的设备树绑定规则检查整棵 DTS，不能只凭本片段认定已通过绑定验证。
+
+### 完整模块：两种总线写法，共用同一套 PMBus 语义
+
+把下面内容保存为 `pmbus_vout_demo.c`。它以 Linux v6.6 的外部模块接口为上下文，通过 `i2c_driver` 在 probe 中完成读取。代码只读监测命令，不写 `VOUT_COMMAND`，不改变输出电压设定。
+
+```c title="pmbus_vout_demo.c · 路径 A/B 对照教学模块"
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/device.h>
+#include <linux/err.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/types.h>
+
+/* 三个命令码来自 TPS40422 手册，不依赖 pmbus 驱动的内部头文件。 */
+#define DEMO_PAGE_CMD       0x00
+#define DEMO_VOUT_MODE_CMD  0x20
+#define DEMO_READ_VOUT_CMD  0x8b
+#define DEMO_TARGET_PAGE    1
+#define DEMO_EXPECTED_MODE  0x17    /* TPS40422 的只读 VOUT_MODE */
+
+struct demo_reading {
+    u8 mode;                    /* VOUT_MODE 返回的一个字节 */
+    u16 raw;                    /* READ_VOUT 组合后的 16 位原始字 */
+};
+
+/* i2c_transfer() 返回完成的消息数；短消息也按失败处理。 */
+static int demo_xfer_result(int ret, int expected)
+{
+    if (ret < 0)
+        return ret;             /* 保留控制器/Core 给出的负错误码 */
+
+    return ret == expected ? 0 : -EIO;
+}
+
+/* ---------- 路径 B：SMBus 辅助函数 ---------- */
+
+static int demo_select_page_smbus(struct i2c_client *client, u8 page)
+{
+    s32 check;
+    int ret;
+
+    ret = i2c_smbus_write_byte_data(client, DEMO_PAGE_CMD, page);
+    if (ret < 0)
+        return ret;
+
+    check = i2c_smbus_read_byte_data(client, DEMO_PAGE_CMD);
+    if (check < 0)
+        return check;
+
+    /* 写调用返回 0 不代表芯片一定接受了页号，所以读回核对。 */
+    return check == page ? 0 : -EIO;
+}
+
+static int demo_read_vout_smbus(struct i2c_client *client,
+                                struct demo_reading *reading)
+{
+    s32 old_page;
+    s32 value;
+    int ret;
+    int restore_ret;
+
+    /* old_page 位于本次调用的栈上，是访问者自己的副本。 */
+    old_page = i2c_smbus_read_byte_data(client, DEMO_PAGE_CMD);
+    if (old_page < 0)
+        return old_page;
+
+    ret = demo_select_page_smbus(client, DEMO_TARGET_PAGE);
+    if (ret < 0)
+        goto restore_page;
+
+    value = i2c_smbus_read_byte_data(client, DEMO_VOUT_MODE_CMD);
+    if (value < 0) {
+        ret = value;
+        goto restore_page;
+    }
+    reading->mode = (u8)value;
+
+    value = i2c_smbus_read_word_data(client, DEMO_READ_VOUT_CMD);
+    if (value < 0) {
+        ret = value;
+        goto restore_page;
+    }
+
+    /* 只有非负返回值才是数据；此时才能安全缩窄为 u16。 */
+    reading->raw = (u16)value;
+    ret = 0;
+
+restore_page:
+    /* 成功和失败路径都恢复原页，避免把共享状态留在第 1 页。 */
+    restore_ret = i2c_smbus_write_byte_data(client, DEMO_PAGE_CMD,
+                                            (u8)old_page);
+    if (restore_ret < 0 && ret == 0)
+        ret = restore_ret;      /* 读取虽成功，恢复失败也不能静默忽略 */
+
+    return ret;
+}
+
+/* ---------- 路径 A：手工构造等价 i2c_msg ---------- */
+
+static int demo_raw_write_byte_data(struct i2c_client *client,
+                                    u8 command, u8 value)
+{
+    u8 buf[2] = { command, value };
+    struct i2c_msg msg = {
+        .addr = client->addr,
+        .flags = client->flags,
+        .len = 2,
+        .buf = buf,
+    };
+    int ret;
+
+    /* 一条写消息包含命令码和数据；成功时完成消息数为 1。 */
+    ret = i2c_transfer(client->adapter, &msg, 1);
+    return demo_xfer_result(ret, 1);
+}
+
+static int demo_raw_read_byte_data(struct i2c_client *client,
+                                   u8 command, u8 *value)
+{
+    u8 command_buf[1] = { command };
+    u8 data_buf[1];
+    struct i2c_msg msgs[2] = {
+        {
+            .addr = client->addr,
+            .flags = client->flags,
+            .len = 1,
+            .buf = command_buf,
+        },
+        {
+            .addr = client->addr,
+            .flags = client->flags | I2C_M_RD,
+            .len = 1,
+            .buf = data_buf,
+        },
+    };
+    int ret;
+
+    /* 两条消息之间由 Core 生成重复 START，而不是先发 STOP。 */
+    ret = i2c_transfer(client->adapter, msgs, 2);
+    ret = demo_xfer_result(ret, 2);
+    if (ret < 0)
+        return ret;
+
+    *value = data_buf[0];
+    return 0;
+}
+
+static int demo_raw_read_word_data(struct i2c_client *client,
+                                   u8 command, u16 *value)
+{
+    u8 command_buf[1] = { command };
+    u8 data_buf[2];
+    struct i2c_msg msgs[2] = {
+        {
+            .addr = client->addr,
+            .flags = client->flags,
+            .len = 1,
+            .buf = command_buf,
+        },
+        {
+            .addr = client->addr,
+            .flags = client->flags | I2C_M_RD,
+            .len = 2,
+            .buf = data_buf,
+        },
+    };
+    int ret;
+
+    ret = i2c_transfer(client->adapter, msgs, 2);
+    ret = demo_xfer_result(ret, 2);
+    if (ret < 0)
+        return ret;
+
+    /* Word Data 低字节先上线：00 03 在这里组成 0x0300。 */
+    *value = (u16)data_buf[0] | ((u16)data_buf[1] << 8);
+    return 0;
+}
+
+static int demo_select_page_raw(struct i2c_client *client, u8 page)
+{
+    u8 check;
+    int ret;
+
+    ret = demo_raw_write_byte_data(client, DEMO_PAGE_CMD, page);
+    if (ret < 0)
+        return ret;
+
+    ret = demo_raw_read_byte_data(client, DEMO_PAGE_CMD, &check);
+    if (ret < 0)
+        return ret;
+
+    return check == page ? 0 : -EIO;
+}
+
+static int demo_read_vout_raw(struct i2c_client *client,
+                              struct demo_reading *reading)
+{
+    u8 old_page;
+    int ret;
+    int restore_ret;
+
+    ret = demo_raw_read_byte_data(client, DEMO_PAGE_CMD, &old_page);
+    if (ret < 0)
+        return ret;
+
+    ret = demo_select_page_raw(client, DEMO_TARGET_PAGE);
+    if (ret < 0)
+        goto restore_page;
+
+    ret = demo_raw_read_byte_data(client, DEMO_VOUT_MODE_CMD,
+                                  &reading->mode);
+    if (ret < 0)
+        goto restore_page;
+
+    ret = demo_raw_read_word_data(client, DEMO_READ_VOUT_CMD,
+                                  &reading->raw);
+
+restore_page:
+    restore_ret = demo_raw_write_byte_data(client, DEMO_PAGE_CMD, old_page);
+    if (restore_ret < 0 && ret == 0)
+        ret = restore_ret;
+
+    return ret;
+}
+
+/* ---------- 两条路径共用：PMBus 输出电压解码 ---------- */
+
+static int demo_decode_mv(const struct demo_reading *reading, s64 *millivolts)
+{
+    int exponent;
+    s64 value;
+
+    /* 高三位为 000 才是本例的线性输出电压格式。 */
+    if ((reading->mode >> 5) != 0)
+        return -EOPNOTSUPP;
+
+    /* 低五位是五位补码指数：10111 表示 23 - 32 = -9。 */
+    exponent = reading->mode & 0x1f;
+    if (exponent & 0x10)
+        exponent -= 0x20;
+
+    /* 先乘 1000 变为毫伏，再按指数缩放，避免内核浮点运算。 */
+    value = (s64)reading->raw * 1000;
+    if (exponent >= 0)
+        value <<= exponent;
+    else
+        value >>= -exponent;
+
+    *millivolts = value;
+    return 0;
+}
+
+static int pmbus_vout_demo_probe(struct i2c_client *client)
+{
+    struct demo_reading smbus_reading = { 0 };
+    struct demo_reading raw_reading = { 0 };
+    s64 millivolts;
+    int ret;
+
+    /* 本实验同时演示两种接口，因此要求适配器两者都能提供。 */
+    if (!i2c_check_functionality(client->adapter,
+                                 I2C_FUNC_I2C |
+                                 I2C_FUNC_SMBUS_BYTE_DATA |
+                                 I2C_FUNC_SMBUS_WORD_DATA))
+        return -EOPNOTSUPP;
+
+    ret = demo_read_vout_smbus(client, &smbus_reading);
+    if (ret < 0) {
+        dev_err(&client->dev, "SMBus read failed: %d\n", ret);
+        return ret;
+    }
+
+    ret = demo_read_vout_raw(client, &raw_reading);
+    if (ret < 0) {
+        dev_err(&client->dev, "raw I2C read failed: %d\n", ret);
+        return ret;
+    }
+
+    /* 两次实时测量可能自然变化；相等才说明本例对照完全吻合。 */
+    if (smbus_reading.mode != raw_reading.mode ||
+        smbus_reading.raw != raw_reading.raw) {
+        dev_err(&client->dev,
+                "readings differ: SMBus %02x/%04x, raw %02x/%04x\n",
+                smbus_reading.mode, smbus_reading.raw,
+                raw_reading.mode, raw_reading.raw);
+        return -EIO;
+    }
+
+    /* 先核对手册规定的固定模式，再允许进入本例的解码路径。 */
+    if (smbus_reading.mode != DEMO_EXPECTED_MODE) {
+        dev_err(&client->dev, "unexpected VOUT_MODE: 0x%02x\n",
+                smbus_reading.mode);
+        return -ENODEV;
+    }
+
+    ret = demo_decode_mv(&smbus_reading, &millivolts);
+    if (ret < 0)
+        return ret;
+
+    dev_info(&client->dev,
+             "page=%d mode=0x%02x wire=%02x %02x raw=0x%04x vout=%lld mV\n",
+             DEMO_TARGET_PAGE, smbus_reading.mode,
+             smbus_reading.raw & 0xff, smbus_reading.raw >> 8,
+             smbus_reading.raw, millivolts);
+    return 0;
+}
+
+/* client 名称 "tps40422" 与此 ID 匹配，于是进入上面的 probe。 */
+static const struct i2c_device_id pmbus_vout_demo_id[] = {
+    { "tps40422", 0 },
+    { }
+};
+MODULE_DEVICE_TABLE(i2c, pmbus_vout_demo_id);
+
+static struct i2c_driver pmbus_vout_demo_driver = {
+    .driver = {
+        .name = "pmbus_vout_demo",
+    },
+    .probe = pmbus_vout_demo_probe,
+    .id_table = pmbus_vout_demo_id,
+};
+
+/* 模块加载时注册驱动，卸载时注销；本例没有额外持久资源要释放。 */
+module_i2c_driver(pmbus_vout_demo_driver);
+
+MODULE_DESCRIPTION("TPS40422 PMBus read: SMBus helpers versus raw I2C");
+MODULE_LICENSE("GPL");
+```
+
+这段代码故意把路径 A 写得很完整。对照后可以看到，原始 `i2c_transfer()` 并没有让 PMBus 消失：两条读取函数仍然要保存和恢复 PAGE、读取 VOUT_MODE、发出 READ_VOUT、检查错误并解码。变化只发生在总线事务怎样表达。
+
+`demo_xfer_result()` 还区分了三种结果：负错误直接向上传递；完成消息数符合预期才成功；返回非负但消息数不足时转换为 `-EIO`。`EIO` 是通用 I/O 错误，`EOPNOTSUPP` 表示请求的能力或格式不受支持，`ENODEV` 在这里表示器件返回的模式不符合本例前提。`I2C_M_RD` 则把第二条消息标为读方向。
+
+本例把 PAGE 的写和读回封装成 `demo_select_page_*()`，目的是让“页选择是否生效”成为可检查的一步，而不是看到写函数返回 0 就继续。两个读取函数都通过 `goto restore_page` 汇合恢复路径，避免中途读 VOUT_MODE 失败时漏掉恢复。
+
+原始消息对照没有加入 PEC。如果启用了 PEC，线上还会多出校验字节，两条路径就不能只按这里的消息长度机械比较。正式 pmbus 核心会在器件 CAPABILITY 和适配器能力都允许时设置 `I2C_CLIENT_PEC`，这是系统集成的一部分，不是本教学模块已经实现的功能。
+
+### 编译、加载和观察结果
+
+把 Makefile 与源文件放在同一目录。`KDIR` 指向已经为目标板配置并准备过外部模块构建的内核源码树，`ARCH` 和 `CROSS_COMPILE` 按工具链调整。
+
+```makefile title="Makefile · 与 pmbus_vout_demo.c 放在同一目录"
+obj-m += pmbus_vout_demo.o
+
+KDIR ?= /path/to/linux
+ARCH ?= arm64
+CROSS_COMPILE ?= aarch64-linux-gnu-
+
+all:
+	$(MAKE) -C $(KDIR) M=$(CURDIR) ARCH=$(ARCH) \
+		CROSS_COMPILE=$(CROSS_COMPILE) modules
+
+clean:
+	$(MAKE) -C $(KDIR) M=$(CURDIR) ARCH=$(ARCH) \
+		CROSS_COMPILE=$(CROSS_COMPILE) clean
+```
+
+执行构建：
+
+```bash
+make KDIR=/path/to/linux
+```
+
+成功后应生成 `pmbus_vout_demo.ko`。这只是模块构建产物，不表示芯片已经应答。
+
+**教学驱动和正式 `tps40422` 驱动不能同时绑定同一个 client。** 如果正式驱动已经绑定，下面的实验只允许在可以暂停电源监控的测试板上进行。设备名 `2-0030` 对应本例的 i2c2 和地址 `0x30`，实际板卡应先从 `/sys/bus/i2c/devices/` 确认。
+
+```bash title="目标板 · 暂停正式驱动，加载教学模块"
+echo 2-0030 > /sys/bus/i2c/drivers/tps40422/unbind
+insmod pmbus_vout_demo.ko
+dmesg | tail -n 20
+```
+
+若 SMBus 与原始消息两次读取都得到本例设定的 1.5 V，预期日志示例为：
+
+```text
+pmbus_vout_demo 2-0030: page=1 mode=0x17 wire=00 03 raw=0x0300 vout=1500 mV
+```
+
+如果输出电压正在变化，两次 READ_VOUT 可能不完全相等，模块会打印 `readings differ` 并返回 `-EIO`。这不是两种事务格式必然不等价，而是实时测量值发生了变化；验证时可以保持输出稳定，或改为分别记录并比较事务轨迹，不要求两次采样绝对相同。
+
+实验结束后卸载教学模块，再让正式驱动重新绑定：
+
+```bash
+rmmod pmbus_vout_demo
+echo 2-0030 > /sys/bus/i2c/drivers/tps40422/bind
+```
+
+若目标系统把正式驱动配置为模块，也可以用符合该系统部署流程的方式重新加载。上述命令没有在本工作区对应的真实板卡上执行，输出只是依据代码和本例数据写出的预期形式。
 
 ---
 
-## <span class="blue">第三层：PMBus 给命令赋予电源语义
+## <span class="blue">五、PAGE 共享状态：为什么“各自读一下”仍会互相干扰
 
-SMBus 能可靠地读回两个字节，却不会仅凭 Word Data 告诉软件“这是哪一路输出电压”“两个字节怎样换算成伏特”。PMBus（Power Management Bus）继续定义电源设备的命令码、页、状态和数据格式。
+PAGE 存在 TPS40422 芯片内部，是同一物理地址下多个访问者共享的状态。`old_page` 则保存在某一次函数调用的栈上，是每个访问者自己的副本。两者不能混为一谈。
 
-本篇使用一个受控的假设实例：一颗双路输出 PMBus 转换器挂在 7 位地址 `0x30`，要读取第 1 页的输出电压。实例不是某块板卡的实测记录，具体设备是否支持这些命令及格式仍须以芯片手册为准。
+用访问者 A 和 B 的具体操作推演。初始 `PAGE=0`，A 想读第 1 页，B 想读第 0 页：
 
-完整过程分为四项操作：
+1. A 读 PAGE，在自己的 `old_page` 中保存 `0`；
+2. A 写 `PAGE=1`，芯片当前页变为 1；
+3. 在 A 发出 READ_VOUT 之前，B 写 `PAGE=0`，芯片当前页又变为 0；
+4. A 发出 `READ_VOUT (0x8b)`。该命令本身不携带页号，所以读到的是当前第 0 页；
+5. A 按自己的计划恢复 `old_page=0`。恢复动作成功，却不能把第 4 步已经读错的数据变正确。
 
-| 顺序 | 操作 | 使用的事务 | 本例得到什么 |
-|---|---|---|---|
-| 1 | `PAGE (0x00) ← 0x01` | SMBus Write Byte Data | 选择第 1 路输出 |
-| 2 | 读 `VOUT_MODE (0x20)` | SMBus Read Byte Data | 返回 `0x14`，表示 ULINEAR16、指数 -12 |
-| 3 | 读 `READ_VOUT (0x8B)` | SMBus Read Word Data | 依次返回低字节 `0x00`、高字节 `0x18` |
-| 4 | 驱动解码并导出 | pmbus → hwmon | 原始字 `0x1800` 转为 1500 mV |
+READ_VOUT 没有“顺便告诉芯片我要第几页”的参数，这正是切页与读取必须协调的原因。I2C 适配器锁能保护单条消息的传输，却不会自动把应用的一整组“切页、读格式、读电压、恢复”合并成一个业务临界区。
 
-`VOUT_MODE` 通常在初始化时读取，不需要每次电压读取都重复执行。单页器件也可能不需要切页；表中把它显式列出，是为了看清多路器件的完整语义链。
+Linux pmbus 核心用两种方式协调**经过同一个 pmbus 驱动实例**的访问：
 
-### PAGE 是芯片里的共享状态，不是 READ_VOUT 的参数
+- `pmbus_data.currpage` 缓存驱动认为芯片当前使用的页，避免不必要的重复写页；
+- `data->update_lock` 让传感器更新和 sysfs 显示等路径串行执行，防止本驱动另一次访问插入切页与取值之间。
 
-`PAGE` 用来选择同一物理地址下的命令上下文，不是 EEPROM 的存储页。发送 `PAGE=1` 后，后续的页相关命令作用于第 1 页，直到页选择被再次改变或设备按自身规则复位。
+`pmbus_set_page()` 在多页器件且目标页不同于缓存时，先写 PAGE，再读回核对，成功后才更新 `currpage`。如果读回值不对，它返回 `-EIO`，不会继续把另一页的数据冒充目标数据。
 
-假设两个访问者共享同一颗转换器：
+这里的 `phase` 又是另一层选择：它用于多相输出中的相，不是 TPS40422 双路 PAGE 的同义词。通用读取接口用 `0xff` 表示不选择特定 phase；本例只讨论 PAGE，不把两者混写。
 
-1. 访问者 A 写入 `PAGE=0`，准备读第 0 路电压。
-2. 访问者 B 在 A 发出 `READ_VOUT` 之前写入 `PAGE=1`。
-3. A 随后的 `READ_VOUT` 仍只带命令码 `0x8B`，并不携带“我要第 0 页”的信息，因此可能读到 B 选中的第 1 路。
+驱动内的锁和缓存仍约束不了绕过驱动的访问者。一个进程若通过 `/dev/i2c-N` 直接写 PAGE，pmbus 的 `currpage` 不会同步更新。于是“软件缓存为 1、芯片实际为 0”就可能发生。调试多页器件时，不应让正式驱动和手工切页命令无协调地同时工作。
 
-这说明切页与读取必须作为一组受协调的操作。Linux pmbus 核心在 `pmbus_set_page()` 中按需写页、读回核对，并保存 `data->currpage` 作为软件缓存；同一驱动的传感器访问通过 `update_lock` 串行化，避免本驱动的另一次读取插入切页和取值之间。
+---
 
-但驱动内的锁不能协调绕过它的访问。另一个进程若经 `/dev/i2c-N` 直接修改 PAGE，驱动缓存和芯片实际页可能失去一致。调试多页 PMBus 器件时，不能一边让 pmbus 驱动工作，一边无协调地用手工命令切页。
+## <span class="blue">六、两个字节怎样成为 1500 mV
 
-`pmbus_read_word_data()` 展示了页选择位于读取之前：
+### 先判断格式，再代入数值
 
-```c title="源码节选 · pmbus_read_word_data()"
-rv = pmbus_set_page(client, page, phase);
-if (rv < 0)
-    return rv;
+TPS40422 的 VOUT_MODE 固定为 `0x17`，写成二进制是 `00010111`：
 
-return i2c_smbus_read_word_data(client, reg);
-```
+- 高三位 `000` 选择线性输出电压模式；
+- 低五位 `10111` 是五位补码。无符号值为 23，五位补码范围为 -16～15，所以实际指数是 `23-32=-9`。
 
-`page` 是驱动希望访问的逻辑通道，`reg` 在这里是 `PMBUS_READ_VOUT`。失败时先返回负错误，不会把旧数据当成新通道的结果。
-
-### READ_VOUT 的两个字节怎样变成 1.5 V
-
-本例 `VOUT_MODE=0x14`。其高三位为 `000`，选择 ULINEAR16；低五位 `10100` 是五位补码形式的 -12。ULINEAR16 把 `READ_VOUT` 返回的完整 16 位字作为无符号整数 `X`，指数 `N` 则由 `VOUT_MODE` 单独提供：
+READ_VOUT 返回的 16 位原始字则全部作为尾数。设原始字为 `X`，指数为 `N`，实际电压为：
 
 ```text
-实际电压 Y = X × 2^N
+Y = X × 2^N
 ```
 
-PMBus Word Data 按低字节在前传输，所以线上收到 `0x00`、`0x18` 后，软件组合为：
+本例线上先收到低字节 `0x00`，再收到高字节 `0x03`：
 
 ```text
-X = 0x00 | (0x18 << 8) = 0x1800 = 6144
-```
+X = 0x00 | (0x03 << 8)
+  = 0x0300
+  = 768
 
-再代入 `N=-12`：
-
-```text
-Y = 6144 × 2^(-12)
-  = 6144 / 4096
+Y = 768 × 2^(-9)
+  = 768 / 512
   = 1.5 V
 ```
 
-`READ_VOUT` 返回的是实际测量值，不是 `VOUT_COMMAND` 中保存的目标值。其他输出电压命令还可能使用 DIRECT、VID、IEEE 半精度等模式，不能看到两个字节就一律套用 ULINEAR16。若器件还有比例换算或厂商特定要求，也应按手册和对应驱动处理。
+hwmon 的电压输入属性以毫伏为文本单位，所以最终显示 `1500`。教学代码中的 `demo_decode_mv()` 按相同顺序先乘 1000，再右移 9 位：`768000 >> 9 = 1500`。
 
-### LINEAR11 为什么不能套在本例上
+### 为什么不能把 LINEAR11 套到 READ_VOUT
 
-LINEAR11 是另一种 16 位编码：高 5 位是有符号指数，低 11 位是有符号尾数，两者都包含在这一个原始字中。以 `0xF803` 为例：
+LINEAR11 把 5 位有符号指数和 11 位有符号尾数一起放进一个 16 位字。许多电流、温度等 PMBus 数据采用这种格式。
 
-```text
-高 5 位：11111 → N = -1
-低 11 位：00000000011 → X = 3
-Y = 3 × 2^(-1) = 1.5
-```
+本例输出电压采用的线性格式则把完整 16 位字作为无符号尾数，指数由另一个命令 VOUT_MODE 提供。Linux pmbus 源码把前者称为 LINEAR11，把本例输出电压分支标为 LINEAR16；有些规范文字也会用 ULINEAR16 强调其无符号性质。
 
-它与 ULINEAR16 的关键区别不是公式外形，而是**指数存在哪里**：LINEAR11 的指数在原始字高 5 位，ULINEAR16 的指数来自独立的 `VOUT_MODE`。许多电流、温度等非输出电压测量使用 LINEAR11；本例输出电压则由 `VOUT_MODE` 明确选择 ULINEAR16，不能混用解码方式。
+区别不只是公式，而是**指数从哪里来**。如果把 `0x0300` 的高 5 位误当 LINEAR11 指数，就会得到另一套解释。正式驱动在 `pmbus_identify_common()` 中读取 VOUT_MODE 并保存每页指数，在 `pmbus_reg2data_linear()` 中按传感器类别选择解码分支，就是为了避免这种混用。
+
+此外，READ_VOUT 是测量值，VOUT_COMMAND 才是目标设定命令。两者即使使用相同数据格式，也不能互相替代。要验证实际输出是否符合目标，还需要把目标值、遥测值和必要的万用表测量放在一起比较。
 
 ---
 
-## <span class="blue">Linux 怎样把原始字交给 hwmon
+## <span class="blue">七、路径 C：现成驱动怎样把同一笔读取接入 hwmon
 
-hwmon 是 Linux 的硬件监控子系统。pmbus 核心负责 PMBus 命令、页选择、状态缓存和格式转换，hwmon 再通过 sysfs 中的 `/sys/class/hwmon/` 属性文件提供统一读数。sysfs 是内核向用户空间导出设备对象和属性的虚拟文件系统，这里的 `in1_input` 就是电压输入属性。
+### 创建阶段：每个对象从哪里来
 
-pmbus 更新传感器时先经过内部辅助函数 `_pmbus_read_word_data()`：器件若有专用读函数，它优先走该函数，否则落到上面展示的 `pmbus_read_word_data()`。前者是多了一层器件分派，不是另一套总线协议。
+路径 C 不需要另写一颗 TPS40422 的通用监测驱动。v6.6 已有 `drivers/hwmon/pmbus/tps40422.c`，Kconfig 项为 `CONFIG_SENSORS_TPS40422`；通用核心由 `CONFIG_PMBUS` 提供。
 
-对本例的 sysfs 读取，可以把调用链与数据流放在一起看：
+沿创建顺序看，各对象承担的工作不同：
 
-```text
-读取 in1_input
-→ pmbus 更新传感器数据
-→ _pmbus_read_word_data(..., PMBUS_READ_VOUT)
-→ pmbus_read_word_data()：本例进入通用读取
-→ pmbus_set_page()：必要时选择并核对页
-→ i2c_smbus_read_word_data()：执行 SMBus Read Word Data
-→ 控制器完成 I2C 波形传输
-→ 原始字 0x1800 写入 sensor->data
-→ pmbus_reg2data_linear()：按 VOUT_MODE 的指数换算
-→ sysfs 输出毫伏值 1500
-```
+1. **DTS 节点 → `i2c_client`。** I2C Core 创建地址为 `0x30`、名称为 `"tps40422"` 的 client。
+2. **`i2c_client` → TPS40422 驱动。** v6.6 的该驱动没有显式 OF 匹配表，但 I2C 匹配最后会用 `i2c_match_id()` 比较 client 名称和 `tps40422_id[]`，因此仍可进入 `tps40422_probe()`。
+3. **器件能力 → `pmbus_driver_info`。** `tps40422_info.pages=2`，两页的 `func[]` 都包含 `PMBUS_HAVE_VOUT`，告诉通用核心“有两个页，两页都可读输出电压”。
+4. **`pmbus_do_probe()` → `pmbus_data`。** 通用核心用 `devm_kzalloc()` 分配运行状态，用 `i2c_set_clientdata()` 把它关联到 client，初始化 `update_lock`，并把 `currpage`、`currphase` 设为 -1，表示还没有可信的页缓存。
+5. **识别结果 → 传感器属性。** `pmbus_init_common()` 和识别路径探测 PEC、VOUT_MODE 等能力，`pmbus_find_attributes()` 按器件能力创建属性集合。
+6. **属性集合 → hwmon 设备。** `devm_hwmon_device_register_with_groups()` 注册 hwmon，sysfs 因而出现可读取的属性文件。
 
-v6.6 的转换分支明确区分输出电压与其他线性数据：
+`devm_*` 表示资源由设备管理框架跟踪，在驱动解绑或设备销毁时自动清理。通用核心不需要每个器件驱动各写一套释放链表；TPS40422 驱动只负责声明“这颗芯片有哪些 PMBus 能力”。
 
-```c title="源码节选 · pmbus_reg2data_linear()"
-if (sensor->class == PSC_VOLTAGE_OUT) {    /* LINEAR16 */
-    exponent = data->exponent[sensor->page];
-    mantissa = (u16)sensor->data;
-} else {                                  /* LINEAR11 */
-    exponent = ((s16)sensor->data) >> 11;
-    mantissa = ((s16)((sensor->data & 0x7ff) << 5)) >> 5;
-}
+### 使用阶段：读取 `in2_input` 时发生什么
 
-val = mantissa;
-if (sensor->class != PSC_FAN)
-    val = val * 1000LL;                   /* 转为毫单位 */
+hwmon 是 Linux 的硬件监控子系统。sysfs 是它向用户空间导出文本属性的接口，`in` 表示电压输入，`input` 表示当前输入值。
 
-if (exponent >= 0)
-    val <<= exponent;
-else
-    val >>= -exponent;
-```
+v6.6 的电压属性按已声明能力依次编号。TPS40422 没有声明 VIN、VMON、VCAP，只声明两页 VOUT，因此：
 
-在本例中，`sensor->data=0x1800`，`exponent=-12`，电压属于毫单位，所以计算为 `6144 × 1000 >> 12 = 1500`。`>> 12` 是右移 12 位，在本例等价于除以 4096；`u16` 强制把输出电压原始字按无符号 16 位值解释。
+- 第 0 页生成 `in1_input`，配套标签为 `vout1`；
+- 第 1 页生成 `in2_input`，配套标签为 `vout2`。
 
-假设驱动已把第 1 页输出映射为 `hwmon0/in1_input`，目标板上的读取命令为：
+本例应读取 `in2_input`，不是第 0 页的 `in1_input`。hwmon 目录编号仍由注册顺序决定，所以用下面的命令先找 `name` 为 `tps40422` 的目录：
 
 ```bash
-cat /sys/class/hwmon/hwmon0/in1_input
+for h in /sys/class/hwmon/hwmon*; do
+    printf '%s: ' "$h"
+    cat "$h/name"
+done
 ```
 
-对应的**预期文本示例**为：
+假设找到 `hwmon2`，再确认标签并读取：
+
+```bash
+cat /sys/class/hwmon/hwmon2/in2_label
+cat /sys/class/hwmon/hwmon2/in2_input
+```
+
+本例预期文本为：
 
 ```text
+vout2
 1500
 ```
 
-`hwmon0` 和 `in1_input` 的编号依赖设备注册顺序与驱动通道映射，不能跨板卡硬编码。实际系统应先查看 `/sys/class/hwmon/hwmon*/name` 和各属性标签，确认文件确实对应该 PMBus 通道。
+一次 `cat in2_input` 在内核中的完整链路是：
 
-到这里，四层各自的结果已经分清：I2C 负责把字节送到，SMBus 规定这笔 Word Data 怎样传，PMBus 规定命令、页和数值格式，pmbus/hwmon 把最终结果变成其他软件可直接使用的标准读数。
+```text
+pmbus_show_sensor()
+→ 持有 update_lock
+→ pmbus_update_sensor_data()
+→ _pmbus_read_word_data(..., PMBUS_READ_VOUT)
+→ pmbus_read_word_data()                 # 本例走通用读取
+→ pmbus_set_page(client, 1, 0xff)
+→ 必要时写 PAGE=1，并读回核对
+→ i2c_smbus_read_word_data(client, 0x8b)
+→ 原生 SMBus 或普通 I2C 消息完成线上事务
+→ sensor->data 保存原始字 0x0300
+→ pmbus_reg2data_linear() 使用第 1 页指数 -9
+→ sysfs_emit() 输出文本 1500
+```
+
+`_pmbus_read_word_data()` 开头的下划线表示它是 pmbus 核心内部的分派辅助函数：器件若有专用读取方法就先分派，否则调用通用 `pmbus_read_word_data()`。它不是另一种总线协议。
+
+到这里，路径 C 的收益已经落到具体代码：应用不必自己保存 PAGE、判断 VOUT_MODE 或拼写电压公式；电源监控、风扇控制和其他管理软件也不必理解每家芯片的用户态解析细节。
+
+### 销毁与失败路径分别由谁处理
+
+`cat` 结束后，sysfs 只完成一次文本读取，不会销毁 client 或 pmbus_data。设备仍然存在，页缓存和锁也继续为下一次读取服务。
+
+驱动解绑时，设备管理框架回收 pmbus_data 并注销 hwmon，但 DTS 创建的 i2c_client 仍可继续存在，等待其他驱动绑定；只有设备从系统移除时，I2C Core 才另外注销 client。若 probe 中途失败，`devm_*` 资源同样按设备管理规则清理，不会把“已注册一半”的 hwmon 留给应用。
+
+如果某次总线读取返回负错误，`pmbus_show_sensor()` 不会把旧的 `sensor->data` 解码成新值输出，而是把错误返回给读取方。页选择、错误传播和资源生命周期因此都是机制的一部分，不是代码之外的附加注意事项。
 
 ---
 
-## <span class="blue">出问题时，先判断错在哪一层
+## <span class="blue">八、三条路径怎样选择，出问题时先查哪一层
 
-同一现象“读不到正确电压”可能来自不同层，不能用重复执行同一命令代替定位：
+**路径 A 适合确实需要自己控制消息序列的场景。** 例如器件使用不符合固定 SMBus 事务的厂商格式，或教学、排障需要逐条观察消息。代价是 PAGE 协调、数据格式、错误恢复和后续系统集成都由自己维护。
 
-1. **地址阶段 NACK**：先检查设备地址、供电、电气与总线占用，属于 I2C 和硬件接入层。
-2. **事务长度或 Count 不符**：核对 Byte Data、Word Data、SMBus Block 与 I2C Block，属于 SMBus 事务格式层。
-3. **原始字合理但通道错误**：检查 PAGE 是否被其他访问者改变，属于 PMBus 共享状态层。
-4. **原始字稳定但物理量错误**：检查 VOUT_MODE、低字节在前、LINEAR16/LINEAR11 和器件比例参数，属于 PMBus 数据解释层。
-5. **总线读取成功但 hwmon 没有文件**：检查 pmbus 驱动匹配、probe 和属性注册，属于 Linux 系统集成层。
+**路径 B 适合事务形状吻合、但仍需自定义器件逻辑的场景。** 它减少消息构造和字节组合工作，又不会迫使软件采用完整 pmbus 框架。使用 AT24C02 的“地址加一字节读取”也可以借用 Byte Data 格式，但这只表示事务兼容，不表示 EEPROM 变成了完整 SMBus 器件。
 
-逻辑分析仪能证明线上字节正确，却不能单独证明页选择和数值解码正确；hwmon 显示 1500 也不是电气波形已经合格的证据。排障时应保留每一层的输入和输出，避免跨层猜测。
+**路径 C 适合内核已经支持、目标又是标准化电源监控的器件。** 它把通用 PMBus 工作和 hwmon 集成复用起来。若芯片有厂商扩展命令，仍可能需要专用驱动补充，不能为了“统一”而忽略器件手册。
+
+出现“读不到正确电压”时，按数据流定位，而不是只看最终文件：
+
+1. **地址阶段 NACK**：检查供电、地址电阻、总线占用和电气连接，这还在 I2C 层。
+2. **SMBus 辅助函数失败而原始消息成功**：检查适配器能力、原生 SMBus 实现和模拟回退，不要先改电压公式。
+3. **原始字合理但通道错误**：保留 PAGE 的写入、读回和并发访问记录，检查共享状态。
+4. **原始字稳定但物理量错误**：检查低字节在前、VOUT_MODE、LINEAR11／LINEAR16，以及器件专属比例。
+5. **总线读取成功但没有 hwmon 文件**：检查 `CONFIG_PMBUS`、器件驱动配置、client 匹配、probe 错误和属性注册。
+6. **hwmon 数值存在但不符合实际电源**：确认读的是测量值还是目标值，再用仪器验证实际电压；sysfs 有文件不等于模拟输出已经正确。
+
+本篇的教学模块用于核对两条软件事务路径和 PMBus 解码机制，正式驱动部分说明的是 Linux 系统集成。它们都不能替代 SMBus 电气符合性、信号完整性或真实电源性能测试；那些实验需要相应仪器和硬件条件。
 
 ---
 
 ## <span class="blue">本节总结
 
-I2C、SMBus、PMBus 不是三组互相替代的引脚。I2C 提供两线传输基础，SMBus 固定系统管理事务并增加超时、延展限制和可选 PEC，PMBus 再定义电源命令、共享页状态和数值格式。普通 I2C 外设可以借用某种 SMBus 格式，但借用格式不等于完整遵守 SMBus 规范。
+只用普通 I2C 并由应用层解析完全可行，但这并没有绕过 SMBus 所表达的事务约定，也没有绕过 PMBus 的 PAGE、命令和数据格式。只是把通用实现换成了自己的实现。
 
-Linux 中的分界也同样清楚：`i2c_smbus_*()` 可以经控制器原生方法或普通 I2C 消息完成事务；pmbus 驱动选择页、发出命令并解码；hwmon 用统一文件和单位导出结果。本例的完整链路是 `PAGE=1`、`VOUT_MODE=0x14`、`READ_VOUT` 返回 `00 18`，最终得到 `0x1800 → 1.5 V → 1500 mV`。
+三条路径在同一笔 TPS40422 读取上的分界是：原始 `i2c_transfer()` 自己构造消息，`i2c_smbus_*()` 复用固定事务，pmbus 加 hwmon 再复用页管理、解码和标准导出。三者最终都经过同一个 I2C 控制器，不是三条不同的物理总线。
+
+本例完整数据链为：`PAGE=1`，`VOUT_MODE=0x17` 给出指数 -9，`READ_VOUT` 返回 `00 03`，组成 `0x0300=768`，换算为 1.5 V，最后由 `in2_input` 输出 `1500` mV。
 
 ---
 
 ## <span class="blue">本节自查 Q&A
 
-??? details "Q1. 普通 AT24C02 使用 `i2c_smbus_read_byte_data()` 后，是否就成为 SMBus 器件？"
-    不会。这里只是 AT24C02 的“存储地址加一字节读取”与 SMBus Byte Data Read 格式一致，Linux 可以复用该事务接口。器件是否满足 SMBus 的电气、超时、延展、PEC 等规范是另一组问题。
+??? details "Q1. 如果不用 SMBus 辅助函数和 pmbus 驱动，只用 i2c_transfer()，是否就不用管 PMBus？"
+    不是。`i2c_transfer()` 只替代总线事务的表达。要读取 TPS40422，代码仍须选择并恢复 PAGE、读取 VOUT_MODE、发出 READ_VOUT，并按 PMBus 和器件手册解码。这些工作只是从通用驱动搬到了自己的代码。
 
-??? details "Q2. SMBus 与 PMBus 分别解决了 I2C 的哪两个空白？"
-    I2C 统一传输方式，但不统一所有器件的事务形状和命令语义。SMBus 固定 Byte Data、Word Data、Block 等事务并增加管理所需的超时和校验规则；PMBus 再用这些事务承载电源命令，定义 PAGE、READ_VOUT、状态和数据编码。
+??? details "Q2. 既然 i2c_smbus_read_word_data() 已返回 0x0300，它是否也已经知道结果是 1.5 V？"
+    不知道。该函数负责 Word Data 事务以及低、高字节组合。它不知道命令 0x8b 代表输出电压，也不知道 VOUT_MODE 给出的指数是 -9。1.5 V 是 PMBus 语义层继续解码的结果。
 
-??? details "Q3. 原生 SMBus 与 SMBus emulation 在哪里分岔，是否使用不同物理总线？"
-    Core 根据适配器是否提供 `smbus_xfer()` 选择原生路径；没有该方法时，由 `i2c_smbus_xfer_emulated()` 构造普通 `i2c_msg`，再经 `__i2c_transfer()` 和 `master_xfer()` 执行。两者最终使用同一控制器和同一组 SDA、SCL，不是两套物理总线。
+??? details "Q3. 三条路径是否要求三种不同的控制器或三组 SDA、SCL？"
+    不要求。原始消息和 SMBus 辅助函数最终都由同一个 I2C 适配器完成波形；pmbus 又建立在 SMBus／I2C 接口之上。差别在软件分工，不在物理引脚数量。
 
-??? details "Q4. SMBus Block Read 与 I2C Block Read 为什么不能只换函数名？"
-    SMBus Block Read 由从设备先返回 Count，调用方按 Count 接收数据；I2C Block Read 由调用方预先指定长度，线上没有这个 Count。Linux 两组接口都最多 32 字节，但长度来源和线上格式不同。
+??? details "Q4. 为什么教学代码在写入 PAGE=1 后还要读回，并在结束后恢复原页？"
+    写函数返回 0 只表示写事务完成，不等于芯片接受了预期页号，所以读回用于验证选择。PAGE 又是芯片内共享状态，恢复原页可以减少本次访问对其他使用者的影响。恢复不能修正已经发生的并发错页，因此正式驱动还需要锁和页缓存协调。
 
-??? details "Q5. 为什么 PAGE 与 READ_VOUT 之间不能被其他访问者插入切页操作？"
-    READ_VOUT 只携带命令码，不携带目标页。若访问者 A 选择 PAGE=0 后，访问者 B 改为 PAGE=1，A 随后的读取就可能落到第 1 页。pmbus 驱动用锁和页缓存协调自身访问，但无法约束绕过驱动的手工切页。
+??? details "Q5. A 已把 old_page 保存在自己的栈上，为什么 B 仍能令 A 读错通道？"
+    old_page 只是 A 的独立副本，READ_VOUT 读取的是芯片内共享的当前 PAGE。若 A 写 PAGE=1 后，B 在 A 的 READ_VOUT 前改写 PAGE=0，A 随后读到第 0 页。A 最后恢复 old_page 也无法回头修正这次错误采样。
 
-??? details "Q6. 本例为什么先收到 `0x00`、`0x18`，最后却是 1500？"
-    PMBus Word Data 低字节在前，所以原始字为 `0x1800=6144`。`VOUT_MODE=0x14` 指定 ULINEAR16、指数 -12，电压为 `6144×2^(-12)=1.5 V`。hwmon 电压输入文件使用毫伏，因此输出 1500。
+??? details "Q6. 本例为什么是 00 03 组成 0x0300，并最终显示 1500？"
+    Word Data 低字节先传，所以 00 是低字节、03 是高字节，原始字为 0x0300=768。VOUT_MODE=0x17 指定线性模式、指数 -9，因此电压为 768/512=1.5 V。hwmon 电压输入使用毫伏文本单位，所以输出 1500。
 
-??? details "Q7. 为什么不能用 LINEAR11 解码所有 PMBus 两字节数据？"
-    LINEAR11 把 5 位指数和 11 位尾数都放在原始字中；ULINEAR16 则把完整原始字作为无符号整数，指数另由 VOUT_MODE 给出。输出电压还可能使用 DIRECT、VID 或 IEEE 模式，必须先确认命令和器件规定的数据格式。
+??? details "Q7. 正式驱动已经管理 PAGE 后，还能否用 /dev/i2c-N 手工切页来调试？"
+    不应无协调地同时操作。手工写 PAGE 不会改变 pmbus_data.currpage，也不会持有同一把 update_lock，可能使缓存和芯片实际页不一致。需要调试时应先暂停正式访问，或使用与驱动协调的接口。
 
-??? details "Q8. PEC 校验通过后，能否证明电压值和页选择都正确？"
-    不能。PEC 只检查一笔事务中的字节是否发生传输错误，不判断命令是否适用于设备，也不证明读取前选中了正确 PAGE，更不负责把原始字解释成正确物理量。
+??? details "Q8. hwmon 中出现 in2_input，是否就证明 PMBus 通信和实际输出电压都正确？"
+    都不能单独证明。属性出现主要说明驱动 probe 和注册走到了相应阶段；一次合理读数支持通信与解码判断，但仍需结合原始命令、错误返回和仪器测量验证。实际电源性能更不是 sysfs 文件存在所能覆盖的。
+
+??? details "Q9. 什么时候值得继续使用路径 A，而不是一律改用 pmbus？"
+    当事务格式不符合 SMBus、需要厂商专属序列，或实验目的就是逐条控制消息时，路径 A 更合适。选择它不是因为它一定更底层、更快，而是因为通用抽象不覆盖该需求；同时必须接受自行维护协议语义、并发和错误恢复的成本。
