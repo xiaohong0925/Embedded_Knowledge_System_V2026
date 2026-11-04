@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I2C 竞态泳道图：STOP 插入 vs 重复 START 交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-color-danger:#cf222e;
+  --kimi-color-warning:#9a6700;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+    --kimi-color-warning:#d29922;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#lr-wrap button{font:inherit;}
+#lr-wrap svg text{font-family:var(--kimi-font-sans);}
+.lr-h{font-size:15px;font-weight:500;margin:0 0 8px 0;color:var(--kimi-color-text-primary);}
+.lr-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:13px;transition:background var(--t-fast) var(--ease-out);}
+.lr-btn.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.lr-controls{display:flex;gap:8px;align-items:center;margin:0 0 10px 0;flex-wrap:wrap;}
+.lr-expl{font-size:13px;line-height:21px;color:var(--kimi-color-text-secondary);margin:8px 0 0 0;}
+.lr-note{font-size:11px;color:var(--kimi-color-text-tertiary);margin-top:6px;}
+.mode-a #sec-b{display:none;}
+.mode-b #sec-a{display:none;}
+.lr-step{font-size:13px;line-height:20px;color:var(--kimi-color-text-tertiary);padding:4px 10px;border-radius:6px;transition:all var(--t-fast) var(--ease-out);margin:2px 0;}
+.lr-step.on{background:var(--kimi-color-surface-muted);color:var(--kimi-color-text-primary);}
+.lr-step b{font-weight:500;color:inherit;}
+</style>
+</head>
+<body>
+<div id="lr-wrap" class="mode-a" style="font-family:var(--kimi-font-sans);width:100%;max-width:760px;margin:0 auto;">
+
+<div class="lr-controls">
+  <button id="lr-tab-a" class="lr-btn active">场景 A：STOP 收尾（竞态发生）</button>
+  <button id="lr-tab-b" class="lr-btn">场景 B：Sr 重复 START（竞态被阻止）</button>
+</div>
+
+<section id="sec-a">
+  <svg viewBox="0 0 760 310" style="width:100%;height:auto;display:block;">
+    <line x1="8" y1="40" x2="752" y2="40" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="135" x2="752" y2="135" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="205" x2="752" y2="205" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="275" x2="752" y2="275" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <text x="56" y="92" text-anchor="middle" font-size="13" fill="var(--kimi-color-text-secondary)">主设备 M1</text>
+    <text x="56" y="168" text-anchor="middle" font-size="12" fill="var(--kimi-color-text-secondary)">从设备</text>
+    <text x="56" y="186" text-anchor="middle" font-size="12" fill="var(--kimi-color-text-tertiary)">（寄存器型）</text>
+    <text x="56" y="240" text-anchor="middle" font-size="13" fill="var(--kimi-color-text-secondary)">主设备 M2</text>
+    <line x1="100" y1="295" x2="740" y2="295" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2" marker-end="url(#lr-arrow)"/>
+    <text x="68" y="300" font-size="11" fill="var(--kimi-color-text-tertiary)">时间</text>
+
+    <g clip-path="url(#la-clip)">
+      <rect x="110" y="72" width="220" height="46" rx="8" fill="rgba(26,127,55,.08)" stroke="var(--kimi-color-positive)" stroke-width="1.5"/>
+      <text x="220" y="99" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-primary)">S → 写地址+0x01+ACK → P</text>
+
+      <rect x="350" y="212" width="210" height="46" rx="8" fill="rgba(154,103,0,.10)" stroke="var(--kimi-color-warning)" stroke-width="1.5"/>
+      <text x="455" y="239" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-primary)">S → 写地址+0x02+ACK → P</text>
+
+      <rect x="580" y="72" width="172" height="46" rx="8" fill="rgba(9,105,218,.08)" stroke="var(--kimi-chart-1)" stroke-width="1.5"/>
+      <text x="666" y="99" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-primary)">S → 读地址 → 数据+ACK → P</text>
+
+      <rect x="150" y="148" width="120" height="44" rx="6" fill="var(--kimi-color-surface-muted)" stroke="var(--kimi-color-border)" stroke-width="1"/>
+      <text x="210" y="166" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">内部访问位置</text>
+      <text x="210" y="185" text-anchor="middle" font-size="14" font-weight="500" fill="var(--kimi-color-text-primary)">0x01</text>
+
+      <line x1="275" y1="170" x2="373" y2="170" stroke="var(--kimi-color-text-primary)" stroke-width="1.5" marker-end="url(#lr-arrow)"/>
+      <rect x="380" y="148" width="100" height="44" rx="6" fill="var(--kimi-color-surface-muted)" stroke="var(--kimi-color-border)" stroke-width="1"/>
+      <text x="430" y="180" text-anchor="middle" font-size="14" font-weight="500" fill="var(--kimi-color-text-primary)">0x02</text>
+
+      <text x="580" y="160" font-size="11.5" fill="var(--kimi-color-danger)">M1 读到的是 0x02 的数据——</text>
+      <text x="580" y="180" font-size="11.5" fill="var(--kimi-color-danger)">所有 ACK 都正常，业务结果错误</text>
+    </g>
+    <line id="la-cursor" x1="100" y1="35" x2="100" y2="285" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="4 3"/>
+    <defs>
+      <clipPath id="la-clip"><rect id="la-clip-rect" x="100" y="0" width="0" height="310"/></clipPath>
+      <marker id="lr-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kimi-color-text-tertiary)"/></marker>
+    </defs>
+  </svg>
+
+  <div style="margin-top:8px;">
+    <div class="lr-step" data-s="0"><b>①</b> M1 写 0x01 设置访问位置，随后发 STOP 释放总线</div>
+    <div class="lr-step" data-s="1"><b>②</b> STOP 之后总线空闲，M2 的事务获得插入机会</div>
+    <div class="lr-step" data-s="2"><b>③</b> M2 把访问位置改写为 0x02 并正常完成（ACK 全无异常）</div>
+    <div class="lr-step" data-s="3"><b>④</b> M1 再发读事务，读到的是 0x02 的数据——竞态成立</div>
+  </div>
+  <div class="lr-controls" style="margin-top:10px;">
+    <button id="la-play" class="lr-btn active">播放 / 重播</button>
+  </div>
+  <p class="lr-expl">竞态不是"传输失败"：总线协议全程正常，错误发生在<strong>事务之间</strong>——共享状态在设置与读取之间被第三方改写。</p>
+  <p class="lr-note">M1 的设置与读取之间插入 STOP，允许 M2 改写共享的器件状态；改用重复 START 可阻止这种插入。</p>
+</section>
+
+<section id="sec-b">
+  <svg viewBox="0 0 760 310" style="width:100%;height:auto;display:block;">
+    <line x1="8" y1="40" x2="752" y2="40" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="135" x2="752" y2="135" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="205" x2="752" y2="205" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <line x1="8" y1="275" x2="752" y2="275" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+    <text x="56" y="92" text-anchor="middle" font-size="13" fill="var(--kimi-color-text-secondary)">主设备 M1</text>
+    <text x="56" y="168" text-anchor="middle" font-size="12" fill="var(--kimi-color-text-secondary)">从设备</text>
+    <text x="56" y="186" text-anchor="middle" font-size="12" fill="var(--kimi-color-text-tertiary)">（寄存器型）</text>
+    <text x="56" y="240" text-anchor="middle" font-size="13" fill="var(--kimi-color-text-secondary)">主设备 M2</text>
+    <line x1="100" y1="295" x2="740" y2="295" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2" marker-end="url(#lb-arrow)"/>
+    <text x="68" y="300" font-size="11" fill="var(--kimi-color-text-tertiary)">时间</text>
+
+    <g clip-path="url(#lb-clip)">
+      <rect x="110" y="72" width="540" height="46" rx="8" fill="rgba(26,127,55,.08)" stroke="var(--kimi-color-positive)" stroke-width="1.5"/>
+      <text x="380" y="99" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-primary)">S → 写地址+0x01+ACK → <tspan font-weight="600" fill="var(--kimi-chart-1)">Sr</tspan> → 读地址 → 数据+ACK → P</text>
+
+      <rect x="150" y="148" width="120" height="44" rx="6" fill="var(--kimi-color-surface-muted)" stroke="var(--kimi-color-border)" stroke-width="1"/>
+      <text x="210" y="166" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">内部访问位置</text>
+      <text x="210" y="185" text-anchor="middle" font-size="14" font-weight="500" fill="var(--kimi-color-text-primary)">0x01</text>
+      <text x="330" y="176" font-size="12" fill="var(--kimi-color-positive)">访问位置始终是 0x01，未被改写</text>
+
+      <rect x="350" y="212" width="210" height="46" rx="8" fill="none" stroke="var(--kimi-color-text-quaternary)" stroke-width="1.2" stroke-dasharray="6 4"/>
+      <text x="455" y="239" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">M2 的事务插不进来</text>
+
+      <text x="600" y="160" font-size="11.5" fill="var(--kimi-color-positive)">M1 读到 0x01 的数据——</text>
+      <text x="600" y="180" font-size="11.5" fill="var(--kimi-color-positive)">结果正确</text>
+    </g>
+    <line id="lb-cursor" x1="100" y1="35" x2="100" y2="285" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="4 3"/>
+    <defs>
+      <clipPath id="lb-clip"><rect id="lb-clip-rect" x="100" y="0" width="0" height="310"/></clipPath>
+      <marker id="lb-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kimi-color-text-tertiary)"/></marker>
+    </defs>
+  </svg>
+
+  <div style="margin-top:8px;">
+    <div class="lr-step" data-s="0"><b>①</b> M1 写 0x01 设置访问位置后，不发 STOP</div>
+    <div class="lr-step" data-s="1"><b>②</b> 直接发重复 START（Sr），设置与读取连成单一事务</div>
+    <div class="lr-step" data-s="2"><b>③</b> M2 没有插入机会，访问位置保持 0x01</div>
+    <div class="lr-step" data-s="3"><b>④</b> M1 读回 0x01——结果正确</div>
+  </div>
+  <div class="lr-controls" style="margin-top:10px;">
+    <button id="lb-play" class="lr-btn active">播放 / 重播</button>
+  </div>
+  <p class="lr-expl">修复手段是让设置与读取<strong>不可分割</strong>：重复 START（Sr）把两段操作合成一个事务，其他主设备插不进来。代价是器件被独占更久，主设备间的冲突由多主仲裁消化。</p>
+  <p class="lr-note">是否需要"写后紧读"，先看器件手册：有些器件的地址指针在 STOP 后自动复位，此时必须靠 Sr 连读，而不是为了防止竞态。</p>
+</section>
+
+<script>
+(function(){
+  var wrap=document.getElementById('lr-wrap');
+  var tabA=document.getElementById('lr-tab-a');
+  var tabB=document.getElementById('lr-tab-b');
+  tabA.addEventListener('click',function(){wrap.classList.add('mode-a');wrap.classList.remove('mode-b');tabA.classList.add('active');tabB.classList.remove('active');});
+  tabB.addEventListener('click',function(){wrap.classList.add('mode-b');wrap.classList.remove('mode-a');tabB.classList.add('active');tabA.classList.remove('active');});
+
+  function animator(clipId,cursorId,stepsSel,thresholds,dur){
+    var clip=document.getElementById(clipId);
+    var cursor=document.getElementById(cursorId);
+    var steps=document.querySelectorAll(stepsSel);
+    var raf=null;
+    function setSteps(x){
+      var active=-1;
+      for(var i=0;i<thresholds.length;i++){if(x>=thresholds[i])active=i;}
+      steps.forEach(function(s){s.classList.toggle('on',+s.dataset.s===active);});
+    }
+    return function(){
+      if(raf)cancelAnimationFrame(raf);
+      clip.setAttribute('width',0);
+      cursor.setAttribute('x1',100);cursor.setAttribute('x2',100);
+      setSteps(0);
+      var startT=null;
+      function step(ts){
+        if(!startT)startT=ts;
+        var p=Math.min((ts-startT)/dur,1);
+        var x=100+645*p;
+        clip.setAttribute('width',645*p);
+        cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);
+        setSteps(x);
+        if(p<1){raf=requestAnimationFrame(step);}else{raf=null;}
+      }
+      raf=requestAnimationFrame(step);
+    };
+  }
+  var playA=animator('la-clip-rect','la-cursor','#sec-a .lr-step',[110,330,555,745],7000);
+  var playB=animator('lb-clip-rect','lb-cursor','#sec-b .lr-step',[110,390,350,745],6500);
+  document.getElementById('la-play').addEventListener('click',playA);
+  document.getElementById('lb-play').addEventListener('click',playB);
+  setTimeout(playA,500);
+})();
+</script>
+</div>
+</body>
+</html>

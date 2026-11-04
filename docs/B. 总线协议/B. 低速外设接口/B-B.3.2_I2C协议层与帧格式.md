@@ -155,6 +155,15 @@ START 后的第一个字节包含两部分：高 7 位是设备地址，最低�
 
 ### 如果中间改成 STOP，会发生什么
 
+<div class="interactive-demo">
+  <iframe
+    src="../html/i2c-race-condition-lanes.html"
+    title="I2C 竞态泳道图：STOP 插入 vs 重复 START 交互演示"
+    loading="lazy"
+    style="width:100%;height:640px;border:0;"
+  ></iframe>
+</div>
+
 单主设备系统中，有些器件允许“先写位置并发 STOP，稍后再读”，但这不是可以推广到所有器件的规则。多主设备系统还多了一层风险。下面用一个明确约定“收到寄存器地址就更新内部指针，STOP 不清零”的通用寄存器型从设备推演；这段讨论不把该行为强加给 AT24C02 或其他具体芯片。
 
 假设主设备 M1 想读寄存器 0x01，主设备 M2 随后要读寄存器 0x02。如果 M1 把设置位置和读取拆成两笔事务，操作序列可能是：
@@ -189,6 +198,16 @@ M2：只有等 M1 的 P 释放总线后，才能开始自己的事务
 
 ## <span class="blue"> 时钟延展与总线清除：等待和恢复不是一回事
 
+<div class="interactive-demo">
+  <iframe
+    src="../html/i2c-clock-stretch-bus-clear-demo.html"
+    title="I2C 时钟延展与总线清除交互演示"
+    loading="lazy"
+    style="width:100%;height:600px;border:0;"
+  ></iframe>
+</div>
+
+
 前面的序列默认从设备能及时准备下一位或下一字节。实际器件可能还在保存数据、处理命令或完成内部转换。支持时钟延展的从设备可以暂时拉住 SCL，让主设备等待；这个机制叫 **Clock Stretching**。
 
 一次字节级延展可以按下面的顺序理解：
@@ -217,6 +236,15 @@ SCL 若被从设备持续拉低，主设备无法凭自身意愿产生完整时�
 ---
 
 ## <span class="blue"> 10 位地址：能辨认扩展寻址即可
+
+<div class="interactive-demo">
+  <iframe
+    src="../html/i2c-10bit-address-demo.html"
+    title="I2C 10 位地址拆字节交互演示"
+    loading="lazy"
+    style="width:100%;height:540px;border:0;"
+  ></iframe>
+</div>
 
 7 位地址空间有限，其中还包含协议保留地址，因此 I2C 另定义了 10 位寻址。它不如 7 位寻址常见，但抓包时不能把它的两个地址字节误认成“地址加数据”。
 
