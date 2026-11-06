@@ -1,0 +1,18 @@
+{
+  "output": "fullcode.js",
+  "globalName": "LAB_FULL_CODE",
+  "entries": {
+    "exampleFile": {
+      "source": "code/example.c",
+      "displayPath": "code/example.c",
+      "origin": "完整教学文件",
+      "wholeFile": true
+    },
+    "exampleExecute": {
+      "source": "code/example.c",
+      "displayPath": "code/example.c",
+      "origin": "完整教学文件",
+      "function": "example_execute"
+    }
+  }
+}

@@ -2,735 +2,857 @@
 
 > 所属章节：第五部 B. 总线协议 > B-B.3 I2C 总线
 >
-> 难度：[B→I] Beginner → Intermediate | 预计阅读时间：45 分钟
+> 难度：[B→I] Beginner → Intermediate | 预计阅读时间：60 分钟
 
 ## <span class="blue"> 本节导读
 
-前面两篇回答了 I2C 信号怎样在线路上传输。本篇换到 Linux 代码内部，只追踪一个问题：**RK3568 的 I2C1 上接了一片地址为 0x50 的 AT24C02，驱动要读取地址 0x10 的一个字节，这笔读取怎样从设备树和驱动初始化回调 `probe()` 走到控制器寄存器，数据又怎样返回？**
+本篇只回答一个问题：**Linux 怎样把设备树中的一颗 AT24C02 建立为可访问对象，把“读取内部地址 0x10 的一个字节”交给可替换的总线实现，再将数据或错误返回调用者？**
 
-AT24C02 是通过 I2C 访问的 EEPROM，即电可擦除、掉电后仍能保存数据的小容量存储器。START 和 STOP 分别是总线事务的开始和结束条件。读取它的一片存储单元时，主机先写入一个字节的存储地址，再用重复 START 切换为读方向。重复 START 是不先结束当前事务、再次发出 START 以开始下一段消息。这个操作足够小，却能同时暴露设备树、设备对象、传输消息、Core 和控制器驱动之间的关系。
+贯穿实例固定为 RK3568 的 I2C1、7 位地址 `0x50` 的 AT24C02 和 Linux v6.6。AT24C02 是可以通过 I2C 读写的 EEPROM，即电可擦除、掉电后仍能保存内容的小容量存储器。读取一个存储单元时，主机先写入内部偏移 `0x10`，再用重复 START 切换为读方向；重复 START 是不先发送 STOP、再次发出 START 以开始下一段消息。
 
-> SoC：System on Chip，片上系统。这里指把 CPU、I2C 控制器等模块集成在同一颗芯片里的主控，例如 RK3568。
+先分清三个名字：
 
-<!-- -->
+- **I2C Core** 是内核中的 I2C 公共代码，负责创建总线与外设对象、提供统一传输入口并串行化同一总线上的事务；它不理解 AT24C02 的页写规则，也不直接实现 RK3568 的寄存器时序。
+- **DTS** 是可读的设备树源文件，用来描述板级硬件；编译后的 DTB 才交给内核使用。
+- **SoC** 是片上系统，这里指把 CPU、I2C 控制器等模块集成在同一颗芯片里的 RK3568。
 
-> I2C Core：Linux 内核提供的 I2C 公共代码。它管理总线与外设对象，提供统一传输入口，并保证同一总线上的事务不会互相穿插；它不理解 AT24C02 的存储页，也不直接实现 RK3568 的寄存器时序。
+本篇与第 11 章的分工不变：第 11 章讲通用的总线、设备、驱动匹配机制，本篇只展开 I2C 特有的对象创建、传输与用户入口。SMBus 和 PMBus 归 B-B.3.6；AT24 的页写、ACK 轮询和 NVMEM（内核非易失存储器框架）的 `eeprom` 文件归 B-B.3.5。
 
-<!-- -->
-
-> 与第 11 章的分工：第 11 章讲通用设备模型怎样匹配设备与驱动。本篇只展开 I2C 特有的对象创建和传输路径，不再重复通用匹配机制。
-
-本篇以 Linux v6.6 源码为核对基准。本节覆盖：裸驱动与框架驱动中的寄存器操作位置、配套设备树源文件（DTS）与完整教学模块、普通 I2C 传输入口 `i2c_transfer()` 到 RK3568 收发缓冲区的真实路径、DTS 属性的消费代码、用户态入口 `/dev/i2c-N`，以及 I2C GPIO 扩展器 PCA9535 怎样复用同一框架。系统管理总线（SMBus）事务与电源管理总线（PMBus）命令独立放到 B-B.3.6 展开。
+> ⚠️ 本篇以 Linux v6.6 源码为核对基准。教学代码和交互实验室均未在本篇环境中交叉编译、运行或上板验证；页面中的 `0x5a`、日志和波形都是用于推演的样本，不是实测记录。
 
 ---
 
-## <span class="blue"> 从直写寄存器到复用框架：代码责任怎样分开
+## <span class="blue"> 先建立全路：寄存器操作没有消失，而是换了负责人
 
-在厂商 SDK（Software Development Kit，软件开发工具包）或裸驱动中，一次外设读取可能全部由一份驱动完成：通过文件读写接口暴露给应用的字符设备收到 `read()` 或 `ioctl()` 请求，驱动再用 `readl()`、`writel()` 访问 SoC 寄存器，并控制 START、地址、数据和 STOP。内存映射 I/O（Input/Output，输入输出）把寄存器窗口映射到 CPU 地址空间，`readl()`、`writel()` 则通过这块地址窗口读写寄存器；它们操作的是 SoC 内部控制器，不是 I2C 外设的存储地址。
+在厂商 SDK 或裸驱动中，一份驱动可能从字符设备的 `read()`、`ioctl()` 一路做到 `readl()`、`writel()`，直接控制 SoC 的 I2C 控制器寄存器。内存映射 I/O 把寄存器窗口映射到 CPU 地址空间，`readl()`、`writel()` 通过这个窗口访问控制器；它们访问的不是 AT24C02 的内部偏移。
 
-```text
-应用 read/ioctl
-    → 自己的字符设备驱动
-    → readl/writel 操作本 SoC 的 I2C 控制器
-    → 软件或控制器状态机逐步产生波形
-```
-
-Linux 的通用 I2C 框架没有让寄存器操作消失，而是把它集中到控制器驱动中。AT24C02 驱动只表达“写存储地址 0x10，再读一个字节”；RK3568 控制器驱动才决定该写哪些寄存器、怎样等待中断、怎样从接收缓冲区取数据。控制器内部的发送和接收缓冲区采用 FIFO（First In, First Out，先进先出）方式，分别记为 TXFIFO 和 RXFIFO。
+Linux 通用 I2C 框架把这件工作拆成可替换的两半：
 
 ```text
-AT24C02 外设驱动
-    → i2c_transfer()：提交与芯片无关的消息
-    → I2C Core：选定总线并串行化事务
-    → RK3568 控制器驱动的 master_xfer()
-    → readl/writel、TXFIFO、RXFIFO 和中断
-    → 数据与错误沿原路返回
+外设驱动：AT24C02 的内部偏移、消息方向、数据长度
+    ↓ 只提交与 SoC 无关的 msgs[2]
+I2C Core：找到 adapter、锁住总线、调用已登记的 algorithm
+    ↓
+控制器实现：RK3568 寄存器 / GPIO 位模拟
+    ↓
+SDA、SCL 上的真实波形
+    ↓
+数据和错误沿原路返回
 ```
 
-> master_xfer：控制器驱动登记给 Core 的普通 I2C 传输方法。外设驱动不直接调用它，Core 在取得总线锁后调用。
+因此，修改 RK3568 控制器时序仍然需要进入寄存器层，但不必在每颗外设驱动里重复做一遍。反过来，替换 AT24C02 为另一颗传感器时，控制器驱动也不需要理解新器件的内部寄存器规则。
 
-硬件侧的 SDA 是串行数据线，SCL 是串行时钟线，前两篇已经展开它们的波形。软件责任线则按以下方式划分：
+本篇使用两条入口观察同一后半路：
 
-| 责任方 | 在本例中负责什么 | 通常由谁维护 |
-|:---|:---|:---|
-| AT24C02 外设驱动 | 存储地址、读写长度、页边界等器件规则 | 内核已有现成驱动，特殊器件才自行编写 |
-| I2C Core | 创建外设对象、提供传输入口、串行化总线事务 | Linux 内核公共代码 |
-| RK3568 控制器驱动 | 寄存器、时钟分频、FIFO、中断和错误处理 | SoC 厂商及内核维护者 |
-| 控制器与 AT24C02 硬件 | 产生并响应 SDA/SCL 波形 | 硬件设计决定，软件通过寄存器和协议使用 |
+```text
+入口 A：内核教学驱动 demo_read_reg()
+入口 B：用户态 i2c-read + /dev/i2c-1
+                  ↓
+           同一个 i2c_transfer()
+                  ↓
+       adapter->algo->master_xfer()
+                  ↓
+        RK3568 或 GPIO 模拟控制器
+```
 
-这张责任线解释了两条实际工程经验。标准 EEPROM 接到另一款 SoC 上时，外设驱动仍可复用，只替换控制器驱动；同一款 RK3568 改接传感器时，控制器驱动也不必重写。只有修改控制器时序、适配新 SoC 或绕过框架时，才需要直接进入控制器寄存器层。**复用现成驱动不是少写了底层的同一件事，而是让底层实现只保留一份。**
+### 先从源码目录看 I2C 子系统：核心、控制器和外设并不都在同一个目录
+
+阅读这套代码时，先按“对象由谁实现”找文件，不要从 `drivers/i2c/` 开始寻找所有 I2C 外设。Linux v6.6 中，本篇涉及的主要代码这样分布：
+
+```text
+include/linux/i2c.h                 内核内部的 client、adapter、driver、algorithm
+include/uapi/linux/i2c.h            用户与内核共享的 i2c_msg、I2C_M_RD
+include/uapi/linux/i2c-dev.h        I2C_RDWR、i2c_rdwr_ioctl_data
+
+drivers/i2c/
+├── i2c-core-base.c                 adapter/client 生命周期、加锁、通用传输
+├── i2c-core-of.c                   从设备树子节点创建 client
+├── i2c-dev.c                       为 adapter 提供 /dev/i2c-N 字符设备入口
+├── busses/
+│   ├── i2c-rk3x.c                  RK3568 等 Rockchip 控制器的寄存器状态机
+│   └── i2c-gpio.c                  取得 GPIO，提供 SDA/SCL 读写操作
+└── algos/
+    └── i2c-algo-bit.c              用上述 GPIO 操作逐位实现 I2C 波形
+
+drivers/misc/eeprom/at24.c           内核现成 AT24 外设驱动
+drivers/gpio/gpio-pca953x.c          PCA9555 等 I2C GPIO 扩展器驱动
+```
+
+这里先把 adapter 理解为“一条可访问总线”的内核对象，把 client 理解为“挂在这条总线上的一颗外设”的对象；下一节再展开它们的字段和所有权。`probe()` 则是设备与驱动绑定后执行的初始化回调。
+
+这棵目录树对应四种不同的代码责任：
+
+- **接口头文件**规定对象长什么样。`include/linux/i2c.h` 面向内核驱动；`include/uapi/` 是用户空间 ABI（应用二进制接口）的一部分，用户程序也能包含后两个头文件。
+- **Core** 实现所有控制器和外设可以共用的规则。它创建并关联对象，但不包含 RK3568 寄存器定义，也不决定 AT24C02 的内部地址宽度。
+- **控制器实现**分为“具体硬件”和“可复用算法”。`i2c-rk3x.c` 自己实现寄存器传输；`i2c-gpio.c` 只负责操作引脚，把逐位波形交给 `i2c-algo-bit.c`。所以 GPIO 路径是两个文件协作，不是一个文件包办全部工作。
+- **外设驱动按外设提供的功能归档**。AT24 提供存储能力，位于 `drivers/misc/eeprom/`；PCA9555 提供 GPIO 能力，位于 `drivers/gpio/`。它们虽然都通过 I2C 访问，却不会因此搬进 `drivers/i2c/`。
+
+同一条主线在这些文件之间这样穿行：
+
+```text
+启动建链：
+rk3568-at24-demo.dts
+→ busses/i2c-rk3x.c 创建并注册 adapter
+→ i2c-core-of.c 读取 eeprom@50，创建 client
+→ 教学 demo_i2c.c 收到 probe(client)
+
+内核读取：
+demo_i2c.c 组织 msgs[2]
+→ i2c-core-base.c 持锁并调用 adapter->algo->master_xfer()
+→ busses/i2c-rk3x.c 操作寄存器、FIFO 和中断状态机
+
+用户态读取：
+i2c-read.c 调用 ioctl(I2C_RDWR)
+→ i2c-dev.c 复制消息并调用同一个 i2c_transfer()
+→ 仍然进入 i2c-core-base.c 和当前 adapter 的控制器实现
+```
+
+因此，`i2c-dev.c` 不是另一套总线协议栈，`i2c-algo-bit.c` 也不是另一套外设驱动。前者只增加用户入口，后者只替换波形实现；Core 的对象和传输约定保持不变。
+
+还要区分“源码树里存在”和“目标板上存在”：各目录的 Kconfig 提供配置选择，Makefile 根据配置把源文件编进内核、编成模块或不参与本次构建；设备树再描述本板实际硬件，驱动 probe 成功后才形成可使用的运行对象。看到某个 `.c` 文件，不能直接推断当前系统已经包含它。
+
+下面的实验室可以逐步执行启动建链和传输过程。启动与传输代码窗可切换“完整函数”和“步骤片段”：前者保留真实文件上下文与起始行号，后者只突出当前一步；SCL 时钟延展单步则需在 GPIO 模拟模式下操作。实验室是正文的辅助视图，即使删除这个 iframe，后文仍能独立讲完同一机制。
+
+<div class="interactive-demo">
+  <iframe
+    src="../html/i2c-framework-lab.html"
+    title="Linux I2C 框架交互实验室：对象建链、传输单步、用户态与 GPIO 模拟"
+    loading="lazy"
+    style="width:100%;height:1120px;border:0;"
+  ></iframe>
+</div>
+
+[在新窗口打开 I2C Framework Lab](./html/i2c-framework-lab.html){: target="_blank" rel="noopener noreferrer" }。实验室中的步骤是依据 v6.6 源码构造的模型推演，不连接真实硬件。
 
 ---
 
-## <span class="blue"> 完整实验：从 DTS 到一次真实读取
+## <span class="blue"> 先认识对象：代码里的五个名字分别是什么
 
-先把实验需要的文件一次配齐。教学驱动使用专用设备树匹配字符串 `compatible`，避免与内核现成的 AT24 驱动争用同一设备；它只用于受控测试，不是产品驱动。后文再单独切换回 `"atmel,24c02"`，观察现成驱动怎样消费写页大小属性 `pagesize`。
+### `i2c_msg`：一段传输的完整描述
 
-### 板级 DTS：启用 I2C1 并声明测试设备
+`i2c_msg` 定义在 UAPI 头文件 `include/uapi/linux/i2c.h`。UAPI 是内核与用户空间共同遵守的接口边界，所以内核驱动和用户程序看到的是同一种消息布局。以下是与本篇有关的完整字段和标志定义：
 
-RK3568 的 `rk356x.dtsi` 已经描述 I2C1 控制器。`.dtsi` 是供其他设备树源文件包含的公共描述。以下是 Linux v6.6 源码节选，中断、时钟和引脚复用属性在此省略：
+```c title="Linux v6.6 · include/uapi/linux/i2c.h · 有删节"
+struct i2c_msg {
+    __u16 addr;       /* 器件地址，本例为 0x50 */
+    __u16 flags;      /* 本段方向及特殊协议标志 */
+#define I2C_M_RD      0x0001
+    __u16 len;        /* buf 中本段要读写的字节数 */
+    __u8  *buf;       /* 写：数据来源；读：接收位置 */
+};
 
-```dts title="源码节选 · rk356x.dtsi"
-i2c1: i2c@fe5a0000 {
-    compatible = "rockchip,rk3568-i2c", "rockchip,rk3399-i2c";
-    reg = <0x0 0xfe5a0000 0x0 0x1000>;
-    #address-cells = <1>;
-    #size-cells = <0>;
-    status = "disabled";
+#define I2C_FUNC_I2C  0x00000001
+```
+
+`__u16`、`__u8` 是接口中明确宽度的无符号整数类型。`I2C_M_RD` 和 `I2C_FUNC_I2C` **都是宏和位标志，不是枚举**，但用途不同：
+
+- `I2C_M_RD` 写进某条 `msg.flags`，说明这一段由从机向主机发送数据；
+- `I2C_FUNC_I2C` 由控制器的 `functionality()` 返回，说明适配器支持普通 I2C 消息；
+- `i2c_check_functionality(adap, I2C_FUNC_I2C)` 检查的是适配器能力，不是当前消息方向。
+
+本例的两条消息应读作两个独立的数据段，而不是两次函数调用：
+
+```text
+msgs[0]：addr=0x50，flags=0，       len=1，buf 指向 0x10
+msgs[1]：addr=0x50，flags=I2C_M_RD，len=1，buf 指向 value
+```
+
+数组后面的参数 `2` 告诉 Core：两段属于同一笔事务，中间使用重复 START，最后才 STOP。
+
+### `i2c_client`：Core 已经创建的外设对象
+
+`struct i2c_client` 代表挂在某条总线上的一颗外设。以下字段取自 `include/linux/i2c.h`，省略了中断、从机模式和资源管理字段：
+
+```c title="Linux v6.6 · include/linux/i2c.h · 字段节选"
+struct i2c_client {
+    unsigned short flags;
+    unsigned short addr;          /* 本例为 0x50 */
+    char name[I2C_NAME_SIZE];
+    struct i2c_adapter *adapter;  /* 指向所属总线，不是内嵌总线 */
+    struct device dev;            /* 内嵌通用设备模型对象 */
+    /* 其余字段省略 */
 };
 ```
 
-这段控制器描述包含四类信息：
+这里有两种不同的关系：
 
-- **`reg`**：CPU 访问 I2C1 控制器寄存器的物理地址窗口。`0xfe5a0000` 由 Rockchip 的芯片设计决定，`0x1000` 是窗口长度，不能由板级作者随意编造。
-- **`#address-cells` 与 `#size-cells`**：前者为 1，表示子节点用一个 32 位单元写地址；后者为 0，表示子节点不写地址空间长度。
-- **`i2c1`**：节点标签，板级文件用 `&i2c1` 修改这个既有节点。
-- **`status = "disabled"`**：SoC 默认不启用该控制器，因为并非每块 RK3568 板卡都会把 I2C1 接出。
+- `client->adapter` 是指针，client 与 adapter 可以分别创建，指针把外设连到既有总线；
+- `client->dev` 是直接内嵌的对象，使这个 I2C 外设能进入通用设备模型、sysfs 和驱动匹配流程。
 
-在板级 DTS 中加入：
+教学驱动中的 `struct i2c_client *client` 是**指向已有对象的指针参数**。Core 在调用 `probe(client)` 前已经创建它，教学驱动不负责分配这个持久对象。
 
-```dts title="板级示例 · rk3568-at24-demo.dts"
-&i2c1 {
-    status = "okay";                    /* 本板启用 I2C1 */
-    clock-frequency = <400000>;         /* 目标 SCL：400 kHz */
+### `i2c_adapter` 与 `i2c_algorithm`：总线对象和它的操作方法
 
-    eeprom@50 {
-        compatible = "demo,at24c02-reader"; /* 只匹配本篇教学驱动 */
-        reg = <0x50>;                       /* AT24C02 的 7 位 I2C 地址 */
-    };
+```c title="Linux v6.6 · include/linux/i2c.h · 字段节选"
+struct i2c_adapter {
+    struct module *owner;
+    const struct i2c_algorithm *algo; /* 怎样在这条总线上传输 */
+    void *algo_data;                  /* algorithm 取回私有状态的入口 */
+    const struct i2c_lock_operations *lock_ops;
+    struct rt_mutex bus_lock;         /* 串行化本总线段的事务 */
+    int timeout;
+    int retries;
+    struct device dev;
+    int nr;                           /* 本例编号 1 */
+    char name[48];
+    /* 其余字段省略 */
+};
+
+struct i2c_algorithm {
+    int (*master_xfer)(struct i2c_adapter *adap,
+                       struct i2c_msg *msgs, int num);
+    int (*master_xfer_atomic)(struct i2c_adapter *adap,
+                              struct i2c_msg *msgs, int num);
+    /* SMBus 专用方法省略 */
+    u32 (*functionality)(struct i2c_adapter *adap);
 };
 ```
 
-板级节点各自回答一个问题：
+adapter 回答“我在哪条总线上、编号多少、怎样加锁”；algorithm 回答“这条总线具体怎样发消息”。把二者分开，Core 才能用同一个 `i2c_transfer()` 同时支持 RK3568 寄存器控制器和 GPIO 位模拟。`master_xfer_atomic()` 是不能睡眠的原子上下文备用入口；本例 `probe()` 可以睡眠，走普通的 `master_xfer()`。`functionality()` 则返回前面说的适配器能力位。
 
-- **访问哪颗外设**：**`reg = <0x50>`** 会被写入外设对象的 `addr` 字段，用于在线路上选择 AT24C02。它不是前面控制器节点的寄存器地址；节点名中的 `@50` 应与它一致。
-- **由哪个驱动处理**：**`compatible`** 提供匹配字符串。这里的专用字符串使现成 AT24 驱动不会匹配这个测试节点。
-- **是否启用总线**：**`status = "okay"`** 覆盖 dtsi 的默认值，明确本板启用 I2C1。
+`master_xfer()` 的返回约定也写在声明旁：**负值表示错误，非负值表示成功处理的消息数**。它不是读取字节数。
 
-> 🔴 这个节点会真实访问 0x50。只在确认该地址确实是可测试的 AT24C02 时使用；不要把示例 `compatible` 写进生产设备，也不要用它抢占正在工作的外设。
+### `i2c_driver`：外设驱动登记给 Core 的回调
 
-DTS 是可读的设备树源文件，DTB 是编译后交给内核的二进制设备树。测试前需要让新 DTB 在板卡上生效，并确保模块针对板卡正在运行的内核配置构建。在内核源码树中构建 DTB 的命令为：
-
-```bash title="构建 DTB"
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- dtbs
+```c title="Linux v6.6 · include/linux/i2c.h · 字段节选"
+struct i2c_driver {
+    unsigned int class;
+    int  (*probe)(struct i2c_client *client);
+    void (*remove)(struct i2c_client *client);
+    /* 其他回调省略 */
+    struct device_driver driver;  /* 内嵌通用驱动对象 */
+    const struct i2c_device_id *id_table;
+    /* 其余字段省略 */
+};
 ```
 
-### 完整教学模块：`probe()` 真正调用读取函数
+教学驱动填写匹配表、`probe()` 和 `remove()`。`probe()` 不是 reader 函数本身，而是设备与驱动绑定后的初始化回调；本篇在初始化中故意执行一次读取，让启动路径和运行路径能够在同一个例子里观察。
 
-保存为 `demo_i2c.c`。这是本篇原创的完整教学文件，不是内核源码节选；代码接口按 Linux v6.6 核对，但本篇环境未进行交叉编译和上板运行。
+---
 
-```c title="完整教学文件 · demo_i2c.c"
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/errno.h>        /* EOPNOTSUPP、EIO 等错误码 */
-#include <linux/i2c.h>          /* client、driver、msg 与传输 API */
-#include <linux/module.h>       /* 模块声明、加载与卸载 */
-#include <linux/of.h>           /* 设备树匹配表 */
+## <span class="blue"> 启动建链：DTS 怎样变成 adapter、client 和 probe 参数
 
-#define DEMO_REG_ADDR 0x10      /* 本例读取的 AT24C02 存储地址 */
+### 板级 DTS：先提供控制器和外设事实
 
-/* 1. 一次同步复合读取：先写存储地址，再读一个字节。 */
-static int demo_read_reg(struct i2c_client *client, u8 reg, u8 *value)
+下面是完整板级教学 DTS。它需要放入 Linux v6.6 的 `arch/arm64/boot/dts/rockchip/` 构建，描述的是受控实验硬件，不是某块商品板的完整配置。
+
+```dts title="完整教学文件 · rk3568-at24-demo.dts"
+--8<-- "docs/B. 总线协议/B. 低速外设接口/code/B-B.3.3/rk3568-at24-demo.dts"
+```
+
+`rk3568.dtsi` 已经描述 I2C1 的寄存器、中断和时钟。板级文件只覆盖需要改变的内容：
+
+- **`status = "okay"`**：启用本板实际接出的 I2C1；
+- **`clock-frequency = <400000>`**：给出目标 SCL 频率，后续还要经控制器计算和硬件约束；
+- **`reg = <0x50>`**：AT24C02 的 7 位地址，不是 `0xfe5a0000` 那样的控制器寄存器地址；
+- **`compatible`**：专用测试匹配字符串，避免与内核现成的 at24 驱动争用同一颗外设。
+
+控制器节点的 `rockchip,rk3399-i2c` 兼容项很重要。RK3568 节点还声明了 `rockchip,rk3568-i2c`，v6.6 的 `rk3x_i2c_match[]` 通过兼容回退匹配 `rockchip,rk3399-i2c`，并把 `match->data` 指向 `rk3399_soc_data`。后文的分频计算函数正来自这里，不是凭空写出的。匹配表中的对应项是：
+
+```c title="Linux v6.6 · drivers/i2c/busses/i2c-rk3x.c · rk3x_i2c_match[] 节选"
 {
-    struct i2c_msg msgs[2] = {
-        {
-            .addr = client->addr, /* 第一条消息仍访问这颗 AT24C02 */
-            .flags = 0,           /* 未设置 I2C_M_RD：写方向 */
-            .len = 1,             /* 只发送一个存储地址字节 */
-            .buf = &reg,          /* 待发送内容就是 0x10 */
-        },
-        {
-            .addr = client->addr, /* 重复 START 后访问同一外设 */
-            .flags = I2C_M_RD,    /* 第二条消息切换为读方向 */
-            .len = 1,             /* 只接收一个字节 */
-            .buf = value,         /* 控制器驱动把数据写到这里 */
-        },
-    };
-    int ret;
-
-    /* 两条消息属于同一笔事务，整组结束后才发 STOP。 */
-    ret = i2c_transfer(client->adapter, msgs, 2);
-    if (ret < 0)
-        return ret;               /* 保留总线或控制器返回的错误 */
-
-    if (ret != 2)
-        return -EIO;              /* 没完成两条消息按 I/O 失败处理 */
-
-    return 0;                     /* 数据已通过 value 返回 */
-}
-
-/* 2. 匹配成功后，Core 把已经创建的 client 交给本驱动。 */
-static int demo_probe(struct i2c_client *client)
-{
-    u8 value;
-    int ret;
-
-    /* 确认控制器支持普通 I2C 消息，而不只支持某类 SMBus 事务。 */
-    if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-        return -EOPNOTSUPP;
-
-    ret = demo_read_reg(client, DEMO_REG_ADDR, &value);
-    if (ret) {
-        dev_err(&client->dev, "read reg 0x%02x failed: %d\n",
-                DEMO_REG_ADDR, ret);
-        return ret;               /* 负值使本次 probe 失败 */
-    }
-
-    dev_info(&client->dev, "reg 0x%02x = 0x%02x, addr = 0x%02x\n",
-             DEMO_REG_ADDR, value, client->addr);
-    return 0;                     /* 通信与初始化均成功，允许绑定 */
-}
-
-static void demo_remove(struct i2c_client *client)
-{
-    dev_info(&client->dev, "remove demo device\n");
-}
-
-/* 3. 声明本驱动支持的设备树型号。 */
-static const struct of_device_id demo_of_match[] = {
-    { .compatible = "demo,at24c02-reader" },
-    { }                            /* 空元素表示匹配表结束 */
-};
-MODULE_DEVICE_TABLE(of, demo_of_match); /* 导出模块自动加载别名 */
-
-static struct i2c_driver demo_driver = {
-    .driver = {
-        .name = "demo_i2c",
-        .of_match_table = demo_of_match, /* 与 DTS compatible 比较 */
-    },
-    .probe = demo_probe,          /* v6.6：只接收 client 一个参数 */
-    .remove = demo_remove,
-};
-module_i2c_driver(demo_driver);   /* 加载注册驱动，卸载注销驱动 */
-
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("I2C combined-read teaching example");
+    .compatible = "rockchip,rk3399-i2c",
+    .data = &rk3399_soc_data
+},
 ```
 
-这段骨架可以按“数据、返回值、注册”三条线阅读。
+“回退”指 DTS 的 compatible 列表允许用较旧但兼容的实现匹配当前硬件；这里不是把 RK3568 说成 RK3399，而是复用后者对应的 `soc_data` 和计算方法。
 
-**数据：谁保存设备，谁保存本次传输**
+### 控制器 probe：私有对象中直接内嵌 adapter
 
-- `struct i2c_client` 代表挂在总线上的一颗外设。本例的 **`client->addr`** 是 0x50，**`client->adapter`** 指向它所属的 I2C1 总线对象。
-- `struct i2c_msg` 只描述一次传输。写消息的 `buf` 提供待发送字节，读消息的 `buf` 提供接收位置。
-- `u8` 是 8 位无符号整数，恰好容纳一个 I2C 数据字节。
+RK3568 控制器驱动使用 `struct rk3x_i2c` 保存一个控制器实例的全部状态：
 
-两条消息和 `reg` 都位于栈上。`i2c_transfer()` 是同步调用，返回时传输已经结束，所以这些缓冲区在硬件使用期间一直有效。
-
-**返回值：怎样判断方向、能力与错误**
-
-- `I2C_M_RD`：读方向标志，方向不拼进 7 位地址。
-- `I2C_FUNC_I2C`：普通 I2C 消息的能力位。`i2c_check_functionality()` 返回非零，才表示控制器具备该能力。
-- `EIO` 与 `EOPNOTSUPP`：分别表示通用 I/O 错误、当前操作不受支持。
-- `dev_err()` 与 `dev_info()`：分别记录带设备身份的错误与普通信息，之后可用 `dmesg` 查看。
-
-**注册：加载、自动加载与实际匹配各做什么**
-
-- `module_i2c_driver()`：在 v6.6 中，模块加载时调用 `i2c_add_driver()`，卸载时调用 `i2c_del_driver()`，所以本例不需要另写模块入口函数。
-- `MODULE_DEVICE_TABLE()`：导出设备别名，帮助系统自动加载模块。
-- `of_match_table`：保存在驱动中，参与设备与驱动的实际匹配。
-
-### 构建、加载与预期结果
-
-在同一个目录保存源码后，生成内核模块构建规则文件 Makefile，并选择一种构建方式。`obj-m` 表示把 `demo_i2c.c` 构建为可加载模块 `demo_i2c.ko`；`M="$PWD"` 告诉内核构建系统，模块源码位于当前目录。
-
-```bash title="Makefile 与模块构建命令"
-cat > Makefile <<'EOF'
-obj-m += demo_i2c.o
-EOF
-
-# 本机构建：只验证与当前主机内核头文件能否一起构建。
-make -C "/lib/modules/$(uname -r)/build" M="$PWD" modules
-
-# RK3568 交叉构建：替换源码路径和工具链前缀；不要与上一条重复执行。
-# make -C /path/to/rk3568-kernel ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M="$PWD" modules
+```c title="Linux v6.6 · drivers/i2c/busses/i2c-rk3x.c · 字段节选"
+struct rk3x_i2c {
+    struct i2c_adapter adap;              /* 直接内嵌，不是指针 */
+    struct device *dev;
+    const struct rk3x_i2c_soc_data *soc_data;
+    void __iomem *regs;
+    struct clk *clk;
+    struct clk *pclk;
+    struct i2c_timings t;
+    spinlock_t lock;
+    wait_queue_head_t wait;
+    bool busy;
+    struct i2c_msg *msg;                  /* 当前消息 */
+    enum rk3x_i2c_state state;            /* 控制器状态机 */
+    unsigned int processed;               /* 当前已处理字节数 */
+    int error;
+};
 ```
 
-命令中的路径和目标可以这样对应：
+`probe()` 先分配这份私有对象，再填写内嵌 adapter：
 
-- `make -C`：先进入内核构建目录。
-- `$(uname -r)`：取得当前主机内核版本。
-- `$PWD`：指向模块所在目录。
-- `ARCH=arm64`：选择 64 位 ARM 目标。
-- `CROSS_COMPILE`：指定交叉工具链前缀。
+```c title="Linux v6.6 · rk3x_i2c_probe() · 有删节"
+i2c = devm_kzalloc(&pdev->dev, sizeof(struct rk3x_i2c), GFP_KERNEL);
+if (!i2c)
+    return -ENOMEM;
 
-本机构建成功只证明代码与主机头文件兼容，不能证明它能访问 RK3568 硬件。
+match = of_match_node(rk3x_i2c_match, np);
+i2c->soc_data = match->data;
+i2c_parse_fw_timings(&pdev->dev, &i2c->t, true);
 
-把与新 DTB、运行内核相匹配的 `demo_i2c.ko` 复制到测试板，执行：
+i2c->adap.owner = THIS_MODULE;
+i2c->adap.algo = &rk3x_i2c_algorithm;
+i2c->adap.retries = 3;
+i2c->adap.dev.of_node = np;
+i2c->adap.algo_data = i2c;
+i2c->adap.dev.parent = &pdev->dev;
+```
 
-```bash title="加载、查看日志并卸载模块"
+现在可以逐段理解 `i2c->adap.algo`：
+
+```text
+i2c       指向 struct rk3x_i2c
+  └─ adap 是这个对象内部直接包含的 struct i2c_adapter
+       └─ algo 是 adapter 内部指向操作方法表的指针
+```
+
+因为 `adap` 是内嵌成员，所以写 `i2c->adap.algo`；因为 `algo` 是指针，Core 调用时才写 `adap->algo->master_xfer(...)`。`algo_data = i2c` 则给回调留了一条反向取回控制器私有状态的通道。
+
+`devm_kzalloc()` 分配并清零设备管理内存；`GFP_KERNEL` 是普通可睡眠上下文的分配标志，这里不是原子传输路径。probe 失败或设备解绑时，devres（设备资源管理）按登记关系释放这份内存。`THIS_MODULE` 指向当前模块，用于记录 adapter 的模块归属；`retries = 3` 是登记在 adapter 上、供 Core 传输重试使用的次数，不代表 DTS 会重试三次匹配。`of_match_node()` 返回本次命中的匹配项，`match->data` 不是 DTS 属性，而是驱动匹配表中预先挂好的 SoC 私有常量。
+
+### 注册 adapter 后，Core 才创建持久 client
+
+控制器完成资源初始化后注册 adapter。v6.6 的 `i2c_register_adapter()` 会调用 `of_i2c_register_devices()` 扫描设备树子节点：
+
+```c title="Linux v6.6 · drivers/i2c/i2c-core-of.c · 两个函数的有删节片段"
+/* of_i2c_get_board_info()：读取 DTS，填写临时描述 */
+ret = of_property_read_u32(node, "reg", &addr);
+if (ret)
+    return ret;
+
+info->addr = addr;
+info->of_node = node;
+
+/* of_i2c_register_device()：用临时描述创建持久对象 */
+ret = of_i2c_get_board_info(&adap->dev, node, &info);
+client = i2c_new_client_device(adap, &info);
+```
+
+`i2c_board_info info` 是创建阶段使用的临时描述，不是后面一直存在的 client。`of_i2c_get_board_info()` 负责把固件属性填进这份描述，`of_i2c_register_device()` 再把描述交给 `i2c_new_client_device()`。因此，本例形成一条可观察的创建链：
+
+```text
+DTS eeprom@50
+→ of_i2c_register_device(adap, node)
+→ of_i2c_get_board_info() 调用 of_property_read_u32("reg") 得到 0x50
+→ info.addr = 0x50
+→ i2c_new_client_device(adap, &info)
+→ client->addr = 0x50，client->adapter = adap
+→ 设备名 1-0050
+```
+
+`1-0050` 中的 `1` 是 adapter 编号，`0050` 是十六进制器件地址。通用设备模型随后完成设备与驱动匹配，命中 `demo_of_match[]` 后才执行：
+
+```c
+demo_probe(client);
+```
+
+因此 `client` 不是 `demo_probe()` 内部创建的局部变量，也不是 DTS 文本自己变成的指针；它是 Core 创建、设备模型传递的持久对象。
+
+### 注册与销毁是对称路径
+
+`module_i2c_driver(demo_driver)` 在 v6.6 中展开为 `module_driver()` 形式：模块加载时调用 `i2c_add_driver()`，卸载时调用 `i2c_del_driver()`。`MODULE_DEVICE_TABLE()` 只导出模块别名，帮助自动加载；实际运行时匹配仍依靠驱动中的 `of_match_table`。
+
+对象生命周期可以沿同一实例收回：
+
+1. 控制器 probe 创建 `rk3x_i2c`，注册内嵌 adapter；
+2. Core 根据子节点创建 client，匹配后调用教学驱动 probe；
+3. 传输时，消息只临时借用 client 中的地址和 adapter 指针；
+4. 模块卸载时先注销驱动并解除绑定，教学驱动不销毁 Core 拥有的 client；
+5. 控制器注销时删除 adapter，Core 对称清理其子设备；devm 释放控制器私有资源。
+
+---
+
+## <span class="blue"> 完整教学模块：代码、构建与验证放在同一处
+
+### 完整文件
+
+`demo_i2c.c` 是原创教学文件，不是内核源码节选。注释已经标出每个参数、返回值和对象所有权；建议先沿 `demo_probe()` 找到读取调用，再读匹配表和注册宏。
+
+=== "demo_i2c.c"
+
+    ```c title="完整教学文件 · demo_i2c.c"
+    --8<-- "docs/B. 总线协议/B. 低速外设接口/code/B-B.3.3/demo_i2c.c"
+    ```
+
+=== "Makefile"
+
+    ```makefile title="完整教学文件 · Makefile"
+    --8<-- "docs/B. 总线协议/B. 低速外设接口/code/B-B.3.3/Makefile"
+    ```
+
+### 构建模块与 DTB
+
+以下命令是构建模板，不代表已经部署到板卡。内核源码路径、交叉工具链前缀和 DTB 部署方式必须替换为实际 BSP 环境。
+
+```bash title="在同一源码目录选择实际需要的构建"
+# 1. 构建教学模块；KDIR 指向与目标板运行内核一致的源码构建树
+make -C /path/to/rk3568-kernel \
+     ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+     M="$PWD" modules
+
+# 2. 构建用户态程序，稍后用于 /dev/i2c-N 路径
+make user CC=aarch64-linux-gnu-gcc
+
+# 3. 把 DTS 放入 arch/arm64/boot/dts/rockchip/ 后，在内核源码顶层构建 DTB
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
+     rockchip/rk3568-at24-demo.dtb
+```
+
+`M="$PWD"` 把外部模块目录交给 Kbuild；`obj-m` 表示生成可加载模块。`make user` 调用本目录 Makefile 中的普通用户程序规则，不经过 Kbuild。构建成功只证明源代码和构建环境相容，不证明 DTB 已生效，也不证明外设可通信。
+
+### 加载后看什么
+
+在新 DTB 已生效、模块与运行内核匹配、地址 `0x50` 确实是可测试 AT24C02 的前提下，才执行：
+
+```bash
 insmod demo_i2c.ko
 dmesg | grep demo_i2c
 rmmod demo_i2c
-dmesg | grep demo_i2c
 ```
 
-`insmod` 加载模块，`rmmod` 卸载模块，`dmesg` 读取内核环形日志，管道后的 `grep demo_i2c` 只筛选本例相关信息。
+假设偏移 `0x10` 中原来保存 `0x5a`，预期日志形状为：
 
-假设 0x10 中保存的字节为 0x5a，日志形状为：
-
-```text title="预期日志示例 · 0x5a 仅为样本值"
+```text title="预期示例 · 非实测输出"
 demo_i2c 1-0050: reg 0x10 = 0x5a, addr = 0x50
 demo_i2c 1-0050: remove demo device
 ```
 
-先看输出字段：`1-0050` 是由总线编号和外设地址组成的设备名，这里表示总线 1、地址 0x50。0x5a 只是样本，真实结果取决于 EEPROM 内容，不能把其他合法数值当成故障。
-
-再按日志判断执行到了哪里：
-
-- **没有读取日志**：驱动已注册，但没有匹配到测试节点。
-- **日志包含负错误码**：`probe()` 已执行，但通信失败。
-
-仅看到 `insmod` 成功，不能证明外设可读。
+`dev_info()` 和 `dev_err()` 没有用于判断通信的返回值；它们通过 `client->dev` 自动带上设备身份。真实读值取决于 EEPROM 原内容，其他合法数值不等于故障。没有读取日志应先检查匹配和 probe 是否执行；出现负错误码才说明 probe 已进入但通信或初始化失败。`insmod` 成功本身只表示模块已加载。
 
 ---
 
-## <span class="blue"> `client` 从哪里来：设备树字段怎样进入对象
+## <span class="blue"> 运行传输：两条消息怎样穿过 Core 到达 RK3568
 
-完整模块从 `probe(client)` 开始工作，但这个指针并不是教学驱动分配的。Linux v6.6 的创建路径为：
+### Core：先检查能力，再持锁调用 algorithm
 
-```text
-rk3x_i2c_probe()
-    → i2c_add_adapter()
-    → i2c_register_adapter()
-    → of_i2c_register_devices()
-    → of_i2c_register_device()
-    → i2c_new_client_device()
-    → device_register(&client->dev)
-    → 通用设备模型完成匹配
-    → i2c_device_probe()
-    → demo_probe(client)
-```
+`demo_read_reg()` 把 `client->adapter`、栈上的 `msgs` 和消息数 `2` 交给 `i2c_transfer()`。由于调用是同步的，返回前这些栈缓冲区一直有效，返回后硬件已经不再使用它们。
 
-`struct i2c_adapter` 代表一条可由 Core 访问的 I2C 总线，本例对应 I2C1。RK3568 控制器在 `drivers/i2c/busses/i2c-rk3x.c` 的 `rk3x_i2c_probe()` 中分配并初始化自己的状态，映射控制器寄存器，再注册适配器。以下只保留与当前路径有关的行：
+v6.6 的公共入口做了两件与本例直接相关的事：
 
-```c
-i2c_parse_fw_timings(&pdev->dev, &i2c->t, true);
-i2c->adap.algo = &rk3x_i2c_algorithm;
-i2c->adap.dev.of_node = np;
-i2c->regs = devm_platform_ioremap_resource(pdev, 0);
-/* 时钟、中断等初始化省略 */
-ret = i2c_add_adapter(&i2c->adap);
-```
+```c title="Linux v6.6 · drivers/i2c/i2c-core-base.c · 有删节"
+int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+    int ret;
 
-这几行分别建立三项关系：
+    if (!adap->algo->master_xfer)
+        return -EOPNOTSUPP;
 
-- `devm_platform_ioremap_resource()`：把平台设备的寄存器窗口映射为内核可访问地址，并由设备资源管理机制在设备生命周期结束时释放。
-- `algo`：保存控制器收发方法表，是适配器最重要的字段之一。
-- `of_node`：让 Core 知道这个适配器对应哪个设备树控制器节点。
+    /* 跟踪记录等省略 */
+    ret = __i2c_lock_bus_helper(adap);
+    if (ret)
+        return ret;
 
-Core 在 `drivers/i2c/i2c-core-of.c` 中扫描可用的子节点。处理 `eeprom@50` 时，关键取值与创建过程是：
-
-```c title="源码合并节选 · of_i2c_get_board_info() 与 of_i2c_register_device()"
-struct i2c_board_info info;
-
-ret = of_property_read_u32(node, "reg", &addr);
-/* 错误与地址标志处理省略 */
-info.addr = addr;
-info.of_node = node;
-/* ... */
-client = i2c_new_client_device(adap, &info);
-```
-
-随后，`drivers/i2c/i2c-core-base.c` 的 `i2c_new_client_device()` 保存总线和地址，并把设备注册进设备模型：
-
-```c
-client = kzalloc(sizeof *client, GFP_KERNEL);
-/* 分配失败处理省略 */
-client->adapter = adap;
-client->addr = info->addr;
-/* OF 节点及其他字段初始化省略 */
-status = device_register(&client->dev);
-```
-
-这里有两个 Core 内部动作：
-
-- `of_property_read_u32()`：从 DTS 节点读取一个 32 位无符号整数属性，这里读出的就是 **`reg = <0x50>`**。
-- `kzalloc()`：分配并清零内核内存；`GFP_KERNEL` 表示分配发生在可睡眠的进程上下文中。
-
-它们只负责说明 client 如何诞生。教学驱动不要再次分配 client，只接收已经建立好总线和地址关系的对象。
-
-到这里，DTS 中的 **`reg`** 已经沿着 `addr → info.addr → client->addr` 进入对象。设备模型再比较节点的 **`compatible`** 与驱动的 `of_match_table`；匹配成功后，`i2c_device_probe()` 最终执行 `driver->probe(client)`。通用匹配细节归第 11 章，本篇只需守住这条 I2C 特有的数据来源链。
-
-适配器由控制器驱动注册，并在控制器移除时通过 `i2c_del_adapter()` 注销；client 由 Core 创建，设备注销时由 Core 撤销；教学驱动只使用 client，不在 `remove()` 中释放它。`remove()` 解除的是设备与驱动的绑定，不等于删除设备树节点。
-
----
-
-## <span class="blue"> 沿 `i2c_transfer()` 进入 RK3568：消息怎样变成数据
-
-现在回到 `demo_read_reg()`。两条消息已经填好，接下来每一段代码都能定位到同一个输入：地址 0x50、存储地址 0x10、读取一个字节。
-
-### Core 先锁定总线，再调用控制器方法
-
-`drivers/i2c/i2c-core-base.c` 中，公开入口先检查能力并锁定总线：
-
-```c
-ret = __i2c_lock_bus_helper(adap);
-if (ret)
+    ret = __i2c_transfer(adap, msgs, num);
+    i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
     return ret;
-
-ret = __i2c_transfer(adap, msgs, num);
-i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
-return ret;
+}
 ```
 
-`__i2c_transfer()` 是要求调用者已经持锁的内部入口。它最终通过适配器的方法表调用控制器：
+`I2C_LOCK_SEGMENT` 表示锁住当前总线段；本例只使用这一条 adapter，可把它理解为保护该适配器对应物理总线上的整笔消息组。解锁与加锁必须成对，因此正常、NACK 和超时路径都要经过它。
 
-```c
+`__i2c_transfer()` 在已经持锁的前提下选择回调：
+
+```c title="Linux v6.6 · __i2c_transfer() · 有删节"
 if (i2c_in_atomic_xfer_mode() && adap->algo->master_xfer_atomic)
     ret = adap->algo->master_xfer_atomic(adap, msgs, num);
 else
     ret = adap->algo->master_xfer(adap, msgs, num);
 ```
 
-这里先判断执行环境，再选择传输方法：
+这里的函数指针不是教学驱动直接填写的。它在控制器 probe 时已经指向：
 
-- `I2C_LOCK_SEGMENT`：解锁当前总线段，与前面的加锁配对，防止多个传输交叉占用同一条物理总线。
-- `i2c_in_atomic_xfer_mode()`：判断当前是否处于不能睡眠的原子场景。如果驱动提供了 `master_xfer_atomic`，Core 就改用不能睡眠的轮询传输。
-
-本例在 `probe()` 的进程上下文中执行，走普通的 `master_xfer`。
-
-`struct i2c_algorithm` 是控制器提供的方法集合。RK3568 所在的 rk3x 驱动把它实现为静态对象：
-
-```c
+```c title="Linux v6.6 · drivers/i2c/busses/i2c-rk3x.c"
 static const struct i2c_algorithm rk3x_i2c_algorithm = {
-    .master_xfer        = rk3x_i2c_xfer,
+    .master_xfer       = rk3x_i2c_xfer,
     .master_xfer_atomic = rk3x_i2c_xfer_polling,
-    .functionality      = rk3x_i2c_func,
+    .functionality     = rk3x_i2c_func,
 };
 ```
 
-于是本例的函数指针调用落到 `rk3x_i2c_xfer(adap, msgs, 2)`。五个对象在这次调用中各提供一项信息：
+所以本例普通上下文中的真实路线是：
 
-- `struct i2c_driver`：外设语义。
-- `struct i2c_client`：外设地址和所属总线。
-- `struct i2c_msg`：本次传输的数据与方向。
-- `struct i2c_adapter`：总线对象。
-- `struct i2c_algorithm`：控制器方法。
+```text
+demo_read_reg(client, 0x10, &value)
+→ i2c_transfer(client->adapter, msgs, 2)
+→ __i2c_lock_bus_helper(adap)
+→ __i2c_transfer(adap, msgs, 2)
+→ rk3x_i2c_xfer(adap, msgs, 2)
+→ rk3x_i2c_xfer_common(adap, msgs, 2, false)
+```
 
-它们是在这条执行路径上相遇的，不是五份互不相关的定义。
+### 控制器：从 adapter 取回私有状态，再启动状态机
 
-### RK3568 识别出“短写＋读”的组合事务
+进入 RK3568 驱动后，第一行把之前保存的 `algo_data` 取回：
 
-`rk3x_i2c_xfer()` 进入 `rk3x_i2c_xfer_common()`，后者调用 `rk3x_i2c_setup()`。本例第一条消息长度小于 4、方向为写，第二条方向为读，命中控制器专门支持的寄存器读取分支：
+```c title="Linux v6.6 · rk3x_i2c_xfer_common() · 有删节"
+struct rk3x_i2c *i2c = (struct rk3x_i2c *)adap->algo_data;
 
-```c
-if (num >= 2 && msgs[0].len < 4 &&
-    !(msgs[0].flags & I2C_M_RD) && (msgs[1].flags & I2C_M_RD)) {
-    u32 reg_addr = 0;
+for (i = 0; i < num; i += ret) {
+    ret = rk3x_i2c_setup(i2c, msgs + i, num - i);
+    if (ret < 0)
+        break;
 
-    for (i = 0; i < msgs[0].len; ++i) {
-        reg_addr |= msgs[0].buf[i] << (i * 8);
-        reg_addr |= REG_MRXADDR_VALID(i);
+    if (i + ret >= num)
+        i2c->is_last_msg = true;
+
+    rk3x_i2c_start(i2c);
+    timeout = wait_event_timeout(i2c->wait, !i2c->busy,
+                                 msecs_to_jiffies(WAIT_TIMEOUT));
+
+    if (timeout == 0) {
+        /* 强制 STOP、恢复 STATE_IDLE 等省略 */
+        ret = -ETIMEDOUT;
+        break;
     }
-
-    i2c->msg = &msgs[1];
-    i2c->mode = REG_CON_MOD_REGISTER_TX;
-    i2c_writel(i2c, addr | REG_MRXADDR_VALID(0), REG_MRXADDR);
-    i2c_writel(i2c, reg_addr, REG_MRXRADDR);
-    ret = 2;
-}
-```
-
-这段代码先组装地址，再选择工作模式，最后记录已处理的消息数。
-
-**1. 组装寄存器地址**
-
-- `u32`：32 位无符号整数。
-- 循环：把短写消息的字节装入 `reg_addr`。
-- `REG_MRXADDR_VALID(i)`：标记第 i 个寄存器地址字节有效。
-
-**2. 设置控制器状态**
-
-- `REG_CON_MOD_REGISTER_TX`：选择控制器的“寄存器地址发送”模式。
-- 第一条消息中的 0x10 被写入 `REG_MRXRADDR`，外设地址写入 `REG_MRXADDR`。`i2c_writel()` 是该驱动对寄存器写操作的封装。
-- `i2c->msg` 指向第二条读消息，后续接收处理因此知道数据该写到哪里。
-
-**3. 理解局部返回值**
-
-`ret = 2` 在这里只表示“本次设置已覆盖两条消息”，不是最终传输已经成功。启动、等待和错误检查仍由 `rk3x_i2c_xfer_common()` 完成。
-
-> FIFO：First In, First Out，先进先出缓冲区。RK3568 驱动把待发送字节放入发送 FIFO，并从接收 FIFO 取回外设数据，CPU 不必逐位驱动 SDA/SCL。
-
-### RXFIFO 的字节最终写入 `msgs[1].buf`
-
-传输启动后，rk3x 驱动等待硬件中断。接收处理函数 `rk3x_i2c_handle_read()` 从 RXBUFFER 取数据：
-
-```c
-if (len > 32)
-    len = 32;                 /* 每次最多处理 32 字节 */
-
-for (i = 0; i < len; ++i) {
-    if (i % 4 == 0)
-        val = i2c_readl(i2c, RXBUFFER_BASE + (i / 4) * 4);
-
-    byte = (val >> ((i % 4) * 8)) & 0xff;
-    i2c->msg->buf[i2c->processed++] = byte;
-}
-```
-
-`RXBUFFER_BASE` 是接收 FIFO 寄存器窗口的起始偏移。一个 32 位寄存器可以容纳 4 个字节，所以每读取一个新寄存器后，代码用 `(i % 4) * 8` 移位，依次取出第 0、1、2、3 个字节；`i2c->processed` 记录已经写回当前消息的字节数。
-
-本例 `len` 为 1，只循环一次。由于 `i2c->msg` 已指向 `msgs[1]`，关键赋值等价于：
-
-```c
-msgs[1].buf[0] = 从 RXFIFO 取出的字节;
-```
-
-这正是教学驱动中 `value` 的内存位置。**读回的数据不经过 `i2c_transfer()` 的返回值传递，而是写入调用者提供的 `buf`。**
-
-硬件结束后，`rk3x_i2c_xfer_common()` 检查超时和控制器错误；没有错误时返回 `num`，否则返回负错误：
-
-```c
-if (timeout == 0) {
-    /* 强制 STOP、恢复状态等处理省略 */
-    ret = -ETIMEDOUT;
-    break;
+    if (i2c->error) {
+        ret = i2c->error;
+        break;
+    }
 }
 
-if (i2c->error) {
-    ret = i2c->error;
-    break;
-}
-/* ... */
 return ret < 0 ? ret : num;
 ```
 
-`ETIMEDOUT` 是超时错误码，前面的负号把它变成内核约定的负错误返回值。本例成功时返回 2，Core 把这个结果原路交给 `demo_read_reg()`。教学代码再把“完成两条消息”转换为 0；负错误继续返回给 `probe()`；若出现非 2 的非负结果，则转换为 `-EIO`。至此，输入、缓冲区变化和返回值形成完整闭环。
+`rk3x_i2c_setup()` 把当前 `i2c_msg` 的地址、方向、缓冲区和长度转成控制器设置，返回值告诉循环本次准备了多少条消息。`is_last_msg` 标记当前是否已到整组末尾，控制器据此决定段间继续还是发送最后的 STOP。`rk3x_i2c_start()` 启动后，进程等待 `i2c->busy` 变为假；中断处理函数根据状态机推进 START、WRITE、READ、STOP，并通过 FIFO 收发数据。FIFO 是先进先出的硬件缓冲，TXFIFO 保存待发送字节，RXFIFO 保存已接收字节。
 
-### 两个外设共享一条总线时，什么独立、什么共享
+一笔传输中的关键状态变化是：
 
-假设另一个传感器也挂在 I2C1 上，两个驱动几乎同时发起读取：
+```text
+调用前：busy=false，state=STATE_IDLE，processed=0
+启动后：busy=true，msg 指向当前消息，state 随传输推进
+接收时：RXFIFO → msg->buf，processed 增加
+完成时：state=STATE_IDLE，busy=false，唤醒等待者
+失败时：error 保存负错误，或等待超时后强制 STOP 并恢复状态
+```
 
-1. AT24C02 驱动在自己的栈上构造 `msgs_a[2]` 和缓冲区 `value_a`。
-2. 传感器驱动在自己的栈上构造 `msgs_b[2]` 和缓冲区 `value_b`。
-3. 两者的 client 不同，`addr` 可以不同；两者的 `client->adapter` 却指向同一个 I2C1 适配器。
-4. Core 让一笔事务完成并释放总线锁后，另一笔事务才进入控制器，避免两组 START、地址和数据在线路上穿插。
-5. RK3568 在每一轮设置中让 `i2c->msg` 指向当前消息，数据分别写回 `value_a` 或 `value_b`。
+`msecs_to_jiffies(WAIT_TIMEOUT)` 把驱动定义的毫秒等待上限转换成内核调度时钟滴答数。`wait_event_timeout()` 返回 0 表示等待超时，不是“本次读取了 0 字节”。若中断正常完成并唤醒等待者，函数再检查 `i2c->error`，决定沿错误路径返回还是继续下一条消息。
 
-消息数组和数据缓冲区彼此独立，适配器、控制器寄存器与物理总线共享。Core 的串行化只保护总线事务，不理解外设业务状态；若两个访问者会修改同一芯片的配置，仍需由驱动统一协调。
+### 返回值：每一层表达的对象不同
+
+本例成功路径上的数字不能混读：
+
+```text
+rk3x_i2c_xfer_common() 返回 2：完成了两条消息
+i2c_transfer()            返回 2：Core 原样返回该结果
+demo_read_reg()           返回 0：两条消息完成，数据已写入 value
+demo_probe()              返回 0：初始化和本次试读均成功，允许绑定
+```
+
+若 `i2c_transfer()` 返回负值，教学代码保留错误；若返回 `0` 或 `1`，说明没有完成两条消息，转换成 `-EIO`。`0x5a` 通过输出参数 `value` 返回，不通过函数返回值返回。
 
 ---
 
-## <span class="blue"> DTS 属性不能停在“给谁看”：继续跟到生效代码
+## <span class="blue"> DTS 属性怎样生效：完整追踪 clock-frequency
 
-前面的 `reg` 已经完成从 DTS 到 `client->addr` 的追踪。另外两个属性分别进入控制器分频和 AT24 写页边界，它们展示了设备树属性真正影响代码的方式。
+`reg` 已经跟到 `client->addr`。`clock-frequency` 走的是控制器对象，而不是 client。
 
-### `clock-frequency` 怎样变成 RK3568 的分频设置
+Core 提供的 `i2c_parse_fw_timings()` 把固件属性读入通用时序对象：
 
-`rk3x_i2c_probe()` 调用 `i2c_parse_fw_timings()`。Core 在 `drivers/i2c/i2c-core-base.c` 中读取属性：
-
-```c
-i2c_parse_timing(dev, "clock-frequency", &t->bus_freq_hz,
-                 I2C_MAX_STANDARD_MODE_FREQ, u);
+```c title="Linux v6.6 · include/linux/i2c.h · 字段节选"
+struct i2c_timings {
+    u32 bus_freq_hz;
+    u32 scl_rise_ns;
+    u32 scl_fall_ns;
+    u32 scl_int_delay_ns;
+    u32 sda_fall_ns;
+    u32 sda_hold_ns;
+    u32 digital_filter_width_ns;
+    u32 analog_filter_cutoff_freq_hz;
+};
 ```
 
-`I2C_MAX_STANDARD_MODE_FREQ` 是属性缺失时可采用的 100 kHz 缺省频率，布尔参数 `u` 表示是否允许在属性缺失时采用缺省值；它不保存频率。本例显式给出 400000，因此板级 DTS 的 **`clock-frequency = <400000>`** 被保存为 `i2c->t.bus_freq_hz`。`rk3x_i2c_adapt_div()` 再让具体 SoC 的计算函数求出高低电平分频值，并写入寄存器：
+控制器 probe 中的调用把结果保存到 `i2c->t`。随后 `rk3x_i2c_adapt_div()` 使用三个不同类型的对象：
 
-```c
+```c title="Linux v6.6 · drivers/i2c/busses/i2c-rk3x.c · 声明节选"
+struct rk3x_i2c_calced_timings {
+    unsigned long div_low;   /* 低电平分频结果 */
+    unsigned long div_high;  /* 高电平分频结果 */
+    unsigned int tuning;
+};
+
+struct rk3x_i2c_soc_data {
+    int grf_offset;
+    int (*calc_timings)(unsigned long clk_rate,
+                        struct i2c_timings *t,
+                        struct rk3x_i2c_calced_timings *result);
+};
+```
+
+本例通过兼容回退选中：
+
+```c title="Linux v6.6 · rk3399_soc_data"
+static const struct rk3x_i2c_soc_data rk3399_soc_data = {
+    .grf_offset = -1,
+    .calc_timings = rk3x_i2c_v1_calc_timings,
+};
+```
+
+最后的消费代码才把计算结果写入分频寄存器：
+
+```c title="Linux v6.6 · rk3x_i2c_adapt_div() · 有删节"
 ret = i2c->soc_data->calc_timings(clk_rate, t, &calc);
-/* 并发保护与 CON 设置省略 */
+WARN_ONCE(ret != 0, "Could not reach SCL freq %u", t->bus_freq_hz);
+
 i2c_writel(i2c, (calc.div_high << 16) | (calc.div_low & 0xffff),
            REG_CLKDIV);
 ```
 
-属性链为：**DTS 数值 → `t.bus_freq_hz` → `calc_timings()` → `REG_CLKDIV`**。400 kHz 是目标值，实际结果仍受控制器输入时钟、支持的模式和计算约束影响，不能用 DTS 数值绕过硬件能力。
+完整属性链为：
 
-### `pagesize` 怎样限制 AT24 单次写入
+```text
+clock-frequency = <400000>
+→ i2c_parse_fw_timings()
+→ i2c->t.bus_freq_hz = 400000
+→ rk3399_soc_data.calc_timings
+→ rk3x_i2c_v1_calc_timings()
+→ calc.div_high / calc.div_low
+→ REG_CLKDIV
+```
 
-现在把教学节点换成使用内核现成 AT24 驱动的正式描述。它与前面的教学 `compatible` 是两种互斥选择，不要让两个驱动同时争用同一节点：
+400 kHz 是目标值，不是绕过硬件能力的保证；实际结果受输入时钟和计算约束影响。`pagesize` 属于 AT24 外设规则，不参与这笔单字节读取，其对象、读取代码、切页过程和 8＋4 写入实验统一放在 B-B.3.5，避免把总线框架主线切成另一条写路径。
 
-```dts title="正式节点示例 · 使用内核现成 AT24 驱动"
-eeprom@50 {
-    compatible = "atmel,24c02";
-    reg = <0x50>;
-    pagesize = <16>;
+---
+
+## <span class="blue"> `/dev/i2c-N`：另一个入口怎样接到同一 Core
+
+### 节点不是凭空出现的：i2c-dev 监听 adapter 注册
+
+`CONFIG_I2C_CHARDEV` 启用 i2c-dev。初始化时它登记字符设备号区域、创建 class，并监听 I2C 总线上的 adapter 增删：
+
+```c title="Linux v6.6 · drivers/i2c/i2c-dev.c · 有删节"
+res = register_chrdev_region(MKDEV(I2C_MAJOR, 0), I2C_MINORS, "i2c");
+i2c_dev_class = class_create("i2c-dev");
+res = bus_register_notifier(&i2c_bus_type, &i2cdev_notifier);
+
+/* 也为初始化前已经存在的 adapter 补建入口 */
+i2c_for_each_dev(NULL, i2c_dev_attach_adapter);
+```
+
+当 adapter 出现时，`i2cdev_attach_adapter()` 创建 `struct i2c_dev`，把次设备号绑定到 `adap->nr`：
+
+```c title="Linux v6.6 · i2cdev_attach_adapter() · 有删节"
+cdev_init(&i2c_dev->cdev, &i2cdev_fops);
+
+device_initialize(&i2c_dev->dev);
+i2c_dev->dev.devt = MKDEV(I2C_MAJOR, adap->nr);
+i2c_dev->dev.class = i2c_dev_class;
+i2c_dev->dev.parent = &adap->dev;
+i2c_dev->dev.release = i2cdev_dev_release;
+
+res = dev_set_name(&i2c_dev->dev, "i2c-%d", adap->nr);
+res = cdev_device_add(&i2c_dev->cdev, &i2c_dev->dev);
+```
+
+在本例编号为 1 的 adapter 上，它形成 `/sys/class/i2c-dev/i2c-1` 所代表的 class 设备，并由 devtmpfs 提供 `/dev/i2c-1` 节点。字符设备通过设备号找到 `i2cdev_fops`，之后的 `open()`、`ioctl()` 才进入 i2c-dev。
+
+通用机制不在本篇重写：
+
+- sysfs 三视图见 [11.5.1 sysfs 三视图](../../02-核心机制深度解析/第11章%20设备模型/11.5.1_sysfs三视图.md)；
+- devtmpfs 与 udev 的分工见 [11.5.2 uevent 生命周期](../../02-核心机制深度解析/第11章%20设备模型/11.5.2_uevent生命周期.md)；
+- cdev 注册和 `open()` 时的 `file_operations` 替换见 [12.1.4 字符设备与 file_operations](../../02-核心机制深度解析/第12章%20文件系统/12.1.4_字符设备与file_operations.md)。
+
+因此，`/dev/i2c-1` 是 **adapter 的用户态入口**，不是 AT24 专属文件。AT24 绑定 at24 驱动后由 NVMEM 创建的 `1-0050/eeprom` 则是另一条外设专用路径，归 B-B.3.5。
+
+### `open()` 创建的是匿名 client，不是第二颗设备树外设
+
+```c title="Linux v6.6 · i2cdev_open() / i2cdev_release() · 有删节"
+adap = i2c_get_adapter(minor);
+client = kzalloc(sizeof(*client), GFP_KERNEL);
+snprintf(client->name, I2C_NAME_SIZE, "i2c-dev %d", adap->nr);
+client->adapter = adap;
+file->private_data = client;
+
+/* release 中 */
+i2c_put_adapter(client->adapter);
+kfree(client);
+file->private_data = NULL;
+```
+
+源码特别强调：这个匿名 client **不会注册进设备模型或 I2C Core 的设备列表**，只保存该打开实例的寻址信息和 adapter 引用。
+
+用两个进程推演共享与独立状态：
+
+```text
+进程 A：open() → file A + 匿名 client A + msgs A + buffer A
+进程 B：open() → file B + 匿名 client B + msgs B + buffer B
+
+二者独立：文件描述符、匿名 client、消息数组和用户缓冲区
+二者共享：同一个 i2c_adapter、bus_lock 和同一条物理总线
+```
+
+A 正在执行 `I2C_RDWR` 时，Core 已持有 adapter 总线锁；B 发起事务会等待锁，不会把 A 的两条消息与 B 的消息穿插在线路上。锁只能保证单笔事务不穿插，不能保证应用与内核驱动对器件内部状态的假设互不破坏，所以已绑定驱动的外设不应被随意强制访问。
+
+### 完整用户态程序：同一笔复合读取
+
+```c title="完整教学文件 · i2c-read.c"
+--8<-- "docs/B. 总线协议/B. 低速外设接口/code/B-B.3.3/i2c-read.c"
+```
+
+`struct i2c_rdwr_ioctl_data` 把消息数组地址和消息数交给 i2c-dev。这里每条 `msg.addr` 已指定 `0x50`，所以不需要另发 `I2C_SLAVE`。i2c-dev 在内核中分配缓冲区、复制消息，调用同一个 `i2c_transfer()`，读消息完成后再把数据复制回用户缓冲区。
+
+v6.6 的 `i2cdev_ioctl_rdwr()` **直接返回 `i2c_transfer()` 的结果**。因此本例的返回值边界是：
+
+- 内核 `i2c_transfer()` 完整成功返回 `2`；
+- 用户态 `ioctl()` 也返回 `2`；失败时系统调用返回 `-1` 并设置 `errno`；
+- 程序先检查 `ret < 0`，再检查 `ret != 2`，防止把短事务当成功；
+- 真正的数据仍通过 `value` 返回，不是 `ioctl()` 的返回值 `2`。
+
+构建、运行和输出检查如下：
+
+```bash
+make user CC=aarch64-linux-gnu-gcc
+
+# 仅在目标总线、器件和驱动占用状态均已确认后运行
+./i2c-read /dev/i2c-1 0x50 0x10
+```
+
+```text title="预期示例 · 非实测输出"
+bus=/dev/i2c-1 chip=0x50 reg=0x10 value=0x5a
+```
+
+输出中的 `bus` 是本次打开的节点，`chip` 是 7 位器件地址，`reg` 是 AT24 内部偏移，`value` 是实际读回字节。若 `open()` 失败，先检查节点、权限和 adapter 是否存在；若 `ioctl()` 失败，再根据 `errno`、绑定状态和波形继续定位。通用工具与故障矩阵归 B-B.3.4。
+
+---
+
+## <span class="blue"> 替换控制器：GPIO 模拟 I2C 为什么不用改外设读取函数
+
+这一节不是增加一颗 I2C 外设，而是替换 adapter 的 algorithm。`demo_read_reg()`、两条消息和 Core 都保持不变。
+
+### DTS 只改总线实现及它下面的外设归属
+
+```dts title="完整教学文件 · i2c-gpio-demo.dts"
+--8<-- "docs/B. 总线协议/B. 低速外设接口/code/B-B.3.3/i2c-gpio-demo.dts"
+```
+
+`GPIO4_A0/A1` 只是语法示例，不是对任何板卡的引脚推荐。实际使用前必须根据原理图更换为空闲引脚，核对引脚复用、电源和外部上拉；两种控制器实验互斥，不能把同一颗物理外设同时描述到两条总线上。
+
+### i2c-gpio：把 GPIO 回调装进 algorithm 所需的数据
+
+```c title="Linux v6.6 · drivers/i2c/busses/i2c-gpio.c · 字段节选"
+struct i2c_gpio_private_data {
+    struct gpio_desc *sda;
+    struct gpio_desc *scl;
+    struct i2c_adapter adap;
+    struct i2c_algo_bit_data bit_data;
+    struct i2c_gpio_platform_data pdata;
+    /* 故障注入字段省略 */
 };
 ```
 
-AT24C02 一页为 16 字节。若一次页写越过页尾，器件可能回绕到本页开头并覆盖已有数据，所以 **`pagesize`** 是硬件事实，不是性能调优值。binding 是设备树绑定规范，用来约定某类节点的属性和含义；Linux 的 `Documentation/devicetree/bindings/eeprom/at24.yaml` 规定该属性表示写页长度，未提供时驱动使用保守值 1。
+`i2c_gpio_probe()` 先申请开漏 GPIO，再填写位模拟回调：
 
-`drivers/misc/eeprom/at24.c` 的 `at24_probe()` 读取并保存它：
+```c title="Linux v6.6 · i2c_gpio_probe() · 有删节"
+priv->sda = i2c_gpio_get_desc(dev, "sda", 0, gflags);
+priv->scl = i2c_gpio_get_desc(dev, "scl", 1, gflags);
 
-```c
-err = device_property_read_u32(dev, "pagesize", &page_size);
-if (err)
-    page_size = 1;            /* 未提供时退化为逐字节写 */
-/* 其他资源初始化省略 */
-at24->page_size = page_size;
+bit_data->setsda = i2c_gpio_setsda_val;
+bit_data->setscl = i2c_gpio_setscl_val;
+if (!pdata->scl_is_output_only)
+    bit_data->getscl = i2c_gpio_getscl;
+if (!pdata->sda_is_output_only)
+    bit_data->getsda = i2c_gpio_getsda;
+
+bit_data->udelay = pdata->udelay ? pdata->udelay : 5;
+bit_data->timeout = pdata->timeout ? pdata->timeout : HZ / 10;
+bit_data->data = priv;
+
+adap->algo_data = bit_data;
+adap->nr = pdev->id;
+ret = i2c_bit_add_numbered_bus(adap);
 ```
 
-`device_property_read_u32()` 是从设备固件描述中读取一个 32 位无符号属性的内核接口，成功返回 0，失败返回负错误。随后，`at24_adjust_write_count()` 在每次写入前缩短跨界部分：
-
-```c
-next_page = roundup(offset + 1, at24->page_size);
-if (offset + count > next_page)
-    count = next_page - offset;
-```
-
-`roundup(x, n)` 把 x 向上取整到 n 的整数倍。例如从页内偏移 14 写 4 字节，`roundup(14 + 1, 16)` 得到下一页边界 16，本次 `count` 被缩短为 2。剩余字节由后续写入处理，不会在同一次页写中回绕。属性链因此是：**`pagesize = <16>` → `device_property_read_u32()` → `at24->page_size` → 缩短跨界写入。**
-
-现成 AT24 驱动的读取路径还经过 regmap。regmap 是内核为寄存器型设备提供的统一访问层，可处理总线差异、寄存器格式和缓存。本例相关路径为：
+`i2c_bit_add_numbered_bus()` 内部把 `adap->algo` 设置为 `i2c_bit_algo`，再注册 adapter。新的运行路线因此变成：
 
 ```text
-at24_read()
-    → at24_regmap_read()
-    → regmap_bulk_read()
-    → regmap_i2c_read()
-    → i2c_transfer()
+demo_read_reg()
+→ i2c_transfer()
+→ i2c_bit_algo.master_xfer
+→ i2c-algo-bit 逐位组织 START、数据、ACK、重复 START、STOP
+→ setsda()/setscl()/getsda()/getscl()
+→ gpiod_set_value_cansleep()/gpiod_get_value_cansleep()
 ```
 
-`drivers/base/regmap/regmap-i2c.c` 中的 `regmap_i2c_read()` 同样构造“写寄存器地址＋读数据”两条消息，并要求 `i2c_transfer()` 返回 2。教学驱动是为了展示框架而手写的简化入口，现成 AT24 驱动则在其上继续使用 regmap；两者不能混为同一份实现。
+### `setscl(1)` 只是放手，还要读回真正的高电平
+
+v6.6 的 `sclhi()` 展示了为什么 `getscl` 不是多余字段：
+
+```c title="Linux v6.6 · drivers/i2c/algos/i2c-algo-bit.c · 有删节"
+setscl(adap, 1);             /* 释放 SCL，不等价于测得高电平 */
+if (!adap->getscl)
+    goto done;
+
+start = jiffies;
+while (!getscl(adap)) {
+    if (time_after(jiffies, start + adap->timeout)) {
+        if (getscl(adap))
+            break;
+        return -ETIMEDOUT;
+    }
+    cpu_relax();
+}
+
+done:
+    udelay(adap->udelay);
+    return 0;
+```
+
+外设可以暂时拉住 SCL，这就是时钟延展。只有读回 SCL 已经变高，位模拟算法才能继续。如果没有 `getscl`，驱动只能假设线已变高，源码会标记不支持时钟延展并发出不可靠警告。
+
+GPIO 模拟证明了框架的替换边界，但不代表性能等价：逐位软件操作耗费 CPU，慢 GPIO 可能睡眠并破坏时序，`udelay` 也不能把调度抖动变成严格硬件实时保证。需要高速、稳定或原子上下文传输时，应优先使用硬件控制器；GPIO 模拟更适合低速调试、救急和没有可用控制器的场景。
 
 ---
 
-## <span class="blue"> `/dev/i2c-N`：从用户态交叉验证同一笔读取
+## <span class="blue"> 收回主线：写、移植和修改时分别落在哪一层
 
-并非每次寄存器验证都值得先写内核驱动。`i2c-dev` 可以把适配器导出为字符设备 `/dev/i2c-N`，让普通程序通过文件接口访问总线。N 是适配器编号，不能脱离具体板卡硬编码。
+沿同一笔读取，现在可以把代码放回正确位置：
 
-> 用户态：运行普通应用程序和命令行工具的环境。应用通过系统调用进入内核，而不是直接操作 SoC 的 I2C 控制器寄存器。
+1. **改变板上有哪些总线和外设**：修改板级 DTS，核对 `status`、地址、引脚和硬件事实；
+2. **写一颗新 I2C 外设驱动**：从 `i2c_driver`、匹配表和 `probe(client)` 开始，用 `i2c_msg` 表达器件事务，不直接写 SoC 寄存器；
+3. **移植到另一款 SoC**：外设消息保持不变，选择或移植对应 adapter/algorithm；
+4. **修改 RK3568 控制器时序**：进入 `rk3x_i2c`、`i2c_timings`、分频、FIFO、中断和错误恢复；
+5. **从用户态验证一笔事务**：使用 i2c-dev 创建的 `/dev/i2c-N`，确认匿名 client、`I2C_RDWR` 和返回值；
+6. **没有可用硬件控制器**：用 i2c-gpio 提供另一条 adapter，但接受软件位模拟的时序和性能边界。
 
-这条路径只绕过具体外设驱动，不绕过 Core 和控制器驱动：
+## <span class="blue"> 本节自检 Q&A
 
-1. `open("/dev/i2c-1", ...)` 选择 I2C1 适配器。
-2. `ioctl(fd, I2C_SLAVE, 0x50)` 给后续访问设置 7 位外设地址。ioctl 是对设备文件执行特定控制操作的系统调用。
-3. 需要“写存储地址后重复 START 再读”时，用 `I2C_RDWR` 一次提交两条 `i2c_msg`。普通 `write()` 后再 `read()` 是两次独立事务，中间会出现 STOP。
+??? question "为什么 `client` 不是教学驱动自己分配的？"
 
-i2c-tools 是一组用户态 I2C 检测与访问工具，包括 `i2cdetect`、`i2cget` 等。在已知只连接可安全扫描器件的测试总线上，可以用它观察绑定前后的差别：
+    因为 DTS 子节点描述的是持久硬件事实。adapter 注册后，Core 先读取 `reg` 并调用 `i2c_new_client_device()` 创建 client，设备模型匹配成功后才把指针传给 `probe(client)`。教学驱动只使用这个对象；卸载驱动也不等于立即销毁整颗 Core 设备。
 
-```bash
-i2cdetect -y 1
-insmod demo_i2c.ko
-i2cdetect -y 1
-```
+??? question "为什么是 `i2c->adap.algo`，而不是 `i2c->adap->algo`？"
 
-绑定前，0x50 所在格可能显示 `50`；教学驱动绑定后，通常变为 `UU`。`UU` 表示该地址已有内核驱动占用，不是“芯片消失”。下面是只保留相关行的输出形状示例：
+    `i2c` 是指向 `struct rk3x_i2c` 的指针，所以第一段用 `->`；`adap` 是直接内嵌的 `struct i2c_adapter`，所以第二段用 `.`；`algo` 才是 adapter 内部指向 algorithm 的指针。这个表达式同时展示了包含关系和指针关系。
 
-```text
-# 绑定前
-50: 50
+??? question "`I2C_M_RD` 和 `I2C_FUNC_I2C` 都是位标志，为什么不能互换？"
 
-# 绑定后
-50: UU
-```
+    前者属于一条消息的 `flags`，表示读方向；后者属于适配器能力位，表示支持普通 I2C 消息。一个描述“这次要做什么”，另一个描述“这条总线能做什么”。
 
-若要在教学驱动未绑定时用 `i2cget` 读取同一地址，可执行：
+??? question "`i2c_transfer()` 返回 2，为什么读到的数据不是 2？"
 
-```bash
-rmmod demo_i2c
-i2cget -y 1 0x50 0x10
-```
+    返回值 `2` 表示完成了两条消息。读取的数据通过第二条消息的 `buf` 写入 `value`。教学函数再把传输结果转换为自身的 `0` 或负错误，避免把消息数、读取值和初始化结果混为一谈。
 
-输出形状为 `0x5a`，实际值仍取决于 EEPROM 内容。不要在内核驱动已经占用地址时强行绕过忙错误：Core 能串行化单笔总线事务，却不能保证应用和驱动对芯片状态的假设互不破坏。
+??? question "用户态 `ioctl(I2C_RDWR)` 在本例为什么也返回 2？"
 
-B-B.3.4 展开 i2c-tools 和抓包排查，B-B.3.5 给出 `/dev/i2c-N`、`I2C_SLAVE`、`I2C_RDWR` 的完整 AT24C02 程序。本篇只确定用户态入口在框架中的位置及其与内核驱动的边界。
+    v6.6 的 `i2cdev_ioctl_rdwr()` 直接返回 `i2c_transfer()` 的结果。系统调用失败时用户看到 `-1` 和 `errno`；非负返回值仍需检查是否等于消息数，不能只凭非负就认定整组事务完成。
 
----
+??? question "两个进程同时打开 `/dev/i2c-1`，会共用同一个匿名 client 吗？"
 
-## <span class="blue"> GPIO 扩展器：I2C 驱动怎样把能力交给另一个子系统
+    不会。每次 `open()` 都创建独立的匿名 client，并保存到各自的 `file->private_data`。它们共享 adapter 和物理总线，所以 Core 用总线锁串行化事务；消息数组和用户缓冲区仍然各自独立。
 
-到这里可以检查框架理解是否真正闭环。假设 SoC 原生 GPIO 已用完，但板上还需要一个外设复位脚。PCA9535 能通过 I2C 提供 16 路可配置输入或输出的引脚，软件不应让每个使用复位脚的驱动都直接读写 PCA9535 寄存器。
+??? question "`/dev/i2c-1` 与 `1-0050/eeprom` 是同一个框架自动创建的两种名字吗？"
 
-> GPIO：General-Purpose Input/Output，通用输入输出引脚。软件可把它配置为读取电平的输入，或输出高低电平。
+    不是。前者由 i2c-dev 监听 adapter 注册并调用 `cdev_device_add()` 创建，是总线入口；后者由 at24 经 NVMEM 在具体 client 上创建，是 EEPROM 外设入口。未绑定 at24 时可以有前者和 `1-0050` 设备目录，却没有 `eeprom` 文件。
 
-<!-- -->
+??? question "换成 GPIO 模拟后，为什么 `demo_read_reg()` 不需要修改？"
 
-> GPIO 扩展器：通过另一套总线增加 GPIO 数量的芯片。主控先用 I2C 修改扩展器寄存器，扩展器再改变对应引脚电平。
-
-pca953x 是 Linux 中支持 PCA9535 等同系列芯片的现成驱动。它在 `probe()` 中注册 `gpiochip`，也就是内核对“一组 GPIO”的统一描述；注册完成后，其他设备驱动通过 GPIO 子系统申请和控制引脚，不必知道它来自 SoC 还是 I2C 扩展器。
-
-设备树先声明扩展器本身：
-
-```dts
-#include <dt-bindings/gpio/gpio.h>
-
-&i2c1 {
-    status = "okay";
-
-    pca9535: pca9535@20 {
-        compatible = "nxp,pca9535";
-        reg = <0x20>;
-        gpio-controller;
-        #gpio-cells = <2>;
-    };
-};
-```
-
-这个节点同时进入 I2C 和 GPIO 两套框架：
-
-- **`compatible` 与 `reg`**：仍走前面的 I2C 对象创建与匹配机制。
-- **`gpio-controller`**：表示这个节点还能作为 GPIO 提供方被其他节点引用。
-- **`#gpio-cells = <2>`**：每次引用要提供两个参数，即扩展器内的引脚编号和标志。
-- **`pca9535`**：供其他节点引用的标签。
-
-假设 PCA9535 的 P1_6 接某外设复位脚，该外设节点的 binding 又支持 `reset-gpios`，引用写成：
-
-```dts
-reset-gpios = <&pca9535 14 GPIO_ACTIVE_LOW>;
-```
-
-编号 14 来自两组各 8 路的排列：P0_0～P0_7 对应 0～7，P1_0～P1_7 对应 8～15，所以 P1_6 是 14。`GPIO_ACTIVE_LOW` 表示逻辑上的“有效”对应低电平；它不表示引脚永远输出低。驱动请求“使能有效”和“解除有效”时，GPIO 框架会按这个标志映射实际电平。
-
-当另一个驱动操作复位脚时，调用链变成：
-
-1. 外设驱动向 GPIO 子系统请求设置复位状态。
-2. GPIO 子系统根据描述符找到 PCA9535 注册的 `gpiochip`。
-3. pca953x 驱动修改方向或输出寄存器，经 I2C Core 和控制器驱动完成传输。
-4. PCA9535 改变 P1_6 电平，目标外设看到复位状态变化。
-
-一次电平操作要经过 I2C 传输，可能等待总线和调度，不能像内存映射的原生 GPIO 那样用于不能睡眠的执行上下文。pca953x 的 `gpio_chip.can_sleep` 正因这一点设为真。需要高频翻转或严格定时的信号，不应默认改用 I2C 扩展器。
-
-> 不能睡眠的执行上下文：运行到此处时不能等待调度或可能阻塞的 I/O，例如部分硬中断处理路径。调用可能睡眠的 GPIO 操作会破坏内核调度约束。
-
-PCA9535 还提供可选的 INT 引脚，即中断告警输出。需要把扩展输入的变化通知 SoC 时，还要在设备树和驱动中接入中断控制器路径；只使用低速输入输出时，不必额外配置这条路径。
+    因为它只依赖 client、adapter、消息和 `i2c_transfer()`。i2c-gpio 在 adapter 内安装另一套 `i2c_bit_algo`，由位模拟算法调用 GPIO 回调实现相同的消息语义。改变的是总线实现，不是 AT24 的内部偏移和读取顺序。
 
 ---
 
-## <span class="blue"> 本节总结
+## <span class="blue"> 核验边界
 
-Linux I2C 框架的关键不是记住对象名单，而是能沿一笔读取说明状态放在哪里：`client` 保存外设地址和所属总线，消息保存本次数据与方向，适配器通过方法表找到控制器，RXFIFO 的字节最终写回调用者缓冲区。裸驱动中的寄存器操作并未消失，而是由控制器驱动集中实现，外设驱动因此可以复用。
+本篇的结构体、宏、函数和返回语义已按 Linux v6.6 的 `include/uapi/linux/i2c.h`、`include/linux/i2c.h`、`i2c-core-of.c`、`i2c-core-base.c`、`i2c-dev.c`、`i2c-rk3x.c`、`i2c-gpio.c`、`i2c-algo-bit.c` 核对。第 11、12 章的前置链接也已检查其现有内容。
 
-设备树属性也必须跟到消费代码才有意义：地址进入 client，频率进入分频计算，页大小进入写边界。`/dev/i2c-N` 适合受控验证，产品功能则应由统一驱动协调外设状态。普通 I2C 外设怎样复用 SMBus 事务，以及 PMBus 怎样解释电源数据，继续在 B-B.3.6 展开。
-
-**速查表**
-
-| 项目 | 应抓住的含义 |
-|:---|:---|
-| `i2c_adapter` | 一条可访问的 I2C 总线，保存控制器方法与编号 |
-| `i2c_client` | 一颗外设对象，`addr` 找设备，`adapter` 找总线 |
-| `i2c_driver` | 处理外设的代码，含匹配表、`probe()`、`remove()` |
-| `i2c_msg` | 一段同地址、同方向的数据消息；复合事务可含多条 |
-| `i2c_algorithm` | 控制器提供的方法表，普通传输进入 `master_xfer()` |
-| 控制器 `reg` | SoC 内部寄存器物理地址窗口，由厂商 dtsi 提供 |
-| 外设 `reg` | 7 位 I2C 地址，经 Core 进入 `client->addr` |
-| `i2c_transfer()` | 返回负错误或完成消息数；本例两条消息成功返回 2 |
-| `clock-frequency` | 经 `i2c_parse_fw_timings()` 和分频计算进入控制器设置 |
-| `pagesize` | 经 `at24->page_size` 限制单次写不跨页 |
-| `/dev/i2c-N` | i2c-dev 用户态入口；复合事务用 `I2C_RDWR` |
-| PCA9535 | 16 路 I2C GPIO 扩展；注册 `gpiochip`，操作可能睡眠 |
-
----
-
-## <span class="blue"> 本节自查
-
-??? details "Q1. 裸驱动中的寄存器操作，在 Linux 通用 I2C 框架里去了哪里？"
-    寄存器操作集中到控制器驱动。AT24C02 驱动只提交“写存储地址再读数据”的消息，Core 经适配器的方法表调用 RK3568 的 `rk3x_i2c_xfer()`，后者再操作寄存器、FIFO 和中断。外设驱动不需要包含 RK3568 的寄存器细节。
-
-??? details "Q2. `reg = <0x50>` 怎样变成教学驱动中的 `client->addr`？"
-    `of_i2c_register_devices()` 扫描控制器子节点，`of_property_read_u32(node, "reg", &addr)` 读取 0x50，先保存到 `info.addr`，再由 `i2c_new_client_device()` 写入 `client->addr`。匹配成功后，Core 把这个 client 传给 `demo_probe()`。
-
-??? details "Q3. 为什么本例要用一次两条消息的 `i2c_transfer()`，不能拆成一次写和一次读？"
-    两条消息在同一次传输中通过重复 START 切换方向，并在整组结束后才发 STOP。拆成两个独立接口会形成两笔事务，中间出现 STOP，不再等同于 AT24C02 要求的复合读取。
-
-??? details "Q4. 从 `rk3x_i2c_setup()` 到 `demo_read_reg()` 返回，数据和返回值分别怎样流动？"
-    `rk3x_i2c_setup()` 识别短写加读，让 `i2c->msg` 指向第二条消息；`rk3x_i2c_handle_read()` 从 RXFIFO 取字节并写入 `i2c->msg->buf`，即教学驱动的 `value`。`rk3x_i2c_xfer_common()` 成功返回消息数 2，Core 原路返回 2，教学代码据此返回 0；负错误则直接向上传播。
-
-??? details "Q5. 两个外设同时访问 I2C1 时，哪些状态独立，哪些状态共享？"
-    两个驱动各自拥有消息数组和数据缓冲区，各自的 client 保存自己的地址；它们共享同一个适配器、控制器寄存器和物理总线。Core 串行化两笔事务，避免波形穿插，但不会替两个访问者协调同一芯片的业务状态。
-
-??? details "Q6. `pagesize = <16>` 为什么能防止 AT24C02 页写回绕？"
-    `at24_probe()` 用 `device_property_read_u32()` 读取 16 并保存到 `at24->page_size`。`at24_adjust_write_count()` 根据它计算下一页边界并缩短跨界写入，例如从页内偏移 14 写 4 字节时，本次只写 2 字节，剩余部分留到后续写入。
-
-??? details "Q7. `i2cdetect` 中地址从 `50` 变成 `UU` 表示什么？为什么不能强行让应用与驱动同时操作？"
-    `50` 表示扫描时该地址有响应，`UU` 表示地址已有内核驱动占用。Core 只能串行化单笔总线事务，不能理解应用与驱动各自对芯片状态的假设；强行并行访问仍可能破坏配置和数据一致性。
-
-??? details "Q8. 其他驱动使用 PCA9535 的复位脚时，为什么还要经过 I2C？调用上下文有什么限制？"
-    其他驱动只向 GPIO 子系统提交逻辑电平请求，pca953x 再把请求转换成扩展器寄存器读写，所以底层仍要发起 I2C 事务。总线访问可能阻塞和睡眠，因此这类 GPIO 不能用于不允许睡眠的执行上下文，也不适合高频严格定时信号。
+原创教学 DTS、内核模块和用户程序只是源码级核验，**尚未完成交叉编译、部署、运行和上板验证**；交互实验室展示的是源码模型，不是硬件仿真器或实测记录。
