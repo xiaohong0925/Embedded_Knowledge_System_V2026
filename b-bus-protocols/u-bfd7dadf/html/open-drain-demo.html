@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开漏输出交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#od-wrap button{font:inherit;}
+#od-wrap svg text{font-family:var(--kimi-font-sans);}
+.od-title{font-size:16px;font-weight:500;margin:0 0 8px 0;color:var(--kimi-color-text-primary);}
+.od-btn{padding:6px 16px;border-radius:8px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:14px;transition:background var(--t-fast) var(--ease-out);}
+.od-btn.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.od-controls{display:flex;gap:8px;align-items:center;margin:12px 0 8px 0;flex-wrap:wrap;}
+.od-expl{font-size:14px;line-height:22px;color:var(--kimi-color-text-secondary);margin:4px 0 0 0;min-height:44px;}
+.od-key{font-size:13px;color:var(--kimi-color-text-tertiary);margin-top:8px;border-left:2px solid var(--kimi-color-border);padding-left:10px;}
+.flow{transition:opacity var(--t-normal) var(--ease-standard);}
+#flowUpG{opacity:1;}
+#flowDownG{opacity:0;}
+.state-low #flowUpG{opacity:0;}
+.state-low #flowDownG{opacity:1;}
+.lvl-circle{transition:fill var(--t-normal) var(--ease-standard),stroke var(--t-normal) var(--ease-standard);}
+.lvl-text{font-weight:500;font-size:14px;transition:fill var(--t-normal) var(--ease-standard);}
+.state-release .lvl-circle{fill:rgba(26,127,55,.13);stroke:var(--kimi-color-positive);}
+.state-release .lvl-text{fill:var(--kimi-color-positive);}
+.state-low .lvl-circle{fill:var(--kimi-color-surface-muted);stroke:var(--kimi-color-text-primary);}
+.state-low .lvl-text{fill:var(--kimi-color-text-primary);}
+.wave{transition:opacity var(--t-normal) var(--ease-standard);}
+.wave-rise,.note-rise{opacity:0;}
+.state-release .wave-rise,.state-release .note-rise{opacity:1;}
+.state-release .wave-fall,.state-release .note-fall{opacity:0;}
+.nmos-channel{transition:stroke var(--t-normal) var(--ease-standard);}
+.state-low .nmos-channel{stroke:var(--kimi-color-text-primary);}
+.state-release .nmos-channel{stroke:var(--kimi-color-text-quaternary);}
+</style>
+</head>
+<body>
+<div id="od-wrap" class="state-release" style="font-family:var(--kimi-font-sans);width:100%;max-width:640px;margin:0 auto;">
+
+<p class="od-title">开漏输出：只能拉低，或者放手</p>
+
+<svg viewBox="0 0 640 360" style="width:100%;height:auto;display:block;">
+  <defs>
+    <marker id="od-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kimi-color-text-tertiary)"/>
+    </marker>
+  </defs>
+
+  <text x="452" y="20" font-size="13" fill="var(--kimi-color-text-tertiary)">+3.3V (VDD)</text>
+  <line x1="360" y1="32" x2="540" y2="32" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+
+  <polyline points="440,36 440,42 428,50 452,58 428,66 452,74 428,82 452,90 440,98 440,120" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <text x="462" y="76" font-size="12" fill="var(--kimi-color-text-secondary)">Rp 上拉电阻</text>
+  <text x="462" y="92" font-size="11" fill="var(--kimi-color-text-tertiary)">4.7kΩ</text>
+
+  <text x="60" y="140" font-size="13" fill="var(--kimi-color-text-secondary)">SDA / SCL 总线</text>
+  <line x1="60" y1="150" x2="566" y2="150" stroke="var(--kimi-color-text-secondary)" stroke-width="3"/>
+  <line x1="440" y1="120" x2="440" y2="150" stroke="var(--kimi-color-text-secondary)" stroke-width="3"/>
+  <circle cx="440" cy="150" r="4" fill="var(--kimi-color-text-primary)"/>
+
+  <circle class="lvl-circle" cx="596" cy="150" r="15" fill="var(--kimi-color-surface-muted)" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+  <text class="lvl-text" x="596" y="155" text-anchor="middle" fill="var(--kimi-color-text-primary)">L</text>
+
+  <rect x="330" y="172" width="220" height="168" fill="none" stroke="var(--kimi-color-border)" stroke-width="1" stroke-dasharray="5 4" rx="8"/>
+  <text x="344" y="192" font-size="12" fill="var(--kimi-color-text-tertiary)">芯片内部</text>
+
+  <line x1="440" y1="150" x2="440" y2="196" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line class="nmos-channel" x1="440" y1="196" x2="440" y2="256" stroke="var(--kimi-color-text-quaternary)" stroke-width="6"/>
+  <line x1="418" y1="206" x2="418" y2="246" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  <line x1="356" y1="226" x2="418" y2="226" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.5" marker-end="url(#od-arrow)"/>
+  <text x="364" y="216" font-size="12" fill="var(--kimi-color-text-secondary)">控制器</text>
+  <text x="364" y="246" font-size="12" fill="var(--kimi-color-text-secondary)">输出</text>
+  <text x="454" y="222" font-size="11" fill="var(--kimi-color-text-tertiary)">NMOS 下拉管</text>
+  <text x="454" y="238" font-size="11" fill="var(--kimi-color-text-tertiary)">（简画）</text>
+
+  <line x1="440" y1="256" x2="440" y2="278" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line x1="426" y1="286" x2="454" y2="286" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="431" y1="292" x2="449" y2="292" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="436" y1="298" x2="444" y2="298" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <text x="462" y="296" font-size="12" fill="var(--kimi-color-text-tertiary)">GND</text>
+
+  <g id="flowUpG" class="flow">
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="1.4s" repeatCount="indefinite" path="M 480 32 L 440 32 L 440 150"/>
+    </circle>
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="1.4s" begin="-0.47s" repeatCount="indefinite" path="M 480 32 L 440 32 L 440 150"/>
+    </circle>
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="1.4s" begin="-0.93s" repeatCount="indefinite" path="M 480 32 L 440 32 L 440 150"/>
+    </circle>
+  </g>
+  <g id="flowDownG" class="flow">
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="0.9s" repeatCount="indefinite" path="M 440 150 L 440 286"/>
+    </circle>
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="0.9s" begin="-0.3s" repeatCount="indefinite" path="M 440 150 L 440 286"/>
+    </circle>
+    <circle r="4" fill="var(--kimi-chart-1)">
+      <animateMotion dur="0.9s" begin="-0.6s" repeatCount="indefinite" path="M 440 150 L 440 286"/>
+    </circle>
+  </g>
+</svg>
+
+<svg viewBox="0 0 640 84" style="width:100%;height:auto;display:block;margin-top:4px;">
+  <text x="20" y="14" font-size="11" fill="var(--kimi-color-text-tertiary)">高</text>
+  <text x="20" y="58" font-size="11" fill="var(--kimi-color-text-tertiary)">低</text>
+  <text x="20" y="80" font-size="12" fill="var(--kimi-color-text-secondary)">总线波形</text>
+  <line x1="46" y1="14" x2="620" y2="14" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="3 4"/>
+  <line x1="46" y1="54" x2="620" y2="54" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="3 4"/>
+  <path class="wave wave-rise" d="M 60 54 L 150 54 C 200 54 210 14 280 14 L 610 14" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  <path class="wave wave-fall" d="M 60 14 L 160 14 L 170 54 L 610 54" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  <text class="note note-rise" x="290" y="40" font-size="11" fill="var(--kimi-color-text-tertiary)">放手后：电阻缓慢上拉（像电容充电）</text>
+  <text class="note note-fall" x="180" y="44" font-size="11" fill="var(--kimi-color-text-tertiary)">拉低：NMOS 直接拽到地，下降沿很快</text>
+</svg>
+
+<div class="od-controls">
+  <button id="od-low" class="od-btn">拉低（NMOS 导通）</button>
+  <button id="od-release" class="od-btn active">放手（高阻态）</button>
+  <button id="od-auto" class="od-btn">自动循环</button>
+</div>
+
+<p class="od-expl" id="od-expl"></p>
+<p class="od-key">要点：开漏的高电平从来不是芯片"输出"的——芯片只能拉低或放手，高电平是上拉电阻把总线"拉回" VDD 的结果。</p>
+
+<script>
+(function(){
+  var wrap=document.getElementById('od-wrap');
+  var expl=document.getElementById('od-expl');
+  var btnLow=document.getElementById('od-low');
+  var btnRel=document.getElementById('od-release');
+  var btnAuto=document.getElementById('od-auto');
+  var autoTimer=null;
+  var TEXT={
+    release:'NMOS 截止，引脚呈高阻态——芯片"放手"，什么都不驱动。上拉电阻 Rp 把总线缓缓拉回 VDD，总线 = 高电平。如果没有这只电阻，总线会浮空，电平不确定。',
+    low:'NMOS 导通，下拉管把总线主动拽向 GND，总线 = 低电平。电流从 VDD 经上拉电阻和导通的 NMOS 流向 GND——这是开漏输出级唯一能主动驱动总线的动作。'
+  };
+  function setState(s,fromAuto){
+    wrap.classList.remove('state-release','state-low');
+    wrap.classList.add(s==='low'?'state-low':'state-release');
+    btnLow.classList.toggle('active',s==='low');
+    btnRel.classList.toggle('active',s!=='low');
+    expl.textContent=TEXT[s];
+    if(!fromAuto&&autoTimer){stopAuto();}
+  }
+  function stopAuto(){
+    if(autoTimer){clearInterval(autoTimer);autoTimer=null;}
+    btnAuto.classList.remove('active');
+    btnAuto.textContent='自动循环';
+  }
+  btnLow.addEventListener('click',function(){setState('low');});
+  btnRel.addEventListener('click',function(){setState('release');});
+  btnAuto.addEventListener('click',function(){
+    if(autoTimer){stopAuto();return;}
+    btnAuto.classList.add('active');
+    btnAuto.textContent='停止循环';
+    var s='release';
+    setState('release');
+    autoTimer=setInterval(function(){
+      s=(s==='release')?'low':'release';
+      setState(s,true);
+    },1800);
+  });
+  expl.textContent=TEXT.release;
+})();
+</script>
+</div>
+</body>
+</html>

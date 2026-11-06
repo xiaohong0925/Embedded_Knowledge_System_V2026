@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线与（wired-AND）与 ACK 应答交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#wa-wrap button{font:inherit;}
+#wa-wrap svg text{font-family:var(--kimi-font-sans);}
+.wa-h{font-size:15px;font-weight:500;margin:16px 0 8px 0;color:var(--kimi-color-text-primary);}
+.wa-h:first-child{margin-top:0;}
+.wa-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:13px;transition:background var(--t-fast) var(--ease-out);}
+.wa-btn.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.wa-controls{display:flex;gap:8px;align-items:center;margin:10px 0 6px 0;flex-wrap:wrap;}
+.wa-expl{font-size:13px;line-height:21px;color:var(--kimi-color-text-secondary);margin:6px 0 0 0;}
+.wa-note{font-size:11px;color:var(--kimi-color-text-tertiary);margin-top:6px;}
+.wa-flowA,.wa-flowB{opacity:0;transition:opacity var(--t-normal) var(--ease-standard);}
+.a-low .wa-flowA{opacity:1;}
+.b-low .wa-flowB{opacity:1;}
+.lvl-circle{transition:fill var(--t-normal) var(--ease-standard),stroke var(--t-normal) var(--ease-standard);}
+.lvl-text{font-weight:500;font-size:14px;transition:fill var(--t-normal) var(--ease-standard);}
+.lvl-circle{fill:rgba(26,127,55,.13);stroke:var(--kimi-color-positive);}
+.lvl-text{fill:var(--kimi-color-positive);}
+.bus-low .lvl-circle{fill:var(--kimi-color-surface-muted);stroke:var(--kimi-color-text-primary);}
+.bus-low .lvl-text{fill:var(--kimi-color-text-primary);}
+.tt-row{display:flex;gap:12px;font-size:13px;color:var(--kimi-color-text-secondary);padding:3px 10px;border-radius:6px;transition:background var(--t-fast) var(--ease-out);}
+.tt-row.on{background:var(--kimi-color-surface-muted);color:var(--kimi-color-text-primary);font-weight:500;}
+.wa-layout{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;}
+.wa-side{flex:1;min-width:200px;}
+.sda-path{transition:opacity var(--t-normal) var(--ease-standard);}
+.mode-ack .sda-nack,.mode-ack .dot-nack{display:none;}
+.mode-nack .sda-ack,.mode-nack .dot-ack{display:none;}
+</style>
+</head>
+<body>
+<div id="wa-wrap" class="mode-ack" style="font-family:var(--kimi-font-sans);width:100%;max-width:640px;margin:0 auto;">
+
+<p class="wa-h">① 两个开漏输出并接：线与（wired-AND）</p>
+
+<svg viewBox="0 0 640 250" style="width:100%;height:auto;display:block;">
+  <text x="470" y="18" font-size="12" fill="var(--kimi-color-text-tertiary)">+3.3V (VDD)</text>
+  <line x1="380" y1="28" x2="540" y2="28" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <polyline points="320,32 320,38 308,46 332,54 308,62 332,70 308,78 332,86 320,94 320,112" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <text x="338" y="70" font-size="12" fill="var(--kimi-color-text-secondary)">Rp</text>
+
+  <text x="40" y="128" font-size="13" fill="var(--kimi-color-text-secondary)">SDA 总线（开漏并接）</text>
+  <line x1="40" y1="140" x2="560" y2="140" stroke="var(--kimi-color-text-secondary)" stroke-width="3"/>
+  <line x1="320" y1="112" x2="320" y2="140" stroke="var(--kimi-color-text-secondary)" stroke-width="3"/>
+  <circle cx="180" cy="140" r="4" fill="var(--kimi-color-text-primary)"/>
+  <circle cx="320" cy="140" r="4" fill="var(--kimi-color-text-primary)"/>
+  <circle cx="460" cy="140" r="4" fill="var(--kimi-color-text-primary)"/>
+
+  <circle class="lvl-circle" cx="588" cy="140" r="15" stroke-width="1.5"/>
+  <text class="lvl-text" x="588" y="145" text-anchor="middle">H</text>
+
+  <rect x="120" y="166" width="120" height="84" fill="none" stroke="var(--kimi-color-border)" stroke-width="1" stroke-dasharray="5 4" rx="8"/>
+  <text x="132" y="184" font-size="12" fill="var(--kimi-color-text-tertiary)">器件 A</text>
+  <line x1="180" y1="140" x2="180" y2="172" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line x1="180" y1="172" x2="180" y2="212" stroke="var(--kimi-color-text-primary)" stroke-width="6"/>
+  <line x1="160" y1="182" x2="160" y2="202" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  <line x1="130" y1="192" x2="160" y2="192" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.5"/>
+  <text x="128" y="216" font-size="11" fill="var(--kimi-color-text-tertiary)">输出控制</text>
+  <line x1="180" y1="212" x2="180" y2="228" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line x1="168" y1="236" x2="192" y2="236" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="172" y1="242" x2="188" y2="242" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="176" y1="248" x2="184" y2="248" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+
+  <rect x="400" y="166" width="120" height="84" fill="none" stroke="var(--kimi-color-border)" stroke-width="1" stroke-dasharray="5 4" rx="8"/>
+  <text x="412" y="184" font-size="12" fill="var(--kimi-color-text-tertiary)">器件 B</text>
+  <line x1="460" y1="140" x2="460" y2="172" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line x1="460" y1="172" x2="460" y2="212" stroke="var(--kimi-color-text-primary)" stroke-width="6"/>
+  <line x1="440" y1="182" x2="440" y2="202" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  <line x1="410" y1="192" x2="440" y2="192" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.5"/>
+  <text x="408" y="216" font-size="11" fill="var(--kimi-color-text-tertiary)">输出控制</text>
+  <line x1="460" y1="212" x2="460" y2="228" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <line x1="448" y1="236" x2="472" y2="236" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="452" y1="242" x2="468" y2="242" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+  <line x1="456" y1="248" x2="464" y2="248" stroke="var(--kimi-color-text-primary)" stroke-width="2"/>
+
+  <g class="wa-flowA">
+    <circle r="4" fill="var(--kimi-chart-1)"><animateMotion dur="0.9s" repeatCount="indefinite" path="M 180 140 L 180 236"/></circle>
+    <circle r="4" fill="var(--kimi-chart-1)"><animateMotion dur="0.9s" begin="-0.45s" repeatCount="indefinite" path="M 180 140 L 180 236"/></circle>
+  </g>
+  <g class="wa-flowB">
+    <circle r="4" fill="var(--kimi-chart-1)"><animateMotion dur="0.9s" repeatCount="indefinite" path="M 460 140 L 460 236"/></circle>
+    <circle r="4" fill="var(--kimi-chart-1)"><animateMotion dur="0.9s" begin="-0.45s" repeatCount="indefinite" path="M 460 140 L 460 236"/></circle>
+  </g>
+</svg>
+
+<div class="wa-layout">
+  <div class="wa-side">
+    <div class="wa-controls">
+      <button id="wa-btnA" class="wa-btn">A：放手</button>
+      <button id="wa-btnB" class="wa-btn">B：放手</button>
+    </div>
+    <p class="wa-expl" id="wa-rb"></p>
+  </div>
+  <div class="wa-side">
+    <div class="tt-row" data-i="0"><span>A 放手（1）</span><span>B 放手（1）</span><span>→ 总线 1</span></div>
+    <div class="tt-row" data-i="1"><span>A 拉低（0）</span><span>B 放手（1）</span><span>→ 总线 0</span></div>
+    <div class="tt-row" data-i="2"><span>A 放手（1）</span><span>B 拉低（0）</span><span>→ 总线 0</span></div>
+    <div class="tt-row" data-i="3"><span>A 拉低（0）</span><span>B 拉低（0）</span><span>→ 总线 0</span></div>
+  </div>
+</div>
+
+<p class="wa-h">② 用"读回"做应答：ACK / NACK</p>
+
+<svg viewBox="0 0 640 214" style="width:100%;height:auto;display:block;">
+  <text x="24" y="64" font-size="12" fill="var(--kimi-color-text-secondary)">SCL</text>
+  <text x="24" y="124" font-size="12" fill="var(--kimi-color-text-secondary)">SDA</text>
+  <path d="M 60 80 L 88 80 L 88 40 L 116 40 L 116 80 L 144 80 L 144 40 L 172 40 L 172 80 L 200 80 L 200 40 L 228 40 L 228 80 L 256 80 L 256 40 L 284 40 L 284 80 L 312 80 L 312 40 L 340 40 L 340 80 L 368 80 L 368 40 L 396 40 L 396 80 L 424 80 L 424 40 L 452 40 L 452 80 L 480 80 L 480 40 L 508 40 L 508 80 L 536 80 L 536 40 L 564 40 L 564 80" fill="none" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+
+  <text x="502" y="22" text-anchor="end" font-size="11" fill="var(--kimi-color-text-tertiary)">发送方从这里放手</text>
+  <line x1="508" y1="30" x2="508" y2="180" stroke="var(--kimi-color-text-tertiary)" stroke-width="1" stroke-dasharray="4 4"/>
+  <rect x="508" y="30" width="56" height="150" fill="none" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="3 3"/>
+
+  <text x="88" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">1</text>
+  <text x="144" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">2</text>
+  <text x="200" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">3</text>
+  <text x="256" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">4</text>
+  <text x="312" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">5</text>
+  <text x="368" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">6</text>
+  <text x="424" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">7</text>
+  <text x="480" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">8</text>
+  <text x="536" y="196" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)">9</text>
+  <text x="536" y="210" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)">应答位</text>
+  <text x="284" y="176" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">前 8 拍：发送方驱动数据</text>
+
+  <g clip-path="url(#wa-clip)">
+    <path class="sda-path sda-ack" d="M 60 160 L 116 160 L 116 120 L 172 120 L 172 160 L 228 160 L 228 120 L 340 120 L 340 160 L 452 160 L 452 120 L 508 120 L 530 120 L 530 160 L 564 160" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+    <path class="sda-path sda-nack" d="M 60 160 L 116 160 L 116 120 L 172 120 L 172 160 L 228 160 L 228 120 L 340 120 L 340 160 L 452 160 L 452 120 L 564 120" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+  </g>
+  <circle class="dot-ack" cx="550" cy="160" r="4" fill="var(--kimi-color-positive)"/>
+  <text class="dot-ack" x="558" y="164" font-size="11" fill="var(--kimi-color-positive)">读回 0 = ACK</text>
+  <circle class="dot-nack" cx="550" cy="120" r="4" fill="var(--kimi-color-text-primary)"/>
+  <text class="dot-nack" x="558" y="124" font-size="11" fill="var(--kimi-color-text-secondary)">读回 1 = NACK</text>
+  <clipPath id="wa-clip"><rect id="wa-clip-rect" x="60" y="0" width="0" height="214"/></clipPath>
+</svg>
+
+<div class="wa-controls">
+  <button id="wa-play" class="wa-btn active">播放</button>
+  <button id="wa-ack" class="wa-btn active">ACK 场景</button>
+  <button id="wa-nack" class="wa-btn">NACK 场景</button>
+</div>
+<p class="wa-expl" id="wa-ack-expl"></p>
+<p class="wa-note">示意时序：SDA 在时钟边沿切换是为了画面清晰，未严格按 I2C 的建立/保持时间绘制。</p>
+
+<script>
+(function(){
+  var wrap=document.getElementById('wa-wrap');
+  var aLow=false,bLow=false;
+  var btnA=document.getElementById('wa-btnA');
+  var btnB=document.getElementById('wa-btnB');
+  var rb=document.getElementById('wa-rb');
+  var rows=wrap.querySelectorAll('.tt-row');
+
+  function refresh(){
+    wrap.classList.toggle('a-low',aLow);
+    wrap.classList.toggle('b-low',bLow);
+    var busLow=aLow||bLow;
+    wrap.classList.toggle('bus-low',busLow);
+    btnA.textContent=aLow?'A：拉低':'A：放手';
+    btnB.textContent=bLow?'B：拉低':'B：放手';
+    btnA.classList.toggle('active',aLow);
+    btnB.classList.toggle('active',bLow);
+    var idx=aLow?(bLow?3:1):(bLow?2:0);
+    rows.forEach(function(r){r.classList.toggle('on',+r.dataset.i===idx);});
+    if(aLow){
+      rb.textContent='A 自己正在拉低 → 读回 0，与自己试图输出的电平一致。';
+    }else if(busLow){
+      rb.textContent='A 已经放手（预期读到 1），实际却读到 0 → 总线上有另一个器件正在拉低。这就是"读回可以不同于输出"，ACK 和多主仲裁都靠它。';
+    }else{
+      rb.textContent='A 放手，读到 1：当前没有任何器件拉低，上拉电阻把总线维持在 1。';
+    }
+  }
+  btnA.addEventListener('click',function(){aLow=!aLow;refresh();});
+  btnB.addEventListener('click',function(){bLow=!bLow;refresh();});
+
+  var clipRect=document.getElementById('wa-clip-rect');
+  var playBtn=document.getElementById('wa-play');
+  var ackBtn=document.getElementById('wa-ack');
+  var nackBtn=document.getElementById('wa-nack');
+  var expl=document.getElementById('wa-ack-expl');
+  var raf=null;
+  var TEXT={
+    ack:'第 9 拍：发送方已放手（SDA 仅靠上拉电阻维持高电平），接收方把 SDA 拉低 → 发送方在第 9 个时钟的高电平期间读回 0，即 ACK。',
+    nack:'第 9 拍：没有任何器件拉低，SDA 被上拉电阻维持在 1 → 发送方读到 1，即 NACK（接收方无应答）。'
+  };
+  function stopAnim(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+  function setMode(m){
+    wrap.classList.toggle('mode-ack',m==='ack');
+    wrap.classList.toggle('mode-nack',m==='nack');
+    ackBtn.classList.toggle('active',m==='ack');
+    nackBtn.classList.toggle('active',m==='nack');
+    expl.textContent=TEXT[m];
+    clipRect.setAttribute('width',0);
+  }
+  function play(){
+    stopAnim();
+    clipRect.setAttribute('width',0);
+    var dur=4500,startT=null;
+    function step(ts){
+      if(!startT)startT=ts;
+      var p=Math.min((ts-startT)/dur,1);
+      clipRect.setAttribute('width',504*p);
+      if(p<1){raf=requestAnimationFrame(step);}else{raf=null;}
+    }
+    raf=requestAnimationFrame(step);
+  }
+  playBtn.addEventListener('click',play);
+  ackBtn.addEventListener('click',function(){setMode('ack');});
+  nackBtn.addEventListener('click',function(){setMode('nack');});
+
+  refresh();
+  setMode('ack');
+  setTimeout(play,600);
+})();
+</script>
+</div>
+</body>
+</html>

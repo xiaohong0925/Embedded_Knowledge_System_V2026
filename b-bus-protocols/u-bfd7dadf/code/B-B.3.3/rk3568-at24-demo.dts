@@ -1,0 +1,27 @@
+/dts-v1/;
+
+/*
+ * 完整板级 DTS 教学文件。
+ * 放入 Linux v6.6 的 arch/arm64/boot/dts/rockchip/ 后构建。
+ * 它只描述受控实验硬件，不代表任何具体商品板的完整配置。
+ */
+#include "rk3568.dtsi"
+
+/ {
+	model = "RK3568 I2C framework teaching board";
+	compatible = "demo,rk3568-i2c-teaching", "rockchip,rk3568";
+};
+
+/*
+ * rk3568.dtsi 已声明 I2C1 的寄存器、中断和时钟；
+ * 这里只覆盖本板需要改变的属性。
+ */
+&i2c1 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	eeprom@50 {
+		compatible = "demo,at24c02-reader";
+		reg = <0x50>;              /* 7 位器件地址，不是控制器寄存器地址 */
+	};
+};

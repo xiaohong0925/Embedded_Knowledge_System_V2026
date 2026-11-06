@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I2C 时序参数与 RC 上升沿交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-color-danger:#cf222e;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#tw-wrap button{font:inherit;}
+#tw-wrap svg text{font-family:var(--kimi-font-sans);}
+.tw-h{font-size:15px;font-weight:500;margin:16px 0 8px 0;color:var(--kimi-color-text-primary);}
+.tw-h:first-child{margin-top:0;}
+.tw-chip{padding:5px 12px;border-radius:999px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:12px;transition:background var(--t-fast) var(--ease-out);}
+.tw-chip.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.tw-controls{display:flex;gap:8px;align-items:center;margin:10px 0 6px 0;flex-wrap:wrap;}
+.tw-expl{font-size:13px;line-height:21px;color:var(--kimi-color-text-secondary);margin:6px 0 0 0;}
+.tw-note{font-size:11px;color:var(--kimi-color-text-tertiary);margin-top:6px;}
+.win{opacity:.28;transition:opacity var(--t-normal) var(--ease-standard);}
+.win text{transition:opacity var(--t-normal) var(--ease-standard);}
+.sel-ss .win-ss,.sel-hdsta .win-hdsta,.sel-sudat .win-sudat,.sel-tlow .win-tlow,.sel-thigh .win-thigh{opacity:1;}
+.rc-pass{stroke:var(--kimi-color-positive);}
+.rc-fail{stroke:var(--kimi-color-danger);}
+#rc-verdict.pass{color:var(--kimi-color-positive);}
+#rc-verdict.fail{color:var(--kimi-color-danger);}
+.rc-slider{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--kimi-color-text-secondary);}
+.rc-slider input[type=range]{width:180px;accent-color:var(--kimi-color-text-primary);}
+.rc-slider .val{font-variant-numeric:tabular-nums;color:var(--kimi-color-text-primary);min-width:64px;}
+.rc-mode.on{font-weight:500;}
+</style>
+</head>
+<body>
+<div id="tw-wrap" class="sel-ss" style="font-family:var(--kimi-font-sans);width:100%;max-width:640px;margin:0 auto;">
+
+<p class="tw-h">① 每个时序参数，量的是波形上的哪一段？</p>
+
+<svg viewBox="0 0 640 260" style="width:100%;height:auto;display:block;">
+  <text x="28" y="55" font-size="12" fill="var(--kimi-color-text-secondary)">SDA</text>
+  <text x="28" y="155" font-size="12" fill="var(--kimi-color-text-secondary)">SCL</text>
+
+  <path d="M 60 150 L 170 150 L 170 210 L 226 210 L 226 150 L 254 150 L 254 210 L 310 210 L 310 150 L 338 150 L 338 210 L 394 210 L 394 150 L 620 150" fill="none" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+  <path d="M 60 50 L 140 50 L 140 110 L 190 110 L 190 50 L 280 50 L 280 110 L 440 110 L 440 50 L 620 50" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+
+  <text x="140" y="34" text-anchor="middle" font-size="12" font-weight="500" fill="var(--kimi-color-text-primary)">START</text>
+  <line x1="140" y1="40" x2="140" y2="47" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2"/>
+  <text x="440" y="34" text-anchor="middle" font-size="12" font-weight="500" fill="var(--kimi-color-text-primary)">STOP</text>
+  <line x1="440" y1="40" x2="440" y2="47" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2"/>
+
+  <text x="235" y="68" font-size="11" fill="var(--kimi-color-text-tertiary)">数据位1 = 1</text>
+  <text x="360" y="100" font-size="11" fill="var(--kimi-color-text-tertiary)">数据位2 = 0</text>
+  <text x="565" y="68" font-size="11" fill="var(--kimi-color-text-tertiary)">空闲</text>
+
+  <g class="win win-ss">
+    <rect x="133" y="42" width="14" height="80" fill="rgba(26,127,55,.12)" rx="3"/>
+    <rect x="433" y="42" width="14" height="80" fill="rgba(26,127,55,.12)" rx="3"/>
+  </g>
+
+  <g class="win win-hdsta">
+    <line x1="140" y1="126" x2="170" y2="126" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="140" y1="121" x2="140" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="170" y1="121" x2="170" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <text x="155" y="120" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-primary)">t_HD;STA</text>
+  </g>
+
+  <g class="win win-sudat">
+    <line x1="190" y1="126" x2="226" y2="126" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="190" y1="121" x2="190" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="226" y1="121" x2="226" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <text x="208" y="120" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-primary)">t_SU;DAT</text>
+    <line x1="280" y1="126" x2="310" y2="126" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="280" y1="121" x2="280" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="310" y1="121" x2="310" y2="131" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <text x="295" y="120" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-primary)">t_SU;DAT</text>
+  </g>
+
+  <g class="win win-tlow">
+    <line x1="170" y1="232" x2="226" y2="232" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="170" y1="227" x2="170" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="226" y1="227" x2="226" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <text x="198" y="248" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-primary)">t_LOW</text>
+    <line x1="254" y1="232" x2="310" y2="232" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="254" y1="227" x2="254" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="310" y1="227" x2="310" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="338" y1="232" x2="394" y2="232" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="338" y1="227" x2="338" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="394" y1="227" x2="394" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+  </g>
+
+  <g class="win win-thigh">
+    <line x1="226" y1="232" x2="254" y2="232" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="226" y1="227" x2="226" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="254" y1="227" x2="254" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <text x="240" y="248" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-primary)">t_HIGH</text>
+    <line x1="310" y1="232" x2="338" y2="232" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="310" y1="227" x2="310" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+    <line x1="338" y1="227" x2="338" y2="237" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>
+  </g>
+</svg>
+
+<div class="tw-controls">
+  <button class="tw-chip" data-k="ss">START / STOP</button>
+  <button class="tw-chip" data-k="hdsta">t_HD;STA</button>
+  <button class="tw-chip" data-k="sudat">t_SU;DAT</button>
+  <button class="tw-chip" data-k="tlow">t_LOW</button>
+  <button class="tw-chip" data-k="thigh">t_HIGH</button>
+</div>
+<p class="tw-expl" id="tw-expl"></p>
+
+<p class="tw-h">② 上升沿为什么会被动违规：Rp × C_bus 实验</p>
+
+<svg viewBox="0 0 640 200" style="width:100%;height:auto;display:block;">
+  <text x="30" y="44" font-size="10" fill="var(--kimi-color-text-tertiary)">VDD</text>
+  <text x="30" y="134" font-size="10" fill="var(--kimi-color-text-tertiary)">0.7VDD</text>
+  <text x="30" y="174" font-size="10" fill="var(--kimi-color-text-tertiary)">0.3VDD</text>
+  <line x1="70" y1="40" x2="560" y2="40" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="70" y1="130" x2="560" y2="130" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="70" y1="170" x2="560" y2="170" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>
+  <text x="315" y="190" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">时间（ns）</text>
+  <line id="rc-limit" x1="397" y1="36" x2="397" y2="170" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <text id="rc-limit-label" x="397" y="30" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)"></text>
+  <path id="rc-curve" d="" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5" stroke-linecap="round"/>
+  <g id="rc-bracket"></g>
+</svg>
+
+<div class="tw-controls">
+  <div class="rc-slider"><span>Rp 上拉电阻</span><input type="range" id="rc-rp" min="0" max="100" value="67" step="1"><span class="val" id="rc-rp-val"></span></div>
+  <div class="rc-slider"><span>C_bus 总线电容</span><input type="range" id="rc-c" min="50" max="500" value="100" step="5"><span class="val" id="rc-c-val"></span></div>
+</div>
+<div class="tw-controls">
+  <button id="rc-sm" class="tw-chip active rc-mode">标准模式 Sm（t_R ≤ 1000 ns）</button>
+  <button id="rc-fm" class="tw-chip rc-mode">快速模式 Fm（t_R ≤ 300 ns）</button>
+</div>
+<p class="tw-expl" id="rc-verdict"></p>
+<p class="tw-note" id="rc-rpmax"></p>
+<p class="tw-note">t_R 按 0.3VDD→0.7VDD 测量（UM10204）：t_R = 0.8473 × Rp × C_bus。下降沿是下拉管主动放电，很快；上升沿只能靠 Rp 给 C_bus 充电——控制器配置不变，走线加长或 Rp 选大，就足以让它超出 t_R。</p>
+
+<script>
+(function(){
+  var wrap=document.getElementById('tw-wrap');
+  var chips=wrap.querySelectorAll('.tw-chip[data-k]');
+  var expl=document.getElementById('tw-expl');
+  var TEXT={
+    ss:'START = SCL 高电平时 SDA 的下降沿；STOP = SCL 高电平时 SDA 的上升沿。它们只看"沿的方向 + 发生时 SCL 的电平"，与数据位天然区分。',
+    hdsta:'t_HD;STA：START 之后必须维持原状的时间，第一个时钟不允许立刻到来——帧边界同样要"稳定"一段时间。',
+    sudat:'t_SU;DAT：数据必须比 SCL 上升沿提前稳定下来。所以规则落在波形上就是：SDA 只能在 SCL 低电平时翻转（看两个数据位的跳变位置都落在 SCL 低电平窗口里），SCL 高电平期间必须保持稳定供采样。',
+    tlow:'t_LOW：SCL 低电平的最短持续时间。这段时间同时是 SDA 允许翻转、以及边沿完成上升/下降（t_R、t_F）的预算窗口。',
+    thigh:'t_HIGH：SCL 高电平的最短持续时间。接收方在这段窗口内采样，配合 t_SU;DAT 保证采样点处数据已稳定。'
+  };
+  function sel(k){
+    wrap.className=wrap.className.replace(/sel-\w+/g,'').trim();
+    wrap.classList.add('sel-'+k);
+    chips.forEach(function(c){c.classList.toggle('active',c.dataset.k===k);});
+    expl.textContent=TEXT[k];
+  }
+  chips.forEach(function(c){c.addEventListener('click',function(){sel(c.dataset.k);});});
+  sel('ss');
+
+  var curve=document.getElementById('rc-curve');
+  var bracket=document.getElementById('rc-bracket');
+  var limitLine=document.getElementById('rc-limit');
+  var limitLabel=document.getElementById('rc-limit-label');
+  var rpSlider=document.getElementById('rc-rp');
+  var cSlider=document.getElementById('rc-c');
+  var rpVal=document.getElementById('rc-rp-val');
+  var cVal=document.getElementById('rc-c-val');
+  var verdict=document.getElementById('rc-verdict');
+  var rpmax=document.getElementById('rc-rpmax');
+  var modeBtns={sm:document.getElementById('rc-sm'),fm:document.getElementById('rc-fm')};
+  var mode='sm';
+  var X0=70,X1=560,YTOP=40,YBOT=170;
+
+  function rpFromSlider(v){return 1000*Math.pow(10,v/100);}
+
+  function recompute(){
+    var Rp=rpFromSlider(+rpSlider.value);
+    var C=+cSlider.value;
+    var limit=mode==='sm'?1000:300;
+    var tmax=mode==='sm'?1500:450;
+    var RCns=Rp*C*1e-3;
+    var tr=0.8473*RCns;
+    var t30=0.35667*RCns,t70=1.20397*RCns;
+    var pass=tr<=limit;
+
+    rpVal.textContent=(Rp>=1000?(Rp/1000).toFixed(1)+' kΩ':Math.round(Rp)+' Ω');
+    cVal.textContent=C+' pF';
+
+    var d='';
+    for(var i=0;i<=60;i++){
+      var t=tmax*i/60;
+      var V=3.3*(1-Math.exp(-t/RCns));
+      var x=X0+(X1-X0)*i/60;
+      var y=YBOT-(V/3.3)*(YBOT-YTOP);
+      d+=(i===0?'M ':' L ')+x.toFixed(1)+' '+y.toFixed(1);
+    }
+    curve.setAttribute('d',d);
+    curve.setAttribute('class',pass?'rc-pass':'rc-fail');
+
+    var xl=X0+(X1-X0)*limit/tmax;
+    limitLine.setAttribute('x1',xl);limitLine.setAttribute('x2',xl);
+    limitLabel.setAttribute('x',xl);
+    limitLabel.textContent='t_R 上限 '+limit+' ns';
+
+    var x30=X0+(X1-X0)*t30/tmax, x70=X0+(X1-X0)*t70/tmax;
+    var y30=170-0.3*130, y70=170-0.7*130;
+    bracket.innerHTML=
+      '<line x1="'+x30+'" y1="'+y30+'" x2="'+x70+'" y2="'+y70+'" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>'+
+      '<line x1="'+x30+'" y1="'+(y30-6)+'" x2="'+x30+'" y2="'+(y30+6)+'" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>'+
+      '<line x1="'+x70+'" y1="'+(y70-6)+'" x2="'+x70+'" y2="'+(y70+6)+'" stroke="var(--kimi-color-text-primary)" stroke-width="1.5"/>'+
+      '<text x="'+((x30+x70)/2+8)+'" y="'+((y30+y70)/2-6)+'" font-size="12" font-weight="500" fill="var(--kimi-color-text-primary)">t_R = '+Math.round(tr)+' ns</text>';
+
+    verdict.className='tw-expl '+(pass?'pass':'fail');
+    verdict.textContent=pass
+      ?('满足：t_R = '+Math.round(tr)+' ns ≤ '+limit+' ns 上限。这条总线在 '+mode.toUpperCase()+' 模式下合规。')
+      :('超出：t_R = '+Math.round(tr)+' ns > '+limit+' ns 上限。控制器配置没变，但上升沿已经违规。');
+    var rmax=limit*1000/(0.8473*C);
+    rpmax.textContent='当前 C_bus = '+C+' pF 时，'+mode.toUpperCase()+' 模式允许的 Rp 上限 ≈ '+Math.round(rmax).toLocaleString()+' Ω（= t_R上限 / (0.8473 × C)）。';
+  }
+  rpSlider.addEventListener('input',recompute);
+  cSlider.addEventListener('input',recompute);
+  modeBtns.sm.addEventListener('click',function(){mode='sm';modeBtns.sm.classList.add('active');modeBtns.fm.classList.remove('active');recompute();});
+  modeBtns.fm.addEventListener('click',function(){mode='fm';modeBtns.fm.classList.add('active');modeBtns.sm.classList.remove('active');recompute();});
+  recompute();
+})();
+</script>
+</div>
+</body>
+</html>
