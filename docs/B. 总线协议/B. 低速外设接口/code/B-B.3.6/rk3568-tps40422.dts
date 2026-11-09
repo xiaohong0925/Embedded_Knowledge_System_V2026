@@ -1,0 +1,13 @@
+/*
+ * B-B.3.6 板级 DTS 片段：合并到实际连接 TPS40422 的板级 DTS。
+ * i2c2 只是示例；0x30 必须由 ADDR1/ADDR0 电阻配置与原理图共同确认。
+ */
+&i2c2 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	pmbus@30 {
+		compatible = "ti,tps40422";
+		reg = <0x30>;
+	};
+};
