@@ -1,0 +1,54 @@
+{
+  "output": "../../html/i2cdev-fullcode.js",
+  "globalName": "LAB_FULL_CODE",
+  "entries": {
+    "userMain": {
+      "source": "i2c-rdwr-read.c",
+      "displayPath": "code/B-B.3.4/i2c-rdwr-read.c",
+      "origin": "本篇原创教学文件（未编译）",
+      "function": "main"
+    },
+    "toolMain": {
+      "source": "i2c-tools-v4.4/tools/i2ctransfer.c",
+      "displayPath": "tools/i2ctransfer.c",
+      "origin": "i2c-tools v4.4",
+      "function": "main"
+    },
+    "deviceOpen": {
+      "source": "linux-v6.6/drivers/i2c/i2c-dev.c",
+      "displayPath": "drivers/i2c/i2c-dev.c",
+      "origin": "Linux v6.6",
+      "function": "i2cdev_open"
+    },
+    "deviceIoctl": {
+      "source": "linux-v6.6/drivers/i2c/i2c-dev.c",
+      "displayPath": "drivers/i2c/i2c-dev.c",
+      "origin": "Linux v6.6",
+      "function": "i2cdev_ioctl"
+    },
+    "deviceRdwr": {
+      "source": "linux-v6.6/drivers/i2c/i2c-dev.c",
+      "displayPath": "drivers/i2c/i2c-dev.c",
+      "origin": "Linux v6.6",
+      "function": "i2cdev_ioctl_rdwr"
+    },
+    "deviceRelease": {
+      "source": "linux-v6.6/drivers/i2c/i2c-dev.c",
+      "displayPath": "drivers/i2c/i2c-dev.c",
+      "origin": "Linux v6.6",
+      "function": "i2cdev_release"
+    },
+    "coreTransfer": {
+      "source": "linux-v6.6/drivers/i2c/i2c-core-base.c",
+      "displayPath": "drivers/i2c/i2c-core-base.c",
+      "origin": "Linux v6.6",
+      "function": "i2c_transfer"
+    },
+    "coreUnlocked": {
+      "source": "linux-v6.6/drivers/i2c/i2c-core-base.c",
+      "displayPath": "drivers/i2c/i2c-core-base.c",
+      "origin": "Linux v6.6",
+      "function": "__i2c_transfer"
+    }
+  }
+}

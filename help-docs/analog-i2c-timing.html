@@ -1,0 +1,846 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+
+
+    
+    
+
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-400-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-500-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-600-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-700-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/barlow-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-400-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-500-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-600-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-700-normal.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/remixicon.eot" as="font" type="font/eot" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/remixicon.ttf" as="font" type="font/ttf" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/remixicon.woff" as="font" type="font/woff" crossorigin>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/assets/remixicon.woff2" as="font" type="font/woff2" crossorigin>
+
+    <!-- *** FE html start -->
+    <meta charset="utf-8">
+
+                <title>I2C Timing: Definition and Specification Guide (Part 2) | Analog Devices</title>
+                    <meta name="robots" content="follow, index" />
+                    <meta name="description" content="In this blog post, we will be discussing I2C timing specifications and the various ways manufacturers sometimes provide these specifications." />
+            <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="referrer" content="no-referrer-when-downgrade" />
+                        <meta name="yandex-verification" content="86a60d9bcaab43f0" />
+                        <meta name="google-site-verification" content="aVOSmh5Dsd1VpzYMM3a_ZvOQcjP9G5GDlvU-atf48ss" />
+                        <meta name="baidu-site-verification" content="cSddD8r1N7" />
+                        <meta name="msvalidate.01" content="381E86BC7EF76D19F9365D26D8BFCD35" />
+                                <link rel="alternate" hreflang=en-US href="https://www.analog.com/en/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html" />
+                                <link rel="alternate" hreflang=en-CN href="https://www.analog.com/cn/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html" />
+                                <link rel="alternate" hreflang=ja-JP href="https://www.analog.com/jp/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html" />
+                            <link rel="canonical" href="https://www.analog.com/en/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html" />
+
+        <script type="application/ld+json">
+           {"@context":"https://schema.org","@type":"TechArticle","headline":"I2C Timing: Definition and Specification Guide (Part 2)","abstract":null,"description":"In this blog post, we will be discussing I2C timing specifications and the various ways manufacturers sometimes provide these specifications. ","url":"https://www.analog.com/en/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html","datePublished":"2016-10-03T00:00:00","dateModified":"2025-07-17T07:21:18","genre":"Technical Articles","proficiencyLevel":"Expert","technicalAudience":"Electrical Engineers, System Designers, R&D Teams","author":[{"@type":"Person","name":"Sal Afzal"}],"audience":{"@type":"BusinessAudience","@id":"https://www.analog.com/en/solutions.html#Engineering_Audience","audienceType":"Engineers","sameAs":"https://www.wikidata.org/wiki/Q81096"},"publisher":{"@type":"Organization","@id":"https://www.analog.com/#organization","name":"Analog Devices, Inc.","alternateName":"ADI","url":"https://www.analog.com/en/index.html","logo":{"@type":"ImageObject","url":"https://assets2.analog.com/images/en/ADI_Logo_AWP.png"},"sameAs":["https://en.wikipedia.org/wiki/Analog_Devices","https://www.linkedin.com/company/analog-devices/","https://www.facebook.com/AnalogDevicesInc","https://www.instagram.com/analogdevices/","https://x.com/adi_news"],"industry":{"@type":"DefinedTerm","termCode":"334413","name":"Semiconductor and Related Device Manufacturing","url":"https://www.naics.com/naics-code-description/?code=334413","inDefinedTermSet":"NAICS (North American Industry Classification System)"}}};
+        </script>
+
+
+    <script>!function (e, a, n, t) { var i = e.head; if (i) { if (a) return; var o = e.createElement("style"); o.id = "alloy-prehiding", o.innerText = n, i.appendChild(o), setTimeout(function () { o.parentNode && o.parentNode.removeChild(o) }, t) } }(document, document.location.href.indexOf("adobe_authoring_enabled") !== -1, "body { opacity: 0 !important }", 3000);</script>
+
+    <script type="text/javascript">
+        var datalayer = {"device":{"browser":"","type":""},"page":{"details":{"part":{"applicableParts":null,"categories":null,"id":null,"lifeCycle":null,"markets":null,"name":null,"type":null}},"meta":{"breadcrumbs":null,"id":null,"journey":null,"language":null,"pathname":null,"persona":null,"publishDate":null,"title":null,"taxonomy":null,"type":null}},"user":{"cart":{"purchaseID":"","sampleID":"","transactionID":""},"email":"","loggedIn":false,"blocked":false,"memberStatus":false}};
+    </script>
+
+
+
+
+                <link rel="icon" href="https://www.analog.com/media/favicon/favicon.ico">
+        <link rel="apple-touch-icon" href="https://www.analog.com/media/favicon/apple_favicon.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="https://www.analog.com/media/favicon/adi-icon-ipad-152x152.png ">
+        <link rel="apple-touch-icon" sizes="180x180" href="https://www.analog.com/media/favicon/adi-icon-iphone-retina-180x180.png ">
+        <link rel="apple-touch-icon" sizes="167x167" href="https://www.analog.com/media/favicon/adi-icon-ipad-retina-167x167.png ">
+        <link href="https://assets2.analog.com/cms-assets/images/images/adi-favicon.svg" rel="shortcut icon" />
+    
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Barlow:wght@600&family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@600&family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'"></noscript>
+    <style>
+        :root {
+            --cta-color: #fff;
+            --cta-background: #1c1c1c;
+        }
+    </style>
+
+
+
+
+
+
+    <!-- Font-awesome -->
+    <!-- Latest compiled and minified CSS -->
+    <!-- Optional theme -->
+    <!-- owl-slider -->
+    <!-- Algolia Instant Search Theme -->
+    <!-- Autocomplete Theme -->
+
+
+    <!-- Latest compiled and minified JavaScript -->
+    
+                <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/css/vendor.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://assets2.analog.com/cms-assets-optimizations/css/vendor.min.css"></noscript>
+        <link rel="preload" href="https://assets2.analog.com/cms-assets-optimizations/css/article.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="https://assets2.analog.com/cms-assets-optimizations/css/article.min.css"></noscript>
+
+
+
+
+    <link rel="stylesheet" type="text/css" href="https://assets2.analog.com/header-footer/index.css">
+    <script src="https://assets2.analog.com/header-footer/index.js" type="module" defer></script>
+
+    <script src="https://assets.adobedtm.com/bc68b7886092/25785b612092/launch-715705770daf.min.js" async></script>
+    <!-- *** FE html end -->
+</head>
+<body class="default-device bodyclass" data-comp-prefix="app-js__" data-show-legacy-div-wrapper="False">
+
+    
+
+    
+
+<!-- #wrapper -->
+<div id="wrapper" class="page-wrap">
+    <!-- #header -->
+    <header>
+        <div id="header" class="container-fluid">
+            <div class="row">
+                <div>
+        <adi-header>            
+            <adi-account></adi-account>
+        </adi-header>
+            <adi-menu divided>
+                <adi-cart slot="buttons"></adi-cart>
+                <adi-search slot="drawer">
+                    <div slot="search"></div>
+                    <div slot="results"></div>
+                </adi-search>
+            </adi-menu>
+        <adi-dispatch></adi-dispatch>
+</div>
+            </div>
+        </div>
+    </header>
+    <!-- /#header -->
+    <!-- #content -->
+        <main role="main" id="main" class="main-content content adi__landing">
+            <div id="content" class="container-fluid">
+                <div class="row">
+<div>
+
+
+
+
+<div class="component Global-Breadcrumb">
+            <script type="application/ld+json">
+            {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.analog.com/en/index.html"},{"@type":"ListItem","position":2,"name":"Resource Library","item":"https://www.analog.com/en/resources.html"},{"@type":"ListItem","position":3,"name":"Technical Articles","item":"https://www.analog.com/en/resources/technical-articles.html"},{"@type":"ListItem","position":4,"name":"I2C Timing: Definition and Specification Guide (Part 2)","item":"https://www.analog.com/en/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html"}]};
+            </script>
+    <div class="component-content">
+        <!-- Breadcrumb component : start -->
+
+        <article class="breadcrumb app-js__breadcrumb breadcrumb breadcrumb-no-border">
+
+            <div class="breadcrumb__container" aria-label="Breadcrumb" role="navigation">
+                            <div class="breadcrumb__container__section body-small">
+                                            <a class="breadcrumb__container__section_item text-underline" href="https://www.analog.com/en/index.html">
+                                                <span class="breadcrumb__container__section_item" aria-current="page">Home</span>
+
+                                            </a>
+
+
+
+                            </div>
+                            <div class="breadcrumb__container__section body-small">
+                                            <a class="breadcrumb__container__section_item text-underline" href="https://www.analog.com/en/resources.html">
+                                                <span class="breadcrumb__container__section_item" aria-current="page">Resource Library</span>
+                                            </a>
+
+
+
+                            </div>
+                            <div class="breadcrumb__container__section body-small">
+                                            <a class="breadcrumb__container__section_item text-underline" href="https://www.analog.com/en/search.html?resourceTypes=Technical Documentation~Technical Articles&amp;sortby=newest">
+                                                <span class="breadcrumb__container__section_item" aria-current="page">Technical Articles</span>
+                                            </a>
+
+
+
+                            </div>
+                            <div class="breadcrumb__container__section body-small">
+I2C Timing: Definition and Specification Guide (Part 2)
+
+
+                            </div>
+
+            </div>
+        </article>
+
+
+        <!-- Previous page link component : start -->
+
+
+        <article class="previous-page-link app-js__previous-page-link">
+                        <a class="previous-page-link__link button-small" href="https://www.analog.com/en/index.html">
+                            <span class="previous-page-link__icon">
+<img src="https://www.analog.com/en/_/media/project/analogweb/analogweb/global/chevron-left-s.png?as=0&amp;dmc=0&amp;iar=0&amp;thn=0&amp;udi=0&amp;rev=c50da4dd134a41a28db3d68c9b26e721&amp;la=en&amp;h=16&amp;w=16&amp;hash=12C65D8611F1448B9E07B6645A314CD5" class="previous-page-link__arrow-left" height="16" alt="left arrow" width="16" />                            </span>
+                            <span class="previous-page-link__label">
+Back to Home
+
+                            </span>
+                        </a>
+
+        </article>
+
+
+        <!-- Previous page link component : end -->
+        
+        <div>
+
+
+        </div>
+    </div>
+</div>
+
+    <main class="adi__article">
+        <!--Gated Content-->
+        <div></div>
+        <!-- Content start -->
+        <adi-container class="adi__spotlight adi__productResources" compact>
+            <div class="adi__spotlight__columns" data-columns="3">
+
+                <!-- Left side content start -->
+                <div class="adi__spotlight__column adi__spotlight__column--double rte-control">
+                    <!-- Header start -->
+                    <div class="adi__container adi__container--dividedLeft">
+                        <div class="adi__container__wrapper">
+                            <heading class="adi__articleHeading">
+                                <div>
+            <h1 class="adi__articleHeading__title">
+                I2C Timing: Definition and Specification Guide (Part 2) <!-- Dynamic Article Title -->
+            </h1>
+        <div class="adi__articleHeading__detail">
+            <div class="adi__articleHeading__byLine">
+
+                by
+
+                <a href="#authors">
+Sal Afzal                </a>
+
+            </div>
+
+            <div class="adi__articleHeading__date">
+Oct 3 2016            </div>
+
+        </div>
+</div>
+                            </heading>
+                        </div>
+                    </div>
+                    <!-- Header end -->
+                    
+    <!-- Component Start -->
+        <section class="adi__productResources__category">
+            <h2 class="adi__article__subHeading">Read other articles in this series.</h2>
+
+                <ul class="adi__list adi__list--custom">
+                    <li class="adi__productResources__category__resource">
+                        <a href="https://www.analog.com/en/resources/technical-articles/i2c-primer-what-is-i2c-part-1.html" target="_blank" class="adi__body--small">
+                            I2C Primer: What is I2C? (Part 1)
+                            <i class="ri-arrow-right-fill"></i>
+                        </a>
+                    </li>
+                </ul>
+        </section>
+    <!-- Component end -->
+    <!-- Content start -->
+        <dialog class="adi__modal adi__zoomModal" id="image-zoom-modal">
+            <section class="adi__modal__heading">
+                <button type="button"
+                        aria-label="close"
+                        data-toggle="modal"
+                        class="adi__zoomModal__close">
+                    Ã—
+                </button>
+            </section>
+            <section class="adi__modal__content">
+                <h4 class="adi__zoomModal__caption">Figure 1</h4>
+                <div class="adi__zoomModal__actions">
+                    <span class="adi__zoomModal__actions__download">
+                        &nbsp;
+                    </span>
+                    <span class="adi__zoomModal__actions__print">
+                        &nbsp;
+                    </span>
+                </div>
+                <img src="" class="adi__zoomModal__image">
+            </section>
+        </dialog>
+<p><h2>Introduction</h2></p>
+<p>In this blog post, we will be discussing I<sup>2</sup>C timing specifications and the various ways manufacturers sometimes provide these specifications. For a primer on I<sup>2</sup>C and its protocols, please refer to the post here.</p>
+<p>I<sup>2</sup>C data transfers occur over a physical two wire interface which consists of a unidirectional serial clock (SCL) and bidirectional data (SDA) line. These transfers can occur over speeds of 100kbits/s in Standard Mode, 400kbits/s in the Fast Mode, 1Mbits/s in Fast Mode Plus, and up to 3.4Mbits/s in High Speed Mode. Each data rate has its own timing specification that the master and slave must adhere to in order for correct data transfer. I<sup>2</sup>C compatible devices must be able to follow transfers at their own maximum bit rates, either by being able to transmit or receive data at the selected data rate. There are nuances such has setup and hold times for proper data transfer at a given data rate. We will be discussing these specifications in this blog post.</p>
+<p>Figure 1, taken from the NXP &ldquo;I<sup>2</sup>C-Bus specification and user manual&rdquo;, depicts a timing diagram which provides definitions of the various timing specs for Fast Mode devices on the I<sup>2</sup>C bus. We will only use the Fast Mode timing diagram for our discussion as the majority of LTC I<sup>2</sup>C parts support this mode. However, the definitions discussed are also applicable to the other speed modes. We will also only discuss how these specifications apply to slave devices as Analog Devices I<sup>2</sup>C compatible devices are typically slaves.</p>
+<figure>
+<div class="image-container"><a name="36747_cfae61dc-8a5b-4620-b0ba-8764468f9478" data-lightbox="cfae61dc-8a5b-4620-b0ba-8764468f9478" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36747.png?la=en&w=900&rev=434018552c5a4f528028c29c554c54f0">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36747" data-alt="36747" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36747.png?la=en&w=435&rev=434018552c5a4f528028c29c554c54f0"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36747.png?la=en&h=300&rev=434018552c5a4f528028c29c554c54f0"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36747.png?la=en&w=435&rev=434018552c5a4f528028c29c554c54f0' alt='Figure 1: I2C Fast Mode Timing Definition'?amp;amp;gt;</noscript><img alt="Figure 1: I2C Fast Mode Timing Definition" class="img-responsive" title="36747" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36747.png?la=en&h=270&rev=434018552c5a4f528028c29c554c54f0" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 1: I<sup>2</sup>C Fast Mode Timing Definition</span></p>
+</figcaption></figure>
+<p><h2>Rise (t<sub>r</sub>) and Fall (t<sub>f</sub>) Times</h2></p>
+<p>t<sub>r</sub> is defined as the amount of time taken by the rising edge to reach 70% amplitude from 30% amplitude for either SDA and SCL, while t<sub>f</sub> is defined as the amount of time taken by the falling edge to reach 30% amplitude from an amplitude of 70%.</p>
+<figure>
+<div class="image-container"><a name="36748_68df0e08-c610-42e0-9091-d66151f0ab17" data-lightbox="68df0e08-c610-42e0-9091-d66151f0ab17" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36748.png?la=en&w=900&rev=72b77df5bfaa4083ac42cd0eb22c0ada">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36748" data-alt="36748" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36748.png?la=en&w=435&rev=72b77df5bfaa4083ac42cd0eb22c0ada"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36748.png?la=en&h=300&rev=72b77df5bfaa4083ac42cd0eb22c0ada"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36748.png?la=en&w=435&rev=72b77df5bfaa4083ac42cd0eb22c0ada' alt='Figure 2: Rise and Fall Time'?amp;amp;gt;</noscript><img alt="Figure 2: Rise and Fall Time" class="img-responsive" title="36748" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36748.png?la=en&h=270&rev=72b77df5bfaa4083ac42cd0eb22c0ada" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 2: Rise and Fall Time</span></p>
+</figcaption></figure>
+<p><h2>Setup and Hold Times</h2></p>
+<p>Setup time is defined as the amount of time data must remain stable before it is sampled. This interval is typically between the rising SCL edge and SDA changing state. Hold time on the other hand is defined as the time interval after sampling has been initiated. This interval is typically between the falling SCL edge and SDA changing state. It is important that data be held stable during these intervals as failure to do so would result in data being sampled improperly.</p>
+<p>In the I<sup>2</sup>C standard the minimum amount of time required in these intervals, which varies by the operating speed mode, is specified for both the START and STOP conditions as well as for data bits. I<sup>2</sup>C compatible slave devices are specified within these parameters to recognize incoming data.</p>
+<p><h2>Setup and Hold Time for Start Condition</h2></p>
+<p>Recall that the start condition is defined as when the SDA line goes LOW before SCL transitions LOW, i.e SDA transitions to a LOW state when the SCL line is HIGH.</p>
+<figure>
+<div class="image-container"><a name="36749_b022bf4f-3bb0-467f-bc0f-b0bfc930ed40" data-lightbox="b022bf4f-3bb0-467f-bc0f-b0bfc930ed40" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36749.png?la=en&w=900&rev=0c08f68bb87742fe95ceeb3cdef1b981">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36749" data-alt="36749" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36749.png?la=en&w=435&rev=0c08f68bb87742fe95ceeb3cdef1b981"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36749.png?la=en&h=300&rev=0c08f68bb87742fe95ceeb3cdef1b981"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36749.png?la=en&w=435&rev=0c08f68bb87742fe95ceeb3cdef1b981' alt='Figure 3: Start and Stop Conditions'?amp;amp;gt;</noscript><img alt="Figure 3: Start and Stop Conditions" class="img-responsive" title="36749" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36749.png?la=en&h=270&rev=0c08f68bb87742fe95ceeb3cdef1b981" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 3: Start and Stop Conditions</span></p>
+</figcaption></figure>
+<p>Hold Time For Start Condition (t<sub>HD;STA</sub>): is the minimum time the data should be low before SCL goes low. It is measured as the time taken from 30% amplitude of SDA from a HIGH to LOW transition to 70% of the amplitude of SCL from a HIGH to LOW transition.</p>
+<figure>
+<div class="image-container"><a name="36750_05253c87-be0d-4160-806e-2a629b2d6216" data-lightbox="05253c87-be0d-4160-806e-2a629b2d6216" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36750.png?la=en&w=900&rev=478782bc1b344a0581400d0621452a76">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36750" data-alt="36750" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36750.png?la=en&w=435&rev=478782bc1b344a0581400d0621452a76"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36750.png?la=en&h=300&rev=478782bc1b344a0581400d0621452a76"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36750.png?la=en&w=435&rev=478782bc1b344a0581400d0621452a76' alt='Figure 4: Setup and Hold Time for (Repeated) Start Condition'?amp;amp;gt;</noscript><img alt="Figure 4: Setup and Hold Time for (Repeated) Start Condition" class="img-responsive" title="36750" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36750.png?la=en&h=270&rev=478782bc1b344a0581400d0621452a76" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 4: Setup and Hold Time for (Repeated) Start Condition</span></p>
+</figcaption></figure>
+<p>Setup Time For a Start Condition (t<sub>SU;STA</sub>): is a timing specification that is only taken into account during a repeated start condition. It is the minimum time the SDA line is required to remain high before initiating a repeated start. This is measured as the time interval between 70% amplitude of SCL from a LOW to HIGH transition and 70% amplitude of SDA from a HIGH to LOW transition.</p>
+<p><h2>Setup for Stop Condition</h2></p>
+<p>In a stop condition SDA transitions to a HIGH state after the SCL transitions HIGH. See Figure 3. There is no hold time requirement for a stop condition, however a minimum setup time is still necessary.</p>
+<p>Setup Time for Stop Condition (t<sub>SU;STO</sub>) is measured as the time between 70% amplitude of the rising edge of SCL and 30% amplitude of a rising SDA signal during a stop condition.</p>
+<figure>
+<div class="image-container"><a name="36751_b636863b-3377-4f59-a093-16c4dd5d7b47" data-lightbox="b636863b-3377-4f59-a093-16c4dd5d7b47" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36751.png?la=en&w=900&rev=83882ef7fd2e40eea163918f3c7335c7">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36751" data-alt="36751" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36751.png?la=en&w=435&rev=83882ef7fd2e40eea163918f3c7335c7"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36751.png?la=en&h=300&rev=83882ef7fd2e40eea163918f3c7335c7"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36751.png?la=en&w=435&rev=83882ef7fd2e40eea163918f3c7335c7' alt='Figure 5: Setup Time for Stop Condition'?amp;amp;gt;</noscript><img alt="Figure 5: Setup Time for Stop Condition" class="img-responsive" title="36751" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36751.png?la=en&h=270&rev=83882ef7fd2e40eea163918f3c7335c7" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 5: Setup Time for Stop Condition</span></p>
+</figcaption></figure>
+<p><h2>Setup Time for Data (t<sub>SU;DAT</sub>)</h2></p>
+<p>Similarly there is a setup time for data which is defined as the minimum amount of time required for SDA to have reached a stable level before an SCL transition takes place. This is measured between 30% amplitude of SDA during a falling edge or 70% amplitude of SDA during a rising edge and 30% amplitude of SCL during a rising edge.</p>
+<figure>
+<div class="image-container"><a name="36752_1bdadbce-043f-41f7-98be-0c4e9258759f" data-lightbox="1bdadbce-043f-41f7-98be-0c4e9258759f" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36752.png?la=en&w=900&rev=efb0f7459ed24127a5fb1f6042bce989">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36752" data-alt="36752" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36752.png?la=en&w=435&rev=efb0f7459ed24127a5fb1f6042bce989"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36752.png?la=en&h=300&rev=efb0f7459ed24127a5fb1f6042bce989"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36752.png?la=en&w=435&rev=efb0f7459ed24127a5fb1f6042bce989' alt='Figure 6: Setup Time of Data'?amp;amp;gt;</noscript><img alt="Figure 6: Setup Time of Data" class="img-responsive" title="36752" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36752.png?la=en&h=270&rev=efb0f7459ed24127a5fb1f6042bce989" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 6: Setup Time of Data</span></p>
+</figcaption></figure>
+<p><h2>Data Valid Time (t<sub>DV;DAT</sub>)</h2></p>
+<p>The validity of data is measured at every data and clock transition. The I<sup>2</sup>C specification states maximum allowed data valid times at different speeds. The data valid time t<sub>DV;DAT</sub> is measured between the falling edge of SDA at 30% or the rising edge of SDA at 70% amplitude with reference to 30% of the falling edge of SCL. There is also a separate Acknowledge valid time spec t<sub>DV;ACK</sub> which is measured similar to the data valid time, except it is measured only at the falling edge of the eighth clock bit. See Figure 1.</p>
+<p><h2>Buffer time (t<sub>BUFF</sub>)</h2></p>
+<p>Buffer time specifies the bus free time between stop and start conditions. This time period allows other devices on the bus to detect a free bus and attempt to transmit data. Slave devices often specify this as a minimum required bus free time. If a master &ndash; previously communicating with another device - attempts to address a slave device without letting the elapsed buffer time pass between its stop and start condition, the slave device may not be able to differentiate the new start condition as a separate transaction and might not respond.</p>
+<figure>
+<div class="image-container"><a name="36753_0d674441-f641-4bb0-8c74-087dd18a58f3" data-lightbox="0d674441-f641-4bb0-8c74-087dd18a58f3" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36753.png?la=en&w=900&rev=f2a3504d8aeb482da39a6effe61c03c8">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="36753" data-alt="36753" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36753.png?la=en&w=435&rev=f2a3504d8aeb482da39a6effe61c03c8"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36753.png?la=en&h=300&rev=f2a3504d8aeb482da39a6effe61c03c8"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36753.png?la=en&w=435&rev=f2a3504d8aeb482da39a6effe61c03c8' alt='Figure 7: Bus Free Time'?amp;amp;gt;</noscript><img alt="Figure 7: Bus Free Time" class="img-responsive" title="36753" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/36753.png?la=en&h=270&rev=f2a3504d8aeb482da39a6effe61c03c8" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 7: Bus Free Time</span></p>
+</figcaption></figure>
+<p>Now that we have defined the various timing specifications, let&rsquo;s see how they are specified by the I<sup>2</sup>C specification. See figure 8 which is taken from the NXP I<sup>2</sup>C user manual.</p>
+<figure>
+<div class="image-container"><a name="figure_8_6ad292ec-c289-49c6-8ab5-3344fd2b212a" data-lightbox="6ad292ec-c289-49c6-8ab5-3344fd2b212a" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-8.jpg?la=en&w=900&rev=d748780716f04fb9877c5b5f850a4a0b">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="figure_8" data-alt="figure_8" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-8.jpg?la=en&w=435&rev=d748780716f04fb9877c5b5f850a4a0b"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-8.jpg?la=en&h=300&rev=d748780716f04fb9877c5b5f850a4a0b"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-8.jpg?la=en&w=435&rev=d748780716f04fb9877c5b5f850a4a0b' alt='Figure 8 - I2C Timing: Definition and Specification Guide'?amp;amp;gt;</noscript><img alt="Figure 8 - I2C Timing: Definition and Specification Guide" class="img-responsive" title="figure_8" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-8.jpg?la=en&rev=d748780716f04fb9877c5b5f850a4a0b" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 8: NXP I<sup>2</sup>C Timing Specification</span></p>
+</figcaption></figure>
+<p>The I<sup>2</sup>C specification table defines its parameters to allow IC designers to design their IC&rsquo;s to be compatible with the bus requirements. As an example an IC compatible with Fast Mode I<sup>2</sup>C would be designed to recognize a start condition hold up time of at least 0.6&micro;s. It could be designed to recognize a faster hold up time but at a bare minimum it should recognize timings of up to 0.6&micro;s.</p>
+<p>Taking this specification, manufacturers define the I<sup>2</sup>C compatibility of their IC&rsquo;s in two ways. Examples of which are provided below.</p>
+<p><h2>Slave I<sup>2</sup>C Timing Specifications: Two Perspectives</h2></p>
+<p>The LTC2493 is a 24-Bit Delta Sigma ADC which specifies its I<sup>2</sup>C timing as follows:</p>
+<figure>
+<div class="image-container"><a name="figure_9_d71e601d-896d-42c2-96f7-bb942ba29734" data-lightbox="d71e601d-896d-42c2-96f7-bb942ba29734" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-9.jpg?la=en&w=900&rev=084484c1f2d84fb49a7388b178248c67">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="figure_9" data-alt="figure_9" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-9.jpg?la=en&w=435&rev=084484c1f2d84fb49a7388b178248c67"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-9.jpg?la=en&h=300&rev=084484c1f2d84fb49a7388b178248c67"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-9.jpg?la=en&w=435&rev=084484c1f2d84fb49a7388b178248c67' alt='Figure 9 - I2C Timing: Definition and Specification Guide'?amp;amp;gt;</noscript><img alt="Figure 9 - I2C Timing: Definition and Specification Guide" class="img-responsive" title="figure_9" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-9.jpg?la=en&h=270&rev=084484c1f2d84fb49a7388b178248c67" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 9: LTC2493 I<sup>2</sup>C Timing Spec Table</span></p>
+</figcaption></figure>
+<p>While the LTC4261 which is a 48V Hot Swap controller specifies timing as shown below:</p>
+<figure>
+<div class="image-container"><a name="figure_10_7d3cd620-8df8-4589-bfb8-5b7f47b69b9d" data-lightbox="7d3cd620-8df8-4589-bfb8-5b7f47b69b9d" href="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-10.jpg?la=en&w=900&rev=37dce30aa14244c59a9c573601a56900">
+<div class="icon-zoom"></div>
+<div data-class="img-responsive" data-title="figure_10" data-alt="figure_10" data-picture=" ">
+<div data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-10.jpg?la=en&w=435&rev=37dce30aa14244c59a9c573601a56900"> </div>
+<div data-media="(min-width: 640px)" data-src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-10.jpg?la=en&h=300&rev=37dce30aa14244c59a9c573601a56900"></div>
+<noscript> &amp;amp;lt;img src='https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-10.jpg?la=en&w=435&rev=37dce30aa14244c59a9c573601a56900' alt='Figure 10 - I2C Timing: Definition and Specification Guide'?amp;amp;gt;</noscript><img alt="Figure 10 - I2C Timing: Definition and Specification Guide" class="img-responsive" title="figure_10" src="https://www.analog.com/en/_/media/analog/en/landing-pages/technical-articles/i2c-timing-definition-and-specification-guide-part-2-/figure-10.jpg?la=en&h=270&rev=37dce30aa14244c59a9c573601a56900" / loading="lazy"> </div>
+</a> </div>
+<figcaption>
+<p><span class="caption">Figure 10: LTC4261 Timing Spec Table</span></p>
+</figcaption></figure>
+<p>Notice the discrepancy? Both devices have the same specifications but are presented in a different way, and while this can be a source of confusion it can be easily explained.</p>
+<p>The LTC2493 timing spec table represents data from the viewpoint of the firmware designer, telling the designer exactly what to do. For example the set up time for a repeated start condition is specified as a minimum of 600ns, meaning the master needs to provide a pulse with a setup time of at least 600ns. This is a copy of the I<sup>2</sup>C specification and is instructing the firmware engineer what the timing of the signals should be.</p>
+<p>The LTC4261, on the other hand, represents data from the viewpoint of the IC itself, telling the firmware designer what the IC itself is capable of. For example, the minimum setup time for a repeated start condition is defined as a typical number of 30ns and a maximum of 600n, meaning that the LTC4261 guarantees that the minimum setup time is no longer than 600ns (thus it meets the 600ns required minimum of the spec), in fact it can recognize setup time intervals down to 30ns, allowing for greater margin in timing.</p>
+<p>Thus timing specifications can be presented differently even though they depict the same data. In the case of the two examples above, both parts are consistent with the I<sup>2</sup>C standard and adhere to I<sup>2</sup>C timing requirements.</p>    <!-- Content end -->
+
+
+
+
+                <h2 id="authors" style="">About the Authors</h2>
+                <article style="" class="adi__authors__card">
+                        <address>
+                            <div class="adi__authors__card__address">
+                                <div class="adi__authors__card__name">Sal Afzal</div>
+
+                            </div>
+                            <div>
+                                        <div id="foo" data-content="broad variety of markets including data center, automotive and industrial. He specializes in power protection and power path control." class="adi__authors__card__title"> Sal Afzal is the Applications Engineering Director of the Power Systems Management group at Analog Devices. Sal has a bachelor’s in electrical engineering from San Jose State University. He has designed hardware for a</div>
+                                        <button class="adi__collapse adi__button adi__button--ghost" aria-expanded="false" aria-controls="foo" data-has-content='true' aria-label="Show More" data-label-expanded="Show Less" data-label-collapsed="Show More">
+                                            <i class="ri-arrow-down-s-line adi__collapse__caret"></i>
+                                        </button>
+
+                            </div>
+                        </address>
+                </article>
+
+
+
+<link rel="stylesheet" href="https://assets2.analog.com/cms-assets-optimizations/css/article.min.css">
+
+    <div class="adi__gated__form" data-bots-list="googlebot|bingbot|yandexbot|slurp|duckduckbot|baiduspider|twitterbot|facebookexternalhit|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator|redditbot|applebot|whatsapp|telegrambot" data-cookie-name="" data-icid="" data-sc-site="AnalogWeb" data-form-id="" data-gate-type="" data-char-to-show="" data-is-gated="false" data-context-id="{5F5D1DDE-9EBE-474E-ABC5-8125C4C5B0E0}">
+
+    </div>
+
+
+<input type="hidden" id="context-language" value="en" />
+
+
+                </div>
+                <!-- Left side content end -->
+                <!-- right side content start -->
+                <div class="adi__spotlight__column">
+                    <div>
+
+
+    <section class="adi__articleHeading__actions">
+        <div class="adi__articleHeading__meta">
+            <div class="adi__articleHeading__meta__datum">
+                <a href="#" class="adi__button adi__button--ghost adi__articleHeading__meta__datum--save"
+                   data-toggle="modal" aria-controls="saveToMyAnalog">
+                    <i class="adi__icon adi__icon--bookmarkPlus"></i>
+                    <span class="adi__chip__label">Add to myAnalog</span>
+                </a>
+            </div>
+            <div class="adi__articleHeading__meta__datum">
+                <button class="adi__button adi__button--ghost adi__articleHeading__meta__datum--share" data-toggle="context-menu" aria-controls="shareMenu">
+                    <i class="ri-share-forward-line"></i>
+                    <span class="adi__chip__label">Share</span>
+                </button>
+            </div>
+        </div>
+        <menu class="adi__contextMenu adi__shareMenu" id="shareMenu" hidden>
+            <li role="button"
+                class="adi__contextMenu__option"
+                data-type="link"
+                data-success-msg="Copied to clipboard!">
+                Copy Link 
+            </li>
+            <li role="button" class="adi__contextMenu__option" data-type="email">
+                Send to Mail  
+            </li>
+        </menu>
+
+        <dialog class="adi__modal adi__saveToMyAnalog" id="saveToMyAnalog">
+            <form>
+                <section class="adi__modal__heading">
+                    <button type="button"
+                            data-toggle="modal"
+                            class="adi__button adi__button--ghost adi__button--compact adi__modal__heading__close"
+                            aria-label="close">
+                        <i class="ri-close-fill"></i>
+                    </button>
+                    <div class="adi__modal__heading__title">
+                        <i class="adi__icon adi__icon--bookmarkPlus"></i>
+                        Add to myAnalog 
+                    </div>
+                </section>
+                <div class="adi__saveToMyAnalog__alert"></div>
+                <section class="adi__modal__content">
+                    <p class="adi__saveToMyAnalog__description">
+                        Add article to the Resources section of myAnalog, to an existing project or to a new project.
+                    </p>
+                    <div class="adi__field adi__field--select adi__saveToMyAnalog__target">
+                        <label for="saveTo" class="adi__field__label">Add article to</label>
+                        <div class="adi__field__container">
+                            <input type="hidden" id="saveTo" name="saveTo" value="resources">
+                            <button type="button" class="adi__field__container__input" data-toggle="context-menu" aria-controls="saveToOptions">
+                                Resources on myAnalog
+                            </button>
+                            <menu class="adi__contextMenu adi__field__container__options adi__saveToMyAnalog__options" id="saveToOptions" hidden>
+                                <li role="button" data-value="resources" class="adi__contextMenu__option">
+                                    Resources on myAnalog
+                                </li>
+                                <li role="button" data-value="new" class="adi__contextMenu__option">
+                                    <i class="ri-add-line"></i>
+                                    New Project
+                                </li>
+                            </menu>
+                        </div>
+                    </div>
+                    <fieldset class="adi__saveToMyAnalog__newProject">
+                        <legend class="adi__saveToMyAnalog__newProject__legend">Create New Project</legend>
+                        <div class="adi__field">
+                            <label for="newProjectName" class="adi__field__label">Project Name</label>
+                            <div class="adi__field__container">
+                                <input type="text" id="newProjectName" name="title" class="adi__field__container__input">
+                            </div>
+                        </div>
+                        <div class="adi__field">
+                            <label for="newProjectDescription" class="adi__field__label">Description</label>
+                            <div class="adi__field__container">
+                                <input type="text" id="newProjectDescription" name="description" class="adi__field__container__input">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="adi__field adi__field--toggle">
+                        <label for="checkbox-1-2" class="adi__field__label">
+                            <input type="checkbox" id="checkbox-1-2">
+                            
+                        </label>
+                    </div>
+                </section>
+                <section class="adi__modal__actions">
+                    <button data-toggle="modal"
+                            type="button"
+                            class="adi__button adi__button--secondary">
+                        Cancel
+                    </button>
+                    <button type="submit" data-artifact-api="["POST", "project/${projectID}/artifact"]"
+                            class="adi__button">
+                        Confirm
+                    </button>
+                </section>
+            </form>
+        </dialog>
+
+        
+    </section>
+</div>
+                    
+    <!-- Related to this Article start -->
+    <section class="adi__productResources__category">
+        <h2 class="adi__heading--xs">
+            
+            Related to this Article
+        </h2>
+        
+
+        <section class="adi__productResources__category__resource">
+            
+
+
+
+
+
+            
+
+
+
+
+
+        </section>
+        <section class="adi__productResources__category__resource">
+            
+
+
+        </section>
+        
+
+    <div class="component Related-News">
+        <div class="component-content">
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+    </section>
+    <!-- Related to this Article end -->
+
+                </div>
+                <!-- right side content end -->
+
+            </div>
+            <div class="component product-productsincategory" id="bannerCard" data-title="We Think You&#39;ll Love">
+                <div class="component-content">
+                </div>
+            </div>
+
+        </adi-container>
+        <!-- Content end -->
+        
+    </main>
+
+
+
+
+
+
+
+
+    <script type="text/javascript">
+
+    var analyticsObject = {"pageInformation":{"pageName":"I2C Timing: Definition and Specification Guide (Part 2)","itemId":"5f5d1dde-9ebe-474e-abc5-8125c4c5b0e0","pageUrl":"https://www.analog.com/en/resources/technical-articles/i2c-timing-definition-and-specification-guide-part-2.html","pageCategory":"Technical Article Page","previousPageUrl":"https://www.google.com.hk/","pageType":"Technical Article Page","isProduct":false}};
+    </script>
+    <script>
+        let userLoggedState = false;
+        try {
+            const savedAuthToken = localStorage.getItem('active-tokens');
+            if (savedAuthToken) {
+                const activeTokenObject = JSON.parse(savedAuthToken);
+                if (activeTokenObject && activeTokenObject['my'] && activeTokenObject['my']['token']) {
+                    var base64Url = activeTokenObject['my']['token'].split('.')[1]
+                    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    var jsonPayload = decodeURIComponent(
+                        atob(base64)
+                            .split('')
+                            .map(function (c) {
+                                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                            })
+                            .join('')
+                    )
+                }
+                const decodedToken = JSON.parse(jsonPayload)
+                const currentTimestamp = Math.floor(Date.now() / 1000);
+                if (!(decodedToken.exp && currentTimestamp > decodedToken.exp)) {
+                    userLoggedState = true;
+                }
+            } else {
+                const tempAuthStatusKey = 'isAuthenticated';
+                const cookies = document.cookie.split( '; ' );
+                const cookieOptions = 'domain=.analog.com; path=/; secure;';
+	            const tempAuthStatus = cookies.find( ( cookie ) => cookie.includes( tempAuthStatusKey ) )
+                                             ?.slice( ( tempAuthStatusKey.length + 1 ) ) || null;
+        	    
+        	    // Updating 'isLoggedIn' only for the first page visit post login redirect
+        	    if ( tempAuthStatus ) {
+            		userLoggedState = tempAuthStatus === 'true';
+
+                    // Delete 'isAuthenticated' cookie
+                    document.cookie = `${tempAuthStatusKey}=; expires=${new Date().toUTCString()}; ${cookieOptions}`;
+        	    }
+        	}
+        }
+        catch (error) {
+            console.log(error)
+        }
+        const localAnalyticsObject = window.analyticsObject;
+
+        if (localAnalyticsObject && localAnalyticsObject?.pageInformation) {
+            const isPDPPage = localAnalyticsObject?.pageInformation?.isProduct || false;
+            const pageViewObject = {
+				"event": "pageview"
+			};
+
+            let commonBreadCrumb = '';
+            const breadcrumbListSections = document.querySelectorAll('.breadcrumb__container__section');
+            breadcrumbListSections?.forEach((DomElement, indexOfDomElement) => {
+                const itemText = DomElement.querySelector(".breadcrumb__container__section_item")
+                const dropdownText = DomElement.querySelector(".breadcrumb__container__section_dropdown-item")
+                let breadcrumbText = "";
+                if (itemText) {
+                    breadcrumbText = ((indexOfDomElement === 0) ? "" : (breadcrumbText + "|")) + itemText.textContent.trim();
+                } else if (dropdownText) {
+                    breadcrumbText = ((indexOfDomElement === 0) ? "" : (breadcrumbText + "|")) + dropdownText.textContent.trim();
+                } else {
+                    breadcrumbText = ((indexOfDomElement === 0) ? "" : (breadcrumbText + "|")) + DomElement.textContent.trim();
+                }
+                commonBreadCrumb = commonBreadCrumb + breadcrumbText;
+            });
+            if (isPDPPage) {
+                const productLifeCycle = document.querySelector('.recently-viewed-flag');
+                pageViewObject.productInfo = {
+                    eventName: 'Product View',
+                    productListItems: []
+                };
+                pageViewObject.productInfo.productListItems.push({
+                    productLifeCycle: productLifeCycle ? productLifeCycle.textContent.trim().toUpperCase() : '',
+                    productBreadCrumb: '',
+                    SKU: ''
+                })
+                pageViewObject.productInfo.productListItems[0].productBreadCrumb = commonBreadCrumb;
+                pageViewObject.productInfo.productListItems[0].SKU = commonBreadCrumb.split("|").reverse()[0];
+            } else {
+                pageViewObject.productInfo = {};
+            }
+            const url = localAnalyticsObject?.pageInformation?.pageUrl
+            let previousPageName = localAnalyticsObject?.pageInformation?.previousPageUrl;
+            if (previousPageName) {
+                previousPageName = previousPageName.split('.html')[0];
+                previousPageName = previousPageName.split('/').reverse()[0];
+            }
+            const category = url?.split('/');
+            category.shift();
+            category.splice(0, 2);
+            pageViewObject.pageInfo = {
+                "pageName": localAnalyticsObject?.pageInformation?.pageName,
+                "pageCategory": localAnalyticsObject?.pageInformation?.pageCategory,
+                "pageURL": localAnalyticsObject?.pageInformation?.pageUrl,
+                "pageType": localAnalyticsObject?.pageInformation?.pageType,
+                "pageBreadCrumb": commonBreadCrumb,
+                "previousPageName": previousPageName,
+                "previousPageUrl": localAnalyticsObject?.pageInformation?.previousPageUrl,
+                "pageEvents": '',
+                "siteSection1": category[1],
+                "siteSection2": category[2] ? category[2] : '',
+                "siteSection3": category[3] ? category[3] : '',
+                "siteSection4": category[4] ? category[4] : '',
+                "siteSection5": category[5] ? category[5] : '',
+                "sitecoreItemID": localAnalyticsObject?.pageInformation?.itemId
+            };
+            pageViewObject.siteInfo = {
+                "siteLanguage": category[0]
+            };
+            pageViewObject.userInfo = {
+                "userType": '',
+                "isLoggedIn": userLoggedState
+            }
+            window.adobeDataLayer = window.adobeDataLayer || [];
+            window.adobeDataLayer.push(pageViewObject);
+			window.adobeDataLayer.reverse();
+            console.log(window.adobeDataLayer);
+        }
+    </script>
+
+
+</div>
+
+                </div>
+            </div>
+        </main>
+    <!-- /#content -->
+    <!-- #footer -->
+    <footer role="contentinfo">
+        <div id="footer" class="container-fluid">
+            <div class=" row">
+                <div>
+        <adi-footer></adi-footer>
+</div>
+            </div>
+        </div>
+    </footer>
+    <!-- /#footer -->
+</div>
+<!-- /#wrapper -->
+
+
+    
+        
+
+
+    <!-- Inject Brightcove script only on rendering containing Video tag from CSHTML -->
+
+    <!-- Latest compiled and minified JS -->
+
+            <script src="https://assets2.analog.com/cms-assets-optimizations/js/article.min.mjs" type="module" defer></script>
+    
+    <script id="image-rte-modal-template" type="text/x-handlebars-template">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="image-label">{{{title}}}</h4>
+        </div>
+        <div class="modal-body">
+            <ul class="control-icons">
+                <li>
+                    {{#if data_download}}
+                    <a class="downloadimagelink" href="{{data_download}}" download="{{data_download}}">
+                        <span id="downbutton" class="icon-download"></span>
+                    </a>
+                    {{else}}
+                    <a class="downloadimagelink" href="{{src}}" download="{{src}}">
+                        <span id="downbutton" class="icon-download"></span>
+                    </a>
+                    {{/if}}
+                </li>
+                <li><a class="print pull-right"><span class="icon-print"></span></a></li>
+            </ul>
+            <br />
+            <img alt="{{{title}}}" class="img-responsive" title="{{{title}}}" src="{{src}}" loading="lazy" />
+            <br />
+        </div>
+    </script>
+
+    <div class="rte-control">
+        <div class="modal fade product-modal image-rte-modal" id="image-rte-modal" tabindex="-1" role="dialog" aria-labelledby="product-modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+<script type="text/javascript"  src="/n0AzzjMbYtok9uhqjDut/uGYuSkN6wzwcmJt9/fiIGKFw/HS8SHC4/LUxc"></script></body>
+</html>
