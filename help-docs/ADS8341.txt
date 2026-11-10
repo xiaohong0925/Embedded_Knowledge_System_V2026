@@ -1,0 +1,1590 @@
+16-Bit, 4-Channel Serial Output Sampling
+ANALOG-TO-DIGITAL CONVERTER
+FEATURES
+G PIN FOR PIN WITH ADS7841
+G SINGLE SUPPLY: 2.7V to 5V
+G 4-CHANNEL SINGLE-ENDED OR
+2-CHANNEL DIFFERENTIAL INPUT
+G UP TO 100kHz CONVERSION RATE
+G 86dB SINAD
+G SERIAL INTERFACE
+G SSOP-16 PACKAGE
+DESCRIPTION
+The ADS8341 is a 4-channel, 16-bit sampling Analog-to-
+Digital (A/D) converter with a synchronous serial interface.
+Typical power dissipation is 8mW at a 100kHz throughput
+rate and a +5V supply. The reference voltage (V
+REF) can be
+varied between 500mV and VCC, providing a corresponding
+input voltage range of 0V to V REF. The device includes a
+shutdown mode that reduces power dissipation to under
+15µW. The ADS8341 is tested down to 2.7V operation.
+Low power, high speed, and an onboard multiplexer make
+the ADS8341 ideal for battery-operated systems such as
+personal digital assistants, portable multi-channel data log-
+gers, and measurement equipment. The serial interface also
+provides low-cost isolation for remote data acquisition. The
+ADS8341 is available in an SSOP-16 package and is en-
+sured over the –40 °C to +85 °C temperature range.
+APPLICATIONS
+G DATA ACQUISITION
+G TEST AND MEASUREMENT
+G INDUSTRIAL PROCESS CONTROL
+G PERSONAL DIGITAL ASSISTANTS
+G BATTERY-POWERED SYSTEMS
+CDAC
+SAR
+Comparator
+Four
+Channel
+Multiplexer
+Serial
+Interface
+and
+Control
+CH0
+CH1
+CH2
+CH3
+COM
+V
+REF
+CS
+SHDN
+DIN
+DOUT
+BUSY
+DCLK
+ADS8341
+ADS8341
+SBAS136D – SEPTEMBER 2000 – APRIL 2003
+www.ti.com
+PRODUCTION DATA information is current as of publication date.
+Products conform to specifications per the terms of Texas Instruments
+standard warranty. Production processing does not necessarily include
+testing of all parameters.
+Copyright © 2000-2003, Texas Instruments Incorporated
+Please be aware that an important notice concerning availability, standard warranty, and use in critical applications of
+Texas Instruments semiconductor products and disclaimers thereto appears at the end of this data sheet.
+ADS83412
+SBAS136D
+ELECTROSTATIC
+DISCHARGE SENSITIVITY
+This integrated circuit can be damaged by ESD. Texas Instru-
+ments recommends that all integrated circuits be handled with
+appropriate precautions. Failure to observe proper handling
+and installation procedures can cause damage.
+ESD damage can range from subtle performance degradation
+to complete device failure. Precision integrated circuits may
+be more susceptible to damage because very small parametric
+changes could cause the device not to meet its published
+specifications.
+MAXIMUM NO
+INTEGRAL MISSING
+LINEARITY CODES SPECIFICATION
+ERROR ERROR TEMPERATURE PACKAGE ORDERING TRANSPORT
+PRODUCT (LSB) (LSB) RANGE PACKAGE DESIGNATOR (1) NUMBER MEDIA
+ADS8341E 8 14 –40 °C to +85 °C SSOP-16 DBQ ADS8341E Rails
+" " " " " " ADS8341E/2K5 Tape and Reel
+ADS8341EB 6 15 –40 °C to +85 °C SSOP-16 DBQ ADS8341EB Rails
+" " " " " " ADS8341EB/2K5 Tape and Reel
+NOTE: (1) For the most current specifications and package information, refer to our web site www.ti.com.
+PIN CONFIGURATIONS
+Top View SSOP
+PACKAGE/ORDERING INFORMATION
+PIN DESCRIPTIONS
+PIN NAME DESCRIPTION
+1+ V CC Power Supply, 2.7V to 5V
+2 CH0 Analog Input Channel 0
+3 CH1 Analog Input Channel 1
+4 CH2 Analog Input Channel 2
+5 CH3 Analog Input Channel 3
+6 COM Ground Reference for Analog Inputs. Sets zero code voltage in single-ended mode. Connect this pin to ground or ground refer ence
+point.
+7 SHDN Shutdown. When LOW, the device enters a very low power shutdown mode.
+8V
+REF Voltage Reference Input. See Electrical Characteristics Table for ranges.
+9+ V CC Power Supply, 2.7V to 5V
+10 GND Ground. Connect to Analog Ground
+11 GND Ground. Connect to Analog Ground.
+12 DOUT Serial Data Output. Data is shifted on the falling edge of DCLK. This output is high impedance when CS is HIGH.
+13 BUSY Busy Output. This output is high impedance when CS is HIGH.
+14 DIN Serial Data Input. If CS is LOW, data is latched on rising edge of DCLK.
+15 CS Chip Select Input. Controls conversion timing and enables the serial input/output register.
+16 DCLK External Clock Input. This clock runs the SAR conversion process and synchronizes serial data I/O. Maximum input clock fr equency
+equals 2.4MHz to achieve 100kHz sampling rate.
+ABSOLUTE MAXIMUM RATINGS(1)
++VCC to GND ........................................................................ –0.3V to +6V
+Analog Inputs to GND ............................................ –0.3V to +V CC + 0.3V
+Digital Inputs to GND ........................................................... –0.3V to +6V
+Power Dissipation .......................................................................... 250mW
+Maximum Junction Temperature ................................................... +150 °C
+Operating Temperature Range ........................................ –40°C to +85 °C
+Storage Temperature Range ......................................... –65 °C to +150 °C
+Lead Temperature (soldering, 10s) ............................................... +300 °C
+NOTE: (1) Stresses above those listed under “Absolute Maximum Ratings”
+may cause permanent damage to the device. Exposure to absolute maximum
+conditions for extended periods may affect device reliability.
+1
+2
+3
+4
+5
+6
+7
+8
++V
+CC
+CH0
+CH1
+CH2
+CH3
+COM
+SHDN
+V
+REF
+DCLK
+CS
+DIN
+BUSY
+DOUT
+GND
+GND
++V
+CC
+16
+15
+14
+13
+12
+11
+10
+9
+ADS8341
+ADS8341 3
+SBAS136D
+ELECTRICAL CHARACTERISTICS: +5V
+At TA = –40°C to +85°C, +VCC = +5V, V REF = +5V, f SAMPLE = 100kHz,  and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+ADS8341E, P ADS8341EB, PB
+✻ Same specifications as ADS8341E.
+NOTES: (1) LSB means Least Significant Bit. With VREF equal to +5.0V, one LSB is 76µV. (2) First five harmonics of the test frequency. (3) Auto power-down mode
+(PD1 = PD0 = 0) active or SHDN = GND.
+PARAMETER CONDITIONS MIN TYP MAX MIN TYP MAX UNITS
+RESOLUTION 16 ✻ BITS
+ANALOG INPUT
+Full-Scale Input Span Positive Input - Negative Input 0 V REF ✻✻ V
+Absolute Input Range Positive Input –0.2 +V CC +0.2 ✻✻ V
+Negative Input –0.2 +1.25 ✻✻ V
+Capacitance 25 ✻ pF
+Leakage Current ±1 ✻ µA
+SYSTEM PERFORMANCE
+No Missing Codes 14 15 Bits
+Integral Linearity Error ±8 ±6L S B
+Offset Error ±2 ±1m V
+Offset Error Match 1.2 4.0 ✻✻ LSB
+(1)
+Gain Error ±0.05 ±0.024 %
+Gain Error Match 1.0 4.0 ✻✻ LSB
+Noise 20 ✻ µVrms
+Power-Supply Rejection +4.75V < V CC < 5.25V 3 ✻ LSB(1)
+SAMPLING DYNAMICS
+Conversion Time 16 ✻ Clk Cycles
+Acquisition Time 4.5 ✻ Clk Cycles
+Throughput Rate 100 ✻ kHz
+Multiplexer Settling Time 500 ✻ ns
+Aperture Delay 30 ✻ ns
+Aperture Jitter 100 ✻ ps
+Internal Clock Frequency SHDN = V DD 2.4 ✻ MHz
+External Clock Frequency 0.024 2.4 ✻✻ MHz
+Data Transfer Only 0 2.4 ✻✻ MHz
+DYNAMIC CHARACTERISTICS
+Total Harmonic Distortion(2) VIN = 5Vp-p at 10kHz –90 ✻ dB
+Signal-to-(Noise + Distortion) V IN = 5Vp-p at 10kHz 86 ✻ dB
+Spurious-Free Dynamic Range V IN = 5Vp-p at 10kHz 92 ✻ dB
+Channel-to-Channel Isolation V IN = 5Vp-p at 50kHz 100 ✻ dB
+REFERENCE INPUT
+Range 0.5 +V CC ✻✻ V
+Resistance DCLK Static 5 ✻ GΩ
+Input Current 40 100 ✻✻ µA
+fSAMPLE = 12.5kHz 2.5 ✻ µA
+DCLK Static 0.001 3 ✻✻ µA
+DIGITAL INPUT/OUTPUT
+Logic Family CMOS ✻
+Logic Levels
+VIH | IIH | ≤ +5µA 3.0 5.5 ✻✻ V
+VIL | IIL | ≤ +5µA –0.3 +0.8 ✻✻ V
+VOH IOH = –250µA 3.5 ✻ V
+VOL IOL = 250µA 0.4 ✻ V
+Data Format Straight Binary ✻
+POWER SUPPLY REQUIREMENTS
++VCC Specified Performance 4.75 5.25 ✻✻ V
+Quiescent Current 1.5 2.0 ✻ mA
+fSAMPLE = 12.5kHz 300 ✻ µA
+Power-Down Mode(3), CS = +V CC 3 ✻ µA
+Power Dissipation 7.5 10 ✻ mW
+TEMPERATURE RANGE
+Specified Performance –40 +85 ✻✻ °C
+ADS83414
+SBAS136D
+ELECTRICAL CHARACTERISTICS: +2.7V
+At TA = –40°C to +85°C, +VCC = +2.7V, V REF = +2.5V, f SAMPLE = 100kHz,  and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+ADS8341E, P ADS8341EB, PB
+✻ Same specifications as ADS8341E.
+NOTES: (1) LSB means Least Significant Bit. With VREF equal to +5.0V, one LSB is 76µV. (2) First five harmonics of the test frequency. (3) Auto power-down mode
+(PD1 = PD0 = 0) active or SHDN = GND.
+PARAMETER CONDITIONS MIN TYP MAX MIN TYP MAX UNITS
+RESOLUTION 16 ✻ BITS
+ANALOG INPUT
+Full-Scale Input Span Positive Input - Negative Input 0 V REF ✻✻ V
+Absolute Input Range Positive Input –0.2 +V CC +0.2 ✻✻ V
+Negative Input –0.2 +0.2 ✻✻ V
+Capacitance 25 ✻ pF
+Leakage Current ±1 ✻ µA
+SYSTEM PERFORMANCE
+No Missing Codes 14 15 Bits
+Integral Linearity Error ±12 ±8L S B
+Offset Error ±1 ±0.5 mV
+Offset Error Match 1.2 4.0 ✻✻ LSB
+Gain Error ±0.05 ±0.0024 % of FSR
+Gain Error Match 1.0 4.0 ✻✻ LSB
+Noise 20 ✻ µVrms
+Power-Supply Rejection +2.7 < V
+CC < +3.3V 3 ✻ LSB(1)
+SAMPLING DYNAMICS
+Conversion Time 16 ✻ Clk Cycles
+Acquisition Time 4.5 ✻ Clk Cycles
+Throughput Rate 100 ✻ kHz
+Multiplexer Settling Time 500 ✻ ns
+Aperture Delay 30 ✻ ns
+Aperture Jitter 100 ✻ ps
+Internal Clock Frequency SHDN = V DD 2.4 ✻ MHz
+External Clock Frequency 0.024 2.4 ✻✻ MHz
+When Used with Internal Clock 0.024 2.0 ✻✻ MHz
+Data Transfer Only 0 2.4 ✻✻ MHz
+DYNAMIC CHARACTERISTICS
+Total Harmonic Distortion
+(2) VIN = 2.5Vp-p at 10kHz –90 ✻ dB
+Signal-to-(Noise + Distortion) V IN = 2.5Vp-p at 10kHz 86 ✻ dB
+Spurious-Free Dynamic Range V IN = 2.5Vp-p at 10kHz 92 ✻ dB
+Channel-to-Channel Isolation V IN = 2.5Vp-p at 50kHz 100 ✻ dB
+REFERENCE INPUT
+Range 0.5 +V CC ✻✻ V
+Resistance DCLK Static 5 ✻ GΩ
+Input Current 13 40 ✻✻ µA
+fSAMPLE = 12.5kHz 2.5 ✻ µA
+DCLK Static 0.001 3 ✻✻ µA
+DIGITAL INPUT/OUTPUT
+Logic Family CMOS ✻
+Logic Levels
+VIH | IIH | ≤ +5µA+ V CC • 0.7 5.5 ✻✻ V
+VIL | IIL | ≤ +5µA –0.3 +0.8 ✻✻ V
+VOH IOH = –250µA+ V CC • 0.8 ✻ V
+VOL IOL = 250µA 0.4 ✻ V
+Data Format Straight Binary ✻
+POWER SUPPLY REQUIREMENTS
++VCC Specified Performance 2.7 3.6 ✻✻ V
+Quiescent Current 1.2 1.85 ✻✻ mA
+fSAMPLE = 12.5kHz 220 µA
+Power-Down Mode(3), CS = +V CC 3 ✻ µA
+Power Dissipation 3.2 5 ✻ mW
+TEMPERATURE RANGE
+Specified Performance –40 +85 ✻✻ °C
+ADS8341 5
+SBAS136D
+TYPICAL CHARACTERISTICS: +5V
+At TA = +25 °C, +VCC = +5V, V REF = +5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+0
+–20
+–40
+–60
+–80
+–100
+–120
+–140
+–160
+FREQUENCY SPECTRUM
+(4096 Point FFT; fIN = 1.001kHz, –0.2dB)
+05 0 2010 40 30
+Frequency (kHz)
+Amplitude (dB)
+0
+–20
+–40
+–60
+–80
+–100
+–120
+–140
+–160
+FREQUENCY SPECTRUM
+(4096 Point FFT; fIN = 9.985kHz, –0.2dB)
+05 0 2010 40 30
+Frequency (kHz)
+Amplitude (dB)
+SPURIOUS-FREE DYNAMIC RANGE AND
+TOTAL HARMONIC DISTORTION
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+SFDR (dB)
+100
+90
+80
+70
+60
+THD (dB)
+–100
+–90
+–80
+–70
+–60
+SFDR
+THD(1)
+(1) First Nine Harmonics
+of the Input Frequency
+EFFECTIVE NUMBER OF BITS
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+Effective Number of Bits
+15.0
+14.5
+14.0
+13.5
+13.0
+12.5
+12.0
+11.5
+11.0
+Temperature (°C)
+0.2
+0.0
+–0.2
+–0.4
+–0.6
+–0.8
+–1.0
+–1.2
+–1.4
+CHANGE IN SIGNAL-TO-(NOISE+DISTORTION)
+vs TEMPERATURE
+25 100–50 –25 0 50 75
+Delta from 25°C (dB)
+fIN = 9.985kHz, –0.2dB
+SIGNAL-TO-NOISE RATIO AND
+SIGNAL-TO-(NOISE+DISTORTION)
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+SNR and SINAD (dB)
+100
+90
+80
+70
+60
+SNR
+SINAD
+ADS83416
+SBAS136D
+TYPICAL CHARACTERISTICS: +5V (Cont.)
+At TA = +25 °C, +VCC = +5V, V REF = +5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+Output Code
+3
+2
+1
+0
+–1
+–2
+–3
+INTEGRAL LINEARITY ERROR vs CODE
+8000h FFFFh0000h 4000h C000h
+ILE (LSBS)
+Output Code
+4
+3
+2
+1
+0
+–1
+–2
+DIFFERENTIAL LINEARITY ERROR vs CODE
+8000h FFFFh0000h 4000h C000h
+DLE (LSBS)
+CHANGE IN OFFSET vs TEMPERATURE
+20 40 600–20–40 100 80
+Temperature (°C)
+Change in Offset (LSB)
+1.0
+0.50
+0.00
+–0.50
+–1.00
+–1.50
+CHANGE IN GAIN vs TEMPERATURE
+Change in Gain (LSB)
+0.40
+0.30
+0.20
+0.10
+0.00
+–0.10
+–0.20
+–0.30
+20 40 600–20–40 100 80
+Temperature (°C)
+WORST CASE CHANNEL-TO-CHANNEL
+OFFSET MATCH vs TEMPERATURE
+Offset Match (LSB)
+2.50
+2.00
+1.50
+1.00
+0.50
+0.00
+20 40 600–20–40 100 80
+Temperature (°C)
+Gain Match (LSB)
+0.35
+0.30
+0.25
+0.20
+0.15
+0.10
+0.05
+0.00
+WORST CASE CHANNEL-TO-CHANNEL
+GAIN MATCH vs TEMPERATURE
+20 40 600–20–40 100 80
+Temperature (°C)
+ADS8341 7
+SBAS136D
+TYPICAL CHARACTERISTICS: +5V (Cont.)
+At TA = +25 °C, +VCC = +5V, V REF = +5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+IQ (mA)
+1.45
+1.40
+1.35
+1.20
+1.25
+IQ vs TEMPERATURE
+20 40 600–20–40 100
+Temperature (°C)
+80
+ADS83418
+SBAS136D
+TYPICAL CHARACTERISTICS: +2.7V
+At TA = +25 °C, +VCC = +2.7V, V REF = +2.5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+0
+–20
+–40
+–60
+–80
+–100
+–120
+–140
+–160
+FREQUENCY SPECTRUM
+(4096 Point FFT; fIN = 1.001kHz, –0.2dB)
+05 0 2010 40 30
+Frequency (kHz)
+Amplitude (dB)
+0
+–20
+–40
+–60
+–80
+–100
+–120
+–140
+–160
+FREQUENCY SPECTRUM
+(4096 Point FFT; fIN = 9.985kHz, –0.2dB)
+05 0 2010 40 30
+Frequency (kHz)
+Amplitude (dB)
+SIGNAL-TO-NOISE RATIO AND
+SIGNAL-TO-(NOISE+DISTORTION)
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+SNR and SINAD (dB)
+90
+85
+80
+75
+70
+65
+60
+SNR
+SINAD
+SPURIOUS-FREE DYNAMIC RANGE AND
+TOTAL HARMONIC DISTORTION
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+SFDR (dB)
+100
+90
+80
+70
+60
+50
+SFDR
+THD(1)
+(1) First nine harmonics
+of the input frequency.
+EFFECTIVE NUMBER OF BITS
+vs INPUT FREQUENCY
+101 100
+Frequency (kHz)
+Effective Number of Bits
+15
+14
+13
+12
+11
+10
+9
+8
+Temperature (°C)
+2.0
+1.5
+1.0
+0.5
+0.0
+–0.5
+–1.0
+–1.5
+–2.0
+CHANGE IN SIGNAL-TO-(NOISE+DISTORTION)
+vs TEMPERATURE
+25 100–50 –25 0 50 75
+Delta from 25°C (dB)
+fIN = 9.985kHz, –0.2dB
+ADS8341 9
+SBAS136D
+TYPICAL CHARACTERISTICS: +2.7V (Cont.)
+At TA = +25 °C, +VCC = +2.7V, V REF = +2.5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
+Output Code
+3
+2
+1
+0
+–1
+–2
+–3
+INTEGRAL LINEARITY ERROR vs CODE
+8000h FFFFh0000h 4000h C000h
+ILE (LSBS)
+Output Code
+4
+3
+2
+1
+0
+–1
+–2
+DIFFERENTIAL LINEARITY ERROR vs CODE
+8000h FFFFh0000h 4000h C000h
+DLE (LSBS)
+CHANGE IN OFFSET vs TEMPERATURE
+Change in Offset (LSB)
+0.30
+0.20
+0.10
+0.00
+–0.10
+–0.20
+–0.30
+20 40 600–20–40 100
+Temperature (°C)
+80
+CHANGE IN GAIN vs TEMPERATURE
+Change in Gain (LSB)
+0.200
+0.100
+0.000
+–0.100
+–0.200
+–0.300
+20 40 600–20–40 100
+Temperature (°C)
+80
+Offset Match (LSB)
+0.400
+0.300
+0.200
+0.100
+0.000
+WORST CASE CHANNEL-TO-CHANNEL
+OFFSET MATCH vs TEMPERATURE
+20 40 600–20–40 100
+Temperature (°C)
+80
+Gain Match (LSB)
+0.200
+0.150
+0.100
+0.050
+0.000
+WORST CASE CHANNEL-TO-CHANNEL
+GAIN MATCH vs TEMPERATURE
+20 40 600–20–40 100
+Temperature (°C)
+80
+ADS834110
+SBAS136D
+TYPICAL CHARACTERISTICS: +2.7V (Cont.)
+At TA = +25 °C, +VCC = +2.7V, V REF = +2.5V, f SAMPLE = 100kHz, and f CLK = 24 • fSAMPLE = 2.4MHz, unless otherwise noted.
++VSS (V)
+1.6
+1.5
+1.4
+1.3
+1.2
+1.1
+1.0
+SUPPLY CURRENT vs +V
+SS
+3.5 5.02.5 3.0 4.0 4.5
+Supply Current (mA)
+fSAMPLE = 100kHz
+VREF vs +VSS
+IQ (mA)
+1.15
+1.10
+1.05
+1.00
+0.95
+IQ vs TEMPERATURE
+20 40 600–20–40 100
+Temperature (°C)
+80
+ADS8341 11
+SBAS136D
+THEORY OF OPERATION
+The ADS8341 is a classic Successive Approximation Reg-
+ister (SAR) A/D converter. The architecture is based on
+capacitive redistribution which inherently includes a sample-
+and-hold function. The converter is fabricated on a 0.6 µm
+CMOS process.
+The basic operation of the ADS8341 is shown in Figure 1.
+The device requires an external reference and an external
+clock. It operates from a single supply of 2.7V to 5.25V.
+The external reference can be any voltage between 500mV
+and +V
+CC. The value of the reference voltage directly sets
+the input range of the converter. The average reference
+input current depends on the conversion rate of the
+ADS8341.
+The analog input to the converter is differential and is
+provided via a four-channel multiplexer. The input can be
+provided in reference to a voltage on the COM pin (which
+is generally ground) or differentially by using two of the four
+input channels (CH0 - CH3). The particular configuration is
+selectable via the digital interface.
+ANALOG INPUT
+Figure 2 shows a block diagram of the input multiplexer on
+the ADS8341. The differential input of the converter is
+derived from one of the four inputs in reference to the COM
+pin or two of the four inputs. Table I and Table II show the
+relationship between the A2, A1, A0, and SGL/DIF control
+bits and the configuration of the analog multiplexer. The
+control bits are provided serially via the DIN pin, see the
+Digital Interface section of this data sheet for more details.
+When the converter enters the hold mode, the voltage
+difference between the  +IN and –IN inputs, as shown in
+Figure 2, is captured on the internal capacitor array. The
+voltage on the –IN input is limited between –0.2V and
+1.25V, allowing the input to reject small signals that are
+common to both the +IN and –IN input. The +IN input has
+a range of –0.2V to +V
+CC + 0.2V.
+FIGURE 2. Simplified Diagram of the Analog Input.
+A2 A1 A0 CH0 CH1 CH2 CH3 COM
+001 + I N –IN
+101 –IN +IN
+010 + I N –IN
+110 –IN +IN
+TABLE II. Differential Channel Control (SGL/DIF LOW).
+A2 A1 A0 CH0 CH1 CH2 CH3 COM
+001 + I N –IN
+101 + I N –IN
+010 + I N –IN
+110 + I N –IN
+TABLE I. Single-Ended Channel Selection (SGL/DIF HIGH).
+The input current on the analog inputs depends on the
+conversion rate of the device. During the sample period, the
+source must charge the internal sampling capacitor (typi-
+cally 25pF). After the capacitor has been fully charged, there
+is no further input current. The rate of charge transfer from
+the analog source to the converter is a function of conver-
+sion rate.
+FIGURE 1. Basic Operation of the ADS8341.
+Converter
++IN
+–IN
+CH0
+CH1
+CH2
+CH3
+COM
+A2-A0
+(Shown 001
+B)
+SGL/DIF
+(Shown HIGH)
++VCC
+CH0
+CH1
+CH2
+CH3
+COM
+SHDN
+V
+REF
+1
+2
+3
+4
+5
+6
+7
+8
+16
+15
+14
+13
+12
+11
+10
+9
+DCLK
+CS
+DIN
+BUSY
+DOUT
+GND
+GND
++V
+CC
+Serial/Conversion Clock
+Chip Select
+Serial Data In
+Serial Data Out
+0.1µF1 µF
+0.1µF
++2.7V to +5V
+ADS8341
+Single-ended
+or differential
+analog inputs
++
++
+1µF
+to
+10µF
+External
+VREF
+ADS834112
+SBAS136D
+FIGURE 3. Conversion Timing, 24-Clocks per Conversion, 8-Bit Bus Interface. No DCLK delay required with dedicated
+serial port.
+REFERENCE INPUT
+The external reference sets the analog input range. The
+ADS8341 will operate with a reference in the range of
+500mV to +V
+CC. Keep in mind that the analog input is the
+difference between the +IN input and the –IN input, see
+Figure 2. For example, in the single-ended mode, a 1.25V
+reference, with the COM pin grounded, the selected input
+channel (CH0 - CH3) will properly digitize a signal in the
+range of 0V to 1.25V. If the COM pin is connected to 0.5V,
+the input range on the selected channel is 0.5V to 1.75V.
+There are several critical items concerning the reference
+input and its wide voltage range. As the reference voltage is
+reduced, the analog voltage weight of each digital output
+code is also reduced. This is often referred to as the LSB
+(least significant bit) size and is equal to the reference
+voltage divided by 65,536. Any offset or gain error inherent
+in the A/D converter will appear to increase, in terms of LSB
+size, as the reference voltage is reduced. For example, if the
+offset of a given converter is 2LSBs with a 2.5V reference,
+then it will typically be 10LSBs with a 0.5V reference. In
+each case, the actual offset of the device is the same, 76 µV.
+Likewise, the noise or uncertainty of the digitized output will
+increase with lower LSB size. With a reference voltage of
+500mV, the LSB size is 7.6 µV. This level is below the
+internal noise of the device. As a result, the digital output
+code will not be stable and vary around a mean value by a
+number of LSBs. The distribution of output codes will be
+gaussian and the noise can be reduced by simply averaging
+consecutive conversion results or applying a digital filter.
+With a lower reference voltage, care should be taken to
+provide a clean layout including adequate bypassing, a clean
+(low-noise, low-ripple) power supply, a low-noise reference,
+and a low-noise input signal. Because the LSB size is lower,
+the converter will also be more sensitive to nearby digital
+signals and electromagnetic interference.
+The voltage into the V
+REF input is not buffered and directly
+drives the Capacitor Digital-to-Analog Converter (CDAC)
+portion of the ADS8341. Typically, the input current is
+13µA with a 2.5V reference. This value will vary by
+microamps depending on the result of the conversion. The
+reference current diminishes directly with both conversion
+rate and reference voltage. As the current from the reference
+is drawn on each bit decision, clocking the converter more
+quickly during a given conversion period will not reduce
+overall current drain from the reference.
+DIGITAL INTERFACE
+Figure 3 shows the typical operation of the ADS8341’s
+digital interface. This diagram assumes that the source of the
+digital signals is a microcontroller or digital signal processor
+with a basic serial interface (note that the digital inputs are
+over-voltage tolerant up to 5.5V, regardless of +V
+CC). Each
+communication between the processor and the converter
+consists of eight clock cycles. One complete conversion can
+be accomplished with three serial communications, for a
+total of 24 clock cycles on the DCLK input.
+The first eight cycles are used to provide the control byte via
+the DIN pin. When the converter has enough information
+about the following conversion to set the input multiplexer
+appropriately, it enters the acquisition (sample) mode. After
+three more clock cycles, the control byte is complete and the
+converter enters the conversion mode. At this point, the
+input sample-and-hold goes into the hold mode. The next 16
+clock cycles accomplish the actual analog-to-digital conver-
+sion.
+Control Byte
+Also shown in Figure 3 is the placement and order of the
+control bits within the control byte. Tables III and IV give
+detailed information about these bits. The first bit, the ‘S’
+bit, must always be HIGH and indicates the start of the
+control byte. The ADS8341 will ignore inputs on the DIN
+pin until the start bit is detected. The next three bits (A2 -
+A0) select the active input channel or channels of the input
+multiplexer (see Tables I and II and Figure 2).
+Bit 7 Bit 6 Bit 5 Bit 4 Bit 3 Bit 2 Bit 1 Bit 0
+(MSB) (LSB)
+S A 2A 1A 0 — SGL/DIF PD1 PD0
+TABLE III. Order of the Control Bits in the Control Byte.
+tACQ
+AcquireIdle Conversion
+1DCLK
+CS
+81
+15 DOUT
+BUSY
+(MSB)
+(START)
+(LSB)
+A2SDIN A1 A0 SGL/
+DIF PD1 PD0
+1 4 1 3 1 2 1 1 1 0 9 8 7654321 0 Zero Filled...
+81 8
+AcquireIdle Conversion
+18 1
+15 
+(MSB)
+(START)
+A2SA 1 A 0 SGL/
+DIF PD1 PD0
+14
+ADS8341 13
+SBAS136D
+TABLE IV. Descriptions of the Control Bits within the
+Control Byte.
+BIT NAME DESCRIPTION
+7 S Start Bit. Control byte starts with first HIGH bit on
+DIN.
+6 - 4 A2 - A0 Channel Select Bits. Along with the SGL/DIF bit,
+these bits control the setting of the multiplexer input,
+see Tables I and II.
+2 SGL/DIF Single-Ended/Differential Select Bit. Along with bits
+A2 - A0, this bit controls the setting of the multiplexer
+input, see Tables I and II.
+1 - 0 PD1 - PD0 Power-Down Mode Select Bits. See Table V for
+details.
+PD0 = 1 for external clock mode. After enabling the re-
+quired clock mode, only then should the ADS8341 be set to
+power-down between conversions (i.e., PD1 = PD0 = 0).
+The ADS8341 maintains the clock mode it was in prior to
+entering the power-down modes.
+External Clock Mode
+In external clock mode, the external clock not only shifts
+data in and out of the ADS8341, it also controls the A/D
+conversion steps. BUSY will go HIGH for one clock period
+after the last bit of the control byte is shifted in. Successive-
+approximation bit decisions are made and appear at DOUT
+on each of the next 16 DCLK falling edges (see Figure 3).
+Figure 4 shows the BUSY timing in external clock mode.
+Since one clock cycle of the serial clock is consumed with
+BUSY going high (while the MSB decision is being made),
+16 additional clocks must be given to clock out all 16 bits
+of data; thus, one conversion takes a minimum of 25 clock
+cycles to fully read the data. Since most microprocessors
+communicate in 8-bit transfers, this means that an additional
+transfer must be made to capture the LSB.
+There are two ways of handling this requirement. One is
+shown in Figure 3, where the beginning of the next control
+byte appears at the same time the LSB is being clocked out
+of the ADS8341. This method allows for maximum through-
+put and 24 clock cycles per conversion.
+The SGL/DIF bit controls the multiplexer input mode: either
+single-ended (HIGH) or differential (LOW). In single-ended
+mode, the selected input channel is referenced to the COM
+pin. In differential mode, the two selected inputs provide a
+differential input. See Tables I and II and Figure 2 for more
+information. The last two bits (PD1 - PD0) select the power-
+down mode, as shown in Table V. If both inputs are HIGH,
+the device is always powered up. If both inputs are LOW, the
+device enters a power-down mode between conversions.
+When a new conversion is initiated, the device will resume
+normal operation instantly—no delay is needed to allow the
+device to power up and the very first conversion will be valid.
+Clock Modes
+The ADS8341 can be used with an external serial clock or
+an internal clock to perform the successive-approximation
+conversion. In both clock modes, the external clock shifts
+data in and out of the device. Internal clock mode is selected
+when PD1 is HIGH and PD0 is LOW.
+If the user decides to switch from one clock mode to the
+other, an extra conversion cycle will be required before the
+ADS8341 can switch to the new mode. The extra cycle is
+required because the PD0 and PD1 control bits need to be
+written to the ADS8341 prior to the change in clock modes.
+When power is first applied to the ADS8341, the user must
+set the desired clock mode. It can be set by writing PD1
+= 1 and PD0 = 0 for internal clock mode or PD1 = 1 and
+PD1 PD0 Description
+0 0 Power-down between conversions. When each
+conversion is finished, the converter enters a low
+power mode. At the start of the next conversion,
+the device instantly powers up to full power. There
+is no need for additional delays to assure full
+operation and the very first conversion is valid.
+1 0 Selects Internal Clock Mode
+0 1 Reserved for Future Use
+1  1 No power-down between conversions, device al-
+ways powered. Selects external clock mode.
+TABLE V. Power-Down Selection.
+FIGURE 4. Detailed Timing Diagram.
+PD0
+tBDV
+tDH
+tCH
+tCL
+tDS
+tCSS
+tDV
+tBD tBD
+tTR
+tBTR
+tD0 tCSH
+DCLK
+CS
+15DOUT
+BUSY
+DIN
+14
+ADS834114
+SBAS136D
+SYMBOL DESCRIPTION MIN TYP MAX UNITS
+tACQ Acquisition Time 900 ns
+tDS DIN Valid Prior to DCLK Rising 50 ns
+tDH DIN Hold After DCLK HIGH 10 ns
+tDO DCLK Falling to DOUT Valid 100 ns
+tDV CS Falling to DOUT Enabled 70 ns
+tTR CS Rising to DOUT Disabled 70 ns
+tCSS CS Falling to First DCLK Rising 50 ns
+tCSH CS Rising to DCLK Ignored 0 ns
+tCH DCLK HIGH 150 ns
+tCL DCLK LOW 150 ns
+tBD DCLK Falling to BUSY Rising 100 ns
+tBDV CS Falling to BUSY Enabled 70 ns
+tBTR CS Rising to BUSY Disabled 70 ns
+The other method is shown in Figure 5, which uses 32 clock
+cycles per conversion; the last seven clock cycles simply
+shift out zeros on the DOUT line. BUSY and DOUT go into
+a high-impedance state when CS goes high; after the next CS
+falling edge, BUSY will go LOW.
+Internal Clock Mode
+In internal clock mode, the ADS8341 generates its own
+conversion clock internally. This relieves the microproces-
+sor from having to generate the SAR conversion clock and
+allows the conversion result to be read back at the processor’s
+convenience, at any clock rate from 0MHz to 2.0MHz.
+BUSY goes LOW at the start of conversion and then returns
+HIGH when the conversion is complete. During the conver-
+sion, BUSY will remain LOW for a maximum of 8µs. Also,
+during the conversion, DCLK should remain LOW to achieve
+the best noise performance. The conversion result is stored
+in an internal register; the data may be clocked out of this
+register any time after the conversion is complete.
+If CS is LOW when BUSY goes LOW following a conver-
+sion, the next falling edge of the external serial clock will
+write out the MSB on the DOUT line. The remaining bits
+(D14-D0) will be clocked out on each successive clock cycle
+following the MSB. If CS is HIGH when BUSY goes LOW
+then the DOUT line will remain in tri-state until CS goes
+LOW, as shown in Figure 6. CS does not need to remain
+LOW once a conversion has started. Note that BUSY is not
+tri-stated when CS goes HIGH in internal clock mode.
+Data can be shifted in and out of the ADS8341 at clock rates
+exceeding 2.4MHz, provided that the minimum acquisition
+time t
+ACQ, is kept above 1.7 µs.
+Digital Timing
+Figure 4 and Tables VI and VII provide detailed timing for
+the digital interface of the ADS8341.
+TABLE VII. Timing Specifications (+V CC = +4.75V to
++5.25V, TA = –40°C to +85°C, CLOAD = 50pF).
+tACQ
+AcquireIdle Conversion
+1DCLK
+CS
+81
+15 DOUT
+BUSY
+(MSB)
+(START)
+(LSB)
+A2SDIN A1 A0 SGL/
+DIF PD1 PD0
+1 4 1 3 1 2 1 1 1 0 9 8 7654321 0
+81 8
+Idle
+18
+Zero Filled...
+tACQ
+AcquireIdle Conversion
+1DCLK
+CS
+8 9 1 01 11 21 31 41 51 61 71 81 92 02 12 22 32 42 52 62 72 82 93 03 13 2
+15 DOUT
+BUSY
+(MSB)
+(START)
+(LSB)
+A2SDIN A1 A0 SGL/
+DIF PD1 PD0
+1 4 1 3 1 2 1 1 1 0 9 8 7654321 0 Zero Filled...
+FIGURE 5. External Clock Mode 32 Clocks Per Conversion.
+FIGURE 6. Internal Clock Mode Timing.
+SYMBOL DESCRIPTION MIN TYP MAX UNITS
+tACQ Acquisition Time 1.5 µs
+tDS DIN Valid Prior to DCLK Rising 100 ns
+tDH DIN Hold After DCLK HIGH 10 ns
+tDO DCLK Falling to DOUT Valid 200 ns
+tDV CS Falling to DOUT Enabled 200 ns
+tTR CS Rising to DOUT Disabled 200 ns
+tCSS CS Falling to First DCLK Rising 100 ns
+tCSH CS Rising to DCLK Ignored 0 ns
+tCH DCLK HIGH 200 ns
+tCL DCLK LOW 200 ns
+tBD DCLK Falling to BUSY Rising 200 ns
+tBDV CS Falling to BUSY Enabled 200 ns
+tBTR CS Rising to BUSY Disabled 200 ns
+TABLE VI. Timing Specifications (+VCC = +2.7V to 3.6V,
+TA = –40 °C to +85 °C, CLOAD = 50pF).
+ADS8341 15
+SBAS136D
+FIGURE 8. Supply Current versus Directly Scaling the Fre-
+quency of DCLK with Sample Rate or Keeping
+DCLK at the Maximum Possible Frequency.
+FIGURE 9. Supply Current versus State of CS.
+10k 100k1k 1M
+fSAMPLE (Hz)
+Supply Current (µA) 100
+10
+1
+1000
+fCLK = 2.4MHz
+fCLK = 24 • fSAMPLE
+TA = 25°C
++VCC = +2.7V
+VREF = +2.5V
+PD1 = PD0 = 0
+10k 100k1k 1M
+fSAMPLE (Hz)
+Supply Current (µA)
+0.00
+0.09
+14
+0
+2
+4
+6
+8
+10
+12
+CS LOW
+(GND)
+CS HIGH (+VCC)
+TA = 25°C
++VCC = +2.7V
+VREF = +2.5V
+fCLK = 24 • fSAMPLE
+PD1 = PD0 = 0
+FIGURE 7. Ideal Input Voltages and Output Codes.
+Data Format
+The ADS8341 output data is in straight binary format, as
+shown in Figure 7. This figure shows the ideal output code
+for the given input voltage and does not include the effects
+of offset, gain, or noise.
+Operating the ADS8341 in auto power-down mode will
+result in the lowest power dissipation, and there is no
+conversion time “penalty” on power-up. The very first
+conversion will be valid. SHDN can be used to force an
+immediate power-down.
+Output Code
+0V
+FS = Full-Scale Voltage = VREF
+1LSB = VREF/65,536
+FS – 1LSB
+11...111
+11...110
+11...101
+00...010
+00...001
+00...000
+1LSB
+NOTE(1): Voltage at converter input, after
+multiplexer: +IN – (–IN). (See Figure 2.)
+Input Voltage(1) (V)
+POWER DISSIPATION
+There are three power modes for the ADS8341: full power
+(PD1 - PD0 = 11B), auto power-down (PD1 - PD0 = 00B),
+and shutdown (SHDN LOW). The affects of these modes
+varies depending on how the ADS8341 is being operated.
+For example, at full conversion rate and 24-clocks per
+conversion, there is very little difference between full power
+mode and auto power-down, a shutdown (SHDN LOW) will
+not lower power dissipation.
+When operating at full-speed and 24-clocks per conversion
+(as shown in Figure 3), the ADS8341 spends most of its time
+acquiring or converting. There is little time for auto power-
+down, assuming that this mode is active. Thus, the differ-
+ence between full power mode and auto power-down is
+negligible. If the conversion rate is decreased by simply
+slowing the frequency of the DCLK input, the two modes
+remain approximately equal. However, if the DCLK fre-
+quency is kept at the maximum rate during a conversion, but
+conversion are simply done less often, then the difference
+between the two modes is dramatic. Figure 8 shows the
+difference between reducing the DCLK frequency (“scal-
+ing” DCLK to match the conversion rate) or maintaining
+DCLK at the highest frequency and reducing the number of
+conversion per second. In the later case, the converter
+spends an increasing percentage of its time in power-down
+mode (assuming the auto power-down mode is active).
+If DCLK is active and CS is LOW while the ADS8341 is in
+auto power-down mode, the device will continue to dissipate
+some power in the digital logic. The power can be reduced
+to a minimum by keeping CS HIGH. The differences in
+supply current for these two cases are shown in Figure 9.
+ADS834116
+SBAS136D
+NOISE
+The noise floor of the ADS8341 itself is extremely low, as
+can be seen from Figures 10 thru 13, and is much lower than
+competing A/D converters. The ADS8341 was tested at both
+5V and 2.7V and in both the internal and external clock
+modes. A low-level DC input was applied to the analog
+input pins and the converter was put through 5,000 conver-
+sions. The digital output of the A/D converter will vary in
+output code due to the internal noise of the ADS8341. This
+is true for all 16-bit SAR-type A/D converters. Using a
+histogram to plot the output codes, the distribution should
+appear bell-shaped with the peak of the bell curve represent-
+ing the nominal code for the input value. The ±1σ, ±2σ, and
+±3σ distributions will represent the 68.3%, 95.5%, and
+99.7%, respectively, of all codes. The transition noise can be
+calculated by dividing the number of codes measured by 6
+and this will yield the ±3σ distribution or 99.7% of all codes.
+Statistically, up to 3 codes could fall outside the distribution
+when executing 1000 conversions. The ADS8341, with < 3
+output codes for the ±3σ distribution, will yield a < ±0.5
+LSB transition noise at 5V operation. Remember, to achieve
+this low noise performance, the peak-to-peak noise of the
+input signal and reference must be < 50 µV.
+FIGURE 10. Histogram of 5,000 Conversions of a DC Input at the
+Code Transition, 5V operation external clock mode.
+FIGURE 11. Histogram of 5,000 Conversions of a DC Input at the
+Code Center, 5V operation internal clock mode.
+FIGURE 12. Histogram of 5,000 Conversions of a DC Input at the
+Code Transition, 2.7V operation external clock mode.
+FIGURE 13. Histogram of 5,000 Conversions of a DC Input at the
+Code Center, 2.7V operation internal clock mode.
+AVERAGING
+The noise of the A/D converter can be compensated by
+averaging the digital codes. By averaging conversion results,
+transition noise will be reduced by a factor of 1/√n, where n
+is the number of averages. For example, averaging 4 conver-
+sion results will reduce the transition noise by 1/2 to ±0.25
+LSBs. Averaging should only be used for input signals with
+frequencies near DC.
+For AC signals, a digital filter can be used to low-pass filter
+and decimate the output codes. This works in a similar
+manner to averaging; for every decimation by 2, the signal-
+to-noise ratio will improve 3dB.
+4606
+1940 0200
+7FFC 7FFE 7FFF 8000 8001
+Code
+0 0
+7FFC 7FFE 7FFF
+4614
+8000 8001
+Code
+203 183
+31
+683
+3619
+638
+29
+7FFD 7FFE 7FFF 8000 8001
+Code
+3572
+586790
+2230
+7FFD 7FFE 7FFF 8000 8001
+Code
+ADS8341 17
+SBAS136D
+LAYOUT
+For optimum performance, care should be taken with the
+physical layout of the ADS8341 circuitry. This is particu-
+larly true if the reference voltage is low and/or the conver-
+sion rate is high.
+The basic SAR architecture is sensitive to glitches or sudden
+changes on the power supply, reference, ground connec-
+tions, and digital inputs that occur just prior to latching the
+output of the analog comparator. Thus, during any single
+conversion for an n-bit SAR converter, there are n “win-
+dows” in which large external transient voltages can easily
+affect the conversion result. Such glitches might originate
+from switching power supplies, nearby digital logic, and
+high power devices. The degree of error in the digital output
+depends on the reference voltage, layout, and the exact
+timing of the external event. The error can change if the
+external event changes in time with respect to the DCLK
+input.
+With this in mind, power to the ADS8341 should be clean
+and well bypassed. A 0.1µF ceramic bypass capacitor should
+be placed as close to the device as possible. In addition, a
+1µF to 10µF capacitor and a 5Ω or 10Ω series resistor may
+be used to low-pass filter a noisy supply.
+The reference should be similarly bypassed with a 0.1 µF
+capacitor. Again,  a series resistor and large capacitor can be
+used to low-pass filter the reference voltage. If the reference
+voltage originates from an op amp, make sure that it can
+drive the bypass capacitor without oscillation (the series
+resistor can help in this case). The ADS8341 draws very
+little current from the reference on average, but it does place
+larger demands on the reference circuitry over short periods
+of time (on each rising edge of DCLK during a conversion).
+The ADS8341 architecture offers no inherent rejection of
+noise or voltage variation in regards to the reference input.
+This is of particular concern when the reference input is tied
+to the power supply. Any noise and ripple from the supply
+will appear directly in the digital results. While high fre-
+quency noise can be filtered out as discussed in the previous
+paragraph, voltage variation due to line frequency (50Hz or
+60Hz) can be difficult to remove.
+The GND pin should be connected to a clean ground point.
+In many cases, this will be the “analog” ground. Avoid
+connections that are too near the grounding point of a
+microcontroller or digital signal processor. If needed, run a
+ground trace directly from the converter to the power supply
+entry point. The ideal layout will include an analog ground
+plane dedicated to the converter and associated analog
+circuitry.
+PACKAGE OPTION ADDENDUM
+www.ti.com 11-Nov-2025
+PACKAGING INFORMATION
+Orderable part number Status
+(1)
+Material type
+(2)
+Package | Pins Package qty | Carrier RoHS
+(3)
+Lead finish/
+Ball material
+(4)
+MSL rating/
+Peak reflow
+(5)
+Op temp (°C) Part marking
+(6)
+ADS8341E Active Production SSOP (DBQ) | 16 75 | TUBE Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341E.B Active Production SSOP (DBQ) | 16 75 | TUBE Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341E/2K5 Active Production SSOP (DBQ) | 16 2500 | LARGE T&R Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341E/2K5.B Active Production SSOP (DBQ) | 16 2500 | LARGE T&R Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341EB Active Production SSOP (DBQ) | 16 75 | TUBE Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341EB.B Active Production SSOP (DBQ) | 16 75 | TUBE Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341EB/2K5 Active Production SSOP (DBQ) | 16 2500 | LARGE T&R Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341EB/2K5.B Active Production SSOP (DBQ) | 16 2500 | LARGE T&R Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ADS8341EB/2K5G4 Active Production SSOP (DBQ) | 16 2500 | LARGE T&R Yes Call TI Level-2-260C-1 YEAR -40 to 85 ADS
+8341E
+ 
+(1) Status:  For more details on status, see our product life cycle.
+ 
+(2) Material type:  When designated, preproduction parts are prototypes/experimental devices, and are not yet approved or released for full production. Testing and final process, including without limitation quality assurance,
+reliability performance testing, and/or process qualification, may not yet be complete, and this item is subject to further changes or possible discontinuation. If available for ordering, purchases will be subject to an additional
+waiver at checkout, and are intended for early internal evaluation purposes only. These items are sold without warranties of any kind.
+ 
+(3) RoHS values:  Yes, No, RoHS Exempt. See the TI RoHS Statement for additional information and value definition.
+ 
+(4) Lead finish/Ball material:  Parts may have multiple material finish options. Finish options are separated by a vertical ruled line. Lead finish/Ball material values may wrap to two lines if the finish value exceeds the maximum
+column width.
+ 
+(5) MSL rating/Peak reflow:  The moisture sensitivity level ratings and peak solder (reflow) temperatures. In the event that a part has multiple moisture sensitivity ratings, only the lowest level per JEDEC standards is shown.
+Refer to the shipping label for the actual reflow temperature that will be used to mount the part to the printed circuit board.
+ 
+Addendum-Page 1
+PACKAGE OPTION ADDENDUM
+www.ti.com 11-Nov-2025
+(6) Part marking:  There may be an additional marking, which relates to the logo, the lot trace code information, or the environmental category of the part.
+ 
+Multiple part markings will be inside parentheses. Only one part marking contained in parentheses and separated by a "~" will appear on a part. If a line is indented then it is a continuation of the previous line and the two
+combined represent the entire part marking for that device.
+ 
+Important Information and Disclaimer:The information provided on this page represents TI's knowledge and belief as of the date that it is provided. TI bases its knowledge and belief on information provided by third parties, and
+makes no representation or warranty as to the accuracy of such information. Efforts are underway to better integrate information from third parties. TI has taken and continues to take reasonable steps to provide representative
+and accurate information but may not have conducted destructive testing or chemical analysis on incoming materials and chemicals. TI and TI suppliers consider certain information to be proprietary, and thus CAS numbers
+and other limited information may not be available for release.
+ 
+In no event shall TI's liability arising out of such information exceed the total purchase price of the TI part(s) at issue in this document sold by TI to Customer on an annual basis.
+ 
+Addendum-Page 2
+PACKAGE MATERIALS INFORMATION
+  
+www.ti.com 10-Aug-2026
+TAPE AND REEL INFORMATION
+Reel Width (W1)
+REEL DIMENSIONS
+A0B0K0WDimension designed to accommodate the component lengthDimension designed to accommodate the component thicknessOverall width of the carrier tapePitch between successive cavity centersDimension designed to accommodate the component width
+TAPE DIMENSIONSK0 P1B0WA0Cavity
+QUADRANT ASSIGNMENTS FOR PIN 1 ORIENTATION IN TAPE
+Pocket QuadrantsSprocket HolesQ1Q1Q2Q2Q3Q3Q4Q4User Direction of Feed
+P1ReelDiameter
+ 
+*All dimensions are nominal
+Device Package
+Type
+Package
+Drawing
+Pins SPQ Reel
+Diameter
+(mm)
+Reel
+Width
+W1 (mm)
+A0
+(mm)
+B0
+(mm)
+K0
+(mm)
+P1
+(mm)
+W
+(mm)
+Pin1
+Quadrant
+ADS8341E/2K5 SSOP DBQ 16 2500 330.0 12.4 6.4 5.2 2.1 8.0 12.0 Q1
+ADS8341EB/2K5 SSOP DBQ 16 2500 330.0 12.4 6.4 5.2 2.1 8.0 12.0 Q1
+Pack Materials-Page 1
+PACKAGE MATERIALS INFORMATION
+  
+www.ti.com 10-Aug-2026
+TAPE AND REEL BOX DIMENSIONS
+Width (mm)
+W LH
+ 
+*All dimensions are nominal
+Device Package Type Package Drawing Pins SPQ Length (mm) Width (mm) Height (mm)
+ADS8341E/2K5 SSOP DBQ 16 2500 353.0 353.0 32.0
+ADS8341EB/2K5 SSOP DBQ 16 2500 353.0 353.0 32.0
+Pack Materials-Page 2
+PACKAGE MATERIALS INFORMATION
+  
+www.ti.com 10-Aug-2026
+TUBE
+ 
+ 
+L - Tube length
+T - Tube  
+height
+W - Tube  
+width
+B - Alignment groove width
+ 
+ 
+*All dimensions are nominal
+Device Package Name Package Type Pins SPQ L (mm) W (mm) T (µm) B (mm)
+ADS8341E DBQ SSOP 16 75 506.6 8 3940 4.32
+ADS8341E.B DBQ SSOP 16 75 506.6 8 3940 4.32
+ADS8341EB DBQ SSOP 16 75 506.6 8 3940 4.32
+ADS8341EB.B DBQ SSOP 16 75 506.6 8 3940 4.32
+Pack Materials-Page 3
+www.ti.com
+PACKAGE OUTLINE
+C
+ TYP-.244.228
+-6.195.80[ ]
+.069 MAX
+[1.75]     
+14X .0250
+[0.635]
+16X -.012.008
+-0.300.21[ ]
+2X
+.175
+[4.45]
+ TYP-.010.005
+-0.250.13[ ]
+0
+- 8
+-.010.004
+-0.250.11[ ]
+(.041 )
+[1.04]
+.010
+[0.25]
+GAGE PLANE
+-.035.016
+-0.880.41[ ]
+A
+NOTE 3
+-.197.189
+-5.004.81[ ]
+B
+NOTE 4
+-.157.150
+-3.983.81[ ]
+SSOP - 1.75 mm max heightDBQ0016A
+SHRINK SMALL-OUTLINE PACKAGE
+4214846/A   03/2014
+NOTES: 
+ 
+1. Linear dimensions are in inches [millimeters]. Dimensions in parenthesis are for reference only. Controlling dimensions are in inches.
+    Dimensioning and tolerancing per ASME Y14.5M. 
+2. This drawing is subject to change without notice. 
+3. This dimension does not include mold flash, protrusions, or gate burrs. Mold flash, protrusions, or gate burrs shall not
+    exceed .006 inch, per side. 
+4. This dimension does not include interlead flash.
+5. Reference JEDEC registration MO-137, variation AB.
+ 
+1 16
+.007 [0.17] C A B
+9
+8
+PIN 1 ID AREA
+SEATING PLANE
+.004 [0.1] C
+ SEE DETAIL A
+DETAIL A
+TYPICAL
+SCALE  2.800
+www.ti.com
+EXAMPLE BOARD LAYOUT
+.002 MAX
+[0.05]
+ALL AROUND
+.002 MIN
+[0.05]
+ALL AROUND
+ 
+(.213)
+[5.4]
+14X (.0250 )
+[0.635]
+16X (.063)
+[1.6]
+16X (.016 )
+[0.41]
+SSOP - 1.75 mm max heightDBQ0016A
+SHRINK SMALL-OUTLINE PACKAGE
+4214846/A   03/2014
+NOTES: (continued)
+ 
+6. Publication IPC-7351 may have alternate designs. 
+7. Solder mask tolerances between and around signal pads can vary based on board fabrication site.
+ 
+METAL SOLDER MASK
+OPENING
+NON SOLDER MASK
+DEFINED
+SOLDER MASK DETAILS
+OPENING
+SOLDER MASK METAL
+SOLDER MASK
+DEFINED
+LAND PATTERN EXAMPLE
+SCALE:8X
+SYMM
+1
+8 9
+16
+SEE
+DETAILS
+www.ti.com
+EXAMPLE STENCIL DESIGN
+16X (.063)
+[1.6]
+16X (.016 )
+[0.41]
+14X (.0250 )
+[0.635]
+(.213)
+[5.4]
+SSOP - 1.75 mm max heightDBQ0016A
+SHRINK SMALL-OUTLINE PACKAGE
+4214846/A   03/2014
+NOTES: (continued)
+ 
+8. Laser cutting apertures with trapezoidal walls and rounded corners may offer better paste release. IPC-7525 may have alternate
+    design recommendations.   
+9. Board assembly site may have different recommendations for stencil design.
+ 
+SOLDER PASTE EXAMPLE
+BASED ON .005 INCH [0.127 MM] THICK STENCIL
+SCALE:8X
+SYMM
+SYMM
+1
+8 9
+16
+IMPORTANT NOTICE AND DISCLAIMER
+TI PROVIDES TECHNICAL AND RELIABILITY DATA (INCLUDING DATASHEETS), DESIGN RESOURCES (INCLUDING REFERENCE 
+DESIGNS), APPLICATION OR OTHER DESIGN ADVICE, WEB TOOLS, SAFETY INFORMATION, AND OTHER RESOURCES “AS IS” 
+AND WITH ALL FAULTS, AND DISCLAIMS ALL WARRANTIES, EXPRESS AND IMPLIED, INCLUDING WITHOUT LIMITATION ANY 
+IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT OF THIRD 
+PARTY INTELLECTUAL PROPERTY RIGHTS.
+These resources are intended for skilled developers designing with TI products. You are solely responsible for (1) selecting the appropriate 
+TI products for your application, (2) designing, validating and testing your application, and (3) ensuring your application meets applicable 
+standards, and any other safety, security, regulatory or other requirements.
+These resources are subject to change without notice. TI grants you permission to use these resources only for development of an 
+application that uses the TI products described in the resource. Other reproduction and display of these resources is prohibited. No license 
+is granted to any other TI intellectual property right or to any third party intellectual property right. TI disclaims responsibility for, and you fully 
+indemnify TI and its representatives against any claims, damages, costs, losses, and liabilities arising out of your use of these resources.
+TI’s products are provided subject to TI’s Terms of Sale, TI’s General Quality Guidelines, or other applicable terms available either on 
+ti.com or provided in conjunction with such TI products. TI’s provision of these resources does not expand or otherwise alter TI’s applicable 
+warranties or warranty disclaimers for TI products. Unless TI explicitly designates a product as custom or customer-specified, TI products 
+are standard, catalog, general purpose devices.
+TI objects to and rejects any additional or different terms you may propose.
+IMPORTANT NOTICE
+Copyright © 2026, Texas Instruments Incorporated
+Last updated 10/2025

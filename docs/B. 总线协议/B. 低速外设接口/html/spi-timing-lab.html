@@ -21,9 +21,11 @@
   .new-tab:hover{color:var(--ink)}
   .control-deck{display:grid;grid-template-columns:minmax(240px,1.2fr) minmax(330px,1fr) auto;gap:22px;align-items:end;padding:16px 22px;border-bottom:1px solid var(--line)}
   .mode-label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;letter-spacing:.6px}
-  .mode-row{display:flex;gap:10px;align-items:center}
+  .mode-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   select{min-width:170px;padding:9px 34px 9px 11px;color:var(--ink);background:var(--panel);border:1px solid #555;border-radius:0}
-  .mode-rule{color:var(--muted);font-size:13px;line-height:1.5}
+  .mode-rule{color:var(--muted);font-size:13px;line-height:1.5;flex:1 1 220px}
+  .speed-control{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:12px;white-space:nowrap}
+  .speed-control select{min-width:76px;padding:8px 25px 8px 8px}
   .transport{display:flex;gap:8px;flex-wrap:wrap}
   button{cursor:pointer;padding:10px 16px;border:1px solid #666;border-radius:0;color:var(--ink);background:transparent;transition:background .12s,color .12s,border-color .12s}
   button:hover:not(:disabled),button:focus-visible{border-color:var(--orange);color:var(--orange);outline:none}
@@ -65,7 +67,7 @@
   }
   @media(max-width:600px){
     .masthead{grid-template-columns:38px 1fr;padding:14px;gap:11px}.mark{width:34px;height:34px}.new-tab{grid-column:2}
-    .control-deck{grid-template-columns:1fr;padding:13px 14px}.mode-row{flex-wrap:wrap}.transport{display:grid;grid-template-columns:1fr 1.3fr 1fr}.transport button{padding:10px 7px}
+    .control-deck{grid-template-columns:1fr;padding:13px 14px}.mode-row{flex-wrap:wrap}.transport{display:grid;grid-template-columns:1.15fr 1fr 1fr .8fr}.transport button{padding:10px 5px;font-size:13px}
     .readout{grid-template-columns:repeat(2,1fr)}.metric{padding:10px 12px}.metric:nth-child(2n){border-right:0}.metric:nth-child(3){border-right:1px solid var(--line)}.metric:nth-child(n+3){border-top:1px solid var(--line)}.metric:last-child{grid-column:1/-1}
     .metric-value{font-size:16px}.received{grid-template-columns:1fr;padding:12px 14px;gap:6px}.bits{font-size:14px;gap:5px;letter-spacing:1px}.byte{padding:3px 5px}
     .foot{grid-template-columns:1fr;padding:11px 14px;gap:4px}.stage{min-height:320px}.wave-wrap{min-height:230px}
@@ -95,14 +97,18 @@
           <option value="3">Mode 3 · CPOL=1 CPHA=1</option>
         </select>
         <span class="mode-rule" id="mode-rule">空闲低 · 上升沿采样 · 下降沿更新 · 首位预载</span>
+        <label class="speed-control" for="speed">速度
+          <select id="speed" aria-label="自动播放速度"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+        </label>
       </div>
     </div>
-    <div class="transport" aria-label="逐拍控制">
+    <div class="transport" aria-label="播放与逐拍控制">
+      <button id="play" class="primary" type="button" aria-label="播放动画">▶ 播放</button>
       <button id="prev" type="button" aria-label="上一拍">← 上一拍</button>
-      <button id="next" class="primary" type="button" aria-label="下一拍">下一拍 →</button>
+      <button id="next" type="button" aria-label="下一拍">下一拍 →</button>
       <button id="reset" type="button">复位</button>
     </div>
-    <div class="keyboard">键盘 ← 上一拍　→ 下一拍<br>第一次前进：选中并准备首位</div>
+    <div class="keyboard">空格 播放／暂停　← → 逐拍<br>第一次前进：选中并准备首位</div>
   </section>
 
   <section class="stage" aria-label="当前波形与接收状态">
@@ -144,8 +150,8 @@
     {cpol:1,cpha:1,idle:"高",sample:"上升沿",update:"下降沿",first:"首边沿更新",supported:true}
   ];
   const $ = id => document.getElementById(id);
-  const controls = {mode:$("mode"),prev:$("prev"),next:$("next"),reset:$("reset")};
-  let mode = 0;
+  const controls = {mode:$("mode"),play:$("play"),prev:$("prev"),next:$("next"),reset:$("reset"),speed:$("speed")};
+  let mode = 0, playing = false, speed = 1, timer = null;
   // -1: CS idle; 0: selected and first bit ready; 1..32: completed sampling edges.
   let phase = -1;
 
@@ -223,13 +229,16 @@
     $("miso-state").textContent = selected ? `${rxBits[index] === null ? "?" : rxBits[index]} · b${7-index%8}` : "—";
     controls.prev.disabled = phase < 0;
     controls.next.disabled = complete;
+    controls.play.disabled = complete;
+    controls.play.textContent = playing ? "Ⅱ 暂停" : "▶ 播放";
+    controls.play.setAttribute("aria-label",playing ? "暂停自动播放" : "开始自动播放");
     controls.next.textContent = phase < 0 ? "选中并预载 →" : complete ? "已完成" : "下一拍 →";
     if (phase < 0) {
-      $("status").textContent = `CS 为高，SCLK 空闲${cfg.idle}。按“下一拍”拉低 CS 并准备 b7。`;
+      $("status").textContent = `CS 为高，SCLK 空闲${cfg.idle}。按“下一拍”拉低 CS 并准备 b7，或按“播放”连续观察。`;
     } else if (phase === 0) {
       $("status").textContent = `CS 已拉低，b7 已准备；下一动作是第 1 个${cfg.sample}采样。`;
     } else if (complete) {
-      $("status").textContent = "32 个采样边沿已完成：?? EF 40 18。CS 已释放，本例指令结束；复位可重新观察。";
+      $("status").textContent = "32 个采样边沿已完成：?? EF 40 18。CS 已释放，自动播放已停止；复位可重新观察。";
     } else {
       const byteIndex = Math.floor((phase-1)/8);
       const names = ["命令阶段，首字节不解释","制造商 ID","Memory Type","Capacity"];
@@ -239,24 +248,47 @@
     $("support-note").className = cfg.supported ? "" : "warning";
     renderReceived();
     drawWave();
-    document.title = `SPI Timing Lab｜Mode ${mode}｜${count}/32`;
+    document.title = `SPI Timing Lab｜Mode ${mode}｜${count}/32${playing ? "｜播放中" : ""}`;
   }
 
-  function next() { if (phase < 32) { phase += 1; render(); } }
-  function prev() { if (phase >= 0) { phase -= 1; render(); } }
-  function reset() { phase = -1; render(); $("wave-wrap").scrollTo({left:0,behavior:"auto"}); }
+  function schedule() {
+    clearTimeout(timer);
+    if (!playing) return;
+    timer = setTimeout(() => {
+      if (!playing) return;
+      if (phase < 32) phase += 1;
+      if (phase >= 32) playing = false;
+      render();
+      if (playing) schedule();
+    },650/speed);
+  }
+  function play() {
+    if (phase >= 32) return;
+    playing = true;
+    if (phase < 0) phase = 0;
+    render();
+    schedule();
+  }
+  function pause() { playing = false; clearTimeout(timer); timer = null; render(); }
+  function next() { playing = false; clearTimeout(timer); if (phase < 32) phase += 1; render(); }
+  function prev() { playing = false; clearTimeout(timer); if (phase >= 0) phase -= 1; render(); }
+  function reset() { playing = false; clearTimeout(timer); timer = null; phase = -1; render(); $("wave-wrap").scrollTo({left:0,behavior:"auto"}); }
+  controls.play.addEventListener("click",() => playing ? pause() : play());
   controls.next.addEventListener("click",next);
   controls.prev.addEventListener("click",prev);
   controls.reset.addEventListener("click",reset);
+  controls.speed.addEventListener("change",event => { speed = Number(event.target.value); if (playing) schedule(); render(); });
   controls.mode.addEventListener("change",event => { mode = Number(event.target.value); reset(); });
   document.addEventListener("keydown",event => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || ["SELECT","INPUT"].includes(document.activeElement.tagName)) return;
+    if (event.key === " ") { event.preventDefault(); playing ? pause() : play(); }
     if (event.key === "ArrowRight") { event.preventDefault(); next(); }
     if (event.key === "ArrowLeft") { event.preventDefault(); prev(); }
     if (event.key === "Home") { event.preventDefault(); reset(); }
   });
+  document.addEventListener("visibilitychange",() => { if (document.hidden && playing) pause(); });
   // Small read-only surface for DOM-based regression checks.
-  window.spiTimingLab = Object.freeze({getState:() => ({mode,phase,cs:phase >= 0 && phase < 32 ? "low" : "high",received:Math.max(0,phase)})});
+  window.spiTimingLab = Object.freeze({getState:() => ({mode,phase,cs:phase >= 0 && phase < 32 ? "low" : "high",received:Math.max(0,phase),playing,speed})});
   reset();
 })();
 </script>

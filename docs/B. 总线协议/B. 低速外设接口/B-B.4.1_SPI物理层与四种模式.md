@@ -69,9 +69,23 @@ W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常�
 
 W25Q128JV 手册规定，`/CS` 为高时器件未被选中，DO 处于高阻；`/CS` 拉低后才接受指令。所以 CS 不只决定“是否解释命令”，也决定这颗 Flash 是否可以驱动共享 MISO。
 
-下图分三格阅读。第一格看一个有效推挽输出怎样主动驱动主机输入；第二格看未选中的从机怎样断开驱动；第三格沿橙色路径看两个从机一高一低同时驱动时，电流为什么会从电源穿过两个输出级流向地。
+下面动画分三种状态阅读。第一步看一个有效推挽输出怎样主动驱动主机输入；第二步看未选中的从机怎样断开驱动；第三步沿橙色路径看两个从机一高一低同时驱动时，电流为什么会从电源穿过两个输出级流向地。可播放、暂停或单步切换，默认停在第一种状态；争用只作机制演示，不是上板试验步骤。
 
-![推挽、高阻与两个从机争用 MISO](images/spi-miso-drive.svg)
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-mechanism-lab.html?view=drive"
+    title="SPI 推挽、高阻与 MISO 驱动权动画"
+    loading="lazy"
+    style="width:100%;height:650px;border:0;"
+  ></iframe>
+</div>
+
+[在新标签页打开 MISO 驱动权动画](html/spi-mechanism-lab.html?view=drive){ target="_blank" rel="noopener" }
+
+<details class="static-fallback">
+<summary>展开静态图：推挽、高阻与两个从机争用 MISO</summary>
+<img src="../images/spi-miso-drive.svg" alt="推挽、高阻与两个从机争用 MISO">
+</details>
 
 两个推挽输出若同时把共享 MISO 分别拉向高、低电平，就会形成“电源 → 一个输出级 → MISO → 另一个输出级 → 地”的直通电流路径。结果不仅是电平和数据不可信，还可能使输出级过热或损坏。因此，未选中的从机能否释放 MISO，必须逐颗核对器件手册，不能用“SPI 通常如此”代替。
 
@@ -81,9 +95,23 @@ W25Q128JV 手册规定，`/CS` 为高时器件未被选中，DO 处于高阻；`
 
 MOSI 与 MISO 是两条独立数据线，所以双方可以在同一组时钟中同时发送，这称为**全双工**。可以用两个 8 位移位寄存器理解：移位寄存器是一串按时钟移动的位，一端把当前输出位送到引脚，另一端把刚采样的输入位移入。
 
-下图抽象一个字节的交换。先从上方 MOSI 箭头看主机 `b7` 移到 Flash，再从下方 MISO 箭头看 Flash 的 `d7` 移到主机；最后看同一 SCLK 怎样让两边同步推进。图中 `d7…d0` 只是占位记号，不表示第一字节一定是有效身份数据。
+下面动画直接展开主事务的第 9～16 拍：MOSI 是占位字节 `00000000`，MISO 是制造商 ID `11101111`。先看两侧已经预载的 `b7`，再逐拍观察同一边沿怎样把 MOSI 的 0 采入 Flash、把 MISO 的 1 或 0 采入主机，最后核对主机得到 `EF`、Flash 得到 `00`。这里不是 `0x9F` 命令的前 8 拍。
 
-![SPI 全双工移位](images/spi-full-duplex.svg)
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-mechanism-lab.html?view=shift"
+    title="SPI 全双工逐位交换动画：00 与 EF"
+    loading="lazy"
+    style="width:100%;height:730px;border:0;"
+  ></iframe>
+</div>
+
+[在新标签页打开全双工逐位交换动画](html/spi-mechanism-lab.html?view=shift){ target="_blank" rel="noopener" }
+
+<details class="static-fallback">
+<summary>展开静态图：SPI 全双工移位</summary>
+<img src="../images/spi-full-duplex.svg" alt="SPI 全双工移位">
+</details>
 
 按 MSB-first，第 1 拍双方输出各自的 `b7`，第 2 拍输出 `b6`，直到第 8 拍输出 `b0`。8 个采样边沿后，主机原字节移入 Flash，Flash 原字节也移入主机。连续重复四组，就得到本例 32 拍。
 
@@ -151,7 +179,7 @@ CS 释放只界定本次串行指令结束，不表示从机返回了 ACK，也�
 
 ### 4.4 用 Timing Lab 逐拍核对
 
-下面的纯波形实验室用于练习同一过程。先选择模式，再按“下一拍”观察当前位、采样边沿和已接收位；用“上一拍”回退，用“复位”回到 CS 空闲。Mode 0 对应本例；Mode 1、2 是通用模式推演，不是本例 Flash 的可用配置。模式切换会复位，避免把不同模式的采样位置混在同一结果里。
+下面的纯波形实验室用于练习同一过程。先选择模式，再按“下一拍”观察当前位、采样边沿和已接收位；也可按“播放”连续推进，用“暂停”停在某拍，并切换 0.5×、1×、2× 速度。任何手动逐拍、复位或模式切换都会停止自动播放；第 32 拍后自动停止并释放 CS。用“上一拍”回退，用“复位”回到 CS 空闲。Mode 0 对应本例；Mode 1、2 是通用模式推演，不是本例 Flash 的可用配置。
 
 <div class="interactive-demo">
   <iframe
@@ -184,9 +212,23 @@ CS 释放只界定本次串行指令结束，不表示从机返回了 ACK，也�
 | Mode 2 | 1 | 0 | 高 | 下降沿 | 上升沿 | 第一个下降沿前预载 |
 | Mode 3 | 1 | 1 | 高 | 上升沿 | 下降沿 | 第一个下降沿更新 |
 
-下图每格只画前两个时钟。阅读顺序固定为：先看空闲高或低，再找 `S` 标记落在第一还是第二个边沿，最后看 `b7` 是提前预载，还是由第一个边沿更新。`U` 标记表示更新下一位。
+下面动画的每格只画前两个时钟，四组共用同步播放头。阅读顺序固定为：先看空闲高或低，再找 `S` 标记落在第一还是第二个边沿，最后看 `b7` 是提前预载，还是由第一个边沿更新。`U` 标记表示更新下一位。播放、暂停或单步只改变观察位置，不改变四种模式的定义。
 
-![SPI 四种模式的空闲、首位、采样和更新](images/spi-four-modes.svg)
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-mechanism-lab.html?view=modes"
+    title="SPI 四种模式同步对比动画"
+    loading="lazy"
+    style="width:100%;height:1040px;border:0;"
+  ></iframe>
+</div>
+
+[在新标签页打开四种模式同步对比动画](html/spi-mechanism-lab.html?view=modes){ target="_blank" rel="noopener" }
+
+<details class="static-fallback">
+<summary>展开静态图：SPI 四种模式的空闲、首位、采样和更新</summary>
+<img src="../images/spi-four-modes.svg" alt="SPI 四种模式的空闲、首位、采样和更新">
+</details>
 
 不看图和表，也能从两个参数重新推导：CPOL 决定第一个边沿的方向，CPHA 决定这个边沿是采样还是更新；若 CPHA=0，首位必须预载，若 CPHA=1，首位可由第一个边沿更新。
 

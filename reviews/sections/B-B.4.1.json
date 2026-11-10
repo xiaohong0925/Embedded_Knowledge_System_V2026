@@ -4,8 +4,8 @@
   "main_question": "一个主机和 W25Q128JV 通过 CS、SCLK、MOSI、MISO 交换位流时，双方怎样在 Mode 0 下用 32 个时钟完成 9F 00 00 00 → ?? EF 40 18？CPOL、CPHA 和电气条件为什么决定采样结果？",
   "baseline": {
     "reviewed_at": "2026-11-10",
-    "article_sha256": "456044a95f089b8ab4e688553c2382c51822056cc485301532749d33545334d2",
-    "agent_sha256": "86d08842f722663809d2f5acc041a8c4053cc949f074f803054f5505e70471b9",
+    "article_sha256": "f2552b1002cace0374a665119f67cb17f94ccb13fe277835e4ee0141600fa3ac",
+    "agent_sha256": "909c5b20aeec4165b439323c88c60001de3061c774262dab79824f81579f35ac",
     "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
   },
   "scope": {
@@ -21,6 +21,7 @@
       "docs/B. 总线协议/B. 低速外设接口/images/spi-miso-drive.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-jedec-32-clocks.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-four-modes.svg",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-mechanism-lab.html",
       "docs/B. 总线协议/B. 低速外设接口/html/spi-timing-lab.html"
     ],
     "related_sections": [
@@ -30,36 +31,37 @@
   "reader_checks": {
     "dependency": {
       "status": "pass",
-      "evidence": "AI 语义复核：导读只给 Mode 0 的临时可操作含义；第 1 节先定义 CS、SCLK、MOSI、MISO 与占位字节，第 2 节再定义推挽、高阻、全双工和移位寄存器，第 3 节在进入 32 拍前完整定义 CPOL、CPHA、预载、更新、采样、建立和保持。正文无 Linux 对象、驱动调用链或寄存器前置依赖。"
+      "evidence": "AI 语义复核：导读只给 Mode 0 的临时可操作含义；第 1 节先定义 CS、SCLK、MOSI、MISO 与占位字节，第 2 节再定义推挽、高阻、全双工和移位寄存器，第 3 节在进入 32 拍前完整定义 CPOL、CPHA、预载、更新、采样、建立和保持。新增动画只复用这些已定义概念，无 Linux 对象、驱动调用链、寄存器或新实例前置依赖。"
     },
     "mainline": {
       "status": "pass",
-      "evidence": "AI 语义复核：第 1 节给出 8+24=32 拍手工基线；第 2 节解释两向位流和 MISO 驱动权；第 3 节确定 Mode 0 边沿；第 4 节逐拍得到 ?? EF 40 18；第 5 节只推广同一 CPOL×CPHA 规则；第 6 节只处理独立 CS；第 7 节解释频率与采样可信度。各节均回到主事务，无菊花链和软件实现支线。"
+      "evidence": "AI 语义复核：第 1 节给出 8+24=32 拍手工基线；第 2 节用第 9～16 拍的真实 00→EF 解释两向位流，并用三种状态解释 MISO 驱动权；第 3 节确定 Mode 0 边沿；第 4 节逐拍得到 ?? EF 40 18；第 5 节用同步播放头推广同一 CPOL×CPHA 规则；第 6 节只处理独立 CS；第 7 节解释频率与采样可信度。动画没有加入菊花链、软件实现或新事务支线。"
     },
     "blind_delete": {
       "status": "pass",
-      "evidence": "AI 盲删复核：删除五幅 SVG、四行拍号表和 iframe 后，4.1～4.2 仍列出 9F、EF、40、18 的全部位序及拍号；4.3 仍有第 8 下降沿到第 9 上升沿的衔接；4.4 明确 iframe 不提供新规则；第 5 节四条文字独立给出四模式采样、更新和首位时机。论证不依赖图表补洞。"
+      "evidence": "AI 盲删复核：删除五幅 SVG、四行拍号表和四个 iframe 后，2.1 文字仍依次说明选中驱动、高阻和争用电流路径，2.2 仍给出 00 与 EF 的 8 位双向交换及字节边界；4.1～4.2 仍列出 9F、EF、40、18 的全部位序及拍号，4.3 仍有第 8 下降沿到第 9 上升沿的衔接；第 5 节四条文字独立给出四模式采样、更新和首位时机。三组可展开静态 fallback 也不是正文论证成立的必要条件。"
     },
     "follow": {
       "status": "pass",
-      "evidence": "AI 跟随复核并用真实 Chrome 操作：从 CS 空闲开始，第一次前进选中并预载，之后 32 个采样动作依次得到 ????????、11101111、01000000、00011000；上一拍、复位、四模式、键盘和完成边界均符合正文。7.3 分别说明逻辑分析仪看数字位流、示波器看模拟电平与边沿，未把任一类证据写成另一类。"
+      "evidence": "AI 跟随复核并用真实 Chrome 执行 50 项检查：shift 从预载到 8 拍得到 11101111，drive 依次进入 selected、high-z、contention，modes 第一边沿为 S/U/S/U、第二边沿为 U/S/U/S 且播放头同步；Timing Lab 自动完成 32 拍并得到 ????????、11101111、01000000、00011000，随后释放 CS 和停止播放。播放、暂停、速度、单步、复位、键盘及减少动态效果均符合正文。7.3 仍分别说明逻辑分析仪与示波器证据，未把动画写成实测。"
     }
   },
   "verification": {
     "strict_build": {
       "status": "pass",
       "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
-      "result": "2026-11-10 在最终正文和实验室状态下真实执行，退出码 0，Documentation built in 31.29 seconds。输出含 Material for MkDocs 上游公告及既有 slug/nav INFO，无 MkDocs WARNING。该结果只证明文档可严格构建，不表示教学质量通过。"
+      "result": "2026-11-10 在新增 spi-mechanism-lab.html、更新 Timing Lab 与正文嵌入后真实执行，退出码 0，Documentation built in 48.59 seconds。输出含 Material for MkDocs 上游公告及既有 slug/nav INFO，无 MkDocs WARNING。该结果只证明文档可严格构建，不表示教学质量通过。"
     },
     "browser": {
       "status": "pass",
-      "result": "真实 Chrome headless + CDP 检查构建后页面：五幅 SVG 均 complete 且 naturalWidth/naturalHeight 非零；懒加载 iframe 滚动进入视口后初始化。首次前进预载、32 拍、前后回退、复位、完成释放 CS、Mode 0～3 切换复位、Mode 1/2 警示、左右方向键、新标签页及越界操作均通过。375/768/1024/1440 px 无页面横向溢出，波形区域独立横向滚动。本章资源与脚本错误 0；另有页面既有 GitHub releases API 404 和测试服务器 favicon 404，与本章资产无关。"
+      "result": "真实 Chrome headless + CDP 对构建后页面完成最终回归，50 项断言全部通过。shift 播放推进、暂停稳定、2× 完成得到 11101111，drive 三状态与争用路径，modes 四组 S/U 与同步播放头，Timing Lab 自动完成 32 拍、最终位流、CS 释放与自停均符合预期；手动操作停止播放、单步、复位、键盘、减少动态效果通过。四个懒加载 iframe 均初始化，五幅 SVG 尺寸有效，三组静态 fallback 可展开，新标签页通过聚焦后真实 Enter 输入打开。375/768/1024/1440 px 四个实验室均无页面横向溢出。本章资源与脚本错误 0；另有页面既有 GitHub releases API 404 和测试服务器 favicon 404，与本章资产无关。前两次新标签页检查因非用户手势点击和鼠标定位未观察到新目标，未记为通过；最终键盘激活实测通过。"
     },
     "teaching_code": {
       "compile": "not_applicable",
       "run": "not_verified",
       "hardware": "not_verified",
-      "note": "本篇按已确认边界无 C 教学模块、DTS、Makefile 或驱动代码，因此编译为 not_applicable。未在 RK3568 目标板运行；未用逻辑分析仪或示波器测量 25 MHz、1.28 μs、32 拍或 EF 40 18。100 MHz 源时钟、30 MHz 目标上限与 25 MHz 结果仅为通用整数分频教学推导。"
+      "instrument": "not_verified",
+      "note": "本篇按已确认边界无 C 教学模块、DTS、Makefile 或驱动代码，因此编译为 not_applicable。未在 RK3568 目标板运行；未用逻辑分析仪或示波器测量 25 MHz、1.28 μs、32 拍或 EF 40 18。动画均为机制推演，不是仪器实测。100 MHz 源时钟、30 MHz 目标上限与 25 MHz 结果仅为通用整数分频教学推导。"
     }
   },
   "open_issues": [

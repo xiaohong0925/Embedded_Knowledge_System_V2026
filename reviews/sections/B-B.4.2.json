@@ -1,0 +1,78 @@
+{
+  "section": "B-B.4.2",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md",
+  "main_question": "一笔 SPI 事务怎样由主机提供的时钟和器件规定的帧格式共同构成，软件又如何在正确的位置取得并验证有效数据？（贯穿实例：W25Q128JV 0x0B Fast Read，地址 0x001234，教学假设数据 A7 5C 3F 19）",
+  "baseline": {
+    "reviewed_at": "2026-11-10",
+    "article_sha256": "1af233e2200d9dcf3e767fd3d39596b5ba3a86961652eddf5941ea06522c8a29",
+    "agent_sha256": "909c5b20aeec4165b439323c88c60001de3061c774262dab79824f81579f35ac",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/B-B.4.2_SPI协议层与时序_低成本试点任务包.md",
+      "docs/00-模板/章节复检与整篇重写SOP.md",
+      "docs/00-模板/B-B.3_I2C章级整改复盘与复用经验.md"
+    ],
+    "source_snapshots": [
+      "help-docs/W25Q128JV_RevF.utf8.txt",
+      "help-docs/ADS8341.txt",
+      "help-docs/ST7789V.txt"
+    ],
+    "assets": [
+      "docs/B. 总线协议/B. 低速外设接口/images/spi-fast-read-0b-frame.svg",
+      "docs/B. 总线协议/B. 低速外设接口/images/spi-rx-buffer-map.svg",
+      "docs/B. 总线协议/B. 低速外设接口/images/spi-ac-timing-budget.svg"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.3.2_I2C协议层与帧格式.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 依赖复核：上一轮四项首现依赖修复保持有效；新增三幅图只复用正文已定义的 CS、MOSI、MISO、SDR、MSB-first、RX、tCLQV、tflight、tSU_host 与 margin。模型 A/B 在图题和相邻正文中就地解释，没有引入新的器件、驱动对象或未交代符号。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "AI 主线复核：三幅图分别回答同一笔 0x0B 事务的 40 拍边界、有效数据在 RX 中的位置、采样前时间预算，均服务本节唯一主问题。ADS8341、ST7789、多线等原有扩展未继续扩张；图前给出观察顺序，图后回到不变量或验证边界。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "AI 盲删复核：同时删除三幅 SVG 与 text 示意块后，40 拍仍由四阶段定义和 8+24+8 加法成立，RX[5]/RX[0] 仍由两种缓冲区约定及不变量成立，AC 预算仍由路径文字、不等式和 50/25 MHz 演算成立。图片只降低观察负担，不独占关键结论。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "AI 跟随与视觉复核：Fast Read 图可逐位核对 A7 的 0 基 clock 40～47 与 1 基第 41～48 拍；RX 图竖直对齐线上数据、等长 RX[5] 和数据专用 RX[0]；AC 图把启动、输出、传播、建立、余量和采样连成一条路径。三图均以 Chrome 原生尺寸渲染检查，Fast Read 图另做半宽缩放；修正两处文字/箭头重叠后无裁切。上一轮 RX 条件化、A7 用途与 25 MHz 结论保持有效。"
+    }
+  },
+  "verification": {
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-10 新增三幅 SVG 与图文引导后真实执行，退出码 0，Documentation built in 51.31 seconds。输出含 Material for MkDocs 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING；三幅 SVG 均通过 XML/viewBox 和正文唯一引用检查，git diff --check 仅有 LF/CRLF 提示。该结果只证明文档可严格构建，不表示协议结论或教学质量通过。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "真实 Chrome headless 对三幅 SVG 分别按 1600×760、1400×780、1500×840 原生尺寸渲染并读图；Fast Read 图另以 800×380 检查半宽缩放。首轮发现箭头穿过文字、模型 A 标题贴近首格两处问题，修正后复拍无重叠、无裁切，数值与正文一致。本记录仅覆盖静态 SVG 的有限视觉检查；未执行全站多宽度页面回归，未新增交互资产。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇按已确认边界无 C 教学模块、Makefile 或驱动代码，正文仅有协议示意字节流，编译记 not_applicable。未在 RK3568 目标板运行；未用逻辑分析仪或示波器测量 40 拍前导或 A7 5C 3F 19，该组数据全文标注为教学假设；§7 的 50/25 MHz 时序演算使用手册 tCLQV max 6 ns 参数，是教学演算而非仪器实测。三幅图均为机制推演图，不是实测截图。"
+    }
+  },
+  "open_issues": [
+    "2026-11-10 上一轮 3 项必修＋2 处推演收紧已经本轮复检闭环；用户认可补强方案后，新增三幅静态 SVG 及图前图后引导，等待用户对最终图文呈现作人工复检。",
+    "目标板运行与仪器测量未执行，状态均为 not_verified；教学假设数据 A7 5C 3F 19 在任何实板或仪器上不可见，正文已显式标注。",
+    "ADS8341 与 ST7789V 证据来自 help-docs/ADS8341.pdf（TI SBAS136）与 help-docs/ST7789V.pdf（Newhaven Display 镜像的 Sitronix v1.3）；若后续取得厂商原始直链可替换镜像来源。",
+    "四种读者、静态检查和有限视觉检查均为 AI 检查记录；record_state=current 只表示哈希有效，最终教学质量以用户人工复检为准。"
+  ],
+  "next_action": "提交用户人工复检三幅图与对应正文引导；若后续修改正文或资产，重新执行相应视觉检查、严格构建和哈希校验，并单独补齐成本台账边界。"
+}
