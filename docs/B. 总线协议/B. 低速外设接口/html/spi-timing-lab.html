@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPI Timing Lab｜32 拍物理层波形</title>
+<style>
+  :root{color-scheme:dark;--black:#000;--ink:#ededed;--muted:#a4a4a4;--line:#363636;--orange:#ff8e4d;--blue:#0099ff;--panel:#111}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--black);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  body{min-height:100vh}
+  button,select,a{-webkit-tap-highlight-color:transparent}
+  button,select{font:inherit}
+  .lab{min-height:100vh;display:grid;grid-template-rows:auto auto minmax(250px,1fr) auto;background:var(--black)}
+  .masthead{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:15px;align-items:start;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .mark{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--ink);font:600 13px/1 ui-monospace,monospace;letter-spacing:-1px}
+  .eyebrow{margin:0 0 4px;color:var(--muted);font:12px/1.2 ui-monospace,monospace;letter-spacing:1.5px;text-transform:uppercase}
+  h1{margin:0;font-size:clamp(20px,3vw,34px);font-weight:650;letter-spacing:-.8px;line-height:1.08}
+  h1 span{color:var(--orange)}
+  .new-tab{color:var(--blue);font-size:13px;text-underline-offset:4px;white-space:nowrap}
+  .new-tab:hover{color:var(--ink)}
+  .control-deck{display:grid;grid-template-columns:minmax(240px,1.2fr) minmax(330px,1fr) auto;gap:22px;align-items:end;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .mode-label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;letter-spacing:.6px}
+  .mode-row{display:flex;gap:10px;align-items:center}
+  select{min-width:170px;padding:9px 34px 9px 11px;color:var(--ink);background:var(--panel);border:1px solid #555;border-radius:0}
+  .mode-rule{color:var(--muted);font-size:13px;line-height:1.5}
+  .transport{display:flex;gap:8px;flex-wrap:wrap}
+  button{cursor:pointer;padding:10px 16px;border:1px solid #666;border-radius:0;color:var(--ink);background:transparent;transition:background .12s,color .12s,border-color .12s}
+  button:hover:not(:disabled),button:focus-visible{border-color:var(--orange);color:var(--orange);outline:none}
+  button.primary{background:var(--orange);border-color:var(--orange);color:#111;font-weight:700}
+  button.primary:hover:not(:disabled),button.primary:focus-visible{background:var(--ink);border-color:var(--ink);color:#000}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  .keyboard{font:12px/1.5 ui-monospace,monospace;color:var(--muted);text-align:right;white-space:nowrap}
+  .stage{position:relative;min-height:300px;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;background:var(--black)}
+  .readout{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--line)}
+  .metric{padding:13px 18px;border-right:1px solid var(--line);min-width:0}
+  .metric:last-child{border-right:0}
+  .metric-label{display:block;color:var(--muted);font:11px/1.2 ui-monospace,monospace;letter-spacing:.7px;margin-bottom:6px}
+  .metric-value{display:block;font:600 18px/1.2 ui-monospace,"Microsoft YaHei",monospace;overflow-wrap:anywhere}
+  .metric-value.orange{color:var(--orange)}
+  .wave-wrap{position:relative;min-height:240px;overflow-x:auto;overflow-y:hidden;scrollbar-color:var(--orange) #222}
+  .wave{display:block;width:max(100%,1530px);height:100%;min-height:240px}
+  .wave text{font-family:ui-monospace,"Microsoft YaHei",monospace;fill:var(--ink)}
+  .wave .minor{fill:var(--muted)}
+  .wave .grid{stroke:#323232;stroke-width:1;stroke-dasharray:3 5}
+  .wave .signal{stroke:var(--ink);stroke-width:2;fill:none;stroke-linejoin:round}
+  .wave .unknown{stroke:#777;stroke-width:1.5;stroke-dasharray:5 5}
+  .wave .active-zone{fill:var(--orange);opacity:.13}
+  .wave .playhead{stroke:var(--orange);stroke-width:2}
+  .wave .done-dot{fill:var(--blue)}
+  .wave .current-dot{fill:var(--orange)}
+  .received{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:center;padding:13px 22px;border-top:1px solid var(--line)}
+  .received-label{color:var(--muted);font-size:12px}
+  .bits{display:flex;gap:10px;flex-wrap:wrap;font:600 17px/1.4 ui-monospace,monospace;letter-spacing:2px}
+  .byte{padding:3px 8px;border-bottom:2px solid #444}
+  .byte.valid{border-color:var(--blue)}
+  .byte.pending{color:#777}
+  .foot{display:grid;grid-template-columns:1fr auto;gap:18px;padding:12px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.55}
+  .status{color:var(--ink)}
+  .warning{color:var(--orange)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:900px){
+    .control-deck{grid-template-columns:1fr auto;gap:14px}.mode-rule{grid-column:1/-1}.keyboard{display:none}
+    .readout{grid-template-columns:repeat(3,1fr)}.metric:nth-child(3){border-right:0}.metric:nth-child(n+4){border-top:1px solid var(--line)}
+  }
+  @media(max-width:600px){
+    .masthead{grid-template-columns:38px 1fr;padding:14px;gap:11px}.mark{width:34px;height:34px}.new-tab{grid-column:2}
+    .control-deck{grid-template-columns:1fr;padding:13px 14px}.mode-row{flex-wrap:wrap}.transport{display:grid;grid-template-columns:1fr 1.3fr 1fr}.transport button{padding:10px 7px}
+    .readout{grid-template-columns:repeat(2,1fr)}.metric{padding:10px 12px}.metric:nth-child(2n){border-right:0}.metric:nth-child(3){border-right:1px solid var(--line)}.metric:nth-child(n+3){border-top:1px solid var(--line)}.metric:last-child{grid-column:1/-1}
+    .metric-value{font-size:16px}.received{grid-template-columns:1fr;padding:12px 14px;gap:6px}.bits{font-size:14px;gap:5px;letter-spacing:1px}.byte{padding:3px 5px}
+    .foot{grid-template-columns:1fr;padding:11px 14px;gap:4px}.stage{min-height:320px}.wave-wrap{min-height:230px}
+  }
+  @media(prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+</head>
+<body>
+<main class="lab" aria-label="SPI 纯波形时序实验室">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">SPI</div>
+    <div>
+      <p class="eyebrow">Timing laboratory / 32 clocks</p>
+      <h1>逐拍看见 <span>9F → EF 40 18</span></h1>
+    </div>
+    <a class="new-tab" href="spi-timing-lab.html" target="_blank" rel="noopener">新标签页打开 ↗</a>
+  </header>
+
+  <section class="control-deck" aria-label="波形控制">
+    <div>
+      <label class="mode-label" for="mode">时钟模式（切换后复位）</label>
+      <div class="mode-row">
+        <select id="mode" aria-describedby="mode-rule">
+          <option value="0">Mode 0 · CPOL=0 CPHA=0</option>
+          <option value="1">Mode 1 · CPOL=0 CPHA=1</option>
+          <option value="2">Mode 2 · CPOL=1 CPHA=0</option>
+          <option value="3">Mode 3 · CPOL=1 CPHA=1</option>
+        </select>
+        <span class="mode-rule" id="mode-rule">空闲低 · 上升沿采样 · 下降沿更新 · 首位预载</span>
+      </div>
+    </div>
+    <div class="transport" aria-label="逐拍控制">
+      <button id="prev" type="button" aria-label="上一拍">← 上一拍</button>
+      <button id="next" class="primary" type="button" aria-label="下一拍">下一拍 →</button>
+      <button id="reset" type="button">复位</button>
+    </div>
+    <div class="keyboard">键盘 ← 上一拍　→ 下一拍<br>第一次前进：选中并准备首位</div>
+  </section>
+
+  <section class="stage" aria-label="当前波形与接收状态">
+    <div class="readout">
+      <div class="metric"><span class="metric-label">CS</span><span class="metric-value" id="cs-state">高 · 未选中</span></div>
+      <div class="metric"><span class="metric-label">进度</span><span class="metric-value orange" id="step-state">0 / 32</span></div>
+      <div class="metric"><span class="metric-label">当前动作</span><span class="metric-value" id="edge-state">等待选中</span></div>
+      <div class="metric"><span class="metric-label">MOSI 当前位</span><span class="metric-value" id="mosi-state">—</span></div>
+      <div class="metric"><span class="metric-label">MISO 当前位</span><span class="metric-value" id="miso-state">—</span></div>
+    </div>
+    <div class="wave-wrap" id="wave-wrap" tabindex="0" aria-label="可横向滚动的 32 拍波形">
+      <svg id="wave" class="wave" viewBox="0 0 1530 300" role="img" aria-labelledby="wave-title wave-desc">
+        <title id="wave-title">SPI 32 拍交互波形</title>
+        <desc id="wave-desc">选择模式并逐拍前进，橙色游标指示当前拍，蓝点表示已经完成的采样。</desc>
+      </svg>
+    </div>
+    <div class="received">
+      <div class="received-label">已接收位（每 8 位一组）<br><span id="valid-bytes">有效身份字节：尚未开始</span></div>
+      <div class="bits" id="received-bits" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="status" id="status" role="status">CS 为高，SCLK 空闲低。按“下一拍”拉低 CS 并准备 b7。</div>
+    <div id="support-note">Mode 0 对应本例 W25Q128JV-IQ/JQ；?? 不解释</div>
+  </footer>
+</main>
+<script>
+(() => {
+  "use strict";
+  const tx = [0x9f, 0x00, 0x00, 0x00];
+  const rx = [null, 0xef, 0x40, 0x18];
+  const txBits = tx.flatMap(value => Array.from({length:8}, (_, i) => (value >> (7-i)) & 1));
+  const rxBits = rx.flatMap(value => value === null ? Array(8).fill(null) : Array.from({length:8}, (_, i) => (value >> (7-i)) & 1));
+  const modes = [
+    {cpol:0,cpha:0,idle:"低",sample:"上升沿",update:"下降沿",first:"首位预载",supported:true},
+    {cpol:0,cpha:1,idle:"低",sample:"下降沿",update:"上升沿",first:"首边沿更新",supported:false},
+    {cpol:1,cpha:0,idle:"高",sample:"下降沿",update:"上升沿",first:"首位预载",supported:false},
+    {cpol:1,cpha:1,idle:"高",sample:"上升沿",update:"下降沿",first:"首边沿更新",supported:true}
+  ];
+  const $ = id => document.getElementById(id);
+  const controls = {mode:$("mode"),prev:$("prev"),next:$("next"),reset:$("reset")};
+  let mode = 0;
+  // -1: CS idle; 0: selected and first bit ready; 1..32: completed sampling edges.
+  let phase = -1;
+
+  function bitsToGroups(count) {
+    return Array.from({length:4}, (_, byte) => {
+      const chars = Array.from({length:8}, (_, bit) => {
+        const index = byte*8 + bit;
+        if (index >= count) return "·";
+        return rxBits[index] === null ? "?" : String(rxBits[index]);
+      }).join("");
+      return {byte,chars,complete:count >= (byte+1)*8,valid:byte > 0 && count >= (byte+1)*8};
+    });
+  }
+
+  function renderReceived() {
+    const count = Math.max(0,phase);
+    $("received-bits").innerHTML = bitsToGroups(count).map(group =>
+      `<span class="byte ${group.valid ? "valid" : "pending"}" data-byte="${group.byte}" aria-label="接收字节 ${group.byte}：${group.chars}">${group.chars}</span>`
+    ).join("");
+    const valid = bitsToGroups(count).filter(group => group.valid).map(group => ["","EF","40","18"][group.byte]);
+    $("valid-bytes").textContent = valid.length ? `有效身份字节：${valid.join(" ")}` : "有效身份字节：尚未开始";
+  }
+
+  function drawWave() {
+    const cfg = modes[mode];
+    const x0 = 110, step = 43, top = 56, low = cfg.cpol ? 102 : 142, high = cfg.cpol ? 142 : 102;
+    const parts = [];
+    parts.push(`<text x="18" y="30" font-size="14" class="minor">SCLK 空闲${cfg.idle} · ${cfg.sample}采样 · ${cfg.update}更新</text>`);
+    parts.push(`<text x="18" y="83" font-size="14">拍号</text><text x="18" y="126" font-size="14">SCLK</text>`);
+    parts.push(`<text x="18" y="193" font-size="14">MOSI</text><text x="18" y="255" font-size="14">MISO</text>`);
+    const currentIndex = phase < 1 ? 0 : Math.min(31,phase-1);
+    const activeX = x0 + currentIndex*step;
+    parts.push(`<rect class="active-zone" x="${activeX}" y="43" width="${step}" height="235"/>`);
+    for (let i=0;i<32;i++) {
+      const x = x0+i*step;
+      const completed = i < phase;
+      const current = i === currentIndex && phase >= 0;
+      parts.push(`<line class="grid" x1="${x+step/2}" y1="43" x2="${x+step/2}" y2="278"/>`);
+      parts.push(`<text x="${x+step/2}" y="68" text-anchor="middle" font-size="11" class="minor">${i+1}</text>`);
+      // Each cell shows the ideal clock half-periods; sampling marker follows the selected mode.
+      const firstY = low;
+      const secondY = high;
+      parts.push(`<path class="signal" d="M${x} ${firstY}H${x+step/2}V${secondY}H${x+step}V${firstY}" opacity="${completed || current ? 1 : .38}"/>`);
+      const mosiY = txBits[i] ? 177 : 207;
+      parts.push(`<path class="signal" d="M${x} ${mosiY}H${x+step}" opacity="${completed || current ? 1 : .38}"/>`);
+      parts.push(`<text x="${x+step/2}" y="226" text-anchor="middle" font-size="11" class="minor">${txBits[i]}</text>`);
+      if (rxBits[i] === null) {
+        parts.push(`<line class="unknown" x1="${x}" y1="250" x2="${x+step}" y2="250"/>`);
+        parts.push(`<text x="${x+step/2}" y="273" text-anchor="middle" font-size="12" class="minor">?</text>`);
+      } else {
+        const misoY = rxBits[i] ? 237 : 267;
+        parts.push(`<path class="signal" d="M${x} ${misoY}H${x+step}" opacity="${completed || current ? 1 : .38}"/>`);
+        parts.push(`<text x="${x+step/2}" y="287" text-anchor="middle" font-size="11" class="minor">${rxBits[i]}</text>`);
+      }
+      if (completed) parts.push(`<circle class="done-dot" cx="${x+step/2}" cy="86" r="3.5"/>`);
+      if (current) parts.push(`<circle class="current-dot" cx="${x+step/2}" cy="86" r="5"/>`);
+    }
+    const playX = phase < 0 ? x0-25 : activeX+step/2;
+    parts.push(`<line class="playhead" x1="${playX}" y1="42" x2="${playX}" y2="280"/>`);
+    parts.push(`<path d="M${playX-5} 42L${playX+5} 42L${playX} 50Z" fill="#ff8e4d"/>`);
+    $("wave").innerHTML = `<title id="wave-title">SPI 32 拍交互波形</title><desc id="wave-desc">当前模式 ${mode}，已完成 ${Math.max(0,phase)} 个采样边沿。</desc>${parts.join("")}`;
+  }
+
+  function render() {
+    const cfg = modes[mode];
+    const count = Math.max(0,phase);
+    const index = Math.min(31,Math.max(0,phase-1));
+    const complete = phase === 32;
+    const selected = phase >= 0 && !complete;
+    $("mode-rule").textContent = `空闲${cfg.idle} · ${cfg.sample}采样 · ${cfg.update}更新 · ${cfg.first}`;
+    $("cs-state").textContent = selected ? "低 · 已选中" : complete ? "高 · 已释放" : "高 · 未选中";
+    $("step-state").textContent = `${count} / 32`;
+    $("edge-state").textContent = phase < 0 ? "等待选中" : phase === 0 ? cfg.first : complete ? "32 拍已完成" : `第 ${phase} 拍 · ${cfg.sample}`;
+    $("mosi-state").textContent = selected ? `${txBits[index]} · b${7-index%8}` : "—";
+    $("miso-state").textContent = selected ? `${rxBits[index] === null ? "?" : rxBits[index]} · b${7-index%8}` : "—";
+    controls.prev.disabled = phase < 0;
+    controls.next.disabled = complete;
+    controls.next.textContent = phase < 0 ? "选中并预载 →" : complete ? "已完成" : "下一拍 →";
+    if (phase < 0) {
+      $("status").textContent = `CS 为高，SCLK 空闲${cfg.idle}。按“下一拍”拉低 CS 并准备 b7。`;
+    } else if (phase === 0) {
+      $("status").textContent = `CS 已拉低，b7 已准备；下一动作是第 1 个${cfg.sample}采样。`;
+    } else if (complete) {
+      $("status").textContent = "32 个采样边沿已完成：?? EF 40 18。CS 已释放，本例指令结束；复位可重新观察。";
+    } else {
+      const byteIndex = Math.floor((phase-1)/8);
+      const names = ["命令阶段，首字节不解释","制造商 ID","Memory Type","Capacity"];
+      $("status").textContent = `第 ${phase} 拍已采样；${names[byteIndex]}。MOSI=${txBits[index]}，MISO=${rxBits[index] === null ? "?" : rxBits[index]}。`;
+    }
+    $("support-note").textContent = cfg.supported ? `Mode ${mode} 可用于本例 Flash；当前仍是机制推演，非实测` : `Mode ${mode} 仅作通用模式推演，不是本例 Flash 可用配置`;
+    $("support-note").className = cfg.supported ? "" : "warning";
+    renderReceived();
+    drawWave();
+    document.title = `SPI Timing Lab｜Mode ${mode}｜${count}/32`;
+  }
+
+  function next() { if (phase < 32) { phase += 1; render(); } }
+  function prev() { if (phase >= 0) { phase -= 1; render(); } }
+  function reset() { phase = -1; render(); $("wave-wrap").scrollTo({left:0,behavior:"auto"}); }
+  controls.next.addEventListener("click",next);
+  controls.prev.addEventListener("click",prev);
+  controls.reset.addEventListener("click",reset);
+  controls.mode.addEventListener("change",event => { mode = Number(event.target.value); reset(); });
+  document.addEventListener("keydown",event => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key === "ArrowRight") { event.preventDefault(); next(); }
+    if (event.key === "ArrowLeft") { event.preventDefault(); prev(); }
+    if (event.key === "Home") { event.preventDefault(); reset(); }
+  });
+  // Small read-only surface for DOM-based regression checks.
+  window.spiTimingLab = Object.freeze({getState:() => ({mode,phase,cs:phase >= 0 && phase < 32 ? "low" : "high",received:Math.max(0,phase)})});
+  reset();
+})();
+</script>
+</body>
+</html>

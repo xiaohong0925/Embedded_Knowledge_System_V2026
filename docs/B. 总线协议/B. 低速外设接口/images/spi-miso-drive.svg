@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 510" role="img" aria-labelledby="title desc">
+<title id="title">推挽、高阻与两个从机争用 MISO</title>
+<desc id="desc">一个从机主动驱动 MISO，未选中从机高阻释放，两个一高一低的推挽输出同时驱动会形成直通电流。</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#18222d}
+    .line{fill:none;stroke:#18222d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .soft{fill:none;stroke:#72808d;stroke-width:1.5;stroke-dasharray:5 5}
+    .box{fill:#f5f7f9;stroke:#18222d;stroke-width:2}
+    .accent{fill:none;stroke:#d95f02;stroke-width:3}
+    .blue{fill:none;stroke:#1769aa;stroke-width:2.5}
+    .label{font-size:18px} .small{font-size:15px;fill:#4c5966} .tiny{font-size:13px;fill:#4c5966}
+  </style>
+</defs>
+<rect width="100%" height="100%" fill="#fff"/>
+
+<text x="600" y="38" text-anchor="middle" font-size="25" font-weight="700">MISO 驱动权：主动驱动、退出驱动、错误争用</text>
+<text x="200" y="88" text-anchor="middle" font-size="21">A. 一个从机被选中</text>
+<rect class="box" x="70" y="115" width="150" height="75"/><text x="145" y="148" text-anchor="middle" class="label">推挽输出级</text><text x="145" y="174" text-anchor="middle" class="small">主动拉高或拉低</text>
+<path class="blue" marker-end="url(#arrow)" d="M220 152H345"/><text x="280" y="137" text-anchor="middle" class="small">MISO</text>
+<rect class="box" x="345" y="115" width="95" height="75"/><text x="392" y="159" text-anchor="middle" class="label">主机输入</text>
+<text x="255" y="222" text-anchor="middle" class="small">高电平也由输出级主动形成，不靠总线上拉</text>
+<text x="600" y="88" text-anchor="middle" font-size="21">B. 从机未选中</text>
+<rect class="box" x="470" y="115" width="150" height="75"/><text x="545" y="148" text-anchor="middle" class="label">DO 高阻</text><text x="545" y="174" text-anchor="middle" class="small">不主动拉高或拉低</text>
+<path class="soft" d="M620 152H745"/><path class="line" d="M665 137L685 167"/><text x="705" y="137" text-anchor="middle" class="small">驱动断开</text>
+<rect class="box" x="745" y="115" width="95" height="75"/><text x="792" y="159" text-anchor="middle" class="label">主机输入</text>
+<text x="655" y="222" text-anchor="middle" class="small">CS 高时释放线路，让其他从机可以使用 MISO</text>
+<text x="600" y="285" text-anchor="middle" font-size="21">C. 两个推挽从机同时驱动：一高一低形成直通电流</text>
+<rect class="box" x="115" y="320" width="170" height="80"/><text x="200" y="352" text-anchor="middle" class="label">从机 A：输出 1</text><text x="200" y="379" text-anchor="middle" class="small">接向本机电源</text>
+<rect class="box" x="915" y="320" width="170" height="80"/><text x="1000" y="352" text-anchor="middle" class="label">从机 B：输出 0</text><text x="1000" y="379" text-anchor="middle" class="small">接向地</text>
+<path class="line" d="M285 360H915"/><circle cx="600" cy="360" r="7"/>
+<path class="accent" marker-end="url(#arrow)" d="M200 320V270H1000V320"/><text x="600" y="255" text-anchor="middle" class="label">电源 → A 上拉开关 → 共享 MISO → B 下拉开关 → 地</text>
+<text x="600" y="440" text-anchor="middle" font-size="20">结果不只是数据错误：电平不可信，输出级还可能过热或损坏</text>
+<text x="600" y="478" text-anchor="middle" class="small">独立 CS 的意义之一，就是保证共享 MISO 上只有一个有效驱动者</text>
+
+</svg>
