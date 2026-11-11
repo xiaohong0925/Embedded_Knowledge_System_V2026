@@ -159,6 +159,7 @@ class ProjectRoutingFileTests(unittest.TestCase):
     def setUpClass(cls):
         cls.root = Path(__file__).resolve().parents[1]
         cls.skill = (cls.root / ".agents" / "skills" / "embedded-book-authoring" / "SKILL.md").read_text(encoding="utf-8")
+        cls.agent = (cls.root / "agent.md").read_text(encoding="utf-8")
 
     def test_skill_frontmatter_has_only_name_and_description(self):
         self.assertTrue(self.skill.startswith("---\n"))
@@ -173,7 +174,7 @@ class ProjectRoutingFileTests(unittest.TestCase):
         self.assertIn("新写正文", frontmatter)
         self.assertIn("Framework Lab", frontmatter)
 
-    def test_conditional_reference_files_exist(self):
+    def test_conditional_reference_files_exist_and_route_through_agent(self):
         references = [
             "agent.md",
             "plan.md",
@@ -187,15 +188,14 @@ class ProjectRoutingFileTests(unittest.TestCase):
         ]
         for reference in references:
             with self.subTest(reference=reference):
-                self.assertIn(reference, self.skill)
+                self.assertIn(reference, self.agent)
                 self.assertTrue((self.root / reference).is_file())
 
     def test_agent_owns_all_five_impact_levels(self):
-        agent = (self.root / "agent.md").read_text(encoding="utf-8")
-        self.assertIn("## 13. 修改影响面与验收基线", agent)
+        self.assertIn("## 13. 修改影响面与验收基线", self.agent)
         for level in ("T0 机械修改", "T1 局部正文", "T2 单章重构", "T3 跨章调整", "T4 共享变化"):
-            self.assertIn(level, agent)
-        self.assertIn("`.agents/skills/embedded-book-authoring/SKILL.md` 只负责按本节路由", agent)
+            self.assertIn(level, self.agent)
+        self.assertIn("`.agents/skills/embedded-book-authoring/SKILL.md` 只负责按本节路由", self.agent)
 
     def test_blank_template_is_json_and_preserves_unverified_boundaries(self):
         template = json.loads((self.root / "docs" / "00-模板" / "section-review.template.json").read_text(encoding="utf-8"))
@@ -206,35 +206,46 @@ class ProjectRoutingFileTests(unittest.TestCase):
 
     def test_skill_bounds_reads_and_deduplicates_sources(self):
         for phrase in (
-            "只读当前章节及直接关联区间",
-            "不得通读整份内核源码",
-            "不得同时通读",
-            "证据路径、函数名和必要行号区间",
+            "只读当前篇目及直接关联部分",
+            "源码和厂商手册只读取当前结论所需",
+            "不同时通读",
+            "证据区间",
         ):
             self.assertIn(phrase, self.skill)
 
-    def test_skill_has_context_checkpoint_and_reuses_confirmed_diagnosis(self):
+    def test_skill_reuses_confirmed_diagnosis_and_agent_owns_context_checkpoint(self):
         self.assertIn("不重复全量诊断", self.skill)
-        self.assertIn("超过 60% 上下文", self.skill)
-        self.assertIn("换新会话重写", self.skill)
-        self.assertIn("不得编造上下文百分比", self.skill)
+        self.assertIn("上下文质量下降", self.agent)
+        self.assertIn("换新会话", self.agent)
+        self.assertIn("不依赖旧会话印象", self.agent)
 
-    def test_skill_separates_rules_reviewed_patterns_and_design_intent(self):
+    def test_agent_separates_current_rules_domain_references_and_history(self):
         for phrase in (
-            "A：现行规则",
-            "B：人工验证经验",
-            "C：设计意图参考",
-            "D：历史查询",
-            "AI 自评 `pass` 不足以升级",
+            "唯一规则真源",
+            "按任务最多追加一类领域资料",
             "数量配额",
-            "不得作为验收依据",
+            "只作历史或状态查询，不进入通用写作输入",
         ):
-            self.assertIn(phrase, self.skill)
+            self.assertIn(phrase, self.agent)
+        self.assertIn("本技能只负责路由，不携带另一套写作规则", self.skill)
 
-    def test_skill_prioritizes_human_reviewed_i2c_experience(self):
-        self.assertIn("B-B.3 必读", self.skill)
-        self.assertIn("优先作为人工验证正例", self.skill)
-        self.assertIn("继承自 v2 的旧格式要求同样无效", self.skill)
+    def test_agent_routes_human_reviewed_i2c_experience(self):
+        self.assertIn("B-B.3 续作", self.agent)
+        self.assertIn("docs/00-模板/B-B.3_I2C章级整改复盘与复用经验.md", self.agent)
+        self.assertIn("经人工认可", self.agent)
+
+    def test_retired_parallel_rule_files_stay_removed(self):
+        retired = [
+            "docs/00-模板/章节复检与整篇重写SOP.md",
+            "docs/00-模板/连续阅读驱动的章节诊断与重写方法论.md",
+            "docs/00-模板/B-B.4.2_SPI协议层与时序_低成本试点任务包.md",
+            "docs/00-模板/B-B.4.1_SPI物理层与四种模式_重构设计方案.md",
+            "docs/00-模板/B-B.3_I2C章级重构设计方案.md",
+            "docs/00-模板/B扩展_总线协议_2026调研与重构大纲_v2.md",
+        ]
+        for reference in retired:
+            with self.subTest(reference=reference):
+                self.assertFalse((self.root / reference).exists())
 
     def test_bus_outline_does_not_inherit_obsolete_acceptance_rules(self):
         outline = (self.root / "docs" / "00-模板" / "总线协议_2026深度调研与写作大纲_v3.md").read_text(encoding="utf-8")

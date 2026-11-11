@@ -1,57 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 780" role="img" aria-labelledby="title desc">
-<title id="title">同一笔 Fast Read 到两种接收缓冲区布局的映射</title>
-<desc id="desc">线上都是四十拍前导后输出 A7 5C 3F 19。等长全双工缓冲区中首数据位于 RX5；只有驱动约定应用接收缓冲区只保存数据段时，首数据才位于 RX0。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 620" role="img" aria-labelledby="title desc">
+<title id="title">两段传输与数据专用接收缓冲区</title>
+<desc id="desc">第一段发送五字节前导并丢弃同步接收值，第二段提供三十二拍并只保存 A7 5C 3F 19，因此首数据位于 RX0。</desc>
 <defs>
-  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#1769aa"/></marker>
   <style>
-    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#18222d}
-    .line{fill:none;stroke:#18222d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .soft{fill:none;stroke:#72808d;stroke-width:1.5;stroke-dasharray:5 5}
-    .box{fill:#f5f7f9;stroke:#18222d;stroke-width:2}
-    .accent{fill:none;stroke:#d95f02;stroke-width:3}
-    .blue{fill:none;stroke:#1769aa;stroke-width:2.5}
-    .label{font-size:18px}.small{font-size:15px;fill:#4c5966}.tiny{font-size:13px;fill:#4c5966}
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#18222d}.line{fill:none;stroke:#18222d;stroke-width:2}.label{font-size:18px}.small{font-size:15px;fill:#4c5966}.byte{font-size:20px;font-weight:700}.plain{fill:#f5f7f9;stroke:#18222d;stroke-width:2}.blue{fill:#e8f1f8;stroke:#1769aa;stroke-width:2}.accent{fill:#fff1e5;stroke:#d95f02;stroke-width:2}
   </style>
 </defs>
-<rect width="100%" height="100%" fill="#fff"/>
-<text x="700" y="40" text-anchor="middle" font-size="25" font-weight="700">同一笔线上事务，为什么既可能取 RX[5]，也可能取 RX[0]</text>
-<text x="700" y="70" text-anchor="middle" class="small">读 4 字节的教学假设；两种布局不是两种协议，而是两种驱动接口约定</text>
-
-<text x="40" y="120" class="label">线上事务</text>
-<text x="40" y="146" class="small">每字节 8 拍</text>
+<rect width="1400" height="620" fill="#fff"/>
+<text x="700" y="42" text-anchor="middle" font-size="26" font-weight="700">前导仍在线上，数据专用 RX 只保存数据段</text>
+<text x="700" y="72" text-anchor="middle" class="small">两段共享同一笔 CS 有效事务，中间不释放片选</text>
+<text x="45" y="135" class="label">线上字节</text>
 <g>
-  <rect x="300" y="95" width="110" height="70" fill="#f0f1f2" stroke="#72808d" stroke-width="2"/><rect x="410" y="95" width="110" height="70" fill="#f0f1f2" stroke="#72808d" stroke-width="2"/><rect x="520" y="95" width="110" height="70" fill="#f0f1f2" stroke="#72808d" stroke-width="2"/><rect x="630" y="95" width="110" height="70" fill="#f0f1f2" stroke="#72808d" stroke-width="2"/><rect x="740" y="95" width="110" height="70" fill="#f0f1f2" stroke="#72808d" stroke-width="2"/>
-  <rect x="850" y="95" width="110" height="70" fill="#fff1e5" stroke="#d95f02" stroke-width="2"/><rect x="960" y="95" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1070" y="95" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1180" y="95" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/>
-  <text x="355" y="137" text-anchor="middle" class="label">0x0B</text><text x="465" y="137" text-anchor="middle" class="label">00</text><text x="575" y="137" text-anchor="middle" class="label">12</text><text x="685" y="137" text-anchor="middle" class="label">34</text><text x="795" y="137" text-anchor="middle" class="label">dummy</text>
-  <text x="905" y="137" text-anchor="middle" class="label">A7</text><text x="1015" y="137" text-anchor="middle" class="label">5C</text><text x="1125" y="137" text-anchor="middle" class="label">3F</text><text x="1235" y="137" text-anchor="middle" class="label">19</text>
+<rect class="blue" x="240" y="100" width="100" height="70"/><rect class="blue" x="340" y="100" width="100" height="70"/><rect class="blue" x="440" y="100" width="100" height="70"/><rect class="blue" x="540" y="100" width="100" height="70"/><rect class="blue" x="640" y="100" width="100" height="70"/>
+<rect class="accent" x="740" y="100" width="100" height="70"/><rect class="accent" x="840" y="100" width="100" height="70"/><rect class="accent" x="940" y="100" width="100" height="70"/><rect class="accent" x="1040" y="100" width="100" height="70"/>
+<text x="290" y="143" text-anchor="middle" class="byte">0B</text><text x="390" y="143" text-anchor="middle" class="byte">00</text><text x="490" y="143" text-anchor="middle" class="byte">12</text><text x="590" y="143" text-anchor="middle" class="byte">34</text><text x="690" y="143" text-anchor="middle" class="byte">00</text><text x="790" y="143" text-anchor="middle" class="byte">A7</text><text x="890" y="143" text-anchor="middle" class="byte">5C</text><text x="990" y="143" text-anchor="middle" class="byte">3F</text><text x="1090" y="143" text-anchor="middle" class="byte">19</text>
 </g>
-<path class="line" d="M300 195V215H850V195"/><text x="575" y="242" text-anchor="middle" class="small">命令＋地址＋dummy：5 字节，共 40 拍</text>
-<path class="accent" d="M850 195V215H1290V195"/><text x="1070" y="242" text-anchor="middle" class="small">有效数据：4 字节，从第 41 拍开始</text>
-
-<path class="blue" marker-end="url(#arrow)" d="M1070 275V315"/><text x="1090" y="300" class="small">接口怎样交付数据？</text>
-
-<text x="40" y="340" font-size="20" font-weight="700">模型 A：等长全双工</text>
-<text x="40" y="368" class="small">TX／RX 等长，逐字节同步接收</text>
+<text x="490" y="202" text-anchor="middle" class="label">前导段：5 字节，40 拍</text><text x="890" y="202" text-anchor="middle" class="label">数据段：4 字节，32 拍</text>
+<path d="M490 235V265" fill="none" stroke="#1769aa" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M890 235V265" fill="none" stroke="#1769aa" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="160" y="285" width="520" height="225" rx="12" fill="#f5f8fa" stroke="#1769aa" stroke-width="2"/>
+<text x="420" y="325" text-anchor="middle" font-size="22" font-weight="700">第一段：只保留发送</text>
+<text x="420" y="360" text-anchor="middle" class="label">TX = 0B 00 12 34 00</text>
+<text x="420" y="400" text-anchor="middle" class="label">同时移入的 5 字节：丢弃</text>
+<text x="420" y="448" text-anchor="middle" class="small">命令、地址和 dummy 已经发生</text><text x="420" y="476" text-anchor="middle" class="small">但不进入数据专用 RX</text>
+<rect x="720" y="285" width="520" height="225" rx="12" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/>
+<text x="980" y="325" text-anchor="middle" font-size="22" font-weight="700">第二段：只保留接收</text>
+<text x="980" y="360" text-anchor="middle" class="label">TX = 00 00 00 00（提供时钟）</text>
 <g>
-  <rect class="box" x="300" y="330" width="110" height="70"/><rect class="box" x="410" y="330" width="110" height="70"/><rect class="box" x="520" y="330" width="110" height="70"/><rect class="box" x="630" y="330" width="110" height="70"/><rect class="box" x="740" y="330" width="110" height="70"/>
-  <rect x="850" y="330" width="110" height="70" fill="#fff1e5" stroke="#d95f02" stroke-width="3"/><rect x="960" y="330" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1070" y="330" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1180" y="330" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/>
-  <text x="355" y="372" text-anchor="middle" class="label">?</text><text x="465" y="372" text-anchor="middle" class="label">?</text><text x="575" y="372" text-anchor="middle" class="label">?</text><text x="685" y="372" text-anchor="middle" class="label">?</text><text x="795" y="372" text-anchor="middle" class="label">?</text>
-  <text x="905" y="372" text-anchor="middle" class="label">A7</text><text x="1015" y="372" text-anchor="middle" class="label">5C</text><text x="1125" y="372" text-anchor="middle" class="label">3F</text><text x="1235" y="372" text-anchor="middle" class="label">19</text>
-  <text x="355" y="428" text-anchor="middle" class="small">RX[0]</text><text x="465" y="428" text-anchor="middle" class="small">RX[1]</text><text x="575" y="428" text-anchor="middle" class="small">RX[2]</text><text x="685" y="428" text-anchor="middle" class="small">RX[3]</text><text x="795" y="428" text-anchor="middle" class="small">RX[4]</text>
-  <text x="905" y="428" text-anchor="middle" class="small">RX[5]</text><text x="1015" y="428" text-anchor="middle" class="small">RX[6]</text><text x="1125" y="428" text-anchor="middle" class="small">RX[7]</text><text x="1235" y="428" text-anchor="middle" class="small">RX[8]</text>
+<rect class="accent" x="760" y="390" width="105" height="65"/><rect class="accent" x="865" y="390" width="105" height="65"/><rect class="accent" x="970" y="390" width="105" height="65"/><rect class="accent" x="1075" y="390" width="105" height="65"/>
+<text x="812" y="431" text-anchor="middle" class="byte">A7</text><text x="917" y="431" text-anchor="middle" class="byte">5C</text><text x="1022" y="431" text-anchor="middle" class="byte">3F</text><text x="1127" y="431" text-anchor="middle" class="byte">19</text>
+<text x="812" y="485" text-anchor="middle" class="small">RX[0]</text><text x="917" y="485" text-anchor="middle" class="small">RX[1]</text><text x="1022" y="485" text-anchor="middle" class="small">RX[2]</text><text x="1127" y="485" text-anchor="middle" class="small">RX[3]</text>
 </g>
-<text x="575" y="462" text-anchor="middle" class="small">前五项不参与数据判断，不要假定为 00 或 FF</text>
-
-<path class="soft" d="M300 495H1290"/>
-<text x="40" y="535" font-size="20" font-weight="700">模型 B：应用 RX 只保存数据段</text>
-<text x="40" y="563" class="small">必须由驱动或接口文档明确约定</text>
-<text x="575" y="585" text-anchor="middle" class="small">前导仍在线上发生，但未放进这个应用缓冲区</text>
-<path class="accent" marker-end="url(#arrow)" d="M850 555V585"/>
-<g>
-  <rect x="850" y="600" width="110" height="70" fill="#fff1e5" stroke="#d95f02" stroke-width="3"/><rect x="960" y="600" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1070" y="600" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/><rect x="1180" y="600" width="110" height="70" fill="#fff8f1" stroke="#d95f02" stroke-width="2"/>
-  <text x="905" y="642" text-anchor="middle" class="label">A7</text><text x="1015" y="642" text-anchor="middle" class="label">5C</text><text x="1125" y="642" text-anchor="middle" class="label">3F</text><text x="1235" y="642" text-anchor="middle" class="label">19</text>
-  <text x="905" y="698" text-anchor="middle" class="small">RX[0]</text><text x="1015" y="698" text-anchor="middle" class="small">RX[1]</text><text x="1125" y="698" text-anchor="middle" class="small">RX[2]</text><text x="1235" y="698" text-anchor="middle" class="small">RX[3]</text>
-</g>
-<text x="700" y="742" text-anchor="middle" class="label">不变的是线上 40 拍前导；变化的是驱动把哪些字节交给应用</text>
-<text x="700" y="768" text-anchor="middle" class="tiny">“线上数据单独成段”本身不足以证明模型 B，必须继续查缓冲区约定</text>
+<text x="700" y="560" text-anchor="middle" font-size="21" font-weight="700">首数据位于 RX[0]；等长 9 字节 RX 模型才会把它放在 RX[5]</text>
+<text x="700" y="592" text-anchor="middle" class="small">索引差别来自接口保留哪些字节，不来自线上帧发生变化</text>
 </svg>

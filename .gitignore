@@ -26,3 +26,9 @@ Thumbs.db
 docs/07-应用层开发/_backup/
 
 tmp_skills/*
+
+# Local agent and review scratch data
+.tmp/
+.mktmp/
+.qoder-credits/
+.review/
