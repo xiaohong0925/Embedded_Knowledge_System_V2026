@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Controlled teaching fragment for Linux v6.6 on RK3568.
+ * Replace/disable any other child using SPI1 CS0 before applying it.
+ * This is a board DTS fragment, not a standalone DTS or an overlay with /plugin/.
+ */
+&spi1 {
+	status = "okay";
+
+	spi_frame_observer: spi-frame-observer@0 {
+		compatible = "kimi,spi-frame-observer";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+	};
+};

@@ -1,0 +1,92 @@
+{
+  "section": "B-B.4.3",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+  "main_question": "同样一笔 W25Q128JV Fast Read，Linux 如何从 DTS 创建 spi_device，经外设驱动、spi_message/spi_transfer、SPI Core 和 RK3568 控制器完成传输，并把结果或错误返回调用者？（0x0B 00 12 34 + 8 dummy + 4 字节数据；A7 5C 3F 19 仅为教学假设）",
+  "baseline": {
+    "reviewed_at": "2026-11-11",
+    "article_sha256": "2f73ad8178619495442fe9c715c83c295141a78f3b34828dd3f55366e99a2b54",
+    "agent_sha256": "909c5b20aeec4165b439323c88c60001de3061c774262dab79824f81579f35ac",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/章节复检与整篇重写SOP.md",
+      "docs/00-模板/B-B.3_I2C章级整改复盘与复用经验.md",
+      "docs/00-模板/扩展篇设计大纲_v1.md",
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "docs/00-模板/framework-lab-template/README.md"
+    ],
+    "source_snapshots": [
+      "help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "help-docs/kernel-src-v6.6/include_linux_spi_spi.h",
+      "help-docs/kernel-src-v6.6/drivers_spi_spi-rockchip.c",
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi"
+    ],
+    "assets": [
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi_frame_observer.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi-frame-observer.dts",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/Makefile",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-lab.html",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-lab.css",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-lab.js",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-fullcode.js",
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-fullcode.manifest.json",
+      "tools/check_spi_framework_lab.cjs",
+      "tools/test_spi_framework_lab_browser.cjs"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.3.3_I2C Linux驱动框架.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 依赖复核：正文原有首次定义和完整代码解释保持独立；新增实验室只使用同一笔 5+4 字节 Fast Read 和已建立的五类对象。步骤说明补充 queue_empty、must_async、-EINPROGRESS、SPI_TRANS_FAIL_NO_START、fallback_pio/PIO 的含义；DTS 片段、noqueue 模型条件、DMA 条件、假设数据和 -EIO 注入均标明边界。完整函数提供真实来源上下文，不把未讲解的寄存器实现另立为学习前提。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "AI 主线复核：正常场景 30 步依次沿 DTS、控制器注册、spi_device 创建与匹配、双段 message、spi_sync、Rockchip、actual_length=9、返回与释放推进；失败场景 24 步复用前 16 步，仅从首段模型注入 -EIO 处分岔，展示第二段不执行、CS 撤销、清理和负错误返回。spidev、spi-nor/MTD 产品实现及其他章节内容未进入实验室主线。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "AI 盲删复核：删除 iframe、源码地图、Mermaid、全部代码块、命令和预期日志后，正文仍独立给出设备创建与匹配、五对象关系、双段全双工语义、七步调用链、CS 正常与错误路径、同步/异步和封装边界。iframe 前明确说明它只把正文机制改成单步视图；实验室不独占任何正文必要结论。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "AI 跟随复核并由静态脚本辅助：正常与失败共 54 个步骤均能从片段切到完整来源，核对真实绝对行号、当前状态、返回值和解释；源码工作台可加载、复制和下载模块、DTS、Makefile。check_spi_framework_lab.cjs 实测通过 54 个片段原文与行号、52 个完整来源切换、16 份生成代码连续区间和 3 份教学文件检查。模块编译、上板和仪器验证仍未执行，不把可跟随性写成硬件功能通过。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-11 真实执行提取器 3 个标准库单元测试并通过；node --check 通过实验室及生成脚本；node tools/check_spi_framework_lab.cjs 通过 54 个步骤、52 个完整来源、16 份生成代码和资源检查。生成 of_register_spi_device 时使用 of_spi_parse_dt 到 of_register_spi_devices 的连续原文区间，以保留返回类型跨行函数，未修改共享提取器。git diff --check 无内容错误，仅有 LF/CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-11 最终真实执行，退出码 0，Documentation built in 30.41 seconds。输出包含 Material for MkDocs 上游公告以及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功，不表示教学代码、硬件功能或教学质量通过。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "2026-11-11 使用本机 Google Chrome 157.0.8103.38 和临时工作区 Playwright 对最终构建站点真实执行 tools/test_spi_framework_lab_browser.cjs。正文 iframe、target/rel、新标签保留正文均通过；正常 30 步和失败 24 步的每一步状态、解释、片段/完整来源、绝对高亮行均通过；上一步、下一步、复位、左右键、hash 刷新和错误 hash 回退通过；3 份教学文件加载、复制、下载通过，Chrome 将无扩展名 Makefile 的建议保存名显示为 Makefile.txt；制造源码 404 后出现可读错误与恢复说明；375/768/1024/1440 px 的机制和源码视图均无整体横向溢出，非步骤条控件在视口内。实验室自身无 JavaScript 异常、console.error 或资源 404。未进行像素截图审查，本记录是 DOM 交互与布局检查。正文全局脚本查询 https://api.github.com/repos/xiaohong0925/Embedded_Knowledge_System_V2026/releases/latest 返回 404 并产生 1 条 console.error，已单独记录，非本实验资源且未越界修改全站脚本。"
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "当前环境没有 make、aarch64-linux-gnu-gcc 和可用 KDIR，既有 make -n 实际返回 127（make: command not found），所以模块与 DTB 编译均为 not_verified；项目 help-docs 源码快照不是完整内核构建树。未在 RK3568 目标板加载模块，未取得真实 dmesg，未用逻辑分析仪或示波器测量 CS/SCLK/MOSI/MISO。实验室的 A7 5C 3F 19、总线事件和 -EIO 均为教学模型，严格构建、静态测试和浏览器通过不改变这些状态。"
+    }
+  },
+  "open_issues": [
+    "教学模块和 DTB 尚未在匹配 Linux v6.6 的完整内核构建树中编译；需在具备 make、目标内核 KDIR 和交叉工具链的环境补验。",
+    "目标板运行与仪器测量均未执行，状态为 not_verified；正文和实验室没有把预期日志、假设数据、模型注入或逻辑事件冒充实测。",
+    "浏览器已完成 DOM 交互与布局检查，未执行像素截图审查；正文全局 GitHub releases/latest 查询存在与本文无关的 404，未跨范围处理。",
+    "四种读者 pass 是 AI 语义检查记录；严格构建、浏览器通过和 record_state=current 均不代表最终教学质量通过，仍待用户人工复检。"
+  ],
+  "next_action": "提交用户人工复检 B-B.4.3 正文、SPI Framework Lab、Q&A 标题及直接配套资产；若后续修改正文或规则，重新执行静态检查、浏览器回归、严格构建和哈希校验；具备完整内核构建环境后再补模块/DTB 编译，具备受控 RK3568 硬件后再补上板与仪器验证。"
+}
