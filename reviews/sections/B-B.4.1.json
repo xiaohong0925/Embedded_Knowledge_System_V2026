@@ -1,11 +1,11 @@
 {
   "section": "B-B.4.1",
   "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
-  "main_question": "一个主机和 W25Q128JV 通过 CS、SCLK、MOSI、MISO 交换位流时，双方怎样在 Mode 0 下用 32 个时钟完成 9F 00 00 00 → ?? EF 40 18？CPOL、CPHA 和电气条件为什么决定采样结果？",
+  "main_question": "以 RK3568 为主机、Winbond W25Q128JV-IQ/JQ 为从机，双方怎样用 32 个时钟完成 9F 00 00 00 → ?? EF 40 18，读到这颗 Flash 的身份？采样边沿和电气条件为什么会影响结果？",
   "baseline": {
-    "reviewed_at": "2026-11-10",
-    "article_sha256": "f2552b1002cace0374a665119f67cb17f94ccb13fe277835e4ee0141600fa3ac",
-    "agent_sha256": "909c5b20aeec4165b439323c88c60001de3061c774262dab79824f81579f35ac",
+    "reviewed_at": "2026-11-12",
+    "article_sha256": "31f76227b8a12626505c0a5d9e0ed56f87b399d93b3756aa4b40c6d753e4b3d1",
+    "agent_sha256": "3959b7758c873aa19e472e337f76c46f00ab616f28f435b834da3a8ced01d9a0",
     "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
   },
   "scope": {
@@ -16,57 +16,72 @@
       "help-docs/W25Q128JV_RevF.utf8.txt"
     ],
     "assets": [
-      "docs/B. 总线协议/B. 低速外设接口/images/spi-four-wire.svg",
+      "docs/B. 总线协议/B. 低速外设接口/images/SPI一对多.png",
+      "docs/B. 总线协议/B. 低速外设接口/images/w25q128jv-0x9f.png",
+      "docs/B. 总线协议/B. 低速外设接口/images/W25Q128JV_RevF.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/spi-wiring.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-full-duplex.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-miso-drive.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-jedec-32-clocks.svg",
       "docs/B. 总线协议/B. 低速外设接口/images/spi-four-modes.svg",
       "docs/B. 总线协议/B. 低速外设接口/html/spi-mechanism-lab.html",
-      "docs/B. 总线协议/B. 低速外设接口/html/spi-timing-lab.html"
+      "docs/B. 总线协议/B. 低速外设接口/html/spi-timing-lab.html",
+      "tools/test_b_b_4_1_opening_browser.cjs",
+      "reviews/sections/B-B.4.1-browser/opening-desktop.png",
+      "reviews/sections/B-B.4.1-browser/opening-narrow.png"
     ],
     "related_sections": [
-      "docs/B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md"
+      "docs/B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md"
     ]
   },
   "reader_checks": {
     "dependency": {
       "status": "pass",
-      "evidence": "AI 语义复核：导读只给 Mode 0 的临时可操作含义；第 1 节先定义 CS、SCLK、MOSI、MISO 与占位字节，第 2 节再定义推挽、高阻、全双工和移位寄存器，第 3 节在进入 32 拍前完整定义 CPOL、CPHA、预载、更新、采样、建立和保持。新增动画只复用这些已定义概念，无 Linux 对象、驱动调用链、寄存器或新实例前置依赖。"
+      "evidence": "AI 针对新开头复核：先定义主从式、同步、全双工，再定义 CS、SCLK、MOSI、MISO 和读取时继续给钟，随后才引入 W25Q128JV、JEDEC ID、32 拍和 Mode 0。按 agent.md 新增的首次引入四项检查，是什么、用来做什么、主从协作、四线普通操作均齐全；CPOL/CPHA 仍在第 3 节正式展开，ACK 已移到基本通信模型之后。SIMO/SOMI 等图片别名在图前解释，不再让首次接触 SPI 的读者先猜方向。"
     },
     "mainline": {
       "status": "pass",
-      "evidence": "AI 语义复核：第 1 节给出 8+24=32 拍手工基线；第 2 节用第 9～16 拍的真实 00→EF 解释两向位流，并用三种状态解释 MISO 驱动权；第 3 节确定 Mode 0 边沿；第 4 节逐拍得到 ?? EF 40 18；第 5 节用同步播放头推广同一 CPOL×CPHA 规则；第 6 节只处理独立 CS；第 7 节解释频率与采样可信度。动画没有加入菊花链、软件实现或新事务支线。"
+      "evidence": "AI 主线复核：新顺序为基本模型→四线方向→普通通信→具体器件→32 拍问题，1.1 只负责把手册引脚映射到已建立的四线模型，1.2 保持原有完整手工基线。后续推挽、高阻、逐拍推演、四种模式和交互实验未改动，32 拍贯穿实例没有变化。"
     },
     "blind_delete": {
       "status": "pass",
-      "evidence": "AI 盲删复核：删除五幅 SVG、四行拍号表和四个 iframe 后，2.1 文字仍依次说明选中驱动、高阻和争用电流路径，2.2 仍给出 00 与 EF 的 8 位双向交换及字节边界；4.1～4.2 仍列出 9F、EF、40、18 的全部位序及拍号，4.3 仍有第 8 下降沿到第 9 上升沿的衔接；第 5 节四条文字独立给出四模式采样、更新和首位时机。三组可展开静态 fallback 也不是正文论证成立的必要条件。"
+      "evidence": "AI 盲删复核：删除开头两张图片后，主从、同步、全双工、四线职责、读取需继续给钟和 9F→EF 40 18 的关系仍由正文独立给出。第一张图只增加共享线与独立片选、别名核对，第二张图只核对手册 0x9F 时序，均不承担首次定义。"
     },
     "follow": {
       "status": "pass",
-      "evidence": "AI 跟随复核并用真实 Chrome 执行 50 项检查：shift 从预载到 8 拍得到 11101111，drive 依次进入 selected、high-z、contention，modes 第一边沿为 S/U/S/U、第二边沿为 U/S/U/S 且播放头同步；Timing Lab 自动完成 32 拍并得到 ????????、11101111、01000000、00011000，随后释放 CS 和停止播放。播放、暂停、速度、单步、复位、键盘及减少动态效果均符合正文。7.3 仍分别说明逻辑分析仪与示波器证据，未把动画写成实测。"
+      "evidence": "AI 跟随复核：首次接触 SPI 的读者可先复述主机拉低 CS、提供时钟、两个方向同时移位，再进入具体命令和拍号，不需要先懂 ACK、CPOL/CPHA 或 Linux。手册 PDF 已复制为本节站内资源并改为有效链接，原 help-docs 文件未改动。"
     }
   },
   "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-12 针对新开头检查：导读和 1.1～1.2 的修改范围内无小写 br、无空 alt、无 Mode 0=CPOL 0 的前置缩写堆叠；后续正文未纳入本次改动。git diff --check 无内容错误，仅有 LF/CRLF 提示。"
+    },
     "strict_build": {
       "status": "pass",
       "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
-      "result": "2026-11-10 在新增 spi-mechanism-lab.html、更新 Timing Lab 与正文嵌入后真实执行，退出码 0，Documentation built in 48.59 seconds。输出含 Material for MkDocs 上游公告及既有 slug/nav INFO，无 MkDocs WARNING。该结果只证明文档可严格构建，不表示教学质量通过。"
+      "result": "2026-11-12 首次构建发现既有手册链接越出 MkDocs 文档树，复制 PDF 到本节 images 并改为站内链接后，最终真实构建退出码 0，Documentation built in 38.07 seconds。输出包含 Material 上游公告和项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
     },
     "browser": {
       "status": "pass",
-      "result": "真实 Chrome headless + CDP 对构建后页面完成最终回归，50 项断言全部通过。shift 播放推进、暂停稳定、2× 完成得到 11101111，drive 三状态与争用路径，modes 四组 S/U 与同步播放头，Timing Lab 自动完成 32 拍、最终位流、CS 释放与自停均符合预期；手动操作停止播放、单步、复位、键盘、减少动态效果通过。四个懒加载 iframe 均初始化，五幅 SVG 尺寸有效，三组静态 fallback 可展开，新标签页通过聚焦后真实 Enter 输入打开。375/768/1024/1440 px 四个实验室均无页面横向溢出。本章资源与脚本错误 0；另有页面既有 GitHub releases API 404 和测试服务器 favicon 404，与本章资产无关。前两次新标签页检查因非用户手势点击和鼠标定位未观察到新目标，未记为通过；最终键盘激活实测通过。"
+      "result": "2026-11-12 使用本机 Google Chrome 与工作区临时 Playwright 真实执行 tools/test_b_b_4_1_opening_browser.cjs，服务和浏览器均在脚本结束时关闭。基本模型→四线→器件→Mode 0 的文本顺序通过；两张图片加载成功，手册 PDF 返回 200，既有 4 个 iframe 和 11 个 details 资源数量保持；1440/375 px 无页面级横向溢出，已回读两种宽度的开头截图。页面脚本异常 0，其他资源 404 为 0；项目全局 releases/latest API 仍有既有 404 和 1 条 console.error。本次为开头针对性回归，不继承旧 50 项交互检查作为本次新通过。"
     },
     "teaching_code": {
       "compile": "not_applicable",
       "run": "not_verified",
       "hardware": "not_verified",
       "instrument": "not_verified",
-      "note": "本篇按已确认边界无 C 教学模块、DTS、Makefile 或驱动代码，因此编译为 not_applicable。未在 RK3568 目标板运行；未用逻辑分析仪或示波器测量 25 MHz、1.28 μs、32 拍或 EF 40 18。动画均为机制推演，不是仪器实测。100 MHz 源时钟、30 MHz 目标上限与 25 MHz 结果仅为通用整数分频教学推导。"
+      "note": "本次只修改导读、四线引入和手册链接，没有新增 C 教学代码，编译为 not_applicable。未执行目标板运行、逻辑分析仪或示波器测量；动画仍为机制推演，不是仪器实测。"
     }
   },
   "open_issues": [
-    "目标板运行和仪器测量未执行，状态均为 not_verified。",
-    "四种读者、静态检查和浏览器结果均为 AI 检查记录；record_state=current 只表示哈希有效，最终教学质量仍以用户人工复检为准。"
+    "目标板运行与仪器测量均为 not_verified。",
+    "本次 T1 只做开头针对性浏览器回归，既有交互资产仅检查资源和数量，未重新执行旧 50 项交互行为测试。",
+    "四种读者与浏览器 pass 是 AI 检查记录；严格构建和 record_state=current 不代表人工教学验收通过，仍待用户确认新开头的实际阅读效果。"
   ],
-  "next_action": "提交用户人工复检；若后续修改正文、规则或交互资产，重新运行相应浏览器检查、严格构建与哈希校验。"
+  "next_action": "提交用户人工阅读新开头，确认主从、同步、全双工和四线模型是否已降低进入门槛；若后续修改正文或交互资产，按影响范围重跑相应浏览器检查、严格构建和哈希校验。"
 }

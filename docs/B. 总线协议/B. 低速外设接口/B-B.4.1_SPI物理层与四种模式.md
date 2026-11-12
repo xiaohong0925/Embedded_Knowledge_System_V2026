@@ -6,16 +6,28 @@
 
 ## <span class="blue"> 本节导读
 
-SPI（Serial Peripheral Interface，串行外设接口）用时钟和两条单向数据线逐位交换信息，用片选决定哪个从机参与本次交换。它没有统一的器件地址帧，也没有标准化的 ACK（Acknowledgement，接收确认）。线路发出了时钟，不等于从机已经正确理解数据；数据是什么意思，要由具体器件手册规定。
+SPI（Serial Peripheral Interface，串行外设接口）是一种用于板内短距离通信的主从式、同步、全双工串行接口，常用来连接控制器与 Flash（闪存）、传感器或显示屏。先把这三个基本词展开：
 
-![aa](images/SPI一对多.png)
+- **主从式**：主机选择要通信的从机并提供时钟，从机按这个节拍收发数据。
+- **同步**：数据传输有专门的时钟线，双方按约定的时钟边沿采样，不需要各自猜测每一位持续多久。
+- **全双工**：主机到从机、从机到主机各有一条数据线，两个方向可以在同一组时钟中同时传位。
 
-本节只回答一个主问题：**一个主机和 W25Q128JV 通过 CS、SCLK、MOSI、MISO 交换位流时，双方怎样在 Mode 0 下用 32 个时钟完成 `9F 00 00 00 → ?? EF 40 18`？CPOL、CPHA 和电气条件为什么决定采样结果？**
+再看标准四线 SPI 各自负责什么：
 
-贯穿实例固定为 RK3568 SPI1 + Winbond W25Q128JV-IQ/JQ，采用标准四线 SPI、8 位字长、MSB-first（Most Significant Bit first，最高有效位先发）和低有效 CS（Chip Select，片选）。<br>
-> Mode 0 在本例中表示：SCLK 空闲为低，上升沿采样，下降沿更新；即Mode 0 = CPOL 0 + CPHA 0。 第 3 节会由 CPOL、CPHA 重新推出这个结论，而不是把它当成需要死记的名称。
+- **CS（Chip Select，片选）**：决定哪颗从机参与本次通信。本例低有效，拉低选中，拉高释放。
+- **SCLK（Serial Clock，串行时钟）**：主机输出的节拍信号，每一位都在它的边沿附近更新或被采样。
+- **MOSI（Master Out Slave In，主机输出、从机输入）**：主机发往从机的数据线。
+- **MISO（Master In Slave Out，主机输入、从机输出）**：从机发往主机的数据线。
 
-`0x9F` 是 Read JEDEC ID 命令。JEDEC ID 是固态技术协会标准化的器件身份标识；本例预期收到一个制造商字节和两个器件标识字节。四个发送字节与四个接收位置如下：
+因此，一笔通信可以先概括为：**主机选中从机并连续提供时钟，MOSI 把主机一侧的位移给从机，MISO 同时把从机一侧的位移给主机。读取从机数据时，主机也要继续提供时钟，不能发完命令就停在那里等数据。**
+
+下图用于核对这些方向。多个从机可以共享 SCK、MOSI 和 MISO，但每个从机有独立的片选；图中 `SCK` 对应 `SCLK`，`SIMO` 对应 `MOSI`，`SOMI` 对应 `MISO`。不同资料会使用不同缩写，先确认方向，再对照名称。多从机的驱动权问题放到第 6 节展开。
+
+![一个主机通过共享时钟和两条数据线与三个独立片选的从机连接](images/SPI一对多.png)
+
+现在把这笔通信落到具体器件。本节只回答一个主问题：**以 RK3568 为主机、Winbond W25Q128JV-IQ/JQ 为从机，双方怎样用 32 个时钟完成 `9F 00 00 00 → ?? EF 40 18`，读到这颗 Flash 的身份？采样边沿和电气条件为什么会影响结果？**
+
+W25Q128JV 是一颗 SPI NOR Flash，可保存固件和数据。`0x9F` 是 Read JEDEC ID 命令，JEDEC ID 是器件按 JEDEC 标准返回的身份标识，本例包含一个制造商字节和两个器件标识字节。实例采用标准四线 SPI、8 位字长和 MSB-first（Most Significant Bit first，最高有效位先发），即每 8 拍组成一个字节，每个字节先传最高位。
 
 ```text
 MOSI：  9F   00   00   00
@@ -23,27 +35,28 @@ MISO：  ??   EF   40   18
 拍号：01～08 09～16 17～24 25～32
 ```
 
-`??` 表示命令阶段采回的位不参与身份判断，不表示它们必为 `00` 或 `FF`。`EF` 是 Winbond 制造商 ID，`40` 是 Memory Type，`18` 是 Capacity。**`EF 40 18` 只适用于本例 IQ/JQ 后缀；手册给 IM/JM 后缀列出的 Device ID 是 `7018h`，不能套用本例答案。**
+前 8 拍发送命令，后 24 拍主机继续提供时钟并接收三个身份字节。`??` 表示命令阶段采回的位不参与身份判断，不表示它们必为 `00` 或 `FF`。`EF` 是 Winbond 制造商 ID，`40` 是 Memory Type，`18` 是 Capacity。**`EF 40 18` 只适用于本例 IQ/JQ 后缀；手册给 IM/JM 后缀列出的 Device ID 是 `7018h`，不能套用本例答案。**
 
-![aa](images/w25q128jv-0x9f.png)
+本例先约定 SCLK 空闲为低、上升沿采样、下降沿更新，第 3 节会把这种约定命名为 Mode 0，并由 CPOL、CPHA 重新推导出来。SPI 没有统一的器件地址帧，也没有标准化的 ACK（Acknowledgement，接收确认）；线路发出了时钟，不等于从机已经正确理解数据，字节含义要由具体器件手册规定。
 
-本节只讲物理层与四种模式。<br>
-详细命令帧和 AC（Alternating Current，交流）时序预算归 B-B.4.2，Linux 设备配置与驱动实现归 B-B.4.3，spidev 工具排障归 B-B.4.4；这些后续内容都不是理解本篇 32 拍的前置条件。
+![W25Q128JV 手册中的 0x9F Read JEDEC ID 时序](images/w25q128jv-0x9f.png)
 
-[点击查看 W25Q128JV 数据手册](../../../help-docs/W25Q128JV_RevF.pdf)
+本节只讲物理层与四种模式。详细命令帧和 AC（Alternating Current，交流）时序预算归 B-B.4.2，Linux 设备配置与驱动实现归 B-B.4.3，spidev 工具排障归 B-B.4.4；这些后续内容都不是理解本篇 32 拍的前置条件。
+
+[点击查看 W25Q128JV 数据手册](images/W25Q128JV_RevF.pdf)
 
 ---
 
 ## <span class="blue"> 1. 四线连接与手工完整基线
 
-### 1.1 先分清四根线的方向
+### 1.1 把四根线落到实际器件引脚
 
-W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常用名称，就是 CS、MOSI、MISO、SCLK：
+前面的 CS、SCLK、MOSI、MISO 是主机侧常用名称。W25Q128JV 在手册中把相应引脚称为 `/CS`、`CLK`、`DI`、`DO`：
 
-- **SCLK（Serial Clock，串行时钟）**：主机输出的时钟，接 Flash 的 6 脚 `CLK`。它的边沿决定何时更新输出、何时采样输入。
-- **MOSI（Master Out Slave In，主机输出、从机输入）**：接 Flash 的 5 脚 `DI`，本例承载 `0x9F` 和后续三个占位字节。
-- **MISO（Master In Slave Out，主机输入、从机输出）**：接 Flash 的 2 脚 `DO`，本例承载三个身份字节。
-- **CS/SS（Chip Select/Slave Select，片选）**：接 Flash 的 1 脚 `/CS`。斜杠表示低有效：拉低选中，拉高释放。
+- 主机 CS 接 Flash 的 1 脚 `/CS`，拉低选中，拉高释放。
+- 主机 SCLK 接 Flash 的 6 脚 `CLK`，边沿决定何时更新输出、何时采样输入。
+- 主机 MOSI 接 Flash 的 5 脚 `DI`，本例承载 `0x9F` 和后续三个占位字节。
+- 主机 MISO 接 Flash 的 2 脚 `DO`，本例承载三个身份字节。
 
 下图用于核对方向、物理引脚和共同参考。先看左侧主机信号，再沿连线看到右侧 Flash 引脚，最后看两侧相同的 GND（Ground，地）符号。8 脚 VCC（电源）、3 脚 `/WP`（写保护）和 7 脚 `/HOLD`（暂停）也必须按手册与实际原理图处理，只是不进入本篇位流主线。
 
@@ -51,7 +64,7 @@ W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常�
 
 即使不看图，也可以按方向完成接线：主机 CS 接从机 `/CS`，主机时钟输出接从机 `CLK`，主机数据输出接从机 `DI`，从机 `DO` 接主机数据输入，双方 GND 相连。MOSI 与 MISO 不是两根可以按名字任意互换的对称线；接反后，主机命令根本到不了 Flash 的 DI。
 
-厂商也会使用 SDI/SDO（Serial Data Input/Output，串行数据输入/输出）、COPI/CIPO（Controller Out/Peripheral In、Controller In/Peripheral Out，控制器输出/外设输入、控制器输入/外设输出）等名称。先确认每一端方向，再对照缩写，不能只凭名称猜测。
+除了图中的 SIMO/SOMI，厂商也会使用 SDI/SDO（Serial Data Input/Output，串行数据输入/输出）、COPI/CIPO（Controller Out/Peripheral In、Controller In/Peripheral Out，控制器输出/外设输入、控制器输入/外设输出）等名称。先确认每一端方向，再对照缩写，不能只凭名称猜测。
 
 ### 1.2 不用任何软件术语，先排出一笔事务
 
@@ -65,6 +78,15 @@ W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常�
 
 这里的三个 `00` 称为**占位字节**。它们不是三条新命令，作用是让主机继续提供时钟，因为 Flash 只有收到时钟，才能逐位移出身份数据。
 
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-transaction-player.html"
+    title="开漏输出：拉低与放手交互演示"
+    loading="lazy"
+    style="width:100%;height:640px;border:0;"
+  ></iframe>
+</div>
+
 由此先得到一个不依赖任何图示的结论：**一笔读取不是“只发 8 拍命令，然后数据自动出现”，而是命令 8 拍加响应 24 拍，共 32 拍；MOSI 与 MISO 在每一个时钟里都同时存在。**
 
 ---
@@ -77,7 +99,7 @@ W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常�
 
 W25Q128JV 手册规定，`/CS` 为高时器件未被选中，DO 处于高阻；`/CS` 拉低后才接受指令。所以 CS 不只决定“是否解释命令”，也决定这颗 Flash 是否可以驱动共享 MISO。
 
-下面动画分三种状态阅读。第一步看一个有效推挽输出怎样主动驱动主机输入；第二步看未选中的从机怎样断开驱动；第三步沿橙色路径看两个从机一高一低同时驱动时，电流为什么会从电源穿过两个输出级流向地。可播放、暂停或单步切换，默认停在第一种状态；争用只作机制演示，不是上板试验步骤。
+<!-- 下面动画分三种状态阅读。第一步看一个有效推挽输出怎样主动驱动主机输入；第二步看未选中的从机怎样断开驱动；第三步沿橙色路径看两个从机一高一低同时驱动时，电流为什么会从电源穿过两个输出级流向地。可播放、暂停或单步切换，默认停在第一种状态；争用只作机制演示，不是上板试验步骤。
 
 <div class="interactive-demo">
   <iframe
@@ -87,13 +109,15 @@ W25Q128JV 手册规定，`/CS` 为高时器件未被选中，DO 处于高阻；`
     style="width:100%;height:650px;border:0;"
   ></iframe>
 </div>
+-->
+[在新标签页打开 MISO 驱动权动画](html/spi-mechanism-lab.html?view=drive){ target="_blank" rel="noopener" } 
 
-[在新标签页打开 MISO 驱动权动画](html/spi-mechanism-lab.html?view=drive){ target="_blank" rel="noopener" }
-
-<details class="static-fallback">
+<!-- <details class="static-fallback">
 <summary>展开静态图：推挽、高阻与两个从机争用 MISO</summary>
-<img src="../images/spi-miso-drive.svg" alt="推挽、高阻与两个从机争用 MISO">
-</details>
+
+</details> -->
+<!-- <img src="images/spi-miso-drive-static.svg" alt="推挽、高阻与两个从机争用 MISO"> -->
+[推挽、高阻与两个从机争用 MISO](images/spi-miso-drive-static.svg)
 
 两个推挽输出若同时把共享 MISO 分别拉向高、低电平，就会形成“电源 → 一个输出级 → MISO → 另一个输出级 → 地”的直通电流路径。结果不仅是电平和数据不可信，还可能使输出级过热或损坏。因此，未选中的从机能否释放 MISO，必须逐颗核对器件手册，不能用“SPI 通常如此”代替。
 
@@ -116,10 +140,11 @@ MOSI 与 MISO 是两条独立数据线，所以双方可以在同一组时钟中
 
 [在新标签页打开全双工逐位交换动画](html/spi-mechanism-lab.html?view=shift){ target="_blank" rel="noopener" }
 
-<details class="static-fallback">
-<summary>展开静态图：SPI 全双工移位</summary>
-<img src="../images/spi-full-duplex.svg" alt="SPI 全双工移位">
-</details>
+<!-- <details class="static-fallback"> -->
+<!-- <summary>展开静态图：SPI 全双工移位</summary> -->
+<!-- <img src="images/spi按位交换.png" alt="SPI 全双工移位"> -->
+<!-- </details> -->
+[SPI 全双工移位](images/spi按位交换.png)
 
 按 MSB-first，第 1 拍双方输出各自的 `b7`，第 2 拍输出 `b6`，直到第 8 拍输出 `b0`。8 个采样边沿后，主机原字节移入 Flash，Flash 原字节也移入主机。连续重复四组，就得到本例 32 拍。
 
@@ -142,6 +167,8 @@ CPHA（Clock Phase，时钟相位）回答：**接收器在一个周期的第几
 - **更新**：发送端在另一个边沿把下一位送到输出引脚。
 - **预载**：首位不等待某个更新边沿，而是在首次采样前就已经放到引脚上并保持稳定。
 
+![aa](images/spi-cpol.png)
+
 本例 Mode 0 是 CPOL=0、CPHA=0。由定义直接推出：空闲低，第一个边沿是上升沿，所以**上升沿采样、下降沿更新**。又因为第一个上升沿就要采样，双方的首位必须在它到来前预载，不能等上升沿到了才临时取出。
 
 接收端并非在理想边沿瞬间看一眼就必然可靠。**建立时间**要求数据在采样边沿前至少稳定多久，**保持时间**要求它在采样边沿后再保持稳定多久。更新与采样分开，为数据稳定留出时间；实际最小窗口仍以双方手册为准。
@@ -152,6 +179,8 @@ CPHA（Clock Phase，时钟相位）回答：**接收器在一个周期的第几
 
 ### 4.1 第 1～8 拍：Flash 收齐命令，主机不解释首字节
 
+![aa](images/spi-mode0-beats1-8-static.svg)
+
 `0x9F` 的二进制是 `10011111`。MSB-first 的 MOSI 位序因此是 `1、0、0、1、1、1、1、1`。
 
 CS 拉低后、第 1 个上升沿前，主机已经把 `b7=1` 预载到 MOSI。第 1 个上升沿，Flash 采样这个 `1`，主机也采样一次 MISO；第 1 个下降沿，主机把 MOSI 更新为 `b6=0`。第 2 个上升沿采样 `0`，随后的下降沿再更新为 `b5=0`。如此重复，第 8 个上升沿采样 `b0=1`，Flash 收齐 `10011111`，即 `0x9F`。
@@ -159,6 +188,8 @@ CS 拉低后、第 1 个上升沿前，主机已经把 `b7=1` 预载到 MOSI。�
 主机也在这 8 个上升沿采样了 8 个 MISO 位，但手册图 43a 把命令阶段的 DO 画为高阻，没有把它们定义为身份响应。因此首字节写成 `??`，不能把它固定译成 `00` 或 `FF`，更不能拿它判断器件身份。
 
 ### 4.2 第 9～32 拍：继续给钟，收齐三个身份字节
+
+![aa](images/spi-mode0-beats9-32-static.svg)
 
 第 8 个下降沿之后，Flash 准备 `0xEF` 的最高位。`0xEF=11101111`，所以第 9 个上升沿主机采到 `1`，随后各拍依次采到 `1、1、0、1、1、1、1`，第 16 个上升沿收齐 `EF`。
 
@@ -242,6 +273,18 @@ CS 释放只界定本次串行指令结束，不表示从机返回了 ACK，也�
 
 W25Q128JV 支持 Mode 0 和 Mode 3。两者都是上升沿采样 DI、下降沿更新 DO，差别是空闲电平以及首位预载还是首边沿更新。**Mode 1、Mode 2 在这里只用于理解通用机制，不能写成本例 Flash 的可用配置。**
 
+
+**SPI 是全人工约定的总线，模式在"设计时"就定死了，上电后没有任何握手过程。**<br>
+那么"选择模式"具体是谁在选?
+
+分两步看：
+
+**第一步：器件手册圈定范围。** 从机 datasheet 声明自己支持哪些模式。W25Q128JV 手册写的是支持 Mode 0 和 Mode 3——这是硅片内部采样逻辑决定的，用户改不了。
+
+**第二步：主机软件配置四选一。** 主机控制器（RK3568 SPI1）上有 CPOL、CPHA 两个配置位，驱动初始化时写进控制器寄存器（RK 上是 `SPI_CTRLR0` 里的 SCPOL/SCPH 位，具体由设备树或驱动代码决定）。写哪个值？**必须落在从机支持的集合里**。W25Q128JV 支持 {0, 3}，所以主机只能配 0 或 3；你文档里选 Mode 0，就是这个"主机配置值"落在从机支持范围内的一个具体选择。
+
+从机这边**永远收不到任何"模式通知"**。它没有配置寄存器告诉你"我工作在 Mode 0"，它只是被动地盯着 SCLK 边沿采样。所谓"双方约定 Mode 0"，准确说法是：**设计者和固件把主机配成了 Mode 0，而恰好这颗 Flash 能在 Mode 0 下正确工作**。约定发生在画图和写代码的时候，不在总线上。
+
 四种模式没有天然的性能优劣，主从双方必须使用器件要求的组合。模式不匹配可能采到旧位、相邻位、固定值或不确定电平，也可能让器件状态机收到错误命令，不能概括成“数据一定整体移一位”。
 
 ---
@@ -249,6 +292,8 @@ W25Q128JV 支持 Mode 0 和 Mode 3。两者都是上升沿采样 DI、下降沿�
 ## <span class="blue"> 6. 独立片选的多从机：共享线路，不共享驱动权
 
 常见多从机接法是让所有从机共享 SCLK、MOSI、MISO，再为每个从机分配独立 CS。N 个从机通常需要 N+3 根信号线。主机只拉低目标从机的 CS，其他 CS 保持无效。
+
+![aa](images/spi-multi-slave-cs-static.svg)
 
 一次完整交换可以按下面的顺序理解：
 
