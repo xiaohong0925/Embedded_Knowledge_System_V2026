@@ -8,9 +8,12 @@
 
 SPI（Serial Peripheral Interface，串行外设接口）用时钟和两条单向数据线逐位交换信息，用片选决定哪个从机参与本次交换。它没有统一的器件地址帧，也没有标准化的 ACK（Acknowledgement，接收确认）。线路发出了时钟，不等于从机已经正确理解数据；数据是什么意思，要由具体器件手册规定。
 
+![aa](images/SPI一对多.png)
+
 本节只回答一个主问题：**一个主机和 W25Q128JV 通过 CS、SCLK、MOSI、MISO 交换位流时，双方怎样在 Mode 0 下用 32 个时钟完成 `9F 00 00 00 → ?? EF 40 18`？CPOL、CPHA 和电气条件为什么决定采样结果？**
 
-贯穿实例固定为 RK3568 SPI1 + Winbond W25Q128JV-IQ/JQ，采用标准四线 SPI、8 位字长、MSB-first（Most Significant Bit first，最高有效位先发）和低有效 CS（Chip Select，片选）。Mode 0 在本例中表示：SCLK 空闲为低，上升沿采样，下降沿更新；第 3 节会由 CPOL、CPHA 重新推出这个结论，而不是把它当成需要死记的名称。
+贯穿实例固定为 RK3568 SPI1 + Winbond W25Q128JV-IQ/JQ，采用标准四线 SPI、8 位字长、MSB-first（Most Significant Bit first，最高有效位先发）和低有效 CS（Chip Select，片选）。<br>
+> Mode 0 在本例中表示：SCLK 空闲为低，上升沿采样，下降沿更新；即Mode 0 = CPOL 0 + CPHA 0。 第 3 节会由 CPOL、CPHA 重新推出这个结论，而不是把它当成需要死记的名称。
 
 `0x9F` 是 Read JEDEC ID 命令。JEDEC ID 是固态技术协会标准化的器件身份标识；本例预期收到一个制造商字节和两个器件标识字节。四个发送字节与四个接收位置如下：
 
@@ -22,7 +25,12 @@ MISO：  ??   EF   40   18
 
 `??` 表示命令阶段采回的位不参与身份判断，不表示它们必为 `00` 或 `FF`。`EF` 是 Winbond 制造商 ID，`40` 是 Memory Type，`18` 是 Capacity。**`EF 40 18` 只适用于本例 IQ/JQ 后缀；手册给 IM/JM 后缀列出的 Device ID 是 `7018h`，不能套用本例答案。**
 
-本节只讲物理层与四种模式。详细命令帧和 AC（Alternating Current，交流）时序预算归 B-B.4.2，Linux 设备配置与驱动实现归 B-B.4.3，spidev 工具排障归 B-B.4.4；这些后续内容都不是理解本篇 32 拍的前置条件。
+![aa](images/w25q128jv-0x9f.png)
+
+本节只讲物理层与四种模式。<br>
+详细命令帧和 AC（Alternating Current，交流）时序预算归 B-B.4.2，Linux 设备配置与驱动实现归 B-B.4.3，spidev 工具排障归 B-B.4.4；这些后续内容都不是理解本篇 32 拍的前置条件。
+
+[点击查看 W25Q128JV 数据手册](../../../help-docs/W25Q128JV_RevF.pdf)
 
 ---
 
@@ -39,7 +47,7 @@ W25Q128JV 的标准 SPI 使用 `/CS`、`DI`、`DO`、`CLK`。映射到主机常�
 
 下图用于核对方向、物理引脚和共同参考。先看左侧主机信号，再沿连线看到右侧 Flash 引脚，最后看两侧相同的 GND（Ground，地）符号。8 脚 VCC（电源）、3 脚 `/WP`（写保护）和 7 脚 `/HOLD`（暂停）也必须按手册与实际原理图处理，只是不进入本篇位流主线。
 
-![RK3568 SPI1 与 W25Q128JV 的四线连接和共地](images/spi-four-wire.svg)
+![RK3568 SPI1 与 W25Q128JV 的四线连接和共地](images/spi-wiring.svg)
 
 即使不看图，也可以按方向完成接线：主机 CS 接从机 `/CS`，主机时钟输出接从机 `CLK`，主机数据输出接从机 `DI`，从机 `DO` 接主机数据输入，双方 GND 相连。MOSI 与 MISO 不是两根可以按名字任意互换的对称线；接反后，主机命令根本到不了 Flash 的 DI。
 
