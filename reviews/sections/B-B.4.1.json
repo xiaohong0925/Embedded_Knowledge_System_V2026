@@ -4,7 +4,7 @@
   "main_question": "以 RK3568 为主机、Winbond W25Q128JV-IQ/JQ 为从机，双方怎样用 32 个时钟完成 9F 00 00 00 → ?? EF 40 18，读到这颗 Flash 的身份？采样边沿和电气条件为什么会影响结果？",
   "baseline": {
     "reviewed_at": "2026-11-12",
-    "article_sha256": "bc9505243164442e12e62d02206e1c8fc4a91ec32f38eb66a60bd12bfa094a4e",
+    "article_sha256": "8d091bbab66d7494a158eada57576bc5e794d5f20bc22da197ca892d90ec9f7c",
     "agent_sha256": "468bde57f45ba19639c34ecd1377121a144e3e7b5e1bdd9cbbca7e20683a485a",
     "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
   },
@@ -27,8 +27,10 @@
       "docs/B. 总线协议/B. 低速外设接口/html/spi-mechanism-lab.html",
       "docs/B. 总线协议/B. 低速外设接口/html/spi-timing-lab.html",
       "tools/test_b_b_4_1_opening_browser.cjs",
+      "tools/test_b_b_4_1_toc_browser.cjs",
       "reviews/sections/B-B.4.1-browser/opening-desktop.png",
-      "reviews/sections/B-B.4.1-browser/opening-narrow.png"
+      "reviews/sections/B-B.4.1-browser/opening-narrow.png",
+      "reviews/sections/B-B.4.1-browser/toc-narrow.png"
     ],
     "related_sections": [
       "docs/B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md",
@@ -64,11 +66,11 @@
     "strict_build": {
       "status": "pass",
       "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
-      "result": "2026-11-12 第 7 节调整后真实执行，退出码 0，Documentation built in 52.18 seconds。输出包含 Material 上游公告和项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
+      "result": "2026-11-12 标题压缩后真实执行，退出码 0，Documentation built in 55.43 seconds。输出包含 Material 上游公告和项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
     },
     "browser": {
-      "status": "not_verified",
-      "result": "本次仅修改第 7 节标题与文字承接，未针对用户复检后的完整页面重新执行浏览器检查。此前开头针对性回归只覆盖当时的开头，不能据此声明当前全页或既有交互资产已通过。"
+      "status": "pass",
+      "result": "2026-11-12 使用本机 Google Chrome 与工作区临时 Playwright 真实执行 tools/test_b_b_4_1_toc_browser.cjs，服务和浏览器均在脚本结束时关闭。375px 下实际展开目录抽屉和本篇二、三级目录，6 个短标题均可见，旧长标题不存在，无页面级横向溢出；已回读 toc-narrow.png。页面脚本异常 0，其他资源 404 为 0；项目全局 releases/latest API 仍有既有 404 和 1 条 console.error。本次为目录针对性回归，不据此声明其他交互资产已通过。"
     },
     "teaching_code": {
       "compile": "not_applicable",
