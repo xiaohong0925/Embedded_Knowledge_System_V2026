@@ -1,0 +1,85 @@
+{
+  "section": "B-B.4.5",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md",
+  "main_question": "在 RK3568 SPI1＋W25Q128JV-IQ/JQ 的受控环境中，怎样通过 spi-nor→MTD 完成器件识别、专用 scratch 分区烧写、读回校验和恢复，并理解框架怎样处理页边界与擦写忙状态？",
+  "baseline": {
+    "reviewed_at": "2026-11-11",
+    "article_sha256": "cf746930d610f3a571a381075aa1b920370067d8db86f4613ad0e6028585ce6d",
+    "agent_sha256": "5200eef9f4f876f5b415c99ef1a34457cd0a67bf01b941f6d6553f7962405c0d",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md"
+    ],
+    "source_snapshots": [
+      "help-docs/W25Q128JV_RevF.utf8.txt",
+      "help-docs/kernel-src-v6.6/drivers_mtd_spi-nor_core.c",
+      "help-docs/kernel-src-v6.6/drivers_mtd_spi-nor_winbond.c",
+      "help-docs/kernel-src-v6.6/drivers_mtd_spi-nor_sfdp.c",
+      "help-docs/kernel-src-v6.6/drivers_mtd_mtdchar.c",
+      "help-docs/mtd-utils_flashcp.c",
+      "help-docs/mtd-utils_mtd_debug.c",
+      "help-docs/mtd-utils_flash_erase.c"
+    ],
+    "assets": [
+      "tools/test_b_b_4_5_browser.cjs",
+      "reviews/sections/B-B.4.5-browser/wiring-desktop.png",
+      "reviews/sections/B-B.4.5-browser/address-desktop.png",
+      "reviews/sections/B-B.4.5-browser/wiring-narrow.png",
+      "reviews/sections/B-B.4.5-browser/address-narrow.png"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 依赖复核：NOR Flash、MTD、JEDEC ID、SFDP、BUSY/WIP 等就地定义；SPI 帧、DTB 构建和 spidev 分别准确指向 B-B.4.2、B-B.4.3、B-B.4.4。JEDEC/SFDP 识别、MTD 注册、字符接口、页切分和 mtd-utils 返回语义均沿同一产品路径解释，不再要求读者凭经验拼接。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "AI 主线复核：全文固定 IQ/JQ、1 MHz、末尾 1 MiB scratch 和 4 KiB 测试文件，按实验边界、手册约束、接线与分区、识别、备份、正常烧写、框架机制、受控 AA→55 观察、恢复复测推进。uboot、kernel、rootfs 不参与烧写，spidev 不再与产品绑定争夺主线。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "AI 盲删复核：删除两幅 SVG、代码块、命令输出和速查表后，正文仍独立给出安全范围、识别链、备份与校验、页边界、位与结果和恢复路径。图示收益比较已留痕：接线图降低方向和共同地协调成本，地址图同时降低 scratch 定位与页边界成本；AA&55 只用文字等式，不保留重复位图。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "AI 跟随复核：识别、备份、测试文件、正常烧写、异常观察和恢复均有前置条件、参数、完整预期输出、退出状态、字段解释和失败停止条件。比较均使用同长文件与 cmp，不再有 zImage 对 4096 字节的 MD5 错误。测试文件改为先生成全零再转换，避免 dd|tr 掩盖上游失败；本地实际执行该生成、od、wc 和 cmp 流程通过。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-11 使用项目指定 Python 执行最终断言：代码围栏成对、7 个 Q&A、两幅 SVG 均可被 XML 解析、窄屏 min-width 和滚动容器存在，zImage/md5sum/w25q_id/Trade-off/待补图均不存在。分区偏移与长度连续且合计 16 MiB。node --check 通过浏览器脚本；git diff --check 无内容错误，仅有 LF/CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-11 最终真实执行，退出码 0，Documentation built in 53.68 seconds。输出包含 Material for MkDocs 上游公告和项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功，不表示目标功能或人工教学质量通过。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "2026-11-11 使用本机 Google Chrome 与工作区内 Playwright 真实执行 tools/test_b_b_4_5_browser.cjs，临时 HTTP 服务、浏览器均在脚本结束时关闭。正文与两幅 SVG 加载成功，7 个 Q&A 均可展开和收起；1440/1024/768/375 px 无页面级横向溢出，两图保持至少 700px 并可在各自容器内滚动到最右端。已回读桌面和窄屏截图，修正地址标签重叠和过度缩小后复验通过。页面脚本异常 0，其他资源 404 为 0；项目全局 releases/latest API 返回 404 并产生 1 条 console.error，单独记录，未越界修改全站脚本。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇没有新增需要编译的 C 示例，故教学代码编译为 not_applicable。教学 DTS/DTB 构建和 mtd-utils 目标版本构建均为 not_verified。未在 RK3568 目标板执行识别、备份、烧写、回读、恢复或仪器测量。只有本地测试文件生成、od、wc 和 cmp 已实际执行通过；目标板全部输出仍为源码推演。"
+    }
+  },
+  "open_issues": [
+    "教学 DTS/DTB 构建、mtd-utils 目标版本构建、目标板识别与烧写恢复、仪器测量均为 not_verified；不得把预期输出写成实测。",
+    "四种读者与浏览器 pass 是 AI 检查记录；严格构建、record_state=current 均不代表人工教学验收通过，仍待项目所有者连续阅读确认。",
+    "浏览器检查记录项目全局 releases/latest API 的 404 和对应 console.error；该问题不属于本节，未跨范围处理。"
+  ],
+  "next_action": "提交用户人工复检 B-B.4.5 正文、两幅 SVG 和恢复操作链；后续修改正文或规则时重跑四种读者、静态检查、浏览器回归、严格构建和哈希校验；具备受控 RK3568 硬件与匹配构建环境后，再补 DTB、目标烧写恢复和仪器验证。"
+}

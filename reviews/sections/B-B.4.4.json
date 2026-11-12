@@ -1,0 +1,83 @@
+{
+  "section": "B-B.4.4",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md",
+  "main_question": "在 RK3568 SPI1 与 W25Q128JV-IQ/JQ 的受控实验环境中，怎样先完成一笔已知答案的 JEDEC ID 读取，再根据软件返回、回环、数字帧和模拟波形逐层定位异常，并把证据用于速率和接口选择？",
+  "baseline": {
+    "reviewed_at": "2026-11-11",
+    "article_sha256": "7b357746c0c29794eda500c48b8988e68bdb8c9a7177644a71245a47b8880ecf",
+    "agent_sha256": "cb3f57572a19705f9a0f06a6687dd5dff90876e558d93b7ae499d912beb10e7b",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md"
+    ],
+    "source_snapshots": [
+      "help-docs/kernel-src-v6.6/tools_spi_spidev_test.c",
+      "help-docs/kernel-src-v6.6/drivers_spi_spidev.c",
+      "help-docs/kernel-src-v6.6/Documentation_spi_spidev.rst",
+      "help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "help-docs/kernel-src-v6.6/drivers_spi_spi-rockchip.c",
+      "help-docs/kernel-src-v6.6/include_uapi_linux_spi_spi.h",
+      "help-docs/kernel-src-v6.6/include_uapi_linux_spi_spidev.h",
+      "help-docs/W25Q128JV_RevF.utf8.txt",
+      "help-docs/UM10204.txt"
+    ],
+    "assets": [],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.3.1_I2C物理层与电气特性.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.3.2_I2C协议层与帧格式.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 依赖复核：首次出现的 spidev、Flash、spi-nor、sysfs、UAPI、TX/RX 与索引、NACK、DO、pinctrl、dummy、tVSL、QSPI/OSPI 和 BUSY 均就地解释；CPOL/CPHA、MOSI/MISO、帧分段和 AC 预算明确承接 B-B.4.1～B-B.4.2，DTS、设备创建与驱动匹配准确指向 B-B.4.3，产品接入和写路径指向 B-B.4.5。未把其他篇目的完整机制重新堆入本篇。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "AI 主线复核：全文只跟随 Mode 0、8 位、MSB-first 的 9F 00 00 00 → ?? EF 40 18 事务，依次完成正常基线、内部回环、外部短接、症状机制、数字与模拟证据、恢复复测和选型应用。选型不再与调试争夺主线；B-B.4.5 所需的三条纪律明确为单变量、证据边界、恢复复测。"
+    },
+    "blind_delete": {
+      "status": "stale",
+      "evidence": "原 AI 盲删复核：删除全部代码块、命令输出和速查表后，正文仍独立给出前置条件、正常身份判据、回环覆盖范围、全 00/全 FF/错位/位序/降速的候选机制、仪器分工、恢复路径和选型依据。2026-11-11 agent.md 新增图示收益比较与留痕要求；原记录只证明无图时正文完整，未比较正常读取／内部回环／外部短接候选图的增量收益，因此原无图结论在新规则下过期，需重新评估。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "AI 跟随复核：绑定检查、1 MHz 正常读取、内部回环和 100 kHz 对照均给出运行前提、参数、完整预期输出、退出状态和字段解释；普通 -p 不自动比较、内部回环自动比较、失败 abort、短正返回未打印等工具边界均明示。外部短接包含断电、隔离、短接点证据范围、拆除和正常 ID 复测。所有输出均标为源码推演而非实测。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-11 使用项目指定 Python 真实执行最终静态断言并通过：代码围栏成对、8 个 Q&A、无独立下一步/Trade-off/待补图，4 行 TX/RX 样本均为 32 个显示列且含 28 个填充项，SPI_LOOP=0x20、100 kHz 输出和三条跨节纪律存在。git diff --check 无内容错误，仅有 LF/CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-11 最终真实执行，退出码 0，Documentation built in 51.85 seconds。输出包含 Material for MkDocs 上游公告以及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功，不表示工具编译、目标功能、硬件测量或人工教学质量通过。"
+    },
+    "browser": {
+      "status": "not_applicable",
+      "result": "本篇无图片、iframe 或交互控件，不需要专项交互浏览器检查；未启动浏览器，未执行窄屏检查，窄屏状态为 not_verified。生成 HTML 仅做静态存在与 Q&A 数量检查，不冒充浏览器交互验收。"
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "当前环境 command -v gcc 和 command -v aarch64-linux-gnu-gcc 均无输出，/usr/include/linux/spi/spidev.h 不存在，因此未编译 v6.6 spidev_test。未在 RK3568 目标板执行命令，未取得真实退出状态或 EF 40 18，未进行外部短接、逻辑分析仪抓取、示波器测量或长期压测。所有输出和波形判据仅经源码或文档核验。"
+    }
+  },
+  "open_issues": [
+    "agent.md 已新增图示收益比较与留痕要求；本节原无图决策未执行候选比较，blind_delete 已标为 stale，需重新评估正常读取／内部回环／外部短接证据覆盖图。",
+    "spidev_test 编译、目标板运行、真实器件 ID、外部短接、逻辑分析仪、示波器和长期压测均为 not_verified，需在具备兼容构建环境和受控硬件后补验。",
+    "未执行浏览器窄屏检查；本篇没有交互资产，该缺项不影响当前静态正文判断，但不得写成窄屏已经通过。",
+    "四种读者检查是 AI 语义检查记录；严格构建和 record_state=current 均不代表人工教学验收通过，仍待项目所有者连续阅读确认。"
+  ],
+  "next_action": "先按 agent.md 新规则比较 B-B.4.4 的纯文字与候选图示方案，确定并实施证据覆盖图取舍，再重跑四种读者检查、浏览器检查、严格构建和哈希校验；随后提交用户人工复检。具备兼容编译环境与受控 RK3568 硬件后，再补工具编译、目标运行和仪器测量。"
+}
