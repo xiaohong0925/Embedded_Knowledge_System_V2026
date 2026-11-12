@@ -4,7 +4,7 @@
   "main_question": "以 RK3568 为主机、Winbond W25Q128JV-IQ/JQ 为从机，双方怎样用 32 个时钟完成 9F 00 00 00 → ?? EF 40 18，读到这颗 Flash 的身份？采样边沿和电气条件为什么会影响结果？",
   "baseline": {
     "reviewed_at": "2026-11-12",
-    "article_sha256": "e80b2865deca180138ce2efa8a44fed27bdd029715a321783c1163bf0e09cc59",
+    "article_sha256": "bc9505243164442e12e62d02206e1c8fc4a91ec32f38eb66a60bd12bfa094a4e",
     "agent_sha256": "468bde57f45ba19639c34ecd1377121a144e3e7b5e1bdd9cbbca7e20683a485a",
     "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
   },
