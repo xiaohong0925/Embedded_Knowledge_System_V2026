@@ -1,0 +1,82 @@
+{
+  "section": "B-B.5.4",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md",
+  "main_question": "面对无输出、乱码、丢字节或数据被修改，怎样用正常基线、软件证据、受控回环和仪器逐层缩小故障域？",
+  "baseline": {
+    "reviewed_at": "2026-11-13",
+    "article_sha256": "2422cca83dff7238076bfcded367bd322bf873bc8ab750eddb7f00292b6b89bd",
+    "agent_sha256": "64bdb189645483fcac89be43fdde5cf947de3eb9c691e738cf7918525110f595",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md"
+    ],
+    "source_snapshots": [
+      "help-docs/uart-b-b-5-1/NEO-6_DataSheet_GPS.G6-HW-09005.utf8.txt",
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_port.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_serial_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_n_tty.c"
+    ],
+    "assets": [
+      "mkdocs.yml",
+      "docs/B. 总线协议/B. 低速外设接口/README.md",
+      "reviews/legacy/B-B.5.5_GPS旧稿待重写.md"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿连续阅读后检查：正常基线、故障域、breakout、getty、gpsd、UBX、CR/LF、sysfs、strace 和各命令选项均在首次出现处解释或给出准确前置归属；UART 帧、8250、N_TTY、serdev、VMIN／VTIME 等只最小回顾并指向 B-B.5.2／B-B.5.3，完整 C 配置和 NMEA 解析明确移交 B-B.5.5。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文按正常 GPS 接收基线→节点／配置／系统调用／计数器→独立外部回环→仪器证据→四类症状收敛→恢复 GPS 与原配置复测推进。正常通信与七字节回环明确为两个实验，没有将回环或仪器结果冒充 GPS 实测，也没有展开 B-B.5.5～B-B.5.7 的内容。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "移除内联 SVG、两张表、命令块和输出后，正文仍完整说明正常基线的前提、各类证据的证明边界、回环隔离范围、仪器分工和恢复判据。SVG 只协调观察位置，表格只汇总正文已经解释的返回与计数器，不承担独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可按命令完成节点核对、termios 保存与读回、strace＋od 限时采集、计数器前后快照、七字节外部回环和最终恢复。每组操作均给出前提、输出文件、退出状态、结果解释及不能推出的结论；动态目标输出未伪造，普通主机仅实际验证七字节文件的 od 内容。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-13 一次性确定性检查通过：新正文与旧稿迁移位置、mkdocs.yml 与 README 导航、单幅 SVG XML 解析、8 组 Q&A、两处 strace -f、回环前后计数器、七字节输入、诚实性标记和 v6.6 源码锚点均正确。git diff --check 无内容错误，只有项目既有 LF／CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-13 真实执行，退出码 0，Documentation built in 53.71 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
+    },
+    "browser": {
+      "status": "not_verified",
+      "result": "not_verified（待统一桌面验收）。本轮未执行浏览器、完整交互或窄屏检查；正文只有静态内联 SVG 和 Q&A，没有新增交互页面。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇无 C 教学代码，编译为 not_applicable。普通主机已实际确认七字节文件的 od 输出为 24 0d 0a 11 13 80 55；本机 strace 不是 Linux 目标实现，未作为串口验证。未在 RK3568 上执行设备节点、stty、strace、计数器、外部回环或恢复复测，未执行逻辑分析仪或示波器测量，以上均为 not_verified。"
+    }
+  },
+  "open_issues": [
+    "实际板级 DTS、UART4 连接器与测试点、当前 NEO-6M breakout 配置和正常接收输出仍未取得，/dev/ttyS4 与 9600、8N1 保持教学配置口径。",
+    "目标系统的 stty、od、timeout、dd、strace 实现与版本、procfs 和权限条件仍需上板确认，正文中的动态输出没有被伪造成实录。",
+    "外部回环、恢复复测、目标运行和仪器测量均为 not_verified；后续必须用真实命令输出、计数器快照和仪器记录闭环。",
+    "浏览器登记 not_verified（待统一桌面验收），没有沿用 B-B.5.2 的旧浏览器证据。",
+    "B-B.5.3 按用户最新决定暂未独立复检，本篇不将其写成已复检或人工通过；本篇四种读者检查和 current 同样不代表人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.4《UART 调试与分层验证》，重点判断正常基线、证据覆盖图、计数器与返回值的边界、外部回环和恢复复测是否易于跟随。用户提出修改时按影响面重跑检查；B-B.5.3 保持暂未独立复检，未经用户明确继续不得提前处理 B-B.5.5～B-B.5.7。"
+}

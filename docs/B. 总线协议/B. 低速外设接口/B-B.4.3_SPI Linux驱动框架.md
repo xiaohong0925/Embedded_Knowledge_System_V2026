@@ -66,6 +66,21 @@ B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍�
 
 这里的源码地图不是另一条学习主线。后文每次放大其中一个区间，都要回到同一笔 5＋4 字节读取，确认它处于全路的哪一步。
 
+SPI Framework Lab 把同一笔读取拆成可单步的代码位置和对象状态：可以先跟完 DTS 建链、双段提交、两段计数与释放，再切换“模型注入首段 `-EIO`”，观察第二段为何不执行、CS 何时撤销、负错误怎样穿过同步调用和 probe。<br>
+每一步都能在片段与完整函数间切换，源码工作台提供正文使用的三份教学文件。
+
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-framework-lab.html"
+    title="B-B.4.3 SPI Framework Lab"
+    loading="lazy"
+    style="width:100%;height:960px;border:0;"
+  ></iframe>
+</div>
+
+[在新窗口打开 SPI Framework Lab](./html/spi-framework-lab.html){: target="_blank" rel="noopener noreferrer" }。
+
+
 ---
 
 ## <span class="blue"> 从控制器节点到外设 probe
@@ -74,8 +89,6 @@ B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍�
 
 RK3568 的 SoC 级 DTSI 已经给出 SPI1 的硬件事实。<br>
 DTSI 是被板级 DTS 包含的设备树源文件，用来复用同一颗 SoC 的公共描述；板级 DTS 再记录某块板实际启用了哪些控制器和接入了哪些器件。
-
-[`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 中的关键片段是：
 
 [`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 中的关键片段是：
 
@@ -123,36 +136,67 @@ Rockchip 驱动进入 `rockchip_spi_probe()` 后，用 `spi_alloc_host()` 创建
 
 ### 教学 DTS 只改变匹配对象，不改变器件协议
 
-为了观察 `spi_driver` 的匹配和传输过程，本篇使用一个只发起 Fast Read 的教学驱动。配套文件 [`spi-frame-observer.dts`](code/B-B.4.3/spi-frame-observer.dts){: data-code-viewer="true" data-code-title="spi-frame-observer.dts" data-code-path="本篇教学配套 · code/B-B.4.3/spi-frame-observer.dts"} 完整内容如下：
+为了观察 `spi_driver` 的匹配和传输过程，本篇使用一个只发起 Fast Read 的教学驱动。<br>
+配套文件 [`spi-frame-observer.dts`](code/B-B.4.3/spi-frame-observer.dts){: data-code-viewer="true" data-code-title="spi-frame-observer.dts" data-code-path="本篇教学配套 · code/B-B.4.3/spi-frame-observer.dts"} 完整内容如下：
 
 ```dts
 // 板级 DTS 片段；不是可独立编译的完整 DTS，也不是带 /plugin/ 的 overlay。
 &spi1 {
+    // `&spi1` 引用 SoC 文件中已有的节点，板级片段将状态改为 `okay`。
     status = "okay";
 
     spi_frame_observer: spi-frame-observer@0 {
         compatible = "kimi,spi-frame-observer";
-        reg = <0>;
-        spi-max-frequency = <1000000>;
+        reg = <0>; // `reg = <0>` 选择 CS0，不是 I2C 那样的总线地址。
+        spi-max-frequency = <1000000>; // 该板级外设允许使用的上限，1 MHz 只是受控教学配置，
     };
 };
 ```
 
-`&spi1` 引用 SoC 文件中已有的节点，板级片段将状态改为 `okay`。`reg = <0>` 选择 CS0，不是 I2C 那样的总线地址。`spi-max-frequency` 是该板级外设允许使用的上限，1 MHz 只是受控教学配置，不是 W25Q128JV 的最高速率，也不是实测推荐值。节点不写 `spi-cpol`、`spi-cpha`、`spi-lsb-first` 和 `spi-cs-high`，对应 Mode 0、MSB-first、低有效 CS 的默认设置。
+节点不写 `spi-cpol`、`spi-cpha`、`spi-lsb-first` 和 `spi-cs-high`，对应 Mode 0、MSB-first、低有效 CS 的默认设置。
 
-pinctrl 沿用 [`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 的 SPI1 m0 组合。实际板卡必须确认原理图确实接到这组引脚；若板级设计使用其他复用组，应修改板级 pinctrl，而不是保留这里的默认假设。
+pinctrl 沿用 [`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 的 SPI1 m0 组合。<br>
+实际板卡必须确认原理图确实接到这组引脚；若板级设计使用其他复用组，应修改板级 pinctrl，而不是保留这里的默认假设。
 
-> 🔴 教学节点和正式 `jedec,spi-nor` 节点不能同时占用 SPI1 CS0。做本实验时，应替换或禁用同片选上的其他子节点，并确认没有第二个驱动绑定它。教学模块只读不写，但错误绑定仍会让对象归属和日志判断失去意义。
+```c
+// drivers/spi/spi.c · of_register_spi_devices()（v6.6 节选，错误日志从略）
+static void of_register_spi_devices(struct spi_controller *ctlr)
+{
+    struct spi_device *spi;
+    struct device_node *nc;
 
-Core 在 `spi_register_controller()` 中调用 `of_register_spi_devices()`。后者遍历可用子节点，对每个节点执行三个关键动作：
+    if (!ctlr->dev.of_node)
+        return;
+
+    // 只扫"可用"子节点：status 为 disabled 的不会进来
+    for_each_available_child_of_node(ctlr->dev.of_node, nc) {
+        // 动作 1：分配 spi_device，初始挂到 ctlr 下
+        spi = spi_alloc_device(ctlr);
+        if (!spi)
+            continue;
+
+        // 动作 2：解析 DT 属性；失败说明节点本身不合法（比如缺 reg）
+        rc = of_spi_parse_dt(ctlr, spi, nc);
+        if (rc) {
+            spi_dev_put(spi);
+            continue;
+        }
+
+        // 动作 3：注册设备；spi_add_device() 内部会走 spi_setup()
+        rc = spi_add_device(spi);
+        if (rc < 0)
+            spi_dev_put(spi);
+    }
+}
+```
+Core 在 `spi_register_controller()` 中调用 `of_register_spi_devices()`。<br>
+后者遍历可用子节点，对每个节点执行三个关键动作：
 
 1. `spi_alloc_device()` 分配 `spi_device`。
 2. `of_spi_parse_dt()` 读取布尔模式属性、`reg` 和 `spi-max-frequency`，分别写入模式、片选和速度字段。
 3. `spi_add_device()` 注册设备。注册阶段的初始设置会经过 `spi_setup()`；未显式设置的字长默认为 8 位，速度还会受控制器上限约束。
 
 因此，外设协议驱动通常不需要在每次 probe 中机械调用一次 `spi_setup()`。只有驱动要修改字长、模式或速度等设备设置时，才需要理解并再次应用相应配置；不能把“存在这个 API”误读成“所有驱动必须重复调用”。
-
-> `spi_device`：挂在某个控制器和片选上的从设备对象。本例的 `spi1.0` 保存控制器指针、CS0、1 MHz 上限、Mode 0 和 8 位字长，并携带设备树节点信息。
 
 ### compatible 把设备对象和协议驱动接起来
 
@@ -342,19 +386,6 @@ MODULE_LICENSE("GPL");
 `cs_change` 需要按位置解释：在非末段设置为 1，Core 会在段间短暂撤销再恢复选中；在末段设置为 1，默认路径把 `keep_cs` 置为真，表示可以让设备保持选中到后续操作。因此，“message 结束 CS 必定拉高”是错误概括。只有器件手册明确要求时才设置该字段；普通 Fast Read 的两段保持默认零值。
 
 同步接口的便利有明确代价。`spi_sync()` 可以睡眠，并且源码没有为等待设置超时，不能用于不能睡眠的上下文。`spi_async()` 则要求提交者设置完成回调，并保持 message、transfer 和缓冲区直到回调结束。`spi_async()` 返回 0 只表示请求已被接受，不表示硬件已经完成；完成回调里的 `message->status` 才给出最终状态。v6.6 只承诺回调在**不能睡眠的上下文**运行，不能简单等同为硬中断上下文，也不能在回调中调用可能睡眠的函数。
-
-SPI Framework Lab 把同一笔读取拆成可单步的代码位置和对象状态：可以先跟完 DTS 建链、双段提交、两段计数与释放，再切换“模型注入首段 `-EIO`”，观察第二段为何不执行、CS 何时撤销、负错误怎样穿过同步调用和 probe。每一步都能在片段与完整函数间切换，源码工作台提供正文使用的三份教学文件。**页面中的总线事件、假设数据和错误注入都是逻辑模型，不是实测波形或 dmesg；正文不依赖实验室也能独立成立。**
-
-<div class="interactive-demo">
-  <iframe
-    src="../html/spi-framework-lab.html"
-    title="B-B.4.3 SPI Framework Lab"
-    loading="lazy"
-    style="width:100%;height:960px;border:0;"
-  ></iframe>
-</div>
-
-[在新窗口打开 SPI Framework Lab](./html/spi-framework-lab.html){: target="_blank" rel="noopener noreferrer" }。
 
 ---
 
