@@ -1,0 +1,90 @@
+{
+  "section": "B-B.5.1",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md",
+  "main_question": "NEO-6M 与 RK3568 UART4 为什么能够通过 TX／RX／GND 交换数据，软件人员怎样判断这条链路在电气上是否连接正确，以及什么时候必须增加收发器？",
+  "baseline": {
+    "reviewed_at": "2026-11-13",
+    "article_sha256": "babdb6e4b07e829f336f3ef0defe7f3dfe38c1228718cd91c1097ecd20ba87d1",
+    "agent_sha256": "468bde57f45ba19639c34ecd1377121a144e3e7b5e1bdd9cbbca7e20683a485a",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "docs/00-模板/B扩展_重构后完整目录_v4.md"
+    ],
+    "source_snapshots": [
+      "help-docs/uart-b-b-5-1/NEO-6_DataSheet_GPS.G6-HW-09005.utf8.txt",
+      "help-docs/uart-b-b-5-1/LEA-NEO-MAX-6_HIM_UBX-14054794.utf8.txt",
+      "help-docs/uart-b-b-5-1/RK3568_datasheet_V2.4.utf8.txt",
+      "help-docs/uart-b-b-5-1/MAX3232_TI.utf8.txt",
+      "help-docs/uart-b-b-5-1/SP3485_MaxLinear.utf8.txt",
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi"
+    ],
+    "assets": [
+      "docs/B. 总线协议/B. 低速外设接口/images/NEO-6_DataSheet_GPS.G6-HW-09005.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/LEA-NEO-MAX-6_HIM_UBX-14054794.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/RK3568_datasheet_V2.4.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/MAX3232_TI.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/SP3485_MaxLinear.pdf",
+      "reviews/sections/B-B.5.1-browser/opening-desktop.png",
+      "reviews/sections/B-B.5.1-browser/wiring-desktop.png",
+      "reviews/sections/B-B.5.1-browser/wiring-dark.png",
+      "tools/render_b_b_5_1_svg_preview.py",
+      "tools/extract_uart_b_b_5_1_evidence.py"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART Linux驱动与调试.md",
+      "docs/01-系统启动与运行/第1章 认识你的开发板/1.4.1_必备硬件工具.md",
+      "docs/01-系统启动与运行/第1章 认识你的开发板/1.4.2_PC端软件环境.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿独立连续阅读后检查：UART 先给是什么、用途、收发双方和 TX／RX／GND，再进入主实例。GNSS、IO、SoC、BGA、TTL、LDO、DTS、USB、收发器、电荷泵、RO／DI／DE／RE 及 VOL／VOH／VIL／VIH 均在首次使用处解释。RS-232 与 RS-485 先分别介绍再比较，不要求读者预先理解帧、波特率、TTY 或 NMEA 解析。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文只跟随 NEO-6M TxD1→RK3568 UART4_RX_M0：器件与责任边界→交叉接线和共地→门限与耐压→pinctrl 边界→USB 转串口→RS-232／RS-485 收发器→文档与仪器验证。帧、采样、波特率、TTY、完整排障和 NMEA 解析均移交后续对应篇目，没有新增第二主实例。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "去除内联 SVG、所有表格和三层关系代码块后，正文仍能独立说明 TX→RX、共地、供电与 IO 的区别、门限计算、pinctrl 边界、三类 USB 转接器和验证顺序。USB 转串口一段已补上不依赖表格的文字结论；SVG 只减少空间协调成本，不承担独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可从 NEO-6M 20／21／23／24 脚和 RK3568 F18／C20 出发，区分模块引脚、BGA 焊球和第三方排针，复算 VCCIO2＝3.3 V、NEO-6M VCC＝3.0 V 时的单向高低电平兼容性，再按文档→断电→供电→波形顺序判断证据。功能级连接与板级接线、手册推演与实测、单向与双向结论均明确分开。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "最终稿连续阅读及依赖、主线、盲删、跟随检查完成；禁用旧栏目和旧路径扫描无匹配；git diff --check 无内容错误，仅项目既有 LF／CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-13 真实执行，退出码 0，Documentation built in 55.08 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "构建后真实页面确认标题、1 幅内联 SVG、6 个 Q&A 和 5 份 PDF 链接进入 DOM；Q&A 均实际展开，PDF 均 HTTP 200。1440×1100 页面截图已回读。SVG 浅色与深色截图均已回读，无文字重叠或裁切。375 px 设备仿真下 viewport/documentWidth 均为 375，无页面级横向溢出；SVG 容器 clientWidth=343、scrollWidth=720，支持内部滚动。普通桌面 Chrome 的 375 px 窗口截图因最小内容宽度不作为窄屏证据，内置浏览器截图通道超时也未记为通过。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇无 C、DTS 或 termios 教学代码，编译为 not_applicable。未在实际 RK3568 板卡运行，未执行万用表、逻辑分析仪或示波器测量；正文所有电气兼容结论均为明确条件下的手册推演，不是实测。"
+    }
+  },
+  "open_issues": [
+    "尚未取得实际 RK3568 板卡连接器原理图和第三方 GPS breakout 资料，正文只提供模块与 SoC 功能级连接，不提供未经核实的排针接线答案。",
+    "目标板运行和仪器测量均为 not_verified；后续须用真实板卡、供电和仪器记录闭环。",
+    "四种读者检查和浏览器检查均为 AI 执行记录；record_state=current 与严格构建通过不代表最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.1 正文与 SVG，重点判断功能级／板级边界、首次依赖和手册推演是否易于跟随。若继续修改正文或资产，重跑相应读者检查、浏览器检查、严格构建和哈希校验；用户确认后再进入 B-B.5.2 的节级设计。"
+}

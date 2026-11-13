@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>B-B.5.1 SVG preview</title>
+<style>html,body{margin:0;background:#111827;color:#f3f4f6;font-family:sans-serif}main{width:900px;max-width:100%;margin:0 auto;padding:12px;box-sizing:border-box}svg{min-width:0!important}</style>
+<main><svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;width:100%;min-width:720px;height:auto" font-family="sans-serif" font-size="14" stroke="currentColor" fill="none" stroke-width="1.5">
+<title>NEO-6M 与 RK3568 UART4_M0 的功能级连接</title>
+<text x="450" y="28" text-anchor="middle" fill="currentColor" stroke="none" font-size="16">功能级连接：不是第三方 breakout 或开发板排针图</text>
+<rect x="55" y="65" width="270" height="270" rx="8"/>
+<text x="190" y="98" text-anchor="middle" fill="currentColor" stroke="none" font-size="17">NEO-6M 模块本体</text>
+<text x="85" y="145" fill="currentColor" stroke="none">TxD1，20 脚，输出</text>
+<text x="85" y="225" fill="currentColor" stroke="none">RxD1，21 脚，输入</text>
+<text x="85" y="292" fill="currentColor" stroke="none">VCC，23 脚：2.7～3.6 V</text>
+<text x="85" y="322" fill="currentColor" stroke="none">GND，24 脚</text>
+<text x="585" y="98" text-anchor="middle" fill="currentColor" stroke="none" font-size="17">RK3568 UART4_M0</text>
+<rect x="585" y="65" width="270" height="270" rx="8"/>
+<text x="615" y="145" fill="currentColor" stroke="none">UART4_RX_M0，F18</text>
+<text x="615" y="172" fill="currentColor" stroke="none">GPIO1_A4_d，VCCIO2</text>
+<text x="615" y="225" fill="currentColor" stroke="none">UART4_TX_M0，C20</text>
+<text x="615" y="252" fill="currentColor" stroke="none">GPIO1_A6_d，VCCIO2</text>
+<text x="615" y="305" fill="currentColor" stroke="none">本例推演前提：VCCIO2＝3.3 V</text>
+<line x1="325" y1="140" x2="570" y2="140"/>
+<polygon points="585,140 570,134 570,146" fill="currentColor" stroke="none"/>
+<text x="450" y="124" text-anchor="middle" fill="currentColor" stroke="none">本例正常接收路径</text>
+<line x1="585" y1="220" x2="340" y2="220" stroke-dasharray="7,5"/>
+<polygon points="325,220 340,214 340,226" fill="currentColor" stroke="none"/>
+<text x="450" y="205" text-anchor="middle" fill="currentColor" stroke="none">需要配置模块时才增加</text>
+<line x1="190" y1="335" x2="190" y2="390"/>
+<line x1="720" y1="335" x2="720" y2="390"/>
+<line x1="190" y1="390" x2="720" y2="390"/>
+<line x1="435" y1="390" x2="475" y2="390"/>
+<line x1="445" y1="390" x2="445" y2="410"/>
+<line x1="465" y1="390" x2="465" y2="410"/>
+<line x1="432" y1="410" x2="478" y2="410"/>
+<line x1="438" y1="418" x2="472" y2="418"/>
+<line x1="445" y1="426" x2="465" y2="426"/>
+<text x="495" y="418" fill="currentColor" stroke="none">共同 GND</text>
+<text x="190" y="465" text-anchor="middle" fill="currentColor" stroke="none">10、12、13 脚也为 GND</text>
+<text x="650" y="465" text-anchor="middle" fill="currentColor" stroke="none">实际板级连接器仍须查原理图</text>
+</svg></main></html>

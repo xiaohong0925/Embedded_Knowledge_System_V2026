@@ -1,0 +1,502 @@
+
+===== PDF PAGE 1 =====
+
+3.3V Low Power Half-Duplex RS-485 Transceiver 
+with 10Mbps Data Rate
+SP3485
+ 1
+FEATURES
+■■ RS-485 and RS-422 transceiver
+■■ Operates from a single 3.3V supply
+■■ Interoperable with 5.0V logic
+■■ Driver/receiver enable
+■■ -7V to +12V common-mode input voltage
+range
+■■ Allows up to 32 transceivers on the serial
+bus
+■■ Compatibility with industry standard 75176
+pinout
+■■ Driver output short-circuit protection
+Description
+The SP3485 device is a 3.3V low power half-duplex transceiver that 
+meets the specifications of the RS-485 and RS-422 serial protocols. 
+This device is pin-to-pin compatible with the MaxLinear SP481, 
+SP483 and SP485 devices as well as popular industry standards. The 
+SP3485 can meet the electrical specifications of the RS-485 and RS-
+422 serial protocols up to 10Mbps under load.
+Block Diagram
+RO 1
+RE 2
+DE 3
+DI 4
+VCC8
+B 7
+A 6
+GND5D
+R
+Ordering Information - Back Page
+SP3485
+August 5, 2021
+216DSR00 Rev. 2.0.2
+
+===== PDF PAGE 2 =====
+
+SP3485
+Absolute Maximum Ratings
+These are stress ratings only and functional operation of the 
+device at these ratings or any other above those indicated 
+in the operation sections of the specifications below is not 
+implied. Exposure to absolute maximum rating conditions 
+for extended periods of time may affect reliability.
+V
+CC ...............................................................................6.0V
+Input Voltages
+Logic ..................................... -0.3V to 6.0V
+Drivers .................................. -0.3V to 6.0V
+Receivers ...........................................±15V
+Outputs
+Drivers ...............................................±15V
+Receivers .............................. -0.3V to 6.0V
+Electrical Characteristics
+Unless otherwise noted: TAMB = TMIN to TMAX  and VCC = 3.3V ±5%.
+PARAMETERS MIN. TYP. MAX. UNITS CONDITIONS
+SP3485 Driver DC Characteristics
+Differential output voltage Vcc Volts Unloaded; R = ∞Ω ; Figure 1
+Differential output voltage 2 Vcc Volts With Load; R = 50Ω (RS-422); Figure 1
+Differential output voltage 1.5 Vcc Volts With Load; R = 27Ω (RS-485); Figure 1
+Change in magnitude of driver differential output 
+voltage for complimentary states 0.2 Volts R = 27Ω or R = 50Ω; Figure 1
+Driver common mode output voltage 3 Volts R = 27Ω or R = 50Ω; Figure 1
+Input high voltage 2.0 Volts Applies to DE, DI, RE
+Input low voltage 0.8 Volts Applies to DE, DI, RE
+Input current ±10 µA Applies to DE, DI, RE
+Driver short circuit current VOUT = HIGH ±250 mA -7V ≤ VO ≤ +12V; Figure 8
+Driver short circuit current VOUT = LOW ±250 mA -7V ≤ VO ≤ +12V; Figure 8
+SP3485 Driver AC Characteristics
+Maximum data rate 10 Mbps RE = VCC, DE = VCC
+Driver input to output, tPLH 17 60 ns Figures 2 & 9
+Driver input to output, tPHL 17 60 ns Figures 2 & 9
+Differential driver skew 2 10 ns |tDO1- tDO2|, Figures 2 and 10
+Driver rise or fall time 5 20 ns From 10%-90%; Figures 3 and 10
+Driver enable to output high 35 120 ns Figures 4 and 11
+Driver enable to output low 30 120 ns Figures 5 and 11
+Driver disable time from low 20 120 ns Figures 5 and 11
+Driver disable time from high 20 120 ns Figures 4 and 11
+Driver enable from shutdown to output high, tPSH 250 ns CL = 50pF, RL = 500Ω. 
+Figures 4, 5, and 11Driver enable from shutdown to output low, tPSL 250 ns
+Time to shutdown, tSHDN 50 200 600 ns Notes 1 and 2
+Storage Temperature ...................................-65˚C to 150˚C
+Maximum Junction Temperature, TJ ..........................125˚C
+Power Dissipation ....................................................600mW
+(derate 6.90mW/°C above 70°C)
+Operating Conditions
+Package Power Dissipation 
+8-pin NSOIC Ѳ JA ................................................ 128.4˚C/W
+ESD Rating
+Human Body Model (HBM) .......................................... ±2kV
+ 2 Rev. 2.0.2
+Receiver Output Current...........................................±60mA
+
+===== PDF PAGE 3 =====
+
+RE, DI = 0V or VCC ; DE = VCC
+RE = 0V, DI = 0V or VCC, DE = 0V
+SP3485
+PARAMETERS MIN. TYP. MAX. UNITS CONDITIONS
+SP3485 Receiver DC Characteristics
+Differential input threshold -0.2 0.2 Volts -7V ≤ VCM ≤ 12V
+Input hysteresis 20 mV VCM = 0V
+Output voltage HIGH Vcc-0.4 Volts VID = 200mV, -1.5mA
+Output voltage LOW 0.4 Volts VID = -200mV, 2.5mA
+Three-state (high impedance) output current ±1 µA 0V ≤ VO ≤ VCC; RE = VCC
+Input resistance 12 kΩ -7V ≤ VCM ≤ 12V
+Input current (A, B); VIN = 12V 1.0 mA DE = 0V, VCC = 0V or 3.6V, 
+VIN = 12V
+Input current (A, B); VIN = -7V -0.8 mA DE = 0V, VCC = 0V or 3.6V, 
+VIN = -7V
+SP3485 Receiver AC Characteristics
+Maximum data rate 10 Mbps RE = 0V, DE = 0V
+Receiver input to output, tPLH 40 100 ns Figures 6 and 12
+Receiver input to output, tPLH 70 ns TAMB = 25°C, Vcc = 3.3V,
+Figures 6 and 12
+Receiver input to output,  tPHL 35 100 ns Figures 6 and 12
+Receiver input to output,  tPHL 70 ns TAMB = 25°C, Vcc = 3.3V, 
+Figures 6 and 12
+Differential receiver skew 4 ns tRSKEW = |tRPHL- tRPLH|,
+Figures 6 and 12
+Receiver enable to output low 10 60 ns Figures 7 and 13, 
+S1 closed, S2 open
+Receiver enable to output high 10 60 ns Figures 7 and 13, 
+S
+2 closed, S1 open
+Receiver disable from low 10 60 ns Figures 7 and 13, 
+S
+1 closed, S2 open
+Receiver disable from high 10 60 ns Figures 7 and 13, 
+S
+2 closed, S1 open
+Receiver enable from shutdown to output high, 
+t
+PRSH
+1800 ns CL = 15pF, RL = 1kΩ. 
+Figures 7 and 13Receiver enable from shutdown to output low, tPRSL 1800 ns
+Time to shutdown, tSHDN 50 200 600 ns Notes 1 and 2
+Power Requirements
+Supply current , no load 425 2000 µA
+Supply current , no load 300 1500 µA
+NOTES:
+1. The transceivers are put into shutdown by gringing RE high and DE low simultaneously for at least 600ns.  If the control inputs are in this state for less than 50ns, the 
+device is guaranteed to not enter shutdown.  If the enable inputs are held in this state for at least 600ns, the device is assured to be in shutdown.  Note that the receiver 
+and driver times increase significantly when coming out of shutdown.
+2. This spec is guaranteed by design and bench characterization.
+Electrical Characteristics (Continued)
+Unless otherwise noted: TAMB = TMIN to TMAX  and VCC = 3.3V ±5%.
+ 3 Rev. 2.0.2
+
+===== PDF PAGE 4 =====
+
+SP3485
+Pin Functions
+Pin Name Description
+1 RO Receiver output
+2 RE Receiver output enable active LOW
+3 DE Driver output enable active HIGH
+4 DI Driver input
+5 GND Ground connection
+6 A Non-inverting driver output / receiver input
+7 B Inverting driver output / receiver input
+8 VCC Positive supply
+RO 1
+RE 2
+DE 3
+DI 4
+VCC8
+B 7
+A 6
+GND5D
+R
+SP3485 
+Pinout (Top View)
+ 4 Rev. 2.0.2
+
+===== PDF PAGE 5 =====
+
+SP3485
+Test Circuits
+Figure 1: Driver DC Test Load Circuit Figure 2: Driver Propagation Delay Test Circuit
+Figure 3: Driver Differential Output Delay 
+and Transition Time Circuit.
+Figure 4: Driver Enable and Disable Timing Circuit, 
+Output High
+Figure 5: Driver Enable and Disable Timing Circuit, 
+Output Low
+Figure 6: Receiver Propagation Delay Test Circuit
+Figure 7: Receiver Enable and Disable Timing Circuit Figure 8: Driver Short Circuit Current Limit Test
+R
+R VOC
+D
+Vcc
+VOD
+GENERATOR
+   (NOTE 1) 50Ω
+CL 
+OUTD
+VCC
+RL  
+54Ω15pF
+(NOTE 2)
+GENERATOR
+   (NOTE 1) 50Ω
+CL
+OUTD
+VCC
+RL =  
+60Ω
+C L = 15pF (NOTE 2)
+GENERATOR
+   (NOTE 1) 50Ω
+S1
+RL = 110Ω
+OUT
+CL = 50pF
+ (NOTE 2)
+D
+GENERATOR
+   (NOTE 1) 50Ω
+S1
+RL = 110Ω
+OUT
+CL = 50pF
+ (NOTE 2)
+D0V OR 3V
+VCC
+GENERATOR
+   (NOTE 1) 50Ω
+1.5V
+0V
+VID R OUT
+CL = 15pF
+ (NOTE 2)
+1.5V
+-1.5V
+S3
+VID
+GENERATOR
+   (NOTE 1) 50Ω
+CL = 15pF
+(NOTE 2)
+R
+1k
+S1
+S2
+VCC
+A
+DDI = 0 or Vcc
+B
+DE = 0 or Vcc
+IOS  D
+-7V to +12V V
+NOTES
+1: The input pulse is supplied by a generator with the following characteristics:  
+PRR = 250kHz, 50% duty cycle, tR < 6.0ns, ZO = 50Ω.
+2: CL includes probe and stray capacitance.
+ 5 Rev. 2.0.2
+
+===== PDF PAGE 6 =====
+
+SP3485
+Switching Waveforms
+Figure 9: Driver Propagation Delay Waveforms Figure 10: Driver Differential Output Delay 
+and Transition Time Waveforms
+Figure 11: Driver Enable and Disable Timing Waveforms Figure 12: Receiver Propagation Delay Waveforms
+Figure 13: Receiver Enable and Disable Waveforms
+0V
+VOH
+tPLH tPHL
+VOM
+tPHL tPLH
+3V
+VOL
+VOH
+1.5V 1.5VINPUT
+Y OUTPUT
+VOMZ OUTPUT
+VOL
+VOM
+VOM
+VOM = VOH + VOL
+2 ≈ 1.5V
+IN 1.5V
+tDO1
+1.5V
+tDO2
+3V
+0V
+OUT
+50% 50%
+10% 10%
+90% 90%
+tTD tTD
+2.0V
+-2.0V
+0V
+VOH
+tPZH
+tPSH
+0.25V
+tPHZ
+VOM
+tPSL
+tPZL
+tPLZ
+3V
+VOL
+VCC
+1.5V 1.5VDE
+OUTPUT
+HIGH
+VOM
+0.25V
+0V
+OUTPUT
+LOW
+VOM = VOH + VOL
+2 ≈ 1.5V
+3V
+0V
+VCC
+tRPLH
+1.5V
+tRPHL
+VOM VOM
+0V
+1.5VINPUT
+OUTPUT
+VOM = VCC
+2
+3V
+0V
+tPRHZ
+1.5V
+tPRZH
+tPRSH
+1.5V
+1.5V
+10%
+0V
+VOH
+RE
+OUTPUT
+S1 is open
+S2 is closed
+S3 = 1.5V
+3V
+0V
+tPRLZ
+1.5V
+tPRZL
+tPRSL
+1.5V
+1.5V
+10%
+VCC
+RE
+OUTPUT
+S1 is closed
+S2 is open
+S3 = -1.5V
+V
+OL
+ 6 Rev. 2.0.2
+
+===== PDF PAGE 7 =====
+
+SP3485
+Description
+The SP3485 is a member in the family of 3.3V low power half-
+duplex transceivers that meet the electrical specifications of 
+the RS-485 and RS-422 serial protocols. This device is pin-
+to-pin compatible with the MaxLinear SP481, SP483 and 
+SP485 devices as well as popular industry standards. The 
+SP3485 feature MaxLinear’s BiCMOS process allowing low 
+power operationwithout sacrificing performance.
+Driver
+The driver outputs of the SP3485 are differential outputs 
+meeting the RS-485 and RS-422 standards.  The typical 
+voltage output swing with no load will be 0 volts to 3.3 Volts.  
+With a load of 54Ω across the differential outputs, the drivers 
+can maintain greater than 1.5V voltage levels.
+The driver of the SP3485 has a driver enable control line 
+which is active HIGH.  A logic HIGH on DE (pin 3) will enable 
+the differential driver outputs.  A logic LOW on the DE (pin 
+3) will tri-state the driver outputs.
+The driver of the SP3485 operates up to 10Mbps. The 
+250mA I
+SC maximum limit on the driver output allows the 
+SP3485 to withstand an infinite short circuit over the   -7.0V 
+to 12V common mode range without catastrophic damage 
+to the IC.
+Receiver
+The SP3485 receiver has differential inputs with an input 
+sensitivity of ±200mV.  Input impedance of the receiver 
+is 12kΩ minimum.  A wide common mode range of -7V to 
+12V allows for large ground potential differences between 
+systems.  The receiver is equipped with a fail-safe feature 
+that guarantees the receiver output will be in a HIGH state 
+when the input is left unconnected. The receiver of the 
+SP3485 operates up to 10Mbps.
+The receiver of the SP3485 has an enable control line 
+which is active LOW.  A logic LOW on RE (pin 2) will enable 
+the differential receiver. A logic HIGH on RE (pin 2) of the 
+SP3485 will disable the receiver.
+Low Power Shutdown Mode
+Low-power shutdown mode is initiated by bringing both 
+RE high and DE low. In shutdown, the devices typically 
+draw only 50nA of supply current. RE and DE can be 
+driven simultaneously; the part is guaranteed not to enter 
+shutdown if RE is high and DE is low for less than 50ns. If 
+the inputs are in this state for at least 600ns, the parts are 
+guaranteed to enter shutdown.
+Enable times t
+PRZH, tPZH, tPRZL and tPZL assume the part 
+was not in a low-power shutdown state. Enable times tPRSH, 
+tPSH, tPRSL and t PSL assume the parts were shut down. It 
+takes drivers and receivers longer to become enabled from 
+low-power shutdown mode (t PRSH, tPSH, tPRSL, tPSL) than 
+from driver/receiver-disable mode (tPRZH, tPZH, tPRZL, tPZL).
+INPUTS OUTPUTS
+RE DE DI B A
+X 1 1 0 1
+X 1 0 1 0
+0 0 X High-Z
+1 0 X Shutdown
+Table 1: Transmit Function Truth Table
+INPUTS OUTPUTS
+RE DE VA - VB RO
+0 X -50mV 1
+0 X -200mV 0
+X X Open/Shorted 1
+1 1 X High-Z
+1 0 X Shutdown
+Table 2: Receive Function Truth Table
+ 7 Rev. 2.0.2
+
+===== PDF PAGE 8 =====
+
+SP3485
+Mechanical Dimensions
+NSOIC8
+Drawing No:
+Revision:      A
+Side View
+Top View
+Front View
+POD-00000108
+ 8 Rev. 2.0.2
+
+===== PDF PAGE 9 =====
+
+SP3485
+Corporate Headquarters: 
+5966 La Place Court 
+Suite 100 
+Carlsbad, CA 92008  
+Tel.: +1 (760) 692-0711 
+Fax: +1 (760) 444-8598 
+www.maxlinear.com
+Ordering Information
+Part Number Operating Temperature Range Lead-Free Package Packaging Method
+SP3485CN-L
+0°C to 70°C
+Yes 8-pin SOIC
+Tube
+SP3485CN-L/TR Reel
+SP3485EN-L
+-40°C to 85°C
+Tube
+SP3485EN-L/TR Reel
+NOTE: For the most up-to-date information and additional information on environmental rating, go to www.maxlinear.com/SP3485.
+Revision History
+Revision Date Description
+10/15/02 -- Legacy Sipex Datasheet
+06/19/12 1.0.0 Convert to Exar Format. Update ordering information and add new Figure 8 - Driver Short 
+Circuit Current Limit Test Circuit. Remove EOL device SP3481.
+06/27/16 2.0.0
+Update logo.  Update description paragraph on page 1. Update timing specifications in 
+electrical characteristics table on pages 2 and 3.  Add Driver and Receiver Enable from 
+Shutdown timing information on pages 3 and 4.  Update typical supply current information 
+on page 4. Update Figures 2, 4, 6, and 8. Update Figures 11 and 13 to add shutdown timing 
+labels.  Add low power shutdown section to page 7. Update transmit and receive truth tables 
+on page 7. Update Receiver section on page 7.
+09/06/17 2.0.1
+Remove GND from Differential Output Voltage min (page 2).  Added maximum junction  
+temperature, package power dissipation and ESD rating.  Update to MaxLinear logo, update 
+format and ordering information table.
+216DSR00  9 Rev. 2.0.2
+08/05/21 2.0.2 Added:
+ In the "Absolute Maximum Ratings" section, "Receiver Output Current" parameter.
+Updated:
+ In the "Absolute Maximum Ratings" section, replaced "Output Voltages" with "Outputs".
+Removed:
+ In the "Electrical Characteristics"
+ section, "Short circuit current" parameter.

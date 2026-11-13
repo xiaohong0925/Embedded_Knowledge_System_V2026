@@ -1,0 +1,1059 @@
+
+===== PDF PAGE 1 =====
+
+  
+ 
+ 
+NEO-6 
+u-blox 6 GPS Modules 
+Data Sheet 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Abstract 
+Technical data sheet describing the cost effective, high-performance  
+u-blox 6 based NEO-6 series of GPS modules, that brings the high 
+performance of the u-blox 6 positioning engine to the miniature 
+NEO form factor. 
+These receivers combine a high level of integration capability with 
+flexible connectivity options in a small package. This makes them 
+perfectly suited for mass-market end products with strict size and 
+cost requirements. 
+ 
+ 
+16.0 x 12.2 x 2.4 mm 
+ 
+locate, communicate, accelerate 
+www.u-blox.com 
+ 
+ 
+
+===== PDF PAGE 2 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 2 of 25 
+ 
+Document Information 
+Title NEO-6 
+Subtitle u-blox 6 GPS Modules  
+Document type Data Sheet  
+Document number GPS.G6-HW-09005-E 
+Document status  
+ 
+Document status information 
+Objective 
+Specification 
+This document contains target values. Revised and supplementary data will be published 
+later. 
+Advance 
+Information 
+This document contains data based on early testing. Revised and supplementary data will 
+be published later. 
+Preliminary  This document contains data from product verification. Revised and supplementary data 
+may be published later. 
+Released  This document contains the final product specification. 
+ 
+This document applies to the following products: 
+Name Type number ROM/FLASH version PCN reference 
+NEO-6G NEO-6G-0-001 ROM7.03 UBX-TN-11047-1 
+NEO-6Q NEO-6Q-0-001 ROM7.03 UBX-TN-11047-1 
+NEO-6M NEO-6M-0-001 ROM7.03 UBX-TN-11047-1 
+NEO-6P NEO-6P-0-000 ROM6.02 N/A 
+NEO-6V NEO-6V-0-000 ROM7.03 N/A 
+NEO-6T NEO-6T-0-000 ROM7.03 N/A 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+This document and the use of any information contained therein, is subject to the acceptance of the u-blox terms and conditions. They 
+can be downloaded from www.u-blox.com. 
+u-blox makes no warranties based on the accuracy or completeness of the contents of this document and reserves the right to make 
+changes to specifications and product descriptions at any time without notice. Reproduction, use or disclosure to third parties without 
+express permission is strictly prohibited. Copyright © 2011, u-blox AG. 
+u-blox
+®
+ is a registered trademark of u-blox Holding AG in the EU and other countries. ARM
+®
+ is the registered trademark of ARM Limited in 
+the EU and other countries. 
+ 
+ 
+
+
+===== PDF PAGE 3 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 3 of 25 
+Contents 
+Contents .............................................................................................................................. 3 
+1 Functional description .................................................................................................. 5 
+1.1 Overview .............................................................................................................................................. 5 
+1.2 Product features ................................................................................................................................... 5 
+1.3 GPS performance .................................................................................................................................. 6 
+1.4 Block diagram ....................................................................................................................................... 7 
+1.5 Assisted GPS (A-GPS) ............................................................................................................................ 7 
+1.6 AssistNow Autonomous ....................................................................................................................... 7 
+1.7 Precision Timing .................................................................................................................................... 8 
+1.7.1 Time mode .................................................................................................................................... 8 
+1.7.2 Timepulse and frequency reference ............................................................................................... 8 
+1.7.3 Time mark ..................................................................................................................................... 8 
+1.8 Raw data .............................................................................................................................................. 8 
+1.9 Automotive Dead Reckoning ................................................................................................................ 8 
+1.10 Precise Point Positioning .................................................................................................................... 9 
+1.11 Oscillators ......................................................................................................................................... 9 
+1.12 Protocols and interfaces .................................................................................................................... 9 
+1.12.1 UART ............................................................................................................................................. 9 
+1.12.2 USB ............................................................................................................................................... 9 
+1.12.3 Serial Peripheral Interface (SPI) ....................................................................................................... 9 
+1.12.4 Display Data Channel (DDC) ........................................................................................................ 10 
+1.13 Antenna .......................................................................................................................................... 10 
+1.14 Power Management ....................................................................................................................... 10 
+1.14.1 Maximum Performance Mode ..................................................................................................... 10 
+1.14.2 Eco Mode .................................................................................................................................... 10 
+1.14.3 Power Save Mode ....................................................................................................................... 11 
+1.15 Configuration ................................................................................................................................. 11 
+1.15.1 Boot-time configuration .............................................................................................................. 11 
+1.16 Design-in ........................................................................................................................................ 11 
+2 Pin Definition .............................................................................................................. 12 
+2.1 Pin assignment ................................................................................................................................... 12 
+3 Electrical specifications .............................................................................................. 14 
+3.1 Absolute maximum ratings ................................................................................................................. 14 
+3.2 Operating conditions .......................................................................................................................... 15 
+3.3 Indicative power requirements ............................................................................................................ 15 
+3.4 SPI timing diagrams ............................................................................................................................ 16 
+3.4.1 Timing recommendations ............................................................................................................ 16 
+4 Mechanical specifications .......................................................................................... 17 
+
+===== PDF PAGE 4 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 4 of 25 
+5 Qualification and certification ................................................................................... 18 
+5.1 Reliability tests .................................................................................................................................... 18 
+5.2 Approvals ........................................................................................................................................... 18 
+6 Product handling & soldering .................................................................................... 19 
+6.1 Packaging ........................................................................................................................................... 19 
+6.1.1 Reels ........................................................................................................................................... 19 
+6.1.1 Tapes .......................................................................................................................................... 20 
+6.2 Moisture Sensitivity Levels ................................................................................................................... 21 
+6.3 Reflow soldering ................................................................................................................................. 21 
+6.4 ESD handling precautions ................................................................................................................... 21 
+7 Default settings .......................................................................................................... 22 
+8 Labeling and ordering information ........................................................................... 23 
+8.1 Product labeling .................................................................................................................................. 23 
+8.2 Explanation of codes........................................................................................................................... 23 
+8.3 Ordering information .......................................................................................................................... 24 
+Related documents........................................................................................................... 24 
+Revision history ................................................................................................................ 24 
+Contact .............................................................................................................................. 25 
+ 
+ 
+
+===== PDF PAGE 5 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 5 of 25 
+1 Functional description 
+1.1 Overview 
+The NEO-6 module series is a family of stand -alone GPS receivers featuring the high performance u -blox 6 
+positioning engine. These flexible and cost effective receivers offer numerous connectivity options in a miniature 
+16 x 12.2 x 2.4 mm package. Their compact architecture and power and memory options make NEO -6 modules 
+ideal for battery operated mobile devices with very strict cost and space constraints.  
+The 50-channel u-blox 6 positioning engine boasts a Time -To-First-Fix (TTFF) of under 1 second . The dedicated 
+acquisition engine, with 2 million correlators, is capable of massive parallel time/frequency space searches, 
+enabling it to find satellites instantly. Innovative design and technology suppresses jamming sources and 
+mitigates multipath effe cts, giving NEO-6 GPS receivers excellent navigation performance even in the most 
+challenging environments.  
+1.2 Product features 
+ 
+ 
+Table 1: Features of the NEO-6 Series  
+ All NEO-6 modules are based on GPS chips qualified according to AEC -Q100. See Chapter 5.1 for further 
+information. 
+
+
+===== PDF PAGE 6 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 6 of 25 
+1.3 GPS performance 
+Parameter Specification 
+Receiver type 50 Channels  
+GPS L1 frequency, C/A Code 
+SBAS: WAAS, EGNOS, MSAS 
+Time-To-First-Fix
+1
+  NEO-6G/Q/T NEO-6M/V NEO-6P 
+Cold Start
+2
+ 26 s 27 s 32 s 
+Warm Start
+2
+ 26 s 27 s 32 s 
+Hot Start
+2
+ 1 s 1 s 1 s 
+Aided Starts
+3
+ 1 s <3 s <3 s 
+Sensitivity
+4
+  NEO-6G/Q/T NEO-6M/V NEO-6P 
+Tracking & Navigation -162 dBm -161 dBm -160 dBm 
+Reacquisition
+5
+ -160 dBm -160 dBm -160 dBm 
+Cold Start (without aiding) -148 dBm -147 dBm -146 dBm 
+ Hot Start -157 dBm -156 dBm -155 dBm 
+Maximum Navigation update rate  NEO-6G/Q/M/T NEO-6P/V  
+ 5Hz 1 Hz  
+Horizontal position accuracy
+6
+ GPS 2.5 m 
+SBAS 2.0 m 
+SBAS + PPP
+7
+ < 1 m (2D, R50)
+8)
+ 
+SBAS + PPP
+7
+  < 2 m (3D, R50)
+8
+ 
+Configurable Timepulse frequency range  NEO-6G/Q/M/P/V NEO-6T 
+ 0.25 Hz to 1 kHz 0.25 Hz to 10 MHz 
+Accuracy for Timepulse signal RMS 30 ns 
+99% <60 ns 
+Granularity 21 ns 
+Compensated
+9
+ 15 ns 
+Velocity accuracy
+6
+  0.1m/s 
+Heading accuracy
+6
+  0.5 degrees 
+Operational Limits Dynamics 
+  4 g  
+Altitude
+10
+ 50,000 m 
+ Velocity
+10
+ 500 m/s 
+Table 2: NEO-6 GPS performance 
+                                                      
+1
+  All satellites at -130 dBm 
+2
+  Without aiding 
+3
+  Dependent on aiding data connection speed and latency 
+4
+  Demonstrated with a good active antenna 
+5
+  For an outage duration 
+ 10s 
+6
+  CEP, 50%, 24 hours static, -130dBm, SEP: <3.5m 
+7
+  NEO-6P only 
+8
+  Demonstrated under following conditions: 24 hours, stationary, first 600 seconds of data discarded. HDOP < 1.5 during measurement 
+period, strong signals. Continuous availability of valid SBAS correction data during full test period. 
+9
+  Quantization error information can be used with NEO-6T to compensate the granularity related error of the timepulse signal 
+10
+ Assuming Airborne <4g platform 
+
+===== PDF PAGE 7 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 7 of 25 
+1.4 Block diagram 
+ 
+Figure 1: Block diagram (For available options refer to the product features table in section 1.2). 
+1.5 Assisted GPS (A-GPS) 
+Supply of aiding information like ephemeris, almanac, rough last position and time and satellite status and an 
+optional time synchronization signal will reduce time to first fix significantly and improve the acquisition 
+sensitivity. All NEO -6 modules support the u -blox AssistNow Online
+ 
+and AssistNow Offline
+ 
+A-GPS services
+11
+ and 
+are OMA SUPL compliant.  
+1.6 AssistNow Autonomous  
+AssistNow Autonomous provides functionality similar to Assisted-GPS without the need for a host or external 
+network connection. Based on previously broadcast satellite ephemeris data downloaded to and stored by the 
+GPS receiver, AssistNow Autonomous automatically generates accurate satellite orbital dat a (“AssistNow 
+Autonomous data”) that is usable for future GPS position fixes. AssistNow Autonomous data is reliable for up to 
+3 days after initial capture.  
+u-blox’ AssistNow Autonomous benefits are:  
+ Faster position fix 
+ No connectivity required 
+ Complementary with AssistNow Online and Offline services 
+ No integration effort, calculations are done in the background 
+ For more details see the u-blox 6 Receiver Description including Protocol Specification [2]. 
+ 
+                                                      
+11
+ AssistNow Offline requires external memory. 
+
+===== PDF PAGE 8 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 8 of 25 
+1.7 Precision Timing 
+1.7.1 Time mode 
+NEO-6T provides a special Time Mode to provide higher timing accuracy. The NEO-6T is designed for use with 
+stationary antenna setups. The Time Mode features three different settings described in Table 3: Disabled, 
+Survey-In and Fixed Mode.  For optimal performance entering the position of the antenna (when known) is 
+recommended as potential source of errors will be reduced. 
+ 
+Time Mode Settings Description 
+Disabled Standard PVT operation 
+Survey-In The GPS receiver computes the average position over an extended time period until a predefined 
+maximum standard deviation has been reached.  Afterwards the receiver will be automatically set to 
+Fixed Mode and the timing features will be activated. 
+Fixed Mode In this mode, a fixed 3D position and known standard deviation is assumed and the timing features are 
+activated.  Fixed Mode can either be activated directly by feeding pre-defined position coordinates (ECEF 
+- Earth Center Earth Fixed format) or by performing a Survey-In. 
+In Fixed mode, the timing errors in the TIMEPULSE signal which otherwise result from positioning errors 
+are eliminated. Single-satellite operation is supported. For details, please refer to the u-blox 6 Receiver 
+Description including Protocol Specification [2]. 
+Table 3: Time mode settings 
+1.7.2 Timepulse and frequency reference 
+NEO-6T comes with a timepulse output which can be configured from 0.25 Hz up to 10 MHz. The timepulse can 
+either be used for time synchronization (i.e. 1 pulse per second) or as a reference frequency in the MHz ra nge. A 
+timepulse in the MHz range provides excellent long-term frequency accuracy and stability. 
+1.7.3 Time mark 
+NEO-6T can be used for precise time measurements with sub-microsecond resolution using the external interrupt 
+(EXTINT0).  Rising and falling edges of these signals are time -stamped to the GPS or UTC time and counted. The 
+Time Mark functionality can be enabled with the UBX-CFG-TM2 message 
+For details, please refer to the u-blox 6 Receiver Description including Protocol Specification [2]. 
+1.8 Raw data 
+Raw data output is supported at an update rate of 5 Hz on the NEO-6T and NEO -6P. The UBX -RXM-RAW 
+message includes carrier phase with half -cycle ambiguity resolved, code phase and Do ppler measurements, 
+which can be used in external applications that offer precision positioning, real -time kinematics (RTK) and 
+attitude sensing.  
+1.9 Automotive Dead Reckoning 
+Automotive Dead Reckoning (ADR) is u-blox’ industry proven off-the-shelf Dead Reckoning solution for tier-one 
+automotive customers. u-blox’ ADR solution combines GPS and sensor digital data using a tightly coupled 
+Kalman filter. This improves position accuracy during periods of no or degraded GPS signal.  
+ 
+The NEO-6V provides ADR functionality over its software sensor interface. A variety of sensors (such as wheel 
+ticks and gyroscope) are supported, with the sensor data received via UBX messages from the application 
+processor. This allows for easy integration and a simple hardware interface, lowering costs. By using digital 
+sensor data available on the vehicle bus, hardware costs are minimized since no extra sensors are required for 
+Dead Reckoning functionality. ADR is designed for simple integration and easy configuration of different sens or 
+options (e.g. with or without gyroscope) and vehicle variants, and is completely self -calibrating. 
+
+===== PDF PAGE 9 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 9 of 25 
+For more details contact the u-blox support representative nearest you to receive dedicated u-blox 6 Receiver 
+Description Including Protocol Specification [3]. 
+1.10 Precise Point Positioning 
+u-blox’ industry proven PPP algorithm provides extremely high levels of position accuracy in static and slow 
+moving applications, and makes the NEO -6P an ideal solution for a variety of high precision applications such as 
+surveying, mapping, marine, agriculture or leisure activities.  
+Ionospheric corrections such as those received from local SBAS
+12
+ geostationary satellites (WAAS, EGNOS, MSAS) 
+or from GPS enable the hi ghest positioning accuracy with the PPP algorithm. The maximum improvement of 
+positioning accuracy is reached with PPP+SBAS and can only be expected in an environment with unobstructed 
+sky view during a period in the order of minutes.  
+1.11 Oscillators 
+NEO-6 GP S modules are available in Crystal and TCXO versions. The TCXO allows accelerated weak signal 
+acquisition, enabling faster start and reacquisition times. 
+1.12 Protocols and interfaces 
+Protocol Type 
+NMEA Input/output, ASCII, 0183, 2.3 (compatible to 3.0) 
+UBX Input/output, binary, u-blox proprietary 
+RTCM Input, 2.3 
+Table 4: Available protocols 
+All listed protocols are available on UART, USB, and DDC. For specification of the various protocols see the u-
+blox 6 Receiver Description including Protocol Specification [2]. 
+1.12.1 UART 
+NEO-6 modules include one configurable UART interface for serial communication (for information about 
+configuration see section 1.15).  
+1.12.2 USB  
+NEO-6 modules provide a USB version 2.0 FS (Full Speed, 12Mbit/s) interface as an alternative to the UART. The 
+pull-up resistor on USB_DP is integrated to signal a full -speed device to the host. The VDDUSB pin supplies the 
+USB interface. u-blox provides a Microsoft
+®
+ certified USB driver for Windows XP , Windows Vista and Windows 7 
+operating systems.  
+1.12.3 Serial Peripheral Interface (SPI) 
+The SPI interface allows for the connection of external devices with a serial  interface, e.g. serial flash to save 
+configuration and AssistNow Offline A -GPS data or to interface to a host CPU. The interface can be operated in 
+master or slave mode. In master mode, one chip select signal is available to select external slaves. In slave mode a 
+single chip select signal enables communication with the host.  
+ The maximum bandwidth is 100kbit/s. 
+                                                      
+12
+ Satellite Based Augmentation System 
+
+
+===== PDF PAGE 10 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 10 of 25 
+1.12.4 Display Data Channel (DDC) 
+The I
+2
+C compatible DDC interface can be used either to access external devices with a serial interface EEPROM or 
+to interface with a host CPU. It is capable of master and slave operation. The DDC interface is I
+2
+C Standard Mode 
+compliant. For timing parameters consult the I
+2
+C standard. 
+ The DDC Interface supports serial communication with u -blox wireless modules. See th e specification of 
+the applicable wireless module to confirm compatibility. 
+ The maximum bandwidth is 100kbit/s. 
+1.12.4.1 External serial EEPROM 
+NEO-6 modules allow an optional external serial EEPROM to be connected to the DDC interface. This can be 
+used to store Configurations permanently. 
+ For more information see the LEA-6/NEO-6/MAX-6 Hardware Integration Manual [1]. 
+ Use caution when implementing since forward compatibility is not guaranteed. 
+1.13 Antenna 
+NEO-6 modules are designed for use with passive and active
+13
+ antennas.   
+ 
+Parameter Specification  
+Antenna Type  Passive and active antenna 
+Active Antenna Recommendations 
+Minimum gain 
+Maximum gain 
+Maximum noise figure  
+15 dB (to compensate signal loss in RF cable) 
+50 dB 
+1.5 dB  
+Table 5: Antenna Specifications for all NEO-6 modules 
+1.14 Power Management 
+u-blox receivers support different power modes. These modes represent strategies of how to control the  
+acquisition and tracking engines in order to achieve either the best possible performance or good performance  
+with reduced power consumption. 
+ For more information about power management strategies, see the u-blox 6 Receiver Description 
+including Protocol Specification [2]. 
+1.14.1 Maximum Performance Mode 
+During a Cold start, a receiver in Maximum Performance Mode continuously deploys the acquisition engine to  
+search for all satellites. Once the receiver has a position fix (or if pre-positioning information is available), the 
+acquisition engine continues to be used to search for all visible satellites that are not being tracked.  
+1.14.2 Eco Mode 
+During a Cold start, a receiver in Eco Mode works exactly as in Maximum Performance Mode. Once a position  
+can be calculated and a sufficient number of satellites are being tracked, the acquisition engine is powered off  
+resulting in significant power savings. The tracking engine continuously tracks acquired satellites and acquires  
+other available or emerging satellites. 
+ Note that even if the acquisition engine is powered off, satellites continue to be acquired. 
+                                                      
+13
+ For information on using active antennas with NEO-6 modules, see the LEA-6/NEO-6 Hardware Integration Manual [1]. 
+
+
+===== PDF PAGE 11 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 11 of 25 
+1.14.3 Power Save Mode 
+Power Save Mode (PSM) allows a reduction in system power consumption by selectively switching parts of the  
+receiver on and off. 
+ Power Save mode is not available with NEO-6P, NEO-6T and NEO-6V. 
+1.15 Configuration 
+1.15.1 Boot-time configuration 
+NEO-6 modules provide configuration pins for boot -time configuration. These become effective immediately 
+after start-up. Once the module has started, the configuration settings can be modified with UBX configuration 
+messages. The modified settings remain effective until power -down or reset. If these settings have been stored 
+in battery-backup RAM, then the modified configuration will be retained, as long as the backup battery supply is 
+not interrupted. 
+NEO-6 modules include both CFG_COM0 and CFG_COM1 pins and can be configured as seen in Table 6. 
+Default settings in bold. 
+CFG_COM1 CFG_COM0 Protocol Messages UARTBaud rate USB power 
+1 1 NMEA GSV, RMC, GSA, GGA, GLL, VTG, TXT 9600 BUS Powered 
+1 0 NMEA GSV, RMC, GSA, GGA, GLL, VTG, TXT 38400 Self Powered 
+0 1 NMEA GSV
+14
+, RMC, GSA, GGA, VTG, TXT 4800 BUS Powered 
+0 0 UBX NAV-SOL, NAV-STATUS, NAV-SVINFO, NAV-CLOCK,  
+INF, MON-EXCEPT, AID-ALPSERV 
+57600 BUS Powered 
+Table 6: Supported COM settings  
+NEO-6 modules include a CFG_GPS0 pin, which enables the boot -time configuration of the power mode. These 
+settings are described in Table 7. Default settings in bold. 
+CFG_GPS0 Power Mode 
+0 Eco Mode 
+1 Maximum Performance Mode 
+Table 7: Supported CFG_GPS0 settings 
+ Static activation of the CFG_COM and CFG_GPS pins is not compatible with use of the SPI interface. 
+1.16 Design-in 
+In order to obtain the necessary information to conduct a proper design -in, u -blox strongly recommends 
+consulting the LEA-6/NEO-6/MAX-6 Hardware Integration Manual [1]. 
+ 
+                                                      
+14
+ Every 5
+th
+ fix. 
+
+
+===== PDF PAGE 12 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 12 of 25 
+2 Pin Definition 
+2.1 Pin assignment 
+ 
+  
+Figure 2 Pin Assignment 
+ 
+No Module Name I/O Description 
+1 All Reserved I Reserved 
+2 All SS_N  I SPI Slave Select  
+3 All TIMEPULSE O Timepulse (1PPS) 
+4 All EXTINT0 I External Interrupt Pin 
+5 All USB_DM I/O USB Data 
+6 All USB_DP I/O USB Data 
+7 All VDDUSB I USB Supply 
+8 All Reserved   See Hardware Integration Manual 
+Pin 8 and 9 must be connected together. 
+9 All VCC_RF O Output Voltage RF section  
+Pin 8 and 9 must be connected together. 
+10 All GND I Ground 
+11 All RF_IN I GPS signal input 
+12 All GND I Ground 
+13 All GND I Ground 
+14 All MOSI/CFG_COM0 O/I SPI MOSI / Configuration Pin.  
+Leave open if not used. 
+15 All MISO/CFG_COM1 I SPI MISO / Configuration Pin. 
+Leave open if not used. 
+16 All CFG_GPS0/SCK  I Power Mode Configuration Pin / SPI Clock.  
+Leave open if not used.  
+17 All Reserved I Reserved 
+18 All SDA2 I/O DDC Data 
+19 All SCL2 I/O DDC Clock 
+20 All TxD1 O Serial Port 1 
+21 All RxD1 I Serial Port 1 
+NEO-6
+Top View
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+24
+22
+21
+20
+19
+18
+17
+16
+15
+14
+13
+23
+
+===== PDF PAGE 13 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 13 of 25 
+No Module Name I/O Description 
+22 All V_BCKP I Backup voltage supply 
+23 All VCC I Supply voltage 
+24 All GND I Ground 
+Table 8: Pinout 
+ Pins designated Reserved should not be used. For more information about Pinouts see the LEA-6/NEO-
+6/MAX-6 Hardware Integration Manual [1]. 
+
+
+===== PDF PAGE 14 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 14 of 25 
+3 Electrical specifications 
+3.1 Absolute maximum ratings 
+Parameter Symbol Module Min Max Units Condition 
+Power supply voltage VCC NEO-6G -0.5 2.0 V  
+NEO-6Q, 6M, 6P, 6V, 6T -0.5 3.6 V  
+Backup battery voltage V_BCKP All -0.5 3.6 V  
+USB supply voltage VDDUSB All -0.5 3.6 V  
+Input pin voltage  Vin All -0.5 3.6 V  
+Vin_usb All -0.5 VDDU
+SB 
+V  
+DC current trough any digital I/O 
+pin (except supplies) 
+Ipin   10 mA  
+VCC_RF output current ICC_RF All  100 mA  
+Input power at RF_IN 
+ 
+Prfin NEO-6Q, 6M, 6G, 6V, 6T  15 dBm source impedance 
+= 50
+ , continuous 
+wave 
+NEO-6P  -5 dBm 
+Storage temperature Tstg All -40 85 °C  
+Table 9: Absolute maximum ratings 
+ GPS receivers are Electrostatic Sensitive Devices (ESD) and require special precautions when 
+handling. For more information see chapter 6.4. 
+ Stressing the device beyond the “Absolute Maximum Ratings” may cause permanent damage. 
+These are stress ratings only. The product is not protected against overvoltage or reversed 
+voltages. If necessary, voltage spikes exceeding the power supply voltage specification, given in 
+table above, must be limited to values within the specified boundaries by using appropriate 
+protection diodes.  For more information see the LEA-6/NEO-6/MAX-6 Hardware Integration 
+Manual [1]. 
+
+
+===== PDF PAGE 15 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 15 of 25 
+3.2 Operating conditions 
+ All specifications are at an ambient temperature of 25°C. 
+ 
+Parameter Symbol Module Min Typ Max Units Condition 
+Power supply voltage  VCC NEO-6G 1.75 1.8 1.95 V  
+NEO-6Q/M 
+NEO-6P/V/T 
+2.7 3.0 3.6 V  
+Supply voltage USB VDDUSB All 3.0 3.3 3.6 V  
+Backup battery voltage V_BCKP All 1.4  3.6 V  
+Backup battery current I_BCKP All  22  µA V_BCKP = 1.8 V, 
+VCC = 0V 
+Input pin voltage range Vin All 0  VCC V  
+Digital IO Pin Low level input voltage Vil All 0  0.2*VCC V  
+Digital IO Pin High level input voltage Vih All 0.7*VCC  VCC V   
+Digital IO Pin Low level output voltage Vol All   0.4 V Iol=4mA 
+Digital IO Pin High level output voltage Voh All VCC -0.4   V Ioh=4mA 
+USB_DM, USB_DP VinU All Compatible with USB with 22 Ohms series resistance 
+VCC_RF voltage VCC_RF All  VCC-0.1  V  
+VCC_RF output current ICC_RF All   50 mA  
+Antenna gain Gant All   50 dB  
+Receiver Chain Noise Figure NFtot All  3.0  dB  
+Operating temperature Topr All -40  85 °C  
+Table 10: Operating conditions 
+ Operation beyond the specified operating conditions can affect device reliability.  
+3.3 Indicative power requirements  
+Table 11 lists examples of the total system supply current for a possible application.  
+Parameter Symbol Module Min Typ Max Units Condition 
+Max. supply current 
+15
+ Iccp All   67 mA VCC = 3.6 V
+16
+ / 
+1.95 V
+17
+ 
+Average supply current
+18
+ 
+Icc Acquisition All  47
+19
+  mA 
+VCC = 3.0 V
+16
+ / 
+1.8 V
+17
+ 
+Icc Tracking 
+(Max Performance mode) 
+NEO-6G/Q/T  40
+20
+  mA 
+NEO-6M/P/V  39
+20
+  mA 
+Icc Tracking 
+(Eco mode) 
+NEO-6G/Q/T  38
+20
+  mA 
+NEO-6M/P/V  37
+20
+  mA 
+Icc Tracking 
+(Power Save mode / 1 Hz) 
+NEO-6G/Q  12
+20
+  mA 
+NEO-6M  11
+20
+  mA 
+Table 11: Indicative power requirements 
+ Values in Table 11 are provided for customer information only as an example of typical power 
+requirements. Values are characterized on samples, actual power requirements can vary depending on 
+FW version used, external circuitry, number of SVs tracked, signal strength, type of start as well as time, 
+duration and conditions of test. 
+                                                      
+15
+  Use this figure to dimension maximum current capability of power supply. Measurement of this parameter with 1 Hz bandwidth. 
+16
+ NEO-6Q, NEO-6M, NEO-6P, NEO-6V, NEO-6T 
+17
+ NEO-6G 
+18
+  Use this figure to determine required battery capacity. 
+19
+ >8 SVs in view, CNo >40 dBHz, current average of 30 sec after cold start. 
+20
+ With strong signals, all orbits available. For Cold Starts typical 12 min after first fix. For Hot Starts typical 15 s after first fix. 
+
+
+===== PDF PAGE 16 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 16 of 25 
+3.4 SPI timing diagrams 
+In order to avoid a faulty usage of the SPI, the user needs to comply with certain timing conditions. The 
+following signals need to be considered for timing constraints: 
+Symbol Description 
+SS_N Slave Select signal 
+SCK Slave Clock signal 
+Table 12: Symbol description 
+ 
+Figure 3: SPI timing diagram 
+3.4.1 Timing recommendations 
+ 
+Parameter Description Recommendation 
+tINIT Initialization Time 500 
+ s 
+tDES Deselect Time 1 ms 
+Bitrate  100 kbit/s 
+Table 13: SPI timing recommendations 
+ The values in the above table result from the requirement of an error-free transmission. By allowing just 
+a few errors, the byte rate could be increased considerably. These timings – and therefore the byte rate 
+– could also be improved by disabling other interfaces, e.g. the UART. 
+ The maximum bandwidth is 100 kbit/s
+21
+. 
+                                                      
+21
+ This is a theoretical maximum, the protocol overhead is not considered. 
+
+
+===== PDF PAGE 17 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 17 of 25 
+4 Mechanical specifications 
+ 
+ 
+Figure 4: Dimensions  
+ For information regarding the Paste Mask and Footprint see the LEA-6/NEO-6/MAX-6 Hardware 
+Integration Manual [1]. 
+
+
+===== PDF PAGE 18 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 18 of 25 
+5 Qualification and certification 
+5.1 Reliability tests 
+ All NEO-6 modules are based on AEC-Q100 qualified GPS chips. 
+Tests for product family qualifications according to ISO 16750 "Road vehicles  - Environmental conditions and 
+testing for electrical and electronic equipment”, and appropriate standards.  
+5.2 Approvals 
+ 
+Products marked with this lead -free symbol on the product label comply with the 
+"Directive 2002/95/EC of the European Parliament and the Council on the Restriction of 
+Use of certain Hazardous Substances in Electrical and Electronic Equipment" (RoHS). 
+All u-blox 6 GPS modules are RoHS compliant. 
+ 
+
+
+===== PDF PAGE 19 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 19 of 25 
+6 Product handling & soldering 
+6.1 Packaging 
+NEO-6 modules are delivered as hermetically sealed, reeled tapes in order to enable efficient production, 
+production lot set -up and tear-down. For more information about packaging, see the u-blox Package 
+Information Guide [4]. 
+ 
+Figure 5: Reeled u-blox 6 modules 
+6.1.1 Reels 
+NEO-6 GPS modules are deliverable in quantities of 250pcs on a reel. NEO-6 modules are delivered using reel 
+Type B as described in the u-blox Package Information Guide [4]. 
+ 
+Parameter Specification 
+Reel Type B 
+Delivery Quantity 250 
+Table 14: Reel information for NEO-6 modules 
+
+
+===== PDF PAGE 20 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 20 of 25 
+6.1.1 Tapes 
+Figure 6 shows the position and orientation of NEO-6 modules as they are delivered on tape. The dimensions of 
+the tapes are specified in Figure 7. 
+ 
+Figure 6: Orientation for NEO-6 modules on tape 
+ 
+ 
+Figure 7: NEO tape dimensions (mm) 
+
+===== PDF PAGE 21 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 21 of 25 
+6.2 Moisture Sensitivity Levels 
+ NEO-6 modules are Moisture Sensitive Devices (MSD) in accordance to the IPC/JEDEC 
+specification.  
+NEO-6 modules are rated at MSL level 4.  For more information regarding moisture sensitivity levels, labeling, 
+storage and drying see the u-blox Package Information Guide [4]. 
+ 
+ For MSL standard see IPC/JEDEC J-STD-020, which can be downloaded from www.jedec.org.  
+6.3 Reflow soldering 
+Reflow profiles are to be selected according to u-blox recommendations (see LEA-6/NEO-6/MAX-6 Hardware 
+Integration Manual [1]). 
+6.4 ESD handling precautions 
+ NEO-6 modules contain highly sensitive electronic circuitry and are Electrostatic 
+Sensitive Devices (ESD). Observe precautions for handling! Failure to observe 
+these precautions can result in severe damage to the GPS receiver!  
+GPS receivers are Electrostatic Sensitive Devices (ESD) and  require special precautions when handling. Particular 
+care must be exercised when handling patch antennas, due to the risk of electrostatic charges. In addition to 
+standard ESD safety practices, the following measu res should be taken into account whenever handling the 
+receiver: 
+ Unless there is a galvanic coupling between the local GND (i.e. the 
+work table) and the PCB GND, then the first point of contact when 
+handling the PCB must always be between the local GND and PCB 
+GND. 
+ Before mounting an antenna patch, connect ground of the device 
+  
+ When handling the RF pin, do not come into contact with any 
+charged capacitors and be careful when contacting materials that 
+can develop charges (e.g. patch antenna ~10pF, coax cable ~50-
+80pF/m, soldering iron, …) 
+ 
+ To prevent electrostatic discharge through the RF input, do not 
+touch any exposed antenna area. If there is any risk that such 
+exposed antenna area is touched in non ESD protected work area, 
+implement proper ESD protection measures in the design. 
+ 
+ When soldering RF connectors and patch antennas to the receiver’s 
+RF pin, make sure to use an ESD safe soldering iron (tip). 
+ 
+ 
+
+
+===== PDF PAGE 22 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 22 of 25 
+7 Default settings 
+ 
+Interface Settings 
+Serial Port 1 Output 
+ 
+9600 Baud, 8 bits, no parity bit, 1 stop bit 
+Configured to transmit both NMEA and UBX protocols, but only following NMEA and no 
+UBX messages have been activated at start-up: 
+GGA, GLL, GSA, GSV, RMC, VTG, TXT 
+(In addition to the 6 standard NMEA messages the NEO-6T includes ZDA). 
+USB Output Configured to transmit both NMEA and UBX protocols, but only following NMEA and no 
+UBX messages have been activated at start-up: 
+GGA, GLL, GSA, GSV, RMC, VTG, TXT 
+(In addition to the 6 standard NMEA messages the NEO-6T includes ZDA). 
+USB Power Mode: Bus-Powered 
+Serial Port 1 Input 9600 Baud, 8 bits, no parity bit, 1 stop bit 
+Automatically accepts following protocols without need of explicit configuration: 
+UBX, NMEA 
+The GPS receiver supports interleaved UBX and NMEA messages. 
+USB Input Automatically accepts following protocols without need of explicit configuration: 
+UBX, NMEA 
+The GPS receiver supports interleaved UBX and NMEA messages. 
+USB Power Mode: Bus-Powered 
+TIMEPULSE 
+(1Hz Nav) 1 pulse per second, synchronized at rising edge, pulse length 100ms 
+Power Mode Maximum Performance mode 
+AssistNow 
+Autonomous Disabled. 
+Table 15: Default settings 
+Refer to the u-blox 6 Receiver Description including Protocol Specification  [2] for information about further 
+settings. 
+ 
+
+===== PDF PAGE 23 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 23 of 25 
+8 Labeling and ordering information 
+8.1 Product labeling 
+The labeling of u -blox 6 GPS modules includes important product information. The location of the pr oduct type 
+number is shown in Figure 8. 
+  
+ 
+ 
+Product type number 
+ 
+Figure 8: Location of product type number on u-blox 6 module label 
+8.2 Explanation of codes 
+3 different product code formats are used. The Product Name is used in documentation such as this data sheet 
+and identifies all u -blox 6 products, independent of packaging and quality grade. The Ordering Code includes 
+options and quality, while the Type Number  includes the hardware and firmware versions. Table 16 below 
+details these 3 different formats: 
+Format Structure 
+Product Name PPP-GV 
+Ordering Code PPP-GV-T 
+Type Number PPP-GV-T-XXX  
+Table 16: Product Code Formats 
+The parts of the product code are explained in Table 17. 
+Code Meaning Example 
+PPP Product Family NEO 
+G Product Generation 6 = u-blox6 
+V Variant T = Timing, R = DR, etc. 
+T Option / Quality Grade Describes standardized functional element or quality grade such as 
+Flash size, automotive grade etc. 
+XXX Product Detail Describes product details or options such as hard- and software 
+revision, cable length, etc. 
+Table 17: part identification code 
+PPP-GV-T-XXX 
+
+===== PDF PAGE 24 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 24 of 25 
+8.3 Ordering information 
+Ordering No. Product 
+NEO-6G-0 u-blox 6 GPS Module, 1.8V, TCXO, 12x16mm, 250 pcs/reel 
+NEO-6M-0 u-blox 6 GPS Module, 12x16mm, 250 pcs/reel 
+NEO-6Q-0 u-blox 6 GPS Module, TCXO, 12x16mm, 250 pcs/reel 
+NEO-6P-0 u-blox 6 GPS Module, PPP, 12x16mm, 250 pcs/reel 
+NEO-6V-0 u-blox 6 GPS Module, Dead Reckoning SW sensor, 12x16mm, 250 pcs/reel 
+NEO-6T-0 u-blox 6 GPS Module, Precision Timing, TCXO, 12x16mm, 250 pcs/reel 
+Table 18: Product Ordering Codes 
+ Product changes affecting form, fit or function are documented by u -blox. For a list of Product Change 
+Notifications (PCNs) see our website at: http://www.u-blox.com/en/notifications.html 
+Related documents 
+[1] LEA-6/NEO-6/MAX-6 Hardware Integration Manual, Docu. GPS.G6-HW-09007 
+[2] u-blox 6 Receiver Description Including Protocol Specification (Public version),  
+Docu. No. GPS.G6-SW-10018 
+[3] u-blox 6 Receiver Description Including Protocol Specification (Confidential version),  
+Docu. No. GPS.G6-SW-10019 
+[4] u-blox Package Information Guide, Docu. No GPS-X-11004 
+ 
+ For regular updates to u-blox documentation and to receive product change notifications please register 
+on our homepage. 
+Revision history 
+ 
+Revision Date Name Status / Comments 
+ 31/08/2009 tgri Initial Version 
+1 21/09/2009 tgri update of section 1.3 GPS performance, section 1.4 block diagram, 
+section 3.2 peak supply current 
+A 25/02/2010 tgri Change of status to Advance Information. Addition of NEO-6G. 
+Update of section 1.8.2, removed reference to Vddio – added USB 
+driver certification. Update of section 3.2 table 11: average supply 
+current, Added section 3.3-3.4: SPI & DDC timing, section 5.1: 
+addition of table 12. 
+B 24/06/2010 dhur Change of status to Preliminary. Update of section 1.2, 1.8.4, 1.10.4, 
+3.1, 3.2 and chapter 2 and 4. General clean-up and consistency 
+check. 
+B1 11/08/2010 dhur Replaced graphic in figure 2. 
+C 18/07/2011 dhur Added chapter 1.6, update to FW7.03. 
+D 19/10/2011 dhur Added NEO-6P and NEO-6V. 
+Added chapter 1.7 and 1.8. Revised Chapter 6. 
+E 05/12/2011 dhur Added NEO-6T. 
+Added chapter 1.7 and 1.8. 
+Added Accuracy for Timepulse signal in Table 2. 
+Corrected Maximum Input power at RF_IN for NEO-6P in Table 9. 
+ 
+
+
+===== PDF PAGE 25 =====
+
+NEO-6 - Data Sheet 
+GPS.G6-HW-09005-E   Page 25 of 25 
+Contact 
+For complete contact information visit us at www.u-blox.com 
+ 
+Headquarters     
+u-blox AG 
+Zuercherstrasse 68 
+CH-8800 Thalwil 
+Switzerland 
+Phone: +41 44 722 74 44 
+Fax: +41 44 722 74 47 
+E-mail: info@u-blox.com 
+ 
+    
+Offices     
+North, Central and South America 
+u-blox America, Inc. 
+Phone: +1 (703) 483 3180 
+E-mail: info_us@u-blox.com  
+Regional Office West Coast: 
+Phone: +1 (703) 483 3184 
+E-mail: info_us@u-blox.com 
+Technical Support: 
+Phone: +1 (703) 483 3185 
+E-mail: support_us@u-blox.com 
+ 
+Europe, Middle East, Africa 
+u-blox AG  
+Phone: +41 44 722 74 44 
+E-mail: info@u-blox.com  
+Technical Support: 
+Phone: +41 44 722 74 44 
+E-mail: info@u-blox.com 
+ 
+Asia, Australia, Pacific 
+u-blox Singapore Pte. Ltd. 
+Phone: +65 6734 3811 
+E-mail: info_ap@u-blox.com 
+Support: support_ap@u-blox.com  
+Regional Office China: 
+Phone: +86 10 68 133 545 
+E-mail: info_cn@u-blox.com  
+Support: support_cn@u-blox.com 
+Regional Office Japan: 
+Phone: +81 3 5775 3850 
+E-mail: info_jp@u-blox.com  
+Support: support_jp@u-blox.com  
+Regional Office Korea: 
+Phone: +82 2 542 0861 
+E-mail: info_kr@u-blox.com  
+Support: support_kr@u-blox.com 
+Regional Office Taiwan: 
+Phone: +886 2 2657 1090 
+E-mail: info_tw@u-blox.com  
+Support: support_tw@u-blox.com  
+ 
