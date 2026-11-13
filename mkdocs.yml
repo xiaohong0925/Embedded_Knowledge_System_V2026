@@ -711,7 +711,7 @@ nav:
               - B-B.4.5 实战W25Qxx SPI NOR Flash端到端: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md
           - B.5 UART:
               - B-B.5.1 UART物理层与电气连接: B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md
-              - B-B.5.2 UART Linux驱动与调试: B. 总线协议/B. 低速外设接口/B-B.5.2_UART Linux驱动与调试.md
+              - B-B.5.2 UART帧、采样与波特率: B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md
               - B-B.5.3 RS-485与Modbus协议: B. 总线协议/B. 低速外设接口/B-B.5.3_RS-485与Modbus协议.md
               - B-B.5.4 实战NEO-6M GPS数据读取与解析: B. 总线协议/B. 低速外设接口/B-B.5.4_实战NEO-6M_GPS数据读取与解析.md
           - B.6 I3C:

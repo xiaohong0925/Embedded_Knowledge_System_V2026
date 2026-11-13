@@ -1,0 +1,96 @@
+{
+  "section": "B-B.5.2",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+  "main_question": "没有共享时钟时，RK3568 怎样把 NEO-6M 发来的 RX 波形恢复成确定的 0x24，双方波特率误差又为什么可能使接收失败？",
+  "baseline": {
+    "reviewed_at": "2026-11-13",
+    "article_sha256": "3eed0b1d7843081ff338bb28477649909128152dc03e49b20fa6b5b49b2d04f9",
+    "agent_sha256": "468bde57f45ba19639c34ecd1377121a144e3e7b5e1bdd9cbbca7e20683a485a",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md"
+    ],
+    "source_snapshots": [
+      "help-docs/uart-b-b-5-1/NEO-6_DataSheet_GPS.G6-HW-09005.utf8.txt",
+      "help-docs/uart-b-b-5-1/RK3568_datasheet_V2.4.utf8.txt",
+      "help-docs/uart-b-b-5-2/Rockchip_RK3568_TRM_Part1_V1.1-20210301.utf8.txt",
+      "help-docs/uart-b-b-5-2/page-785-Im49.png",
+      "help-docs/uart-b-b-5-2/page-785-Im51.png",
+      "help-docs/uart-b-b-5-2/page-787-Im53.jpg",
+      "help-docs/uart-b-b-5-2/page-787-Im54.jpg",
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_dw.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_serial_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_port.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_n_tty.c",
+      "help-docs/kernel-src-v6.6/include_linux_tty.h",
+      "help-docs/kernel-src-v6.6/include_uapi_linux_serial_reg.h"
+    ],
+    "assets": [
+      "docs/B. 总线协议/B. 低速外设接口/images/Rockchip_RK3568_TRM_Part1_V1.1-20210301.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/b-b-5-2-uart-sampling.html",
+      "reviews/sections/B-B.5.2-browser/svg-light.png",
+      "reviews/sections/B-B.5.2-browser/svg-dark.png",
+      "reviews/sections/B-B.5.2-browser/interactive-desktop.png",
+      "reviews/sections/B-B.5.2-browser/interactive-dark.png",
+      "reviews/sections/B-B.5.2-browser/interactive-mobile-375.png",
+      "tools/extract_uart_b_b_5_2_evidence.py",
+      "tools/extract_uart_b_b_5_2_trm_images.py",
+      "tools/render_b_b_5_2_svg_preview.py",
+      "tools/check_uart_b_b_5_2.py",
+      "tools/capture_uart_b_b_5_2_mobile.mjs"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿连续阅读后检查：先定义波特率、帧、LSB／MSB、过采样，再进入分频、误差和流控；ASCII、APB、DLH／DLL、LSR、FIFO、N_TTY、VSTART／VSTOP、UBX 均在首次使用处解释。0x24 的正反位图案相同，正文明确说明不能靠最终数值判断 LSB-first，改按 D0～D7 的时刻和编号跟随。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文只跟随 NEO-6M 首字符 $（0x24）：帧起点→8N1 位序→16 拍采样→时钟与分频→采样偏移→帧／校验／Break→FIFO 与流控→证据边界。异常均为同一帧的变体，没有引入第二主实例；TTY、完整排障、NMEA 解析、RS-485 和 Modbus 均移交后续篇目。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "去除内联 SVG、交互 iframe 和表格后，正文仍给出完整位序、16 拍采样步骤、分频公式、采样位置公式、±6% 停止位推演、FIFO 时间计算和 RTS／CTS 时序结论。交互页的逐位表和公式不是正文独有论证的载体。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可从 0x24 的 D0～D7 出发，复算每位时长、实际波特率、停止位采样位置和 64 字节 FIFO 时间量级；交互模型同步展示采样落点、恢复字节和帧错误，能够区分位段偏移、碰巧相同的位值与停止位失败。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "tools/check_uart_b_b_5_2.py 通过：0x24 位序及对称性、五个停止位采样位置、-0.3906% 分频误差、66.67 ms FIFO 算式、交互 ID 与控件、资源和导航均正确。git diff --check 无内容错误，仅项目既有 LF／CRLF 提示。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-13 最终修正后真实执行，退出码 0，Documentation built in 54.83 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "构建后真实页面确认 1 幅内联 SVG、7 个可展开 Q&A、iframe 正确加载和 3 份 PDF 链接均 HTTP 200。iframe 的目录式 URL 与交互返回 slug 已实际点击复验。交互正常、+6%、-6%、越界、空输入和重置均通过 DOM 检查；+6% 停止位为 8.962 且帧错误，-6% 为 10.106、恢复字节 0xA4 且帧错误。桌面浅色／深色与静态 SVG 浅色／深色截图已回读。真实 375 px CDP 设备仿真下正文 viewport/documentWidth 均为 375，无页面级横向溢出；独立交互页 clientWidth/scrollWidth 均为 375、内容高度 2059，真实移动视口截图已回读。普通 Chrome 窗口截屏未作为窄屏证据。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇无 C、DTS 或 termios 教学代码，编译为 not_applicable。未在实际 RK3568 板卡读取 baudclk、分频寄存器或控制器状态，未核对当前 NEO-6M 配置，未执行目标运行，也未执行逻辑分析仪或示波器测量。153000 Hz 为教学假设，153600 Hz 为驱动请求值，均不是实测。"
+    }
+  },
+  "open_issues": [
+    "当前 RK3568 板卡的实际 SCLK_UART4、分频值和 NEO-6M 当前配置仍未取得，正文算例只用于机制推演。",
+    "NEO-6M 公开资料未提供本篇所需的内部时钟和分频值，未虚构发送端寄存器算例。",
+    "目标运行和仪器测量均为 not_verified；后续须用真实板卡、位宽、控制器状态和仪器记录闭环。",
+    "四种读者检查和浏览器检查均为 AI 执行记录；record_state=current 与严格构建通过不代表最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.2 正文、静态帧图和采样误差交互，重点判断 0x24 对称位图案、采样误差公式和 RTS／CTS 时序是否易于跟随。若继续修改正文或资产，重跑相应读者检查、浏览器检查、严格构建和哈希校验；用户确认后才提交 B-B.5.3 的节级方案，不提前处理 B-B.5.4～B-B.5.7。"
+}

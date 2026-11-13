@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UART 采样点与波特率误差模型</title>
+<style>
+:root{color-scheme:light dark;--bg:#f7f9fc;--panel:#fff;--text:#182230;--muted:#566273;--line:#c8d1df;--accent:#1769aa;--good:#147d52;--bad:#c43d3d;--warn:#9a5a00;--track:#e7ecf3;--code:#edf2f8}
+@media(prefers-color-scheme:dark){:root{--bg:#12171e;--panel:#1a2230;--text:#edf2f8;--muted:#b3bfce;--line:#455267;--accent:#75bdf1;--good:#66d6a5;--bad:#ff8d8d;--warn:#f1bd68;--track:#273245;--code:#232f40}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:20px}
+h1{font-size:24px;line-height:1.3;margin:0 0 8px}h2{font-size:18px;margin:22px 0 10px}p{margin:8px 0}.muted{color:var(--muted)}.small{font-size:13px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}.controls{display:grid;grid-template-columns:1fr 130px;gap:12px 16px;align-items:center}.controls label{font-weight:650}.range-line{display:flex;gap:12px;align-items:center}.range-line input{width:100%}input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit}input[type=range]{accent-color:var(--accent)}.buttons{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}button{padding:7px 12px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;cursor:pointer}button:hover{border-color:var(--accent)}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.metric{padding:10px;border-radius:8px;background:var(--code)}.metric strong{display:block;font-size:18px}.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}svg{display:block;width:100%;min-width:760px;height:auto}table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}caption{text-align:left;padding:8px 10px;font-weight:650}th,td{padding:7px 10px;border-top:1px solid var(--line);text-align:left}th{background:var(--code)}code{padding:1px 4px;border-radius:4px;background:var(--code)}.formula{font-size:16px;text-align:center;padding:10px}.links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}a{color:var(--accent)}#inputNote{min-height:1.5em;color:var(--warn)}
+@media(max-width:700px){main{padding:12px}h1{font-size:21px}.controls{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}.panel{padding:12px}.buttons button{flex:1 1 30%}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>UART 采样点与波特率误差模型</h1>
+<p class="muted">固定发送 <code>$ = 0x24</code>、9600、8N1。横轴使用发送端位时间；下一帧紧接当前帧。模型只计算双方速率比造成的采样偏移，不模拟噪声、起始沿检测量化或多数表决。</p>
+</header>
+<section class="panel" aria-labelledby="controlTitle">
+<h2 id="controlTitle" style="margin-top:0">调整接收端实际波特率</h2>
+<div class="controls">
+<label for="errorRange">相对偏差 e</label>
+<label for="errorNumber">百分比</label>
+<div class="range-line"><input id="errorRange" type="range" min="-8" max="8" step="0.1" value="0" aria-describedby="rangeHelp"><span id="rangeValue">0.0%</span></div>
+<div><input id="errorNumber" type="number" min="-8" max="8" step="0.1" value="0" aria-label="接收端相对偏差百分比"></div>
+<p id="rangeHelp" class="small muted" style="grid-column:1/-1;margin:0">e =（接收端波特率 − 发送端波特率）÷ 发送端波特率。正值使采样提前，负值使采样推迟。输入范围限制为 −8%～+8%。</p>
+<div class="buttons" aria-label="预设偏差">
+<button type="button" data-value="0">正常 0%</button>
+<button type="button" data-value="1">较快 +1%</button>
+<button type="button" data-value="-1">较慢 −1%</button>
+<button type="button" data-value="6">较快 +6%</button>
+<button type="button" data-value="-6">较慢 −6%</button>
+<button type="button" id="resetButton">恢复默认</button>
+</div>
+</div>
+<p id="inputNote" role="status" aria-live="polite"></p>
+<div class="summary" aria-live="polite">
+<div class="metric"><span class="muted small">接收端实际波特率</span><strong id="receiverRate">9600.0</strong><span class="small">baud</span></div>
+<div class="metric"><span class="muted small">停止位采样位置</span><strong id="stopPosition">9.500</strong><span class="small">发送端位时间</span></div>
+<div class="metric"><span class="muted small">恢复的数据</span><strong id="recoveredByte">0x24</strong><span class="small">D7…D0</span></div>
+<div class="metric"><span class="muted small">停止位检查</span><strong id="frameStatus" class="good">通过</strong><span id="stopRead" class="small">读到高电平</span></div>
+</div>
+</section>
+<section class="panel" aria-labelledby="waveTitle">
+<h2 id="waveTitle" style="margin-top:0">波形与采样落点</h2>
+<p class="small muted">竖虚线是各位中心。彩色标记是当前接收端采样点：绿色落在预期位段，橙色已经偏离预期位段。停止位读低时报告帧错误。</p>
+<div class="scroll">
+<svg id="wave" viewBox="0 0 1000 350" role="img" aria-labelledby="svgTitle svgDesc">
+<title id="svgTitle">0x24 的 UART 波形与接收采样点</title>
+<desc id="svgDesc">发送端依次输出起始位、0x24 的八个数据位、停止位和下一帧起始位。采样位置随接收端偏差变化。</desc>
+<g id="grid"></g>
+<path id="wavePath" fill="none" stroke="currentColor" stroke-width="2"/>
+<g id="bitLabels"></g>
+<g id="samples"></g>
+</svg>
+</div>
+</section>
+<section class="panel" aria-labelledby="tableTitle">
+<h2 id="tableTitle" style="margin-top:0">逐位核对</h2>
+<div class="scroll">
+<table>
+<caption>同一帧的十个采样点</caption>
+<thead><tr><th>位段</th><th>预期电平</th><th>采样位置</th><th>实际落点</th><th>读到</th><th>判断</th></tr></thead>
+<tbody id="sampleRows"></tbody>
+</table>
+</div>
+<p id="stopExplanation" class="small"></p>
+</section>
+<section class="panel">
+<div class="formula"><code>采样位置 = (k + 0.5) / (1 + e)</code></div>
+<p class="small muted">起始位 k = 0，D0 的 k = 1，停止位的 k = 9。模型把下一帧起始位固定为低电平，用于展示连续 NMEA 数据流中的停止位检查；如果后续一直保持空闲高电平，同样的时间偏移可能得到不同结果。</p>
+<div class="links"><a href="../b-b-5-2-uart/">返回 B-B.5.2 正文</a><span class="small muted">确定性教学模型，不是 RK3568 硬件仿真</span></div>
+</section>
+</main>
+<script>
+(function(){
+"use strict";
+const bits=[0,0,0,1,0,0,1,0,0,1,0];
+const names=["起始","D0","D1","D2","D3","D4","D5","D6","D7","停止"];
+const x0=60,bitWidth=80,highY=80,lowY=190;
+const ns="http://www.w3.org/2000/svg";
+const range=document.getElementById("errorRange");
+const number=document.getElementById("errorNumber");
+const note=document.getElementById("inputNote");
+function el(tag,attrs,text){const node=document.createElementNS(ns,tag);Object.entries(attrs||{}).forEach(([k,v])=>node.setAttribute(k,v));if(text!==undefined)node.textContent=text;return node;}
+function bitAt(position){if(position<0)return 1;if(position>=11)return 1;return bits[Math.floor(position)];}
+function segmentAt(position){if(position<0)return "前置空闲";if(position>=11)return "后续空闲";if(position>=10)return "下一帧起始";return names[Math.floor(position)];}
+function fmt(value,digits){return Number(value).toFixed(digits);}
+function buildStatic(){
+ const grid=document.getElementById("grid"),labels=document.getElementById("bitLabels");
+ grid.replaceChildren();labels.replaceChildren();
+ for(let i=0;i<=11;i++){const x=x0+i*bitWidth;grid.appendChild(el("line",{x1:x,y1:35,x2:x,y2:245,stroke:"currentColor",opacity:.22,"stroke-dasharray":"4,4"}));}
+ for(let i=0;i<11;i++){const x=x0+(i+.5)*bitWidth;labels.appendChild(el("text",{x,y:230,"text-anchor":"middle",fill:"currentColor",stroke:"none","font-size":13},i===10?"下帧起始":names[i]));labels.appendChild(el("text",{x,y:250,"text-anchor":"middle",fill:"currentColor",stroke:"none","font-size":13},String(bits[i])));}
+ labels.appendChild(el("text",{x:20,y:70,fill:"currentColor",stroke:"none","font-size":13},"高 1"));labels.appendChild(el("text",{x:20,y:200,fill:"currentColor",stroke:"none","font-size":13},"低 0"));
+ let d=`M 20 ${highY} H ${x0}`;
+ for(let i=0;i<11;i++){const left=x0+i*bitWidth,right=left+bitWidth,y=bits[i]?highY:lowY;d+=` V ${y} H ${right}`;}
+ document.getElementById("wavePath").setAttribute("d",d);
+}
+function clamp(value){return Math.max(-8,Math.min(8,value));}
+function render(raw){
+ const e=clamp(raw)/100,ratio=1+e;
+ range.value=(e*100).toFixed(1);number.value=(e*100).toFixed(1);document.getElementById("rangeValue").textContent=`${(e*100).toFixed(1)}%`;
+ document.getElementById("receiverRate").textContent=fmt(9600*ratio,1);
+ const samples=names.map((name,k)=>({name,k,position:(k+.5)/ratio,expected:bits[k]}));
+ const stop=samples[9],stopValue=bitAt(stop.position),stopOk=stopValue===1;
+ document.getElementById("stopPosition").textContent=fmt(stop.position,3);
+ const data=samples.slice(1,9).map(s=>bitAt(s.position));
+ const value=data.reduce((acc,bit,index)=>acc|(bit<<index),0);
+ document.getElementById("recoveredByte").textContent=`0x${value.toString(16).toUpperCase().padStart(2,"0")}`;
+ const status=document.getElementById("frameStatus");status.textContent=stopOk?"通过":"帧错误";status.className=stopOk?"good":"bad";
+ const stopRead=document.getElementById("stopRead");stopRead.textContent=stopOk?"读到高电平":"读到低电平";stopRead.className=stopOk?"small good":"small bad";
+ const group=document.getElementById("samples");group.replaceChildren();
+ samples.forEach(s=>{
+  const x=x0+s.position*bitWidth,actual=bitAt(s.position),segment=Math.floor(s.position),inExpected=segment===s.k;
+  const color=inExpected?"var(--good)":"var(--warn)";
+  group.appendChild(el("line",{x1:x,y1:42,x2:x,y2:215,stroke:color,"stroke-width":2}));
+  group.appendChild(el("circle",{cx:x,cy:s.expected?highY:lowY,r:5,fill:color,stroke:"none"}));
+  group.appendChild(el("text",{x,y:30,"text-anchor":"middle",fill:color,stroke:"none","font-size":12},s.name));
+ });
+ const tbody=document.getElementById("sampleRows");tbody.replaceChildren();
+ samples.forEach(s=>{
+  const actual=bitAt(s.position),inExpected=Math.floor(s.position)===s.k;
+  const row=document.createElement("tr");
+  const judgement=s.k===9?(actual?"停止位正常":"帧错误"):(inExpected?(actual===s.expected?"位段内，值一致":"位段内，值改变"):(actual===s.expected?"偏离位段，值碰巧相同":"偏离位段，值改变"));
+  [s.name,String(s.expected),fmt(s.position,3),segmentAt(s.position),String(actual),judgement].forEach((text,index)=>{const cell=document.createElement("td");cell.textContent=text;if(index===5)cell.className=(s.k===9&&!actual)||!inExpected?"warn":"good";row.appendChild(cell);});
+  tbody.appendChild(row);
+ });
+ document.getElementById("stopExplanation").textContent=`停止位预期位于第 9～10 个发送端位时间，当前采样位置为 ${fmt(stop.position,3)}，落在“${segmentAt(stop.position)}”，读到 ${stopValue}，因此${stopOk?"停止位检查通过":"报告帧错误"}。`;
+}
+range.addEventListener("input",()=>{note.textContent="";render(Number(range.value));});
+number.addEventListener("change",()=>{const value=Number(number.value);if(number.value.trim()===""||!Number.isFinite(value)){note.textContent="输入不是有效数字，已恢复为 0%。";render(0);return;}if(value<-8||value>8)note.textContent="输入超出范围，已限制到 −8%～+8%。";else note.textContent="";render(value);});
+document.querySelectorAll("button[data-value]").forEach(button=>button.addEventListener("click",()=>{note.textContent="";render(Number(button.dataset.value));}));
+document.getElementById("resetButton").addEventListener("click",()=>{note.textContent="已恢复为双方波特率一致。";render(0);});
+buildStatic();render(0);
+})();
+</script>
+</body>
+</html>
