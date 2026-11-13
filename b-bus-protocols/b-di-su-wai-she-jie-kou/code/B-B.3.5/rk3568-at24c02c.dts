@@ -1,0 +1,19 @@
+/*
+ * Board-level DTS fragment for the B-B.3.5 controlled experiment.
+ * Merge into the DTS that actually enables RK3568 I2C1 in your BSP.
+ * This is not a universal board file and has not been compiled or deployed.
+ */
+&i2c1 {
+    status = "okay";
+
+    eeprom@50 {
+        /* A valid Linux v6.6 at24 match: 256 bytes, 8-bit word address. */
+        compatible = "atmel,24c02";
+
+        /* Seven-bit bus address with A2/A1/A0 grounded on a package that has them. */
+        reg = <0x50>;
+
+        /* AT24C02C hardware fact: 32 pages × 8 bytes; never enlarge for speed. */
+        pagesize = <8>;
+    };
+};

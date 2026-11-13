@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPI 一笔事务：9F 00 00 00 → ?? EF 40 18</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --kimi-font-mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  --kimi-color-text-primary:#1f1f23;
+  --kimi-color-text-secondary:#54545a;
+  --kimi-color-text-tertiary:#76767e;
+  --kimi-color-text-quaternary:#a6a6ae;
+  --kimi-color-surface-muted:#f2f2f5;
+  --kimi-color-surface-raised:#ffffff;
+  --kimi-color-border:#e3e3e8;
+  --kimi-chart-1:#2b7fff;
+  --kimi-chart-3:#1fa972;
+  --t-fast:150ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#ededf0;
+    --kimi-color-text-secondary:#b9b9c0;
+    --kimi-color-text-tertiary:#8f8f98;
+    --kimi-color-text-quaternary:#5f5f66;
+    --kimi-color-surface-muted:#26262b;
+    --kimi-color-surface-raised:#1a1a1e;
+    --kimi-color-border:#38383f;
+    --kimi-chart-1:#5ea2ff;
+    --kimi-chart-3:#2fbf85;
+  }
+}
+html,body{background:transparent;margin:0;padding:16px;}
+</style>
+</head>
+<body>
+
+
+<style>
+#spi button{border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:background var(--t-fast,150ms) var(--ease-out,ease-out)}
+#spi button:hover{background:var(--kimi-color-surface-muted)}
+#spi .chip{border:1px solid var(--kimi-color-border);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--kimi-color-text-tertiary);background:transparent;cursor:default}
+#spi .chip.on{color:var(--kimi-color-text-primary);font-weight:500;border-color:var(--kimi-color-text-primary)}
+#spi .hx{font-family:var(--kimi-font-mono,monospace);font-variant-numeric:tabular-nums;font-size:13px}
+#spi .done{color:var(--kimi-color-text-primary);font-weight:500}
+#spi .act{color:var(--kimi-color-text-primary)}
+#spi .todo{color:var(--kimi-color-text-quaternary)}
+#spi .unk{color:var(--kimi-color-text-quaternary)}
+#spi svg text{font-family:var(--kimi-font-sans,sans-serif)}
+#speed button{padding:4px 10px;border-radius:6px}
+</style>
+<div id="spi" style="font-family:var(--kimi-font-sans,sans-serif);color:var(--kimi-color-text-primary);max-width:880px;margin:0 auto;">
+  <div id="rail" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+  <svg id="wf" viewBox="0 0 798 254" style="width:100%;height:auto;display:block;"></svg>
+  <div style="display:flex;flex-wrap:wrap;gap:16px;margin:10px 0 2px;font-size:12px;color:var(--kimi-color-text-tertiary);align-items:center;">
+    <span><i style="display:inline-block;width:18px;border-top:2px solid var(--kimi-chart-1);vertical-align:middle;margin-right:6px;"></i>MOSI 主机→Flash</span>
+    <span><i style="display:inline-block;width:18px;border-top:2px solid var(--kimi-chart-3);vertical-align:middle;margin-right:6px;"></i>MISO Flash→主机</span>
+    <span><i style="display:inline-block;width:18px;border-top:2px dashed var(--kimi-color-text-quaternary);vertical-align:middle;margin-right:6px;"></i>未定义（首字节）</span>
+    <span><i style="display:inline-block;width:0;height:12px;border-left:2px solid var(--kimi-chart-1);vertical-align:middle;margin-right:6px;"></i>上升沿采样</span>
+  </div>
+  <div id="status" style="font-size:14px;color:var(--kimi-color-text-secondary);margin:8px 0;"></div>
+  <div style="margin-bottom:12px;">
+    <div style="margin-bottom:4px;"><span style="display:inline-block;width:76px;font-size:13px;color:var(--kimi-color-text-tertiary);">MOSI 已发</span><span id="dm"></span></div>
+    <div><span style="display:inline-block;width:76px;font-size:13px;color:var(--kimi-color-text-tertiary);">MISO 已收</span><span id="di"></span></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <button id="bReset">重置</button>
+    <button id="bPrev">上一拍</button>
+    <button id="bPlay" style="min-width:64px;">播放</button>
+    <button id="bNext">下一拍</button>
+    <span style="flex:1;"></span>
+    <span style="display:flex;gap:4px;" id="speed">
+      <button data-ms="900">慢</button><button data-ms="450" class="on">中</button><button data-ms="220">快</button>
+    </span>
+  </div>
+  <input id="scrub" type="range" min="0" max="32" value="0" style="width:100%;margin-top:12px;accent-color:var(--kimi-color-text-primary);">
+</div>
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var X0=78,C=22,N=32,XE=X0+N*C;
+var YCH=44,YCL=66,YSH=96,YSL=118,YMH=148,YML=170,YIH=200,YIL=222;
+var svg=document.getElementById('wf');
+function E(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(x,y,s,a,p){var t=E('text',{x:x,y:y,'font-size':a.fs||12,fill:a.fill||'var(--kimi-color-text-secondary)'},p);if(a.ta)t.setAttribute('text-anchor',a.ta);t.textContent=s;return t;}
+
+var defs=E('defs',{},svg);
+var cp=E('clipPath',{id:'rv'},defs);
+var rv=E('rect',{id:'rvr',x:X0,y:30,width:0,height:202},cp);
+var gBand=E('g',{},svg),gSep=E('g',{},svg),gIdle=E('g',{},svg),gAct=E('g',{'clip-path':'url(#rv)'},svg),gCur=E('g',{},svg);
+
+for(var g=0;g<4;g++){if(g%2===1)E('rect',{x:X0+g*8*C,y:34,width:8*C,height:194,fill:'color-mix(in srgb, var(--kimi-color-surface-muted) 55%, transparent)'},gBand);}
+[X0,X0+8*C,X0+16*C,X0+24*C,X0+32*C].forEach(function(x,i){E('line',{x1:x,y1:30,x2:x,y2:228,stroke:'var(--kimi-color-border)','stroke-width':1,'stroke-dasharray':(i===0||i===4)?'none':'3 4'},gSep);});
+var mosiB=['9F','00','00','00'],misoB=['??','EF','40','18'];
+for(g=0;g<4;g++){var cx=X0+g*8*C+4*C;T(cx,18,mosiB[g],{ta:'middle'},gSep);T(cx,244,misoB[g],{ta:'middle',fill:g===0?'var(--kimi-color-text-quaternary)':'var(--kimi-color-text-secondary)'},gSep);}
+[['CS',(YCH+YCL)/2+4],['SCLK',(YSH+YSL)/2+4],['MOSI →',(YMH+YML)/2+4],['MISO ←',(YIH+YIL)/2+4]].forEach(function(L){T(70,L[1],L[0],{fs:13,ta:'end'},gIdle);});
+E('line',{x1:8,y1:YCH,x2:XE+8,y2:YCH,stroke:'var(--kimi-color-text-quaternary)','stroke-width':1.6},gIdle);
+E('line',{x1:8,y1:YSL,x2:XE+8,y2:YSL,stroke:'var(--kimi-color-text-quaternary)','stroke-width':1.6},gIdle);
+E('line',{x1:8,y1:YML,x2:XE+8,y2:YML,stroke:'var(--kimi-color-text-quaternary)','stroke-width':1.6},gIdle);
+E('line',{x1:8,y1:YIL,x2:XE+8,y2:YIL,stroke:'var(--kimi-color-text-quaternary)','stroke-width':1.6,'stroke-dasharray':'5 4'},gIdle);
+
+var MOSI=[0x9F,0,0,0],MISO=[null,0xEF,0x40,0x18];
+function bit(arr,i){var b=arr[i>>3];if(b===null||b===undefined)return null;return (b>>(7-(i&7)))&1;}
+
+E('path',{d:'M'+X0+' '+YCH+' V'+YCL+' H'+XE+' V'+YCH,stroke:'var(--kimi-color-text-primary)','stroke-width':2,fill:'none'},gAct);
+var rising=[];
+for(var i=0;i<N;i++){
+  var xs=X0+i*C,xr=xs+0.3*C,xf=xs+0.7*C;
+  E('path',{d:'M'+xs+' '+YSL+' H'+xr+' V'+YSH+' H'+xf+' V'+YSL+' H'+(xs+C),stroke:'var(--kimi-color-text-primary)','stroke-width':1.8,fill:'none'},gAct);
+  E('line',{x1:xr,y1:YSH-5,x2:xr,y2:YIL+12,stroke:'var(--kimi-color-text-quaternary)','stroke-width':0.5},gAct);
+  var v=bit(MOSI,i),y=v?YMH:YML,py=i?(bit(MOSI,i-1)?YMH:YML):YML;
+  E('path',{d:'M'+xs+' '+py+' V'+y+' H'+(xs+C),stroke:'var(--kimi-chart-1)','stroke-width':2,fill:'none'},gAct);
+  var w=bit(MISO,i);
+  if(w===null){E('line',{x1:xs,y1:YIL,x2:xs+C,y2:YIL,stroke:'var(--kimi-color-text-quaternary)','stroke-width':2,'stroke-dasharray':'5 4'},gAct);}
+  else{var wy=w?YIH:YIL,wp=i&&bit(MISO,i-1)===1?YIH:YIL;
+    E('path',{d:'M'+xs+' '+wp+' V'+wy+' H'+(xs+C),stroke:'var(--kimi-chart-3)','stroke-width':2,fill:'none'},gAct);}
+  rising.push(xr);
+}
+var band=E('rect',{x:X0,y:34,width:C,height:194,opacity:0,fill:'color-mix(in srgb, var(--kimi-color-surface-muted) 85%, transparent)'},gCur);
+var ctick=E('line',{y1:YSH-8,y2:YIL+16,'stroke-width':1.6,opacity:0,stroke:'var(--kimi-chart-1)'},gCur);
+var ctri=E('path',{opacity:0,fill:'var(--kimi-chart-1)'},gCur);
+var cm=T(0,-10,'',{fs:11,ta:'middle',fill:'var(--kimi-chart-1)'},gCur);
+var ci=T(0,-10,'',{fs:11,ta:'middle',fill:'var(--kimi-chart-3)'},gCur);
+
+var steps=['空闲','拉低 CS','发命令 0x9F','占位读 ID','释放 CS'];
+var rail=document.getElementById('rail');
+steps.forEach(function(s,idx){var d=document.createElement('div');d.className='chip';d.id='st'+idx;d.textContent=(idx+1)+' · '+s;rail.appendChild(d);});
+function stepOf(k){return k===0?0:k===1?1:k<=8?2:k<32?3:4;}
+function statusText(k){
+  if(k===0)return '空闲 · CS=高，SCLK=低；双方已约定 8 位、MSB-first、Mode 0';
+  if(k===1)return '已拉低 CS · 第 1 拍：主机把 0x9F 的 bit7=1 放上 MOSI，Flash 在上升沿采样';
+  if(k<=8)return '第 '+k+' 拍 · Flash 采样命令字节 0x9F（bit'+(8-k)+'）';
+  if(k<32)return '第 '+k+' 拍 · 主机发占位 00，Flash 移出 ID 第 '+(k-8)+' 位，主机在上升沿采样 MISO';
+  return '完成 · 共 32 拍：MOSI 发出 9F 00 00 00，MISO 收到 ?? EF 40 18，CS 释放';
+}
+function cls(doneCond,actCond){return doneCond?'done':(actCond?'act':'todo');}
+function syncDecode(k){
+  var dm=document.getElementById('dm'),di=document.getElementById('di');
+  dm.innerHTML=mosiB.map(function(h,idx){return '<span class="hx '+cls(k>=(idx+1)*8,k>idx*8)+'">'+h+'</span>';}).join(' ');
+  di.innerHTML=misoB.map(function(h,idx){
+    var c=idx===0?(k>=8?'done':'unk'):cls(k>=(idx+1)*8,k>idx*8);
+    return '<span class="hx '+c+'">'+h+'</span>';}).join(' ');
+}
+
+var k=0,playing=false,speed=450,last=0;
+var bPlay=document.getElementById('bPlay');
+function render(){
+  rv.setAttribute('width',k*C);
+  if(k<N){
+    var x=X0+k*C,xr=rising[k];
+    band.setAttribute('x',x);band.setAttribute('opacity',1);
+    ctick.setAttribute('x1',xr);ctick.setAttribute('x2',xr);ctick.setAttribute('opacity',1);
+    ctri.setAttribute('d','M'+(xr-4)+' '+(YSH-14)+' L'+(xr+4)+' '+(YSH-14)+' L'+xr+' '+(YSH-8)+' Z');ctri.setAttribute('opacity',1);
+    var v=bit(MOSI,k);cm.setAttribute('x',x+0.65*C);cm.setAttribute('y',YMH-6);cm.textContent=v===null?'–':String(v);cm.setAttribute('opacity',1);
+    var w=bit(MISO,k);ci.setAttribute('x',x+0.65*C);ci.setAttribute('y',YIH-6);ci.textContent=w===null?'?':String(w);ci.setAttribute('fill',w===null?'var(--kimi-color-text-quaternary)':'var(--kimi-chart-3)');ci.setAttribute('opacity',1);
+  }else{
+    band.setAttribute('opacity',0);ctick.setAttribute('opacity',0);ctri.setAttribute('opacity',0);
+    cm.setAttribute('opacity',0);ci.setAttribute('opacity',0);
+  }
+  document.getElementById('status').textContent=statusText(k);
+  syncDecode(k);
+  var so=stepOf(k);
+  for(var idx=0;idx<5;idx++){var c=document.getElementById('st'+idx);if(c)c.className='chip'+(idx===so?' on':'');}
+  document.getElementById('scrub').value=k;
+}
+function pause(){playing=false;bPlay.textContent='播放';}
+bPlay.onclick=function(){
+  if(k>=N)k=0;
+  playing=!playing;bPlay.textContent=playing?'暂停':'播放';last=performance.now();
+  if(playing)requestAnimationFrame(frame);
+};
+function frame(t){
+  if(!playing)return;
+  if(t-last>=speed){last=t;if(k<N){k++;render();}}
+  if(k>=N){pause();return;}
+  requestAnimationFrame(frame);
+}
+document.getElementById('bReset').onclick=function(){pause();k=0;render();};
+document.getElementById('bPrev').onclick=function(){pause();if(k>0)k--;render();};
+document.getElementById('bNext').onclick=function(){pause();if(k<N)k++;render();};
+document.getElementById('scrub').oninput=function(e){pause();k=+e.target.value;render();};
+document.getElementById('speed').onclick=function(e){
+  var b=e.target.closest('button');if(!b)return;
+  speed=+b.dataset.ms;
+  this.querySelectorAll('button').forEach(function(x){x.className='';});
+  b.className='on';
+};
+render();
+})();
+</script>
+
+</body>
+</html>

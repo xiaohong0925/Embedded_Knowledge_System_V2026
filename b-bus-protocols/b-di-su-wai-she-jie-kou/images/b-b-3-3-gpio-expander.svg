@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="920" viewBox="0 0 1600 920">
+  <defs>
+    <style>
+      .title{font:700 42px 'Microsoft YaHei',sans-serif;fill:#172033}.sub{font:24px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .h{font:700 28px 'Microsoft YaHei',sans-serif;fill:#172033}.t{font:23px 'Microsoft YaHei',sans-serif;fill:#26334a}.s{font:20px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .box{stroke-width:3;rx:22}.arrow{stroke:#415a77;stroke-width:5;fill:none;marker-end:url(#a)}.dash{stroke-dasharray:12 10}.lbl{font:700 21px 'Microsoft YaHei',sans-serif;fill:#31527a}
+    </style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#415a77"/></marker>
+  </defs>
+  <rect width="1600" height="920" fill="#f7f9fc"/>
+  <text x="800" y="68" text-anchor="middle" class="title">GPIO 扩展器：I2C 设备驱动与 GPIO 子系统接力</text>
+  <text x="800" y="110" text-anchor="middle" class="sub">其他驱动看到的是 GPIO 编号与电平，不必自己读写扩展器寄存器</text>
+
+  <rect x="80" y="180" width="390" height="240" class="box" fill="#e8f1ff" stroke="#5284c4"/>
+  <text x="275" y="230" text-anchor="middle" class="h">SoC 与 pca953x 驱动</text>
+  <text x="120" y="280" class="t">原生 GPIO 已用完</text>
+  <text x="120" y="323" class="t">pca953x 读写方向 / 输入 / 输出寄存器</text>
+  <text x="120" y="366" class="t">probe() 注册 gpiochip（16 路）</text>
+  <text x="120" y="402" class="s">gpiochip 是内核对“一组 GPIO”的统一抽象</text>
+
+  <rect x="605" y="180" width="390" height="240" class="box" fill="#e8f7ed" stroke="#4b9c68"/>
+  <text x="800" y="230" text-anchor="middle" class="h">PCA9535</text>
+  <text x="645" y="280" class="t">I2C 地址：0x20</text>
+  <text x="645" y="323" class="t">P0_0 … P0_7，P1_0 … P1_7</text>
+  <text x="645" y="366" class="t">每路可配置为输入或输出</text>
+  <text x="645" y="402" class="s">INT 是可选告警输出，不是 I2C 必需信号</text>
+
+  <rect x="1130" y="180" width="390" height="240" class="box" fill="#fff3d9" stroke="#d19a2a"/>
+  <text x="1325" y="230" text-anchor="middle" class="h">板上的低速控制信号</text>
+  <text x="1170" y="280" class="t">LED、复位、使能、拨码开关</text>
+  <text x="1170" y="323" class="t">例如 P1_6 接外设复位脚</text>
+  <text x="1170" y="366" class="t">电平翻转由一次 I2C 寄存器写完成</text>
+  <text x="1170" y="402" class="s">不适合替代高频率、严格定时的原生 GPIO</text>
+
+  <path d="M470 300 H605" class="arrow"/><path d="M995 300 H1130" class="arrow"/>
+  <text x="538" y="275" text-anchor="middle" class="lbl">SDA / SCL</text><text x="1062" y="275" text-anchor="middle" class="lbl">扩展引脚</text>
+
+  <rect x="240" y="560" width="1120" height="220" class="box" fill="#f0edff" stroke="#806cc1"/>
+  <text x="800" y="615" text-anchor="middle" class="h">另一个设备节点像使用原生 GPIO 一样引用它</text>
+  <text x="800" y="670" text-anchor="middle" class="t">reset-gpios = &lt;&amp;pca9535 14 GPIO_ACTIVE_LOW&gt;;</text>
+  <text x="800" y="714" text-anchor="middle" class="t">GPIO 子系统 → pca953x → I2C Core → PCA9535 的 P1_6</text>
+  <text x="800" y="756" text-anchor="middle" class="s">编号 14 = 第二组 8 路中的第 6 路；ACTIVE_LOW 描述有效电平，不是固定输出低</text>
+  <path d="M800 560 V470 H275 V420" class="arrow dash"/>
+</svg>

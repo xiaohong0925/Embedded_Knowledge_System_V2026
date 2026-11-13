@@ -1,0 +1,54 @@
+{
+  "section": "",
+  "article": "",
+  "main_question": "",
+  "baseline": {
+    "reviewed_at": "",
+    "article_sha256": "",
+    "agent_sha256": "",
+    "plan_sha256": ""
+  },
+  "scope": {
+    "outlines": [],
+    "source_snapshots": [],
+    "assets": [],
+    "related_sections": []
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "not_verified",
+      "evidence": ""
+    },
+    "mainline": {
+      "status": "not_verified",
+      "evidence": ""
+    },
+    "blind_delete": {
+      "status": "not_verified",
+      "evidence": ""
+    },
+    "follow": {
+      "status": "not_verified",
+      "evidence": ""
+    }
+  },
+  "verification": {
+    "strict_build": {
+      "status": "not_verified",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": ""
+    },
+    "browser": {
+      "status": "not_applicable",
+      "result": ""
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "note": ""
+    }
+  },
+  "open_issues": [],
+  "next_action": ""
+}

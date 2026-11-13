@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "lab": "/B. 总线协议/B. 低速外设接口/html/pmbus-lab.html",
+  "browser": "Headless Chrome via CDP",
+  "scenarios": {
+    "raw": {
+      "steps": 9,
+      "finalText": "raw768exponent-9millivolts1500ret0"
+    },
+    "native": {
+      "steps": 3,
+      "finalText": "data.word0x0300函数返回768外层 raw0x0300"
+    },
+    "emulated": {
+      "steps": 4,
+      "finalText": "msgbuf100 03data->word0x0300status0"
+    },
+    "race": {
+      "steps": 5,
+      "finalText": "恢复后 PAGE0A 已存样本错误通道补救结果无法追溯修正"
+    },
+    "decode": {
+      "steps": 4,
+      "finalText": "计算768 × 1000 >> 9millivolts1500电压1.5 V"
+    },
+    "driver": {
+      "steps": 10,
+      "finalText": "用户看到1500\\nupdate_lockunlockedcurrpage1sensor继续存在"
+    },
+    "failure": {
+      "steps": 5,
+      "finalText": "读取 ret-ENXIO（示例）restore_ret-EIO最终 ret-ENXIO恢复错误已记录"
+    }
+  },
+  "sources": {
+    "demo": {
+      "characters": 7548,
+      "status": "343 行 · 完整文件"
+    },
+    "dts": {
+      "characters": 223,
+      "status": "14 行 · 完整文件"
+    },
+    "makefile": {
+      "characters": 348,
+      "status": "16 行 · 完整文件"
+    },
+    "smbus": {
+      "characters": 20668,
+      "status": "724 行 · 完整文件"
+    },
+    "tps": {
+      "characters": 1366,
+      "status": "55 行 · 完整文件"
+    },
+    "core": {
+      "characters": 93128,
+      "status": "3693 行 · 完整文件"
+    }
+  },
+  "mobileLayout": {
+    "body": 390,
+    "viewport": 390,
+    "code": 316
+  },
+  "runtimeExceptions": 0,
+  "consoleErrors": 0,
+  "failedResponses": 0,
+  "scope": "仅验证浏览器 DOM 交互、源码加载、场景状态与布局；不验证内核模块编译、真实总线、芯片或仪器。"
+}
