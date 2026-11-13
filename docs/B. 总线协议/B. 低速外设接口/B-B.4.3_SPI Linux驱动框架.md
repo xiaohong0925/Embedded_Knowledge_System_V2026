@@ -19,25 +19,24 @@ B-B.4.2 已经把一笔 W25Q128JV Fast Read 拆成确定的线上字节：主机
 
 `D0～D3` 是 Flash 当前地址中的内容，不由 SPI 框架决定。后文用 `A7 5C 3F 19` 解释日志时，它只是**教学假设数据**，不是实测结果。
 
-本节覆盖：五类 SPI 对象的生命周期、DTS 建链与驱动匹配、手工双段 `spi_message`、v6.6 真实调用链、CS 和返回语义、`spi_write_then_read()` 的封装边界，以及完整教学模块、DTS、Makefile 和观察步骤。spidev 工具排障归 B-B.4.4；`jedec,spi-nor → MTD` 的产品接入和烧录归 B-B.4.5。
+本节覆盖：五类 SPI 对象的生命周期、DTS 建链与驱动匹配、手工双段 `spi_message`、v6.6 真实调用链、CS 和返回语义、`spi_write_then_read()` 的封装边界，以及完整教学模块、DTS、Makefile 和观察步骤。<br>
+spidev 工具排障归 B-B.4.4；`jedec,spi-nor → MTD` 的产品接入和烧录归 B-B.4.5。
 
 ---
 
 ## <span class="blue"> 先沿一笔读取看清责任线
 
-SPI 软件框架不是在用户态和引脚之间增加一层笼统的“驱动”，而是把不同责任交给不同对象。板级 DTS（Device Tree Source，设备树源文件）描述哪颗芯片接在哪个控制器的哪根 CS 上；外设协议驱动理解 `0x0B` 命令和 24 位地址；SPI Core 提供排队、校验、同步等待等公共服务；控制器驱动只负责让 RK3568 硬件完成规定的位移。
+B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍装进`spi_message` 和 `spi_transfer`，让 Linux 替你发出去。
 
-> SPI Core：Linux 在 `drivers/spi/spi.c` 中提供的总线核心，负责设备注册、驱动匹配、传输校验、调度和完成通知，不理解某颗 Flash 的命令集。
+本节先看一笔最小读取长什么样，再顺着执行路径确认：<br>
+命令在哪层组装、时钟在哪层产生、出错时该翻哪份代码。
 
-<!-- -->
+四类对象的边界先记一句话: 后面路径表里还会反复见到：
 
-> 外设协议驱动：与具体器件协议对应的 `spi_driver`。它通过 SPI API 访问从设备，不直接操作 RK3568 控制器寄存器。
-
-<!-- -->
-
-> 控制器驱动：与 SoC 中 SPI 硬件对应的驱动。本例是 `drivers/spi/spi-rockchip.c`，它执行 Core 交给它的一段传输（transfer），不理解 `0x0B` 在 Flash 协议中的含义。
-
-`probe` 是设备与驱动匹配成功后由 Core 调用的驱动入口。路径中的 message 表示一笔由若干段组成的事务，transfer 表示其中一段；后文会把它们落到具体结构体和代码。
+- **协议驱动**：你写的代码，管 0x0B 和地址怎么拆，不管 RK3568 寄存器。
+- **控制器驱动**（`spi-rockchip.c`）：管时钟、CS、GPIO，不管 0x0B 是什么意思。
+- **SPI Core**（`spi.c`）：管调度、排队、匹配，让上面两层接上头。
+- **设备树（DTS）**：只描述"芯片接在哪"，不跑代码。
 
 一笔成功读取要经过的完整路径是：
 
@@ -53,16 +52,17 @@ SPI 软件框架不是在用户态和引脚之间增加一层笼统的“驱动�
 → spi_sync() 返回 0，外设驱动取得 4 字节数据
 ```
 
-这条路径也给出源码地图。行号均按本项目保存的 Linux v6.6 快照核对，阅读代码时应先定位函数，再观察它的正常路径和错误路径。
+这条路径也给出源码地图。<br>
+行号均按本项目保存的 Linux v6.6 快照核对，阅读代码时应先定位函数，再观察它的正常路径和错误路径。
 
 | 责任 | v6.6 位置 | 本例要看的内容 |
 |---|---|---|
-| SPI1 硬件描述 | `arch/arm64/boot/dts/rockchip/rk356x.dtsi:1291-1303` | `spi1: spi@fe620000`、时钟、DMA、pinctrl、默认 disabled |
-| 设备创建与匹配 | `drivers/spi/spi.c:2226-2392, 376-470` | 解析子节点、创建 `spi_device`、匹配并调用 probe |
-| 同步传输 | `drivers/spi/spi.c:4190-4274` | 校验、排队或直接执行、等待、返回状态 |
-| 默认逐段执行 | `drivers/spi/spi.c:1481-1590` | 遍历 transfer、调用 `transfer_one`、处理 CS 和错误 |
-| 对象与 API 定义 | `include/linux/spi/spi.h:127-210, 975-1165` | 设备字段、全双工语义、message 和 transfer |
-| RK3568 硬件适配 | `drivers/spi/spi-rockchip.c:668-722, 752-928` | 注册控制器、配置并执行一个 transfer |
+| SPI1 硬件描述 | [`arch/arm64/boot/dts/rockchip/rk356x.dtsi:1291-1303`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} | `spi1: spi@fe620000`、时钟、DMA、pinctrl、默认 disabled |
+| 设备创建与匹配 | [`drivers/spi/spi.c:2226-2392, 376-470`](code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c){: data-code-viewer="true" data-code-title="spi.c" data-code-path="Linux v6.6 · drivers/spi/spi.c" data-code-lines="2226-2392,376-470"} | 解析子节点、创建 `spi_device`、匹配并调用 probe |
+| 同步传输 | [`drivers/spi/spi.c:4190-4274`](code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c){: data-code-viewer="true" data-code-title="spi.c" data-code-path="Linux v6.6 · drivers/spi/spi.c" data-code-lines="4190-4274"} | 校验、排队或直接执行、等待、返回状态 |
+| 默认逐段执行 | [`drivers/spi/spi.c:1481-1590`](code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c){: data-code-viewer="true" data-code-title="spi.c" data-code-path="Linux v6.6 · drivers/spi/spi.c" data-code-lines="1481-1590"} | 遍历 transfer、调用 `transfer_one`、处理 CS 和错误 |
+| 对象与 API 定义 | [`include/linux/spi/spi.h:127-210, 975-1165`](code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h){: data-code-viewer="true" data-code-title="spi.h" data-code-path="Linux v6.6 · include/linux/spi/spi.h" data-code-lines="127-210,975-1165"} | 设备字段、全双工语义、message 和 transfer |
+| RK3568 硬件适配 | [`drivers/spi/spi-rockchip.c:668-722, 752-928`](code/B-B.4.3/kernel-v6.6/drivers/spi/spi-rockchip.c){: data-code-viewer="true" data-code-title="spi-rockchip.c" data-code-path="Linux v6.6 · drivers/spi/spi-rockchip.c" data-code-lines="668-722,752-928"} | 注册控制器、配置并执行一个 transfer |
 
 这里的源码地图不是另一条学习主线。后文每次放大其中一个区间，都要回到同一笔 5＋4 字节读取，确认它处于全路的哪一步。
 
@@ -72,38 +72,58 @@ SPI 软件框架不是在用户态和引脚之间增加一层笼统的“驱动�
 
 ### SoC 先描述控制器，板级文件再描述接线结果
 
-RK3568 的 SoC 级 DTSI 已经给出 SPI1 的硬件事实。DTSI 是被板级 DTS 包含的设备树源文件，用来复用同一颗 SoC 的公共描述；板级 DTS 再记录某块板实际启用了哪些控制器和接入了哪些器件。
+RK3568 的 SoC 级 DTSI 已经给出 SPI1 的硬件事实。<br>
+DTSI 是被板级 DTS 包含的设备树源文件，用来复用同一颗 SoC 的公共描述；板级 DTS 再记录某块板实际启用了哪些控制器和接入了哪些器件。
 
-`rk356x.dtsi` 中的关键片段是：
+[`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 中的关键片段是：
+
+[`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 中的关键片段是：
 
 ```dts
 spi1: spi@fe620000 {
+    // 驱动匹配：spi-rockchip.c 按 rockchip,rk3568-spi → rockchip,rk3066-spi 顺序尝试
     compatible = "rockchip,rk3568-spi", "rockchip,rk3066-spi";
+
+    // 寄存器窗口：基址 0xfe620000，长度 0x1000，来自 SoC 地址映射，不是驱动分配的
     reg = <0x0 0xfe620000 0x0 0x1000>;
+
+    // GIC 中断号 104，电平高触发；传输完成、FIFO 收发中断都走这一条
     interrupts = <GIC_SPI 104 IRQ_TYPE_LEVEL_HIGH>;
+
+    // spiclk：控制器主时钟，SCK 由它分频得到；apb_pclk：APB 接口时钟，寄存器读写靠它
     clocks = <&cru CLK_SPI1>, <&cru PCLK_SPI1>;
     clock-names = "spiclk", "apb_pclk";
-    dmas = <&dmac0 22>, <&dmac0 23>;
+
+    // DMAC0 的 channel 22 发、23 收；声明了 dma-names 驱动就优先走 DMA，大数据量不吃 CPU
+    dmas = <&dmac0 22>, &dmac0 23>;
     dma-names = "tx", "rx";
+
+    // 引脚复用选 m0 方案：cs0/cs1 两个片选 + clk/miso/mosi 数据脚
     pinctrl-names = "default";
     pinctrl-0 = <&spi1m0_cs0 &spi1m0_cs1 &spi1m0_pins>;
+
+    // 子节点按片选号寻址，不是内存地址，所以 size-cells = 0
     #address-cells = <1>;
     #size-cells = <0>;
+
+    // SoC 文件只声明能力；启用是板级 dts 的决定，不替任何一块板默认开
     status = "disabled";
 };
 ```
 
-`spi@fe620000` 中的地址来自 SoC 地址映射，不是外设驱动分配的。`compatible` 让 Rockchip 平台驱动识别这套硬件；`reg` 给出寄存器窗口；`clocks` 提供控制器工作时钟；`dmas` 声明可用 DMA 通道；`pinctrl-0` 选择引脚复用组合。DMA（Direct Memory Access，直接内存访问）允许硬件在内存与外设之间搬运数据，减少 CPU 逐字参与。`status = "disabled"` 表示 SoC 文件只声明能力，不替每块板默认启用。
+`spi@fe620000` 这个地址来自 SoC 地址映射，外设驱动不参与分配，它只负责认领。<br>
+`status = "disabled"` 体现了分层原则：SoC 级文件只声明这颗芯片"有什么能力"，启不启用、接了什么器件，留给板级 DTS 描述。
 
-Rockchip 驱动进入 `rockchip_spi_probe()` 后，用 `spi_alloc_host()` 创建 `spi_controller`，设置模式能力、速度范围、`setup`、`set_cs` 和 `transfer_one` 等回调，最后调用 `devm_spi_register_controller()`。这里的 `devm` 表示设备模型管理资源，控制器解绑或销毁时按设备资源路径释放，不要求外设协议驱动介入。
+Rockchip 驱动进入 `rockchip_spi_probe()` 后，用 `spi_alloc_host()` 创建 `spi_controller`，设置模式能力、速度范围、`setup`、`set_cs` 和 `transfer_one` 等回调，最后调用 `devm_spi_register_controller()`。<br>`devm` 表示资源挂在设备模型上，控制器解绑时按设备资源路径自动释放，不要求协议驱动介入。
 
-> `spi_controller`：一个 SPI 主机控制器在内核中的对象。它保存总线编号、片选数量、支持的模式与字长、速度范围和硬件操作回调；本例由 Rockchip 控制器驱动在 probe 中创建。
+> `spi_controller`：一个 SPI 主机控制器在内核中的对象。<br>
+> 它保存总线编号、片选数量、支持的模式与字长、速度范围和硬件操作回调；本例由 Rockchip 控制器驱动在 probe 中创建。
 
 控制器注册成功并不等于 Flash 已经可以访问。Core 还要遍历控制器节点下的可用子节点，把板级接线描述变成外设对象。
 
 ### 教学 DTS 只改变匹配对象，不改变器件协议
 
-为了观察 `spi_driver` 的匹配和传输过程，本篇使用一个只发起 Fast Read 的教学驱动。配套文件 [`spi-frame-observer.dts`](code/B-B.4.3/spi-frame-observer.dts) 完整内容如下：
+为了观察 `spi_driver` 的匹配和传输过程，本篇使用一个只发起 Fast Read 的教学驱动。配套文件 [`spi-frame-observer.dts`](code/B-B.4.3/spi-frame-observer.dts){: data-code-viewer="true" data-code-title="spi-frame-observer.dts" data-code-path="本篇教学配套 · code/B-B.4.3/spi-frame-observer.dts"} 完整内容如下：
 
 ```dts
 // 板级 DTS 片段；不是可独立编译的完整 DTS，也不是带 /plugin/ 的 overlay。
@@ -120,7 +140,7 @@ Rockchip 驱动进入 `rockchip_spi_probe()` 后，用 `spi_alloc_host()` 创建
 
 `&spi1` 引用 SoC 文件中已有的节点，板级片段将状态改为 `okay`。`reg = <0>` 选择 CS0，不是 I2C 那样的总线地址。`spi-max-frequency` 是该板级外设允许使用的上限，1 MHz 只是受控教学配置，不是 W25Q128JV 的最高速率，也不是实测推荐值。节点不写 `spi-cpol`、`spi-cpha`、`spi-lsb-first` 和 `spi-cs-high`，对应 Mode 0、MSB-first、低有效 CS 的默认设置。
 
-pinctrl 沿用 `rk356x.dtsi` 的 SPI1 m0 组合。实际板卡必须确认原理图确实接到这组引脚；若板级设计使用其他复用组，应修改板级 pinctrl，而不是保留这里的默认假设。
+pinctrl 沿用 [`rk356x.dtsi`](code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi){: data-code-viewer="true" data-code-title="rk356x.dtsi" data-code-path="Linux v6.6 · arch/arm64/boot/dts/rockchip/rk356x.dtsi" data-code-lines="1291-1303"} 的 SPI1 m0 组合。实际板卡必须确认原理图确实接到这组引脚；若板级设计使用其他复用组，应修改板级 pinctrl，而不是保留这里的默认假设。
 
 > 🔴 教学节点和正式 `jedec,spi-nor` 节点不能同时占用 SPI1 CS0。做本实验时，应替换或禁用同片选上的其他子节点，并确认没有第二个驱动绑定它。教学模块只读不写，但错误绑定仍会让对象归属和日志判断失去意义。
 
@@ -170,7 +190,7 @@ flowchart LR
 
 下面的完整模块是本篇原创教学代码，面向 Linux v6.6 外设协议驱动模型。它不是 Rockchip 或 spi-nor 源码节选，也不提供产品级 Flash 管理。运行上下文是可睡眠的进程上下文：模块加载后，设备匹配触发 probe，probe 同步执行一次只读 Fast Read。
 
-配套文件：[`spi_frame_observer.c`](code/B-B.4.3/spi_frame_observer.c)。
+配套文件：[`spi_frame_observer.c`](code/B-B.4.3/spi_frame_observer.c){: data-code-viewer="true" data-code-title="spi_frame_observer.c" data-code-path="本篇教学配套 · code/B-B.4.3/spi_frame_observer.c"}。
 
 ```c
 // SPDX-License-Identifier: GPL-2.0
@@ -385,7 +405,7 @@ make KDIR=/lib/modules/$(uname -r)/build
 make KDIR=/path/to/linux-v6.6 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 ```
 
-配套 [`Makefile`](code/B-B.4.3/Makefile) 的完整内容是：
+配套 [`Makefile`](code/B-B.4.3/Makefile){: data-code-viewer="true" data-code-title="Makefile" data-code-path="本篇教学配套 · code/B-B.4.3/Makefile"} 的完整内容是：
 
 ```makefile
 obj-m += spi_frame_observer.o

@@ -41,7 +41,9 @@ hooks:
   - tools/url_slug_hook.py
 extra_css:
   - stylesheets/extra.css
+  - stylesheets/code-viewer.css
 extra_javascript:
+  - javascripts/code-viewer.js
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js
 markdown_extensions:
   - tables
@@ -712,7 +714,7 @@ nav:
           - B.5 UART:
               - B-B.5.1 UART物理层与电气连接: B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md
               - B-B.5.2 UART帧、采样与波特率: B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md
-              - B-B.5.3 RS-485与Modbus协议: B. 总线协议/B. 低速外设接口/B-B.5.3_RS-485与Modbus协议.md
+              - B-B.5.3 UART Linux驱动框架与TTY路径: B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md
               - B-B.5.4 实战NEO-6M GPS数据读取与解析: B. 总线协议/B. 低速外设接口/B-B.5.4_实战NEO-6M_GPS数据读取与解析.md
           - B.6 I3C:
               - B-B.6.1 I3C物理层与I2C演进: B. 总线协议/B. 低速外设接口/B-B.6.1_I3C物理层与I2C演进.md

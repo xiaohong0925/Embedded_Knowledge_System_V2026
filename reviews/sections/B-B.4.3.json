@@ -3,9 +3,9 @@
   "article": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
   "main_question": "同样一笔 W25Q128JV Fast Read，Linux 如何从 DTS 创建 spi_device，经外设驱动、spi_message/spi_transfer、SPI Core 和 RK3568 控制器完成传输，并把结果或错误返回调用者？（0x0B 00 12 34 + 8 dummy + 4 字节数据；A7 5C 3F 19 仅为教学假设）",
   "baseline": {
-    "reviewed_at": "2026-11-11",
-    "article_sha256": "2f73ad8178619495442fe9c715c83c295141a78f3b34828dd3f55366e99a2b54",
-    "agent_sha256": "909c5b20aeec4165b439323c88c60001de3061c774262dab79824f81579f35ac",
+    "reviewed_at": "2026-11-13",
+    "article_sha256": "59547a7ab6fd538ff473730bcb62e9a5448cd2cd08a9aaa8240d74b05b3893a4",
+    "agent_sha256": "468bde57f45ba19639c34ecd1377121a144e3e7b5e1bdd9cbbca7e20683a485a",
     "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
   },
   "scope": {
@@ -31,7 +31,14 @@
       "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-fullcode.js",
       "docs/B. 总线协议/B. 低速外设接口/html/spi-framework-fullcode.manifest.json",
       "tools/check_spi_framework_lab.cjs",
-      "tools/test_spi_framework_lab_browser.cjs"
+      "tools/test_spi_framework_lab_browser.cjs",
+      "docs/javascripts/code-viewer.js",
+      "docs/stylesheets/code-viewer.css",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi-rockchip.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi",
+      "tools/test_code_viewer_browser.cjs"
     ],
     "related_sections": [
       "docs/B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md",
@@ -43,35 +50,35 @@
   },
   "reader_checks": {
     "dependency": {
-      "status": "pass",
-      "evidence": "AI 依赖复核：正文原有首次定义和完整代码解释保持独立；新增实验室只使用同一笔 5+4 字节 Fast Read 和已建立的五类对象。步骤说明补充 queue_empty、must_async、-EINPROGRESS、SPI_TRANS_FAIL_NO_START、fallback_pio/PIO 的含义；DTS 片段、noqueue 模型条件、DMA 条件、假设数据和 -EIO 注入均标明边界。完整函数提供真实来源上下文，不把未讲解的寄存器实现另立为学习前提。"
+      "status": "stale",
+      "evidence": "2026-11-11 的旧复核不再覆盖当前正文。2026-11-13 仅新增源码弹窗入口，没有引入新的正文技术结论，也没有重做整篇首次依赖检查；当前记录不沿用旧 pass。"
     },
     "mainline": {
-      "status": "pass",
-      "evidence": "AI 主线复核：正常场景 30 步依次沿 DTS、控制器注册、spi_device 创建与匹配、双段 message、spi_sync、Rockchip、actual_length=9、返回与释放推进；失败场景 24 步复用前 16 步，仅从首段模型注入 -EIO 处分岔，展示第二段不执行、CS 撤销、清理和负错误返回。spidev、spi-nor/MTD 产品实现及其他章节内容未进入实验室主线。"
+      "status": "stale",
+      "evidence": "本次只改变源码链接的展示与获取方式，未调整教学设计主线；但正文在本任务前已有其他未验收改动，因此未重新声明整篇主线通过。"
     },
     "blind_delete": {
-      "status": "pass",
-      "evidence": "AI 盲删复核：删除 iframe、源码地图、Mermaid、全部代码块、命令和预期日志后，正文仍独立给出设备创建与匹配、五对象关系、双段全双工语义、七步调用链、CS 正常与错误路径、同步/异步和封装边界。iframe 前明确说明它只把正文机制改成单步视图；实验室不独占任何正文必要结论。"
+      "status": "stale",
+      "evidence": "源码弹窗属于可选阅读入口，正文原有代码块和论证未由弹窗替代；本次未重做整篇盲删验收，旧结果标为 stale。"
     },
     "follow": {
-      "status": "pass",
-      "evidence": "AI 跟随复核并由静态脚本辅助：正常与失败共 54 个步骤均能从片段切到完整来源，核对真实绝对行号、当前状态、返回值和解释；源码工作台可加载、复制和下载模块、DTS、Makefile。check_spi_framework_lab.cjs 实测通过 54 个片段原文与行号、52 个完整来源切换、16 份生成代码连续区间和 3 份教学文件检查。模块编译、上板和仪器验证仍未执行，不把可跟随性写成硬件功能通过。"
+      "status": "stale",
+      "evidence": "2026-11-13 已真实验证 12 个源码入口的内容、行号、高亮、复制、下载和异常恢复，但这只是代码获取与跟随工具的交互检查，不等于整篇四种读者或教学质量通过。"
     }
   },
   "verification": {
     "static_checks": {
       "status": "pass",
-      "result": "2026-11-11 真实执行提取器 3 个标准库单元测试并通过；node --check 通过实验室及生成脚本；node tools/check_spi_framework_lab.cjs 通过 54 个步骤、52 个完整来源、16 份生成代码和资源检查。生成 of_register_spi_device 时使用 of_spi_parse_dt 到 of_register_spi_devices 的连续原文区间，以保留返回类型跨行函数，未修改共享提取器。git diff --check 无内容错误，仅有 LF/CRLF 提示。"
+      "result": "2026-11-13 真实执行 node --check docs/javascripts/code-viewer.js 通过；4 份发布用内核源码与 help-docs 原始快照 cmp 逐字节一致；最终构建 HTML 中 data-code-viewer 入口为 12 个；git diff --check 无内容错误，仅有既有 LF/CRLF 提示。"
     },
     "strict_build": {
       "status": "pass",
       "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
-      "result": "2026-11-11 最终真实执行，退出码 0，Documentation built in 30.41 seconds。输出包含 Material for MkDocs 上游公告以及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功，不表示教学代码、硬件功能或教学质量通过。"
+      "result": "2026-11-13 最终真实执行，退出码 0，Documentation built in 24.88 seconds。输出包含 Material for MkDocs 上游公告以及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示文档严格构建成功，不表示教学代码、硬件功能或教学质量通过。"
     },
     "browser": {
       "status": "pass",
-      "result": "2026-11-11 使用本机 Google Chrome 157.0.8103.38 和临时工作区 Playwright 对最终构建站点真实执行 tools/test_spi_framework_lab_browser.cjs。正文 iframe、target/rel、新标签保留正文均通过；正常 30 步和失败 24 步的每一步状态、解释、片段/完整来源、绝对高亮行均通过；上一步、下一步、复位、左右键、hash 刷新和错误 hash 回退通过；3 份教学文件加载、复制、下载通过，Chrome 将无扩展名 Makefile 的建议保存名显示为 Makefile.txt；制造源码 404 后出现可读错误与恢复说明；375/768/1024/1440 px 的机制和源码视图均无整体横向溢出，非步骤条控件在视口内。实验室自身无 JavaScript 异常、console.error 或资源 404。未进行像素截图审查，本记录是 DOM 交互与布局检查。正文全局脚本查询 https://api.github.com/repos/xiaohong0925/Embedded_Knowledge_System_V2026/releases/latest 返回 404 并产生 1 条 console.error，已单独记录，非本实验资源且未越界修改全站脚本。"
+      "result": "2026-11-13 使用本机 Google Chrome 和临时工作区 Playwright 对最终构建站点真实执行 tools/test_code_viewer_browser.cjs：12 个入口逐一打开，文件内容、行数、高亮区间、原文件链接、复制与下载均通过；DTS 复制内容排除 Windows 剪贴板 CRLF→LF 规范化后一致；Esc、关闭按钮、遮罩关闭、正文不跳转、制造 404 后的可读错误与同页成功重试均通过；375/768/1440 px 无页面横向溢出，弹窗和控件在视口内，并回读桌面与手机截图检查视觉效果。另执行 tools/test_spi_framework_lab_browser.cjs，正常 30 步、失败 24 步、源码加载复制下载、hash、404 与 375/768/1024/1440 px 回归全部通过。正文全局 GitHub releases/latest 查询仍有既有 404 和 1 条 console.error，非本功能资源，未跨范围处理。"
     },
     "teaching_code": {
       "compile": "not_verified",
@@ -84,8 +91,8 @@
   "open_issues": [
     "教学模块和 DTB 尚未在匹配 Linux v6.6 的完整内核构建树中编译；需在具备 make、目标内核 KDIR 和交叉工具链的环境补验。",
     "目标板运行与仪器测量均未执行，状态为 not_verified；正文和实验室没有把预期日志、假设数据、模型注入或逻辑事件冒充实测。",
-    "浏览器已完成 DOM 交互与布局检查，未执行像素截图审查；正文全局 GitHub releases/latest 查询存在与本文无关的 404，未跨范围处理。",
-    "四种读者 pass 是 AI 语义检查记录；严格构建、浏览器通过和 record_state=current 均不代表最终教学质量通过，仍待用户人工复检。"
+    "源码弹窗已完成 DOM 交互、布局与桌面/手机截图检查；正文全局 GitHub releases/latest 查询存在与本文无关的既有 404，未跨范围处理。",
+    "四种读者状态为 stale：本次只验收源码入口，没有重做整篇教学验收。严格构建、浏览器通过和 record_state=current 均不代表最终教学质量通过，仍待用户人工复检。"
   ],
-  "next_action": "提交用户人工复检 B-B.4.3 正文、SPI Framework Lab、Q&A 标题及直接配套资产；若后续修改正文或规则，重新执行静态检查、浏览器回归、严格构建和哈希校验；具备完整内核构建环境后再补模块/DTB 编译，具备受控 RK3568 硬件后再补上板与仪器验证。"
+  "next_action": "提交用户人工复检 B-B.4.3 的 12 个源码弹窗入口及当前正文；若后续修改正文或规则，重新执行静态检查、浏览器回归、严格构建和哈希校验；具备完整内核构建环境后再补模块/DTB 编译，具备受控 RK3568 硬件后再补上板与仪器验证。"
 }

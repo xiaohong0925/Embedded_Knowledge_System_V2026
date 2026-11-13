@@ -229,7 +229,7 @@ dummy 也不能替代 Flash 的忙状态查询。读命令中的 dummy 由固定
 
 ```
 Flash 内部   →   引脚输出   →   PCB 走线   →   主机引脚   →   主机采样
-              tCLQV        tflight        tSU_host      margin
+                 tCLQV        tflight        tSU_host      margin
 ```
 
 | 符号 | 中文读法 | 含义 | 通常谁决定 |
@@ -250,7 +250,7 @@ Flash 内部   →   引脚输出   →   PCB 走线   →   主机引脚   → 
     src="../html/spi-flash-timing-budget.html"
     title="开漏输出：拉低与放手交互演示"
     loading="lazy"
-    style="width:100%;height:640px;border:0;"
+    style="width:100%;height:600px;border:0;"
   ></iframe>
 </div>
 
