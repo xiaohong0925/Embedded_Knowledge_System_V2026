@@ -247,7 +247,7 @@ Flash 内部   →   引脚输出   →   PCB 走线   →   主机引脚   → 
 
 <div class="interactive-demo">
   <iframe
-    src="../html/open-drain-demo.html"
+    src="../html/spi-flash-timing-budget.html"
     title="开漏输出：拉低与放手交互演示"
     loading="lazy"
     style="width:100%;height:640px;border:0;"
