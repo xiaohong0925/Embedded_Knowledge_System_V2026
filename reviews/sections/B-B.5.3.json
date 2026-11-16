@@ -1,0 +1,91 @@
+{
+  "section": "B-B.5.3",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md",
+  "main_question": "UART4 已经恢复出的 0x24，怎样经过 8250、serial core 和 TTY 到达用户态 read()，termios 又分别改变哪些硬件与终端行为？",
+  "baseline": {
+    "reviewed_at": "2026-11-13",
+    "article_sha256": "f8c1575376cc83b1779f4b1cd81c1be31a7558532b5c8fc7f754d1f3ab7e5b69",
+    "agent_sha256": "64bdb189645483fcac89be43fdde5cf947de3eb9c691e738cf7918525110f595",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md"
+    ],
+    "source_snapshots": [
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi",
+      "help-docs/kernel-src-v6.6/Documentation_devicetree_bindings_serial_serial.yaml",
+      "help-docs/kernel-src-v6.6/Documentation_devicetree_bindings_serial_snps-dw-apb-uart.yaml",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_dw.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_port.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_serial_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_buffer.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_port.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_io.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_ioctl.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_n_tty.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serdev_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serdev_serdev-ttyport.c",
+      "help-docs/kernel-src-v6.6/drivers_usb_serial_usb-serial.c"
+    ],
+    "assets": [
+      "docs/B. 总线协议/B. 低速外设接口/html/uart-framework-lab.html",
+      "docs/B. 总线协议/B. 低速外设接口/html/uart-framework-lab.css",
+      "docs/B. 总线协议/B. 低速外设接口/html/uart-framework-lab.js",
+      "docs/B. 总线协议/B. 低速外设接口/html/uart-framework-lab-fullcode.js",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.3/fullcode.manifest.json",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.3/extract_fullcode.py",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.3/test_extract_fullcode.py"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "独立连续阅读后检查：TTY、8250、LSR、flip buffer、uart_driver、uart_port、uart_state、serdev 等首次出现处均有定义或准确前置归属；驱动族、端口、tty_struct、file 和 N_TTY 私有数据分开解释，完整排障和 C 应用分别移交 B-B.5.4、B-B.5.5。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文沿同一 0x24 展开：驱动族与端口注册→对象关系→termios 生效→8250 接收→flip buffer→N_TTY→read()，再反向跟随 write()，最后区分 serdev 与 USB 入口。没有切换到第二笔数据实例，也没有展开帧机制、完整排障或 NMEA 解析。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "去除 SVG、对象表、代码块和 iframe 后，正文仍完整说明注册与对象生命周期、termios 两侧生效、接收与发送交接、read() 返回边界以及 serdev／USB 分流。实验室只提供同源代码的另一种视图，不承担正文独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "10 个接收步骤与 4 个配置步骤的片段、绝对行号、完整函数和高亮均与发布源码一致，12 份发布源码与 v6.6 缓存逐字一致；serdev-ttyport.c 展示路径已修正为 drivers/tty/serdev/serdev-ttyport.c，读者可以从步骤回到正确的源码路径。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-13 T1 修正后复验：本节总结已补 [B→I]，实验室 serdev-ttyport.c 展示路径已改为 drivers/tty/serdev/serdev-ttyport.c。源码提取器 3 项单元测试再次通过；原统一批次中 12 份发布源码、14 个步骤片段、完整函数与绝对行号的一致性结论保持不变。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-13 四处 T1 修正完成后真实执行，退出码 0，Documentation built in 55.13 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。该结果只表示当前文档严格构建成功。"
+    },
+    "browser": {
+      "status": "pass",
+      "result": "本批次仅执行桌面 DOM 与交互检查：正文 1 幅内联 SVG、7 组 Q&A 和 iframe 加载正常，正文链接以 target=_blank 与 rel=noopener noreferrer 打开独立实验室并保留原标签页。10 个接收步骤、4 个配置步骤的片段／完整函数、绝对高亮、上一步／下一步／复位和左右键均通过；#source 刷新可恢复源码视图。12 份源码均实际加载成功且 HTTP 200，复制成功，下载入口已点击且目标资源为 200，未核对本机下载目录。强制 fetch 失败后显示可读错误及失败原因。桌面页面无整体横向溢出；未执行手机、窄屏或视觉截图验收。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "本篇没有独立 C 教学程序，发布文件是 Linux v6.6 源码快照，编译登记 not_applicable；提取器单元测试通过不等于内核源码编译。实验室为源码模型，未在实际 RK3568 上执行 probe、open、tcsetattr、read() 或 write()，未执行目标运行或仪器测量。"
+    }
+  },
+  "open_issues": [
+    "当前没有实际板级 DTS、设备节点、probe 日志、用户态 read() 或仪器记录，实验室和正文中的对象状态仍是源码模型。",
+    "浏览器结果只覆盖本批次桌面 DOM 与交互，没有视觉截图，也不代表目标运行、硬件功能或最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.3 正文和 Framework Lab，重点判断对象生命周期、termios 两侧生效路径和完整源码跟随。current 与严格构建通过不代表人工教学验收通过；用户明确继续后再进入 B-B.5.5 的节级方案。"
+}

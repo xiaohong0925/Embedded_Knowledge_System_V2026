@@ -22,7 +22,7 @@ B-B.5.3 已经沿一个 `0x24` 建立了从 UART4、8250、serial core、N_TTY �
 
 > 本节覆盖：正常接收基线、设备节点与配置观察、系统调用返回、UART 计数器、受控外部回环、仪器分工，以及最后的恢复复测。帧与采样机制归 B-B.5.2，完整驱动和 TTY 调用链归 B-B.5.3，完整 C 串口配置、流式组帧和 NMEA 解析归 B-B.5.5。
 
-下图标出各类证据的观察位置。阅读时先看正常数据从左上到右下经过哪些层，再看每项工具能覆盖哪一段。外部回环只把短接点以内的路径换成已知输入，不会把 GPS 和被隔离的外部线段一并证明。
+下图标出各类证据的观察位置。阅读时先看正常数据从左到右经过哪些层，再看每项工具能覆盖哪一段。外部回环只把短接点以内的路径换成已知输入，不会把 GPS 和被隔离的外部线段一并证明。
 
 <div style="overflow-x:auto">
 <svg viewBox="0 0 1160 510" xmlns="http://www.w3.org/2000/svg" style="max-width:1000px;width:100%;min-width:820px;height:auto" font-family="sans-serif" font-size="14" stroke="currentColor" fill="none" stroke-width="1.5">

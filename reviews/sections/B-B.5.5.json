@@ -1,0 +1,92 @@
+{
+  "section": "B-B.5.5",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.5_实战NEO-6M_GPS数据读取与NMEA解析.md",
+  "main_question": "连续且任意分块的 NMEA 字节流，怎样经过 termios 配置、流式组帧、校验和解析变成可信定位数据？",
+  "baseline": {
+    "reviewed_at": "2026-11-16",
+    "article_sha256": "65d18ee32dd647f3f3aa460cba27c4f9579216d99c8d1f40ccdced64120fd5b6",
+    "agent_sha256": "64bdb189645483fcac89be43fdde5cf947de3eb9c691e738cf7918525110f595",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "reviews/designs/B-B.5_UART整章设计.md"
+    ],
+    "source_snapshots": [
+      "help-docs/uart-b-b-5-1/NEO-6_DataSheet_GPS.G6-HW-09005.utf8.txt",
+      "help-docs/uart-b-b-5-5/u-blox6_ReceiverDescrProtSpec_GPS.G6-SW-10018_Public.pdf",
+      "help-docs/uart-b-b-5-5/u-blox6_ReceiverDescrProtSpec_GPS.G6-SW-10018_Public.utf8.txt",
+      "help-docs/kernel-src-v6.6/include_uapi_asm-generic_termbits.h",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_ioctl.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_n_tty.c"
+    ],
+    "assets": [
+      "mkdocs.yml",
+      "docs/B. 总线协议/B. 低速外设接口/README.md",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.5/neo6m_nmea.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.5/nmea_stream.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.5/nmea_stream.h",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.5/test_nmea_stream.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.5/Makefile",
+      "tools/check_uart_b_b_5_5.py",
+      "reviews/legacy/B-B.5.5_GPS旧稿待重写.md"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿独立连续阅读后检查：NMEA、GGA、CR/LF、UTC、流式组帧、XOR、HDOP、breakout、回调、termios 标志、读取返回值和信号标志均在首次使用处解释或由 B-B.5.2～B-B.5.4 准确承接。正文代码中的函数、字段、返回值和错误路径均能回到配套源码。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文沿同一 u-blox 官方 GGA 样本推进：正常产品路径→语句检查→termios 备份与配置→任意 read() 分块→校验与字段门限→完整程序恢复→主机夹具→目标验证。半行、多行、坏校验、空字段、未定位和超长均为同一主问题的输入变体，没有进入 RS-485 或 Modbus。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "移除两幅 SVG、字段表、测试表和代码块后，正文仍完整说明处理顺序、校验覆盖、字段位置、坐标换算、定位门限、读取返回和恢复路径。图示只协调处理阶段及残留状态，不承担正文独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可从官方样本跟到确定坐标，再由完整 nmea_stream_feed()、split_fields() 和设备清理片段回到五个实际配套文件。测试覆盖整句、所有切分点、逐字节、不规则分块、多行、坏校验、空字段、未定位、超长和重同步。静态脚本确认正文两个完整函数与源码一致，全部固定夹具校验值独立复算通过。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-16 实际执行 tools/check_uart_b_b_5_5.py，退出码 0：PASS: B-B.5.5 resources, fixture checksums, SVG and source excerpts。覆盖导航、目录、五个配套文件、固定夹具校验值、两幅 SVG XML、正文完整函数与源码一致性。该结果不是 C 编译或测试运行。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-16 首次构建退出码 0，55.18 秒；最终正文读者修正后再次真实执行，退出码 0，Documentation built in 28.61 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。"
+    },
+    "browser": {
+      "status": "not_verified",
+      "result": "not_verified（待统一桌面验收）。未执行桌面 DOM、源码弹窗或视觉截图检查，未执行手机或窄屏测试。"
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "当前 shell 未发现 gcc、make、aarch64-linux-gnu-gcc、clang 或 cc，WSL 没有已安装的可用 Linux 环境。未进行本机编译、交叉编译或 Sanitizer。目标 UART4、真实 NMEA、定位、退出恢复和仪器测量均未执行。"
+    },
+    "host_test": {
+      "status": "not_verified",
+      "result": "十组确定性 C 测试已经形成，但无可用 C 编译环境，make test 未执行。固定夹具的 XOR 校验值由独立静态脚本复算通过，不等于测试程序运行通过。"
+    }
+  },
+  "open_issues": [
+    "实际板级 DTS、UART4 连接器、当前 NEO-6M breakout 配置、真实 NMEA 输出和定位记录仍未取得；/dev/ttyS4 与 9600、8N1 保持教学配置口径。",
+    "教学代码编译、主机测试、目标运行、目标恢复和仪器测量均为 not_verified；后续须先取得可用编译环境，再分别闭环。",
+    "浏览器为 not_verified（待统一桌面验收），不在本次补跑手机或窄屏检查。",
+    "四种读者检查为 AI 执行记录；record_state=current 与严格构建通过不代表最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.5 正文并跟随配套代码，重点判断任意分块、校验与字段门限、恢复闭环和证据边界。用户明确继续后才进入 B-B.5.6。"
+}

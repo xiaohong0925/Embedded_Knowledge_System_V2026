@@ -1,0 +1,98 @@
+{
+  "section": "B-B.5.6",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.6_RS-485电气机制与Linux配置.md",
+  "main_question": "UART 经过 RS-485 收发器后，为什么能够差分、多节点通信，半双工方向和 Linux RS-485 配置怎样影响一次正常传输？",
+  "baseline": {
+    "reviewed_at": "2026-11-16",
+    "article_sha256": "f57a3bd93572dae5da639942928bf4e8861f91b261e78e261a60d8810fe6b479",
+    "agent_sha256": "64bdb189645483fcac89be43fdde5cf947de3eb9c691e738cf7918525110f595",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "reviews/designs/B-B.5_UART整章设计.md"
+    ],
+    "source_snapshots": [
+      "help-docs/kernel-src-v6.6/include_uapi_linux_serial.h",
+      "help-docs/kernel-src-v6.6/include_uapi_asm-generic_ioctls.h",
+      "help-docs/kernel-src-v6.6/include_uapi_linux_serial_reg.h",
+      "help-docs/kernel-src-v6.6/include_linux_serial_core.h",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_serial_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_core.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_port.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_dw.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_tty_ioctl.c",
+      "help-docs/kernel-src-v6.6/Documentation_devicetree_bindings_serial_rs485.yaml",
+      "help-docs/kernel-src-v6.6/Documentation_devicetree_bindings_serial_serial.yaml",
+      "help-docs/kernel-src-v6.6/Documentation_devicetree_bindings_serial_snps-dw-apb-uart.yaml",
+      "help-docs/kernel-src-v6.6/Documentation_driver-api_serial_serial-rs485.rst",
+      "help-docs/kernel-src-v6.6/arch_arm64_boot_dts_rockchip_rk356x.dtsi"
+    ],
+    "assets": [
+      "mkdocs.yml",
+      "docs/B. 总线协议/B. 低速外设接口/README.md",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.6/rs485_xfer.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.6/Makefile",
+      "tools/check_uart_b_b_5_6.py"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.5_实战NEO-6M_GPS数据读取与NMEA解析.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿独立连续阅读后检查：RS-485、差分、共模、高阻、失效保护、DE／RE、FIFO、THRE／TEMT、GPIO、UAPI、ioctl、RTS、raw、VMIN／VTIME 和读取错误均在首次使用处解释，或由 B-B.5.1～B-B.5.5 准确承接；配套程序中的配置、返回和恢复路径可回到完整源码。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文沿同一笔 55 00 FF 3C 请求与 C3 7E 响应推进：责任线→差分与共模→多节点电气条件→DE／RE→发送完成→Linux UAPI→RK3568 支持闸门→配置传输恢复→异常与仪器证据。未展开 Modbus 字段、CRC 或 libmodbus。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "移除三幅 SVG、表格、代码块和预期输出后，正文仍完整说明差分／共模、拓扑／终端／偏置、方向状态、发送完成、配置清理、目标驱动缺口和恢复判据。图示只协调空间连接、共同偏移和时间关系，不承担正文独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可从固定请求跟随到受控响应，再由正文配置片段回到完整 rs485_xfer.c 与 Makefile。程序分别保存原 termios 和 serial_rs485，保留原始请求以识别内核回写清理，处理短写短读并集中恢复。静态脚本确认正文片段与源码一致、固定夹具一致、三幅 SVG XML 可解析。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-16 实际执行 tools/check_uart_b_b_5_6.py，退出码 0：PASS: B-B.5.6 resources, fixtures, SVG, source excerpt and kernel evidence。覆盖导航、目录、两个配套文件、固定字节、三幅 SVG、正文配置片段、恢复路径和关键内核证据。该结果不是 C 编译或硬件测试。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-16 首次严格构建退出码 0，Documentation built in 53.30 seconds；最终稿复查修正后再次构建退出码 0，Documentation built in 50.97 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。"
+    },
+    "browser": {
+      "status": "not_verified",
+      "result": "not_verified（待统一桌面验收）。未执行桌面 DOM、源码弹窗、SVG 深浅色或视觉截图检查，未执行手机或窄屏测试。"
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "当前 shell 未发现 gcc、clang、cc、make 或 aarch64-linux-gnu-gcc。未进行本机编译、交叉编译或目标运行；真实配置读回、受控对端响应、停止恢复和仪器测量均未执行。"
+    },
+    "host_test": {
+      "status": "not_applicable",
+      "result": "本篇没有独立主机测试夹具；rs485_xfer 需要真实串口和受控 RS-485 对端。静态脚本不是 C 测试或硬件模拟。"
+    }
+  },
+  "open_issues": [
+    "目标板收发器型号及手册、板级原理图、UART 连接器、实际 DTS、BSP 驱动和受控对端资料仍未取得；不得锁定接线、偏置、终端或方向参数。",
+    "已核对的 v6.6 主线 8250_dw 未提供 rs485_config／rs485_supported；实际 BSP 是否扩展支持必须另查，通用 UAPI 不能写成当前目标已成功。",
+    "教学代码编译、目标运行、目标恢复和仪器测量均为 not_verified；浏览器为 not_verified（待统一桌面验收）。",
+    "四种读者检查为 AI 执行记录；record_state=current 与严格构建通过不代表最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.6 正文并跟随配套代码，重点判断差分与方向的叙事衔接、发送完成边界、RK3568 支持闸门和恢复闭环。用户明确继续后才进入 B-B.5.7。"
+}

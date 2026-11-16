@@ -324,7 +324,7 @@ USB 转串口设备不经过 `dw8250_probe()`。`drivers/usb/serial/usb-serial.c
 
 当前没有取得实际板级 DTS、设备节点、probe 日志、用户态 `read()` 或仪器记录。实验室和正文中的对象状态是依据源码构造的教学模型，不是目标运行结果。完整命令输出、回环和故障定位归 B-B.5.4，不能用 PTY 代替 UART4／8250 的真实路径验证。
 
-## <span class="blue"> 本节总结
+## <span class="blue"> 本节总结 [B→I]
 
 `0x24` 从 UART4 到用户态的路径可以归纳为三次交接：8250 从硬件取出字节并插入 flip buffer，工作队列把字节交给 N_TTY，用户 `read()` 再通过 N_TTY 取得数据。驱动族注册、具体端口注册和一次 open 是不同生命周期动作，`uart_state`、`uart_port`、`tty_struct` 与 `file` 也不能混为一个对象。
 

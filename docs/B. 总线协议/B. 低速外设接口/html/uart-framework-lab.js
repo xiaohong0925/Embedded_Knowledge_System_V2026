@@ -387,7 +387,7 @@
       "context": "逐字来自 Linux v6.6 缓存，仅用于源码跟随。未作为独立教学程序编译、运行或上板验证。"
     },
     {
-      "name": "drivers/tty/serdev-ttyport.c",
+      "name": "drivers/tty/serdev/serdev-ttyport.c",
       "kind": "Linux v6.6 源码",
       "url": "../code/B-B.5.3/serdev-ttyport.c",
       "context": "逐字来自 Linux v6.6 缓存，仅用于源码跟随。未作为独立教学程序编译、运行或上板验证。"
