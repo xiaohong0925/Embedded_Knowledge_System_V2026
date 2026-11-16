@@ -718,6 +718,7 @@ nav:
               - B-B.5.4 UART调试与分层验证: B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md
               - B-B.5.5 实战：NEO-6M GPS 数据读取与 NMEA 解析: B. 总线协议/B. 低速外设接口/B-B.5.5_实战NEO-6M_GPS数据读取与NMEA解析.md
               - B-B.5.6 RS-485 电气机制与 Linux 配置: B. 总线协议/B. 低速外设接口/B-B.5.6_RS-485电气机制与Linux配置.md
+              - B-B.5.7 Modbus RTU 协议与传感器采集: B. 总线协议/B. 低速外设接口/B-B.5.7_Modbus RTU协议与传感器采集.md
           - B.6 I3C:
               - B-B.6.1 I3C物理层与I2C演进: B. 总线协议/B. 低速外设接口/B-B.6.1_I3C物理层与I2C演进.md
               - B-B.6.2 I3C协议层与CCC命令: B. 总线协议/B. 低速外设接口/B-B.6.2_I3C协议层与CCC命令.md

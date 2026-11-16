@@ -1,0 +1,95 @@
+{
+  "section": "B-B.5.7",
+  "article": "docs/B. 总线协议/B. 低速外设接口/B-B.5.7_Modbus RTU协议与传感器采集.md",
+  "main_question": "一组 UART 字节怎样构成一次可寻址、可校验的 Modbus 寄存器读取，并由用户程序取得和验证测量值？",
+  "baseline": {
+    "reviewed_at": "2026-11-16",
+    "article_sha256": "2d19c2ca6b4e6f166ef10d46d39f39eb7cd14f2948f36a428bf310a48b3ccd33",
+    "agent_sha256": "64bdb189645483fcac89be43fdde5cf947de3eb9c691e738cf7918525110f595",
+    "plan_sha256": "9dd93a9f3f6c78114b6d51754468fe437e2adb94288c1d6354f50f11025aa0e1"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "reviews/designs/B-B.5_UART整章设计.md"
+    ],
+    "source_snapshots": [
+      "docs/B. 总线协议/B. 低速外设接口/images/Modbus_Application_Protocol_V1_1b3.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/Modbus_Serial_Line_V1_02.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/images/HMP60_HMP110_M211060EN-N.pdf",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/libmodbus-v3.2.0/src/modbus.h",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/libmodbus-v3.2.0/src/modbus.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/libmodbus-v3.2.0/src/modbus-rtu.c",
+      "help-docs/kernel-src-v6.6/drivers_tty_serial_8250_8250_dw.c"
+    ],
+    "assets": [
+      "mkdocs.yml",
+      "docs/B. 总线协议/B. 低速外设接口/README.md",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/modbus_sensor.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/hmp110_temperature.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/hmp110_temperature.h",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/test_modbus_sensor.c",
+      "docs/B. 总线协议/B. 低速外设接口/code/B-B.5.7/Makefile",
+      "tools/inspect_b_b_5_7_evidence.py",
+      "tools/check_uart_b_b_5_7.py"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.3_UART Linux驱动框架与TTY路径.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.4_UART调试与分层验证.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.5_实战NEO-6M_GPS数据读取与NMEA解析.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.5.6_RS-485电气机制与Linux配置.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "AI 对最终稿独立连续阅读后检查：Modbus、RTU、主站／从站、寄存器、PDU／ADU、CRC、特殊值、PTY、select()、uint16_t 和 errno 均在首次使用处解释或由 B-B.5.2～B-B.5.6 承接；API、字段和错误码可回到手册或固定标签源码。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "全文沿从机 240、功能码 0x03、PDU 地址 0x0101 的一个温度寄存器读取推进：责任线→请求／响应→RTU 与 read() 边界→CRC 与事务核对→语义发布→libmodbus 完整程序→主机／目标证据→异常恢复。未展开 NMEA、UART 采样或 RS-485 电气细节。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "移除两幅 SVG、表格、代码块和预期输出后，正文仍完整说明帧字段、静默边界、任意分块、CRC 覆盖、异常响应、测量可信层级和目标支持闸门。图示只协调字段对齐及线上／软件边界，不承担正文独有论证。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "读者可从固定请求 F0 03 01 01 00 01 C1 17 跟随到正常、异常和错误响应，再由正文片段回到完整 modbus_sensor.c、解码器、测试和 Makefile。静态脚本确认 CRC、正文片段、源码证据、两个 SVG、手册页和链接一致；该结果不是 C 编译或硬件测试。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-16 最终稿实际执行 python tools/check_uart_b_b_5_7.py，退出码 0：PASS: B-B.5.7 resources, links, SVG, CRC fixtures, source excerpts and manual evidence。覆盖资源、导航、本地链接、两幅 SVG XML、固定 CRC、源码片段和手册证据；不覆盖 C 编译或运行。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-16 首次构建因证据 Markdown 的相对链接产生 11 个警告并停止；将仅供核验的 libmodbus 文档移到 help-docs 后复建通过。最终稿再次构建退出码 0，Documentation built in 54.51 seconds。输出含 Material 上游公告及项目既有 slug/nav INFO，无 MkDocs WARNING。"
+    },
+    "browser": {
+      "status": "not_verified",
+      "result": "not_verified（待统一桌面验收）。未执行桌面 DOM、源码弹窗、SVG 深浅色或视觉截图检查，未执行手机或窄屏测试。"
+    },
+    "teaching_code": {
+      "compile": "not_verified",
+      "run": "not_verified",
+      "hardware": "not_verified",
+      "instrument": "not_verified",
+      "note": "2026-11-16 重新检查当前 shell，未发现 gcc、clang、cc、make、aarch64-linux-gnu-gcc 或 pkg-config。未进行本机编译、交叉编译、Sanitizer、目标运行、真实 HMP110 采集、配置恢复或仪器测量。"
+    },
+    "host_test": {
+      "status": "not_verified",
+      "result": "已形成 9 组语义测试和 14 组真实 libmodbus PTY 集成测试，但当前没有编译器、Make 和 libmodbus 构建环境，未实际运行。静态脚本不是这些 C 测试的替代。"
+    }
+  },
+  "open_issues": [
+    "当前没有实际 HMP110、目标板级接线、DTS、BSP 驱动、受控对端记录或仪器记录；文中的固定帧和输出格式不是实测。",
+    "v6.6 主线 8250_dw 缺少 rs485_config／rs485_supported 的既有结论仍是 RK3568 上板闸门；实际 BSP、其他 UART、USB 转 RS-485 或自动方向硬件必须另行核验。",
+    "教学代码编译、23 组主机测试、目标运行、目标恢复和仪器测量均为 not_verified；浏览器为 not_verified（待统一桌面验收）。",
+    "四种读者检查为 AI 执行记录；record_state=current 与严格构建通过不代表最终人工教学质量通过。"
+  ],
+  "next_action": "提交项目所有者连续阅读 B-B.5.7 正文并跟随配套代码，重点判断同一温度事务、RTU 与 read() 边界、CRC 与语义分层、异常恢复及 RK3568 支持闸门是否清楚。等待人工教学验收，不提前写成通过。"
+}
