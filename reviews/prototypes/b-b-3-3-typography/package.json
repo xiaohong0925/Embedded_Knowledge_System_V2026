@@ -1,0 +1,9 @@
+{
+  "name": "b-b-3-3-typography-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "B-B.3.3 中文技术正文紧凑排版 A/B 样张",
+  "scripts": {
+    "dev": "node server.cjs"
+  }
+}

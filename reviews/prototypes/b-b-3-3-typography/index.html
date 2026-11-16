@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN" data-density="a">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-B.3.3 紧凑排版 A/B 样张</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="prototype-header">
+    <div class="header-inner">
+      <div class="header-main">
+        <div>
+          <p class="kicker">B-B.3.3 · 排版试验</p>
+          <h1>紧凑排版 A/B 样张</h1>
+          <p class="subtitle">正文内容未改，只比较字号、行距、段距和栏宽。</p>
+        </div>
+        <div class="controls" aria-label="样张控制">
+          <div>
+            <span class="control-label">排版密度</span>
+            <div class="segmented" role="group" aria-label="选择排版密度">
+              <button type="button" data-density="a" aria-pressed="true">A 当前排版</button>
+              <button type="button" data-density="b" aria-pressed="false">B 紧凑居中</button>
+              <button type="button" data-density="b2" aria-pressed="false">B2 紧凑伸展</button>
+            </div>
+          </div>
+          <div>
+            <label class="control-label" for="sample-select">样张内容</label>
+            <select id="sample-select">
+              <option value="objects">对象定义</option>
+              <option value="transfer">运行传输</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="parameter-line">
+        <span id="density-summary">A 当前排版 · 正文 17px／1.85 · 代码 14px／1.75 · 容器 940px</span>
+        <span>桌面样张 · 不修改原文</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="reading-layout">
+    <aside class="mock-sidebar mock-primary" aria-label="模拟全局目录">
+      <h2>嵌入式 Linux 知识体系</h2>
+      <ul>
+        <li class="is-muted">第一部 系统启动与运行</li>
+        <li class="is-muted">第二部 核心机制深度解析</li>
+        <li class="is-muted">第三部 系统设计与决策</li>
+        <li class="nav-caption">B. 总线协议</li>
+        <li class="is-muted">A. 片内总线认知</li>
+        <li class="nav-caption">B. 低速外设接口</li>
+        <li class="is-muted">B-B.2 GPIO／PWM／ADC／DAC</li>
+        <li class="nav-caption">B-B.3 I2C</li>
+        <li class="is-muted">B-B.3.1 I2C 物理层与电气特性</li>
+        <li class="is-muted">B-B.3.2 I2C 协议层与帧格式</li>
+        <li class="is-current">B-B.3.3 I2C Linux 驱动框架</li>
+        <li class="is-muted">B-B.3.4 I2C 调试工具与故障排查</li>
+        <li class="is-muted">B-B.3.5 实战 AT24C02</li>
+        <li class="is-muted">B-B.4 SPI</li>
+      </ul>
+    </aside>
+    <main class="page-shell">
+    <div class="reading-note">
+      <p><strong>观察重点：</strong>A/B 比较居中阅读密度；B2 保留紧凑参数，并展示正文在左右目录之间伸展的效果。</p>
+    </div>
+
+    <div data-sample="objects">
+      <article class="reader" aria-label="对象定义排版样张">
+        <p class="sample-label">B-B.3.3 · 对象定义节选</p>
+        <h2><span class="blue">先认识对象：代码里的五个名字分别是什么</span></h2>
+
+        <h3><code>i2c_msg</code>：一段传输的完整描述</h3>
+        <p><code>i2c_msg</code> 定义在 UAPI 头文件 <code>include/uapi/linux/i2c.h</code>。UAPI 是内核与用户空间共同遵守的接口边界，所以内核驱动和用户程序看到的是同一种消息布局。以下是与本篇有关的完整字段和标志定义：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · include/uapi/linux/i2c.h · 有删节</span>
+          <pre><code>struct i2c_msg {
+    __u16 addr;       /* 器件地址，本例为 0x50 */
+    __u16 flags;      /* 本段方向及特殊协议标志 */
+#define I2C_M_RD      0x0001
+    __u16 len;        /* buf 中本段要读写的字节数 */
+    __u8  *buf;       /* 写：数据来源；读：接收位置 */
+};
+
+#define I2C_FUNC_I2C  0x00000001</code></pre>
+        </div>
+        <p><code>__u16</code>、<code>__u8</code> 是接口中明确宽度的无符号整数类型。<code>I2C_M_RD</code> 和 <code>I2C_FUNC_I2C</code> <strong>都是宏和位标志，不是枚举</strong>，但用途不同：</p>
+        <ul>
+          <li><code>I2C_M_RD</code> 写进某条 <code>msg.flags</code>，说明这一段由从机向主机发送数据；</li>
+          <li><code>I2C_FUNC_I2C</code> 由控制器的 <code>functionality()</code> 返回，说明适配器支持普通 I2C 消息；</li>
+          <li><code>i2c_check_functionality(adap, I2C_FUNC_I2C)</code> 检查的是适配器能力，不是当前消息方向。</li>
+        </ul>
+        <p>本例的两条消息应读作两个独立的数据段，而不是两次函数调用：</p>
+        <div class="code-block">
+          <pre><code>msgs[0]：addr=0x50，flags=0，       len=1，buf 指向 0x10
+msgs[1]：addr=0x50，flags=I2C_M_RD，len=1，buf 指向 value</code></pre>
+        </div>
+        <p>数组后面的参数 <code>2</code> 告诉 Core：两段属于同一笔事务，中间使用重复 START，最后才 STOP。</p>
+
+        <h3><code>i2c_client</code>：Core 已经创建的外设对象</h3>
+        <p><code>struct i2c_client</code> 代表挂在某条总线上的一颗外设。以下字段取自 <code>include/linux/i2c.h</code>，省略了中断、从机模式和资源管理字段：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · include/linux/i2c.h · 字段节选</span>
+          <pre><code>struct i2c_client {
+    unsigned short flags;
+    unsigned short addr;          /* 本例为 0x50 */
+    char name[I2C_NAME_SIZE];
+    struct i2c_adapter *adapter;  /* 指向所属总线，不是内嵌总线 */
+    struct device dev;            /* 内嵌通用设备模型对象 */
+    /* 其余字段省略 */
+};</code></pre>
+        </div>
+        <p>这里有两种不同的关系：</p>
+        <ul>
+          <li><code>client->adapter</code> 是指针，client 与 adapter 可以分别创建，指针把外设连到既有总线；</li>
+          <li><code>client->dev</code> 是直接内嵌的对象，使这个 I2C 外设能进入通用设备模型、sysfs 和驱动匹配流程。</li>
+        </ul>
+        <p>教学驱动中的 <code>struct i2c_client *client</code> 是<strong>指向已有对象的指针参数</strong>。Core 在调用 <code>probe(client)</code> 前已经创建它，教学驱动不负责分配这个持久对象。</p>
+
+        <h3><code>i2c_adapter</code> 与 <code>i2c_algorithm</code>：总线对象和它的操作方法</h3>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · include/linux/i2c.h · 字段节选</span>
+          <pre><code>struct i2c_adapter {
+    struct module *owner;
+    const struct i2c_algorithm *algo; /* 怎样在这条总线上传输 */
+    void *algo_data;                  /* algorithm 取回私有状态的入口 */
+    const struct i2c_lock_operations *lock_ops;
+    struct rt_mutex bus_lock;         /* 串行化本总线段的事务 */
+    int timeout;
+    int retries;
+    struct device dev;
+    int nr;                           /* 本例编号 1 */
+    char name[48];
+    /* 其余字段省略 */
+};
+
+struct i2c_algorithm {
+    int (*master_xfer)(struct i2c_adapter *adap,
+                       struct i2c_msg *msgs, int num);
+    int (*master_xfer_atomic)(struct i2c_adapter *adap,
+                              struct i2c_msg *msgs, int num);
+    /* SMBus 专用方法省略 */
+    u32 (*functionality)(struct i2c_adapter *adap);
+};</code></pre>
+        </div>
+        <p>adapter 回答“我在哪条总线上、编号多少、怎样加锁”；algorithm 回答“这条总线具体怎样发消息”。把二者分开，Core 才能用同一个 <code>i2c_transfer()</code> 同时支持 RK3568 寄存器控制器和 GPIO 位模拟。<code>master_xfer_atomic()</code> 是不能睡眠的原子上下文备用入口；本例 <code>probe()</code> 可以睡眠，走普通的 <code>master_xfer()</code>。<code>functionality()</code> 则返回前面说的适配器能力位。</p>
+        <p><code>master_xfer()</code> 的返回约定也写在声明旁：<strong>负值表示错误，非负值表示成功处理的消息数</strong>。它不是读取字节数。</p>
+
+        <h3><code>i2c_driver</code>：外设驱动登记给 Core 的回调</h3>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · include/linux/i2c.h · 字段节选</span>
+          <pre><code>struct i2c_driver {
+    unsigned int class;
+    int  (*probe)(struct i2c_client *client);
+    void (*remove)(struct i2c_client *client);
+    /* 其他回调省略 */
+    struct device_driver driver;  /* 内嵌通用驱动对象 */
+    const struct i2c_device_id *id_table;
+    /* 其余字段省略 */
+};</code></pre>
+        </div>
+        <p>教学驱动填写匹配表、<code>probe()</code> 和 <code>remove()</code>。<code>probe()</code> 不是 reader 函数本身，而是设备与驱动绑定后的初始化回调；本篇在初始化中故意执行一次读取，让启动路径和运行路径能够在同一个例子里观察。</p>
+      </article>
+    </div>
+
+    <div data-sample="transfer" hidden>
+      <article class="reader" aria-label="运行传输排版样张">
+        <p class="sample-label">B-B.3.3 · 运行传输节选</p>
+        <h2><span class="blue">运行传输：两条消息怎样穿过 Core 到达 RK3568</span></h2>
+
+        <h3>Core：先检查能力，再持锁调用 algorithm</h3>
+        <p><code>demo_read_reg()</code> 把 <code>client->adapter</code>、栈上的 <code>msgs</code> 和消息数 <code>2</code> 交给 <code>i2c_transfer()</code>。由于调用是同步的，返回前这些栈缓冲区一直有效，返回后硬件已经不再使用它们。</p>
+        <p>v6.6 的公共入口做了两件与本例直接相关的事：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · drivers/i2c/i2c-core-base.c · 有删节</span>
+          <pre><code>int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+    int ret;
+
+    if (!adap->algo->master_xfer)
+        return -EOPNOTSUPP;
+
+    /* 跟踪记录等省略 */
+    ret = __i2c_lock_bus_helper(adap);
+    if (ret)
+        return ret;
+
+    ret = __i2c_transfer(adap, msgs, num);
+    i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
+    return ret;
+}</code></pre>
+        </div>
+        <p><code>I2C_LOCK_SEGMENT</code> 表示锁住当前总线段；本例只使用这一条 adapter，可把它理解为保护该适配器对应物理总线上的整笔消息组。解锁与加锁必须成对，因此正常、NACK 和超时路径都要经过它。</p>
+        <p><code>__i2c_transfer()</code> 在已经持锁的前提下选择回调：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · __i2c_transfer() · 有删节</span>
+          <pre><code>if (i2c_in_atomic_xfer_mode() && adap->algo->master_xfer_atomic)
+    ret = adap->algo->master_xfer_atomic(adap, msgs, num);
+else
+    ret = adap->algo->master_xfer(adap, msgs, num);</code></pre>
+        </div>
+        <p>这里的函数指针不是教学驱动直接填写的。它在控制器 probe 时已经指向：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · drivers/i2c/busses/i2c-rk3x.c</span>
+          <pre><code>static const struct i2c_algorithm rk3x_i2c_algorithm = {
+    .master_xfer       = rk3x_i2c_xfer,
+    .master_xfer_atomic = rk3x_i2c_xfer_polling,
+    .functionality     = rk3x_i2c_func,
+};</code></pre>
+        </div>
+        <p>所以本例普通上下文中的真实路线是：</p>
+        <div class="code-block">
+          <pre><code>demo_read_reg(client, 0x10, &value)
+→ i2c_transfer(client->adapter, msgs, 2)
+→ __i2c_lock_bus_helper(adap)
+→ __i2c_transfer(adap, msgs, 2)
+→ rk3x_i2c_xfer(adap, msgs, 2)
+→ rk3x_i2c_xfer_common(adap, msgs, 2, false)</code></pre>
+        </div>
+
+        <h3>控制器：从 adapter 取回私有状态，再启动状态机</h3>
+        <p>进入 RK3568 驱动后，第一行把之前保存的 <code>algo_data</code> 取回：</p>
+        <div class="code-block">
+          <span class="code-title">Linux v6.6 · rk3x_i2c_xfer_common() · 有删节</span>
+          <pre><code>struct rk3x_i2c *i2c = (struct rk3x_i2c *)adap->algo_data;
+
+for (i = 0; i &lt; num; i += ret) {
+    ret = rk3x_i2c_setup(i2c, msgs + i, num - i);
+    if (ret &lt; 0)
+        break;
+
+    if (i + ret &gt;= num)
+        i2c->is_last_msg = true;
+
+    rk3x_i2c_start(i2c);
+    timeout = wait_event_timeout(i2c->wait, !i2c->busy,
+                                 msecs_to_jiffies(WAIT_TIMEOUT));
+
+    if (timeout == 0) {
+        /* 强制 STOP、恢复 STATE_IDLE 等省略 */
+        ret = -ETIMEDOUT;
+        break;
+    }
+    if (i2c->error) {
+        ret = i2c->error;
+        break;
+    }
+}
+
+return ret &lt; 0 ? ret : num;</code></pre>
+        </div>
+        <p><code>rk3x_i2c_setup()</code> 把当前 <code>i2c_msg</code> 的地址、方向、缓冲区和长度转成控制器设置，返回值告诉循环本次准备了多少条消息。<code>is_last_msg</code> 标记当前是否已到整组末尾，控制器据此决定段间继续还是发送最后的 STOP。<code>rk3x_i2c_start()</code> 启动后，进程等待 <code>i2c->busy</code> 变为假；中断处理函数根据状态机推进 START、WRITE、READ、STOP，并通过 FIFO 收发数据。FIFO 是先进先出的硬件缓冲，TXFIFO 保存待发送字节，RXFIFO 保存已接收字节。</p>
+        <p>一笔传输中的关键状态变化是：</p>
+        <div class="code-block">
+          <pre><code>调用前：busy=false，state=STATE_IDLE，processed=0
+启动后：busy=true，msg 指向当前消息，state 随传输推进
+接收时：RXFIFO → msg->buf，processed 增加
+完成时：state=STATE_IDLE，busy=false，唤醒等待者
+失败时：error 保存负错误，或等待超时后强制 STOP 并恢复状态</code></pre>
+        </div>
+        <p><code>msecs_to_jiffies(WAIT_TIMEOUT)</code> 把驱动定义的毫秒等待上限转换成内核调度时钟滴答数。<code>wait_event_timeout()</code> 返回 0 表示等待超时，不是“本次读取了 0 字节”。若中断正常完成并唤醒等待者，函数再检查 <code>i2c->error</code>，决定沿错误路径返回还是继续下一条消息。</p>
+
+        <h3>返回值：每一层表达的对象不同</h3>
+        <p>本例成功路径上的数字不能混读：</p>
+        <div class="code-block">
+          <pre><code>rk3x_i2c_xfer_common() 返回 2：完成了两条消息
+i2c_transfer()            返回 2：Core 原样返回该结果
+demo_read_reg()           返回 0：两条消息完成，数据已写入 value
+demo_probe()              返回 0：初始化和本次试读均成功，允许绑定</code></pre>
+        </div>
+        <p>若 <code>i2c_transfer()</code> 返回负值，教学代码保留错误；若返回 <code>0</code> 或 <code>1</code>，说明没有完成两条消息，转换成 <code>-EIO</code>。<code>0x5a</code> 通过输出参数 <code>value</code> 返回，不通过函数返回值返回。</p>
+      </article>
+    </div>
+
+    <footer class="source-note">
+      内容节选自《B-B.3.3 I2C Linux 驱动框架》的“先认识对象”与“运行传输”部分。样张只改变呈现参数，不用于核验源码事实、编译或运行结果。
+    </footer>
+    </main>
+    <aside class="mock-sidebar mock-secondary" aria-label="模拟本页目录">
+      <h2>本页目录</h2>
+      <ul data-toc="objects">
+        <li class="is-current">先认识对象</li>
+        <li>i2c_msg：一段传输的完整描述</li>
+        <li>i2c_client：Core 已经创建的外设对象</li>
+        <li>i2c_adapter 与 i2c_algorithm</li>
+        <li>i2c_driver：外设驱动登记给 Core 的回调</li>
+      </ul>
+      <ul data-toc="transfer" hidden>
+        <li class="is-current">运行传输</li>
+        <li>Core：先检查能力，再持锁调用 algorithm</li>
+        <li>控制器：取回私有状态并启动状态机</li>
+        <li>返回值：每一层表达的对象不同</li>
+      </ul>
+    </aside>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

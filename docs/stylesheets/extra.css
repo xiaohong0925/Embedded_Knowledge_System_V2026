@@ -626,18 +626,18 @@ html {
 }
 
 .md-typeset {
-    font-size: 17px;
-    line-height: 1.8;
+    font-size: 16px;
+    line-height: 1.70;
     letter-spacing: 0.002em;
 }
 
 .md-typeset p,
 .md-typeset li {
-    line-height: 1.85;
+    line-height: 1.70;
 }
 
 .md-typeset p {
-    margin-bottom: 1.15em;
+    margin-bottom: 0.9em;
     text-wrap: pretty;
 }
 
@@ -652,7 +652,7 @@ html {
 }
 
 .md-typeset h2 {
-    margin-top: 2.4em;
+    margin-top: 1.9em;
     padding-bottom: 0.35em;
     border-bottom: 1px solid var(--reader-border-color);
 }
@@ -676,7 +676,7 @@ html {
     line-height: inherit;
 }
 
-/* 代码块与正文同等重要，不再使用缩小字号。 */
+/* 代码块与正文采用统一的紧凑阅读密度，同时保留可辨识性。 */
 .md-typeset .highlight {
     margin: 1.5em 0 1.75em;
     border: 1px solid var(--reader-border-color);
@@ -692,10 +692,10 @@ html {
 
 .md-typeset pre > code {
     display: block;
-    padding: 18px 20px;
+    padding: 14px 16px;
     border-radius: 7px;
-    font-size: 14px;
-    line-height: 1.75;
+    font-size: 13px;
+    line-height: 1.60;
     letter-spacing: 0;
 }
 
@@ -720,14 +720,14 @@ html {
     color: #9aa8b8;
 }
 
-/* 桌面端正文居中并限制阅读宽度，侧边栏退到次要层级。 */
+/* 桌面端正文在真实内容区内伸展并限制过长行，侧边栏退到次要层级。 */
 @media screen and (min-width: 1220px) {
     .md-content__inner {
         max-width: 940px !important;
         margin-right: auto !important;
-        margin-left: auto !important;
-        padding-right: 32px;
-        padding-left: 32px;
+        margin-left: 0 !important;
+        padding-right: 24px;
+        padding-left: 24px;
     }
 }
 
@@ -915,4 +915,58 @@ html {
     padding: 0.85rem 1rem 1rem;
     font-size: 0.94em;
     line-height: 1.8;
+}
+
+
+/* B-B.3.3 试点：本页目录展开三级链接，标题链接仍负责跳转。 */
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-collapsible {
+    position: relative;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-collapsible > .md-nav__link {
+    padding-right: 2.2em;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-toggle {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.35rem;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--reader-muted-color);
+    cursor: pointer;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-toggle:hover {
+    color: var(--md-typeset-a-color);
+    background: var(--reader-inline-code-bg);
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-toggle:focus-visible {
+    outline: 2px solid var(--md-typeset-a-color);
+    outline-offset: 2px;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-toggle svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 160ms ease;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary .reader-toc-toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+body:has(.reader-b2) .md-sidebar--secondary [data-md-component="toc"] > .reader-toc-collapsible > .md-nav > .md-nav__list {
+    display: none;
+}
+
+body:has(.reader-b2) .md-sidebar--secondary [data-md-component="toc"] > .reader-toc-collapsible.is-expanded > .md-nav > .md-nav__list {
+    display: block;
 }
