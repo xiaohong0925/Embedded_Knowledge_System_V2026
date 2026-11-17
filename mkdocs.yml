@@ -712,8 +712,17 @@ nav:
               - B-B.3.5 实战AT24C02 EEPROM端到端读写: B. 总线协议/B. 低速外设接口/B-B.3.5_实战AT24C02_EEPROM端到端读写.md
               - B-B.3.6 SMBus与PMBus: B. 总线协议/B. 低速外设接口/B-B.3.6_SMBus与PMBus.md
           - B.4 SPI:
-              - B-B.4.1 SPI物理层与四种模式: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md
-              - B-B.4.2 SPI协议层与时序: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md
+              - B-B.4.1 SPI物理层与四种模式:
+                  - 导读与实例地图: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式.md
+                  - 接线、驱动权与全双工: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式_wiring.md
+                  - CPOL／CPHA 与 Mode 0 的 32 拍: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式_mode0.md
+                  - 四种模式与多从机: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式_modes.md
+                  - 频率、电气条件与验证: B. 总线协议/B. 低速外设接口/B-B.4.1_SPI物理层与四种模式_electrical.md
+              - B-B.4.2 SPI协议层与时序:
+                  - 导读与 72 拍完整帧: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md
+                  - 软件缓冲区与数据对齐: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序_buffer.md
+                  - 采样前的时间预算: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序_timing.md
+                  - 命令变体与协议验证: B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序_validation.md
               - B-B.4.3 SPI Linux驱动框架:
                   - 导读与责任地图: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md
                   - DTS 建链与对象生命周期: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_startup.md
