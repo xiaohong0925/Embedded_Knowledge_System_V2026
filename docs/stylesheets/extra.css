@@ -867,7 +867,7 @@ html {
 }
 
 /* 自检问答：撤销首页 summary 的 flex 布局，恢复自然中英混排。 */
-.md-typeset h2[id="本节自查"] ~ details {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details {
     margin: 0.75rem 0;
     overflow: hidden;
     border: 1px solid var(--reader-border-color);
@@ -875,7 +875,7 @@ html {
     background: transparent;
 }
 
-.md-typeset h2[id="本节自查"] ~ details > summary {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > summary {
     position: relative;
     display: block;
     padding: 0.8rem 2.8rem 0.8rem 1rem;
@@ -888,29 +888,29 @@ html {
     text-align: left;
 }
 
-.md-typeset h2[id="本节自查"] ~ details > summary::before {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > summary::before {
     display: none;
 }
 
-.md-typeset h2[id="本节自查"] ~ details > summary::-webkit-details-marker {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > summary::-webkit-details-marker {
     display: none;
 }
 
-.md-typeset h2[id="本节自查"] ~ details > summary:hover {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > summary:hover {
     background: var(--reader-inline-code-bg);
 }
 
-.md-typeset h2[id="本节自查"] ~ details[open] > summary {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details[open] > summary {
     border-bottom: 1px solid var(--reader-border-color);
     background: var(--reader-inline-code-bg);
 }
 
-.md-typeset h2[id="本节自查"] ~ details > summary code {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > summary code {
     white-space: normal;
     overflow-wrap: anywhere;
 }
 
-.md-typeset h2[id="本节自查"] ~ details > p {
+.md-typeset :is(h2[id="本节自查"], h2[id="本页自查"]) ~ details > p {
     margin: 0;
     padding: 0.85rem 1rem 1rem;
     font-size: 0.94em;

@@ -8,7 +8,18 @@
 
 ## <span class="blue"> 本节导读
 
-B-B.4.2 已经把一笔 W25Q128JV Fast Read 拆成确定的线上字节：主机发送 `0B 00 12 34 00`，再提供读取 4 字节所需的时钟。本节追问同一笔操作在 Linux 中的完整路径：**设备树怎样变成一个可供驱动使用的设备对象，外设驱动怎样描述这两段传输，SPI Core 和 RK3568 控制器驱动怎样执行它，结果或错误又怎样回到调用者。**
+B-B.4.2 已经把一笔 W25Q128JV Fast Read 拆成确定的线上字节：主机发送 `0B 00 12 34 00`，再提供读取 4 字节所需的时钟。
+
+<div class="interactive-demo">
+  <iframe
+    src="../html/spi-4-3-intro-pipeline.html"
+    title="开漏输出：拉低与放手交互演示"
+    loading="lazy"
+    style="width:100%;height:640px;border:0;"
+  ></iframe>
+</div>
+
+本节追问同一笔操作在 Linux 中的完整路径：**设备树怎样变成一个可供驱动使用的设备对象，外设驱动怎样描述这两段传输，SPI Core 和 RK3568 控制器驱动怎样执行它，结果或错误又怎样回到调用者。**
 
 贯穿实例仍是 RK3568 SPI1、W25Q128JV-IQ/JQ、Mode 0、8 位、MSB-first、低有效 CS。事务固定为：
 
@@ -28,20 +39,22 @@ spidev 工具排障归 B-B.4.4；`jedec,spi-nor → MTD` 的产品接入和烧�
 
 ## <span class="blue"> 怎样阅读这组短页面
 
-这组页面沿用同一笔 5＋4 字节 Fast Read，但把对象创建、代码组装、底层执行、封装选择和实际观察分开。完整教学文件、真实源码与 Framework Lab 始终用于回查，不让某一段孤立代码承担整个子系统的解释。
+这组页面沿用同一笔 5＋4 字节 Fast Read，但把对象创建、代码组装、底层执行、封装选择和实际观察分开。
 
-1. **导读与责任地图**：先知道一笔读取经过哪些角色；
-2. **DTS 建链与对象生命周期**：理解 `spi_device` 为什么先于 probe 存在；
-3. **手工双段 message 基线**：看清分段、缓冲区、返回值与释放；
-4. **Core 与 Rockchip 执行路径**：理解调度、CS、DMA 与完成通知；
-5. **便捷封装的边界**：判断何时使用 `spi_write_then_read()`；
-6. **构建观察与产品移交**：完成验证，并回到 spi-nor → MTD 产品路径。
+完整教学文件、真实源码与 Framework Lab 始终用于回查，不让某一段孤立代码承担整个子系统的解释。
 
-[开始阅读：DTS 建链与对象生命周期](B-B.4.3_SPI Linux驱动框架_startup.md)。
+1. **SPI Linux 驱动框架概述**：说明有哪些角色，以及一次传输的完整流程；
+2. **设备描述、注册与驱动匹配**：说明 DTS、`spi_device`、`spi_driver` 和 probe 的关系；
+3. **SPI 传输请求的组织**：说明 message、transfer、缓冲区和返回值；
+4. **SPI Core 与控制器驱动的执行过程**：说明请求怎样交给硬件，结果怎样返回；
+5. **常用传输接口及其适用场景**：说明基础接口与便捷接口的关系和选择依据；
+6. **驱动构建、运行验证与应用边界**：说明怎样编译观察，以及教学驱动和产品驱动的区别。
+
+[开始阅读：设备描述、注册与驱动匹配](B-B.4.3_SPI Linux驱动框架_startup.md)。
 
 ---
 
-## <span class="blue"> 先沿一笔读取看清责任线
+## <span class="blue"> SPI 驱动框架与一次传输流程
 
 B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍装进`spi_message` 和 `spi_transfer`，让 Linux 替你发出去。
 
@@ -54,6 +67,8 @@ B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍�
 - **控制器驱动**（`spi-rockchip.c`）：管时钟、CS、GPIO，不管 0x0B 是什么意思。
 - **SPI Core**（`spi.c`）：管调度、排队、匹配，让上面两层接上头。
 - **设备树（DTS）**：只描述"芯片接在哪"，不跑代码。
+
+![aa](images/spi-four-objects-flow-static.svg)
 
 一笔成功读取要经过的完整路径是：
 
@@ -81,9 +96,11 @@ B-B.4.2 算清了 72 拍在引脚上怎么跑；写代码时，要把这 72 拍�
 | 对象与 API 定义 | [`include/linux/spi/spi.h:127-210, 975-1165`](code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h){: data-code-viewer="true" data-code-title="spi.h" data-code-path="Linux v6.6 · include/linux/spi/spi.h" data-code-lines="127-210,975-1165"} | 设备字段、全双工语义、message 和 transfer |
 | RK3568 硬件适配 | [`drivers/spi/spi-rockchip.c:668-722, 752-928`](code/B-B.4.3/kernel-v6.6/drivers/spi/spi-rockchip.c){: data-code-viewer="true" data-code-title="spi-rockchip.c" data-code-path="Linux v6.6 · drivers/spi/spi-rockchip.c" data-code-lines="668-722,752-928"} | 注册控制器、配置并执行一个 transfer |
 
-这里的源码地图不是另一条学习主线。后文每次放大其中一个区间，都要回到同一笔 5＋4 字节读取，确认它处于全路的哪一步。
+这里的源码地图不是另一条学习主线。<br>
+后文每次放大其中一个区间，都要回到同一笔 5＋4 字节读取，确认它处于全路的哪一步。
 
-SPI Framework Lab 把同一笔读取拆成可单步的代码位置和对象状态：可以先跟完 DTS 建链、双段提交、两段计数与释放，再切换“模型注入首段 `-EIO`”，观察第二段为何不执行、CS 何时撤销、负错误怎样穿过同步调用和 probe。<br>
+SPI Framework Lab 把同一笔读取拆成可单步的代码位置和对象状态：<br>
+可以先跟完 DTS 建链、双段提交、两段计数与释放，再切换“模型注入首段 `-EIO`”，观察第二段为何不执行、CS 何时撤销、负错误怎样穿过同步调用和 probe。<br>
 每一步都能在片段与完整函数间切换，源码工作台提供正文使用的三份教学文件。
 
 <div class="interactive-demo">
@@ -108,6 +125,6 @@ SPI Framework Lab 把同一笔读取拆成可单步的代码位置和对象状�
 
 ---
 
-[下一页：DTS 建链与对象生命周期](B-B.4.3_SPI Linux驱动框架_startup.md)
+[下一页：设备描述、注册与驱动匹配](B-B.4.3_SPI Linux驱动框架_startup.md)
 
 </div>

@@ -1,16 +1,16 @@
 <div class="reader-b2" markdown="1">
 
-# spi_sync 之后：Core 和 Rockchip 各做什么
+# SPI Core 与控制器驱动的执行过程
 
 > 所属章节：第五部 B. 总线协议 > B-B.4 SPI 总线 > B-B.4.3 SPI Linux 驱动框架
 >
 > 本组阅读：第 4 页，共 6 页
-
-本页只回答一个问题：**spi_sync() 之后谁校验、调度、操作硬件、处理 CS，并把状态带回调用者？**
+> 
+> 本页回答：**SPI Core 怎样调度传输请求，控制器驱动怎样执行它，数据和状态又怎样返回？**
 
 ---
 
-## <span class="blue"> spi_sync 之后，Core 和 Rockchip 各做什么
+## <span class="blue"> SPI Core 怎样调度控制器驱动
 
 外设驱动调用 `spi_sync(spi, &message)` 后，最先发生的不是写寄存器，而是 Core 对同一笔 message 的校验与调度。沿 v6.6 源码可以把本例继续拆成七步。
 
@@ -44,6 +44,6 @@
 
 ---
 
-[上一页：手工双段 message](B-B.4.3_SPI Linux驱动框架_message.md) · [下一页：便捷封装的边界](B-B.4.3_SPI Linux驱动框架_api.md)
+[上一页：SPI 传输请求的组织](B-B.4.3_SPI Linux驱动框架_message.md) · [下一页：常用传输接口及其适用场景](B-B.4.3_SPI Linux驱动框架_api.md)
 
 </div>

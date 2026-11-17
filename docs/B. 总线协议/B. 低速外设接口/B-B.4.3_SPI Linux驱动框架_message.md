@@ -1,16 +1,16 @@
 <div class="reader-b2" markdown="1">
 
-# 手工双段 message：5＋4 字节怎样完成并释放
+# SPI 传输请求的组织
 
 > 所属章节：第五部 B. 总线协议 > B-B.4 SPI 总线 > B-B.4.3 SPI Linux 驱动框架
 >
 > 本组阅读：第 3 页，共 6 页
-
-本页只回答一个问题：**两个 spi_transfer、缓冲区和 message 怎样组织一笔读取，并在成功或失败后正确返回？**
+> 
+> 本页回答：**怎样用 `spi_message`、`spi_transfer` 和缓冲区组织一次传输，并正确处理返回值与资源释放？**
 
 ---
 
-## <span class="blue"> 用手工双段 message 建立完整基线
+## <span class="blue"> 用 message 和 transfer 组织一次传输
 
 便捷 API 会隐藏分段、缓冲区复制和返回值细节。本篇先手工构造一笔 message，确保每个字节和每种状态都能找到对应代码，再使用封装减少重复工作。
 
@@ -171,6 +171,6 @@ MODULE_LICENSE("GPL");
 
 ---
 
-[上一页：DTS 建链](B-B.4.3_SPI Linux驱动框架_startup.md) · [下一页：Core 与 Rockchip 执行](B-B.4.3_SPI Linux驱动框架_execution.md)
+[上一页：设备描述、注册与驱动匹配](B-B.4.3_SPI Linux驱动框架_startup.md) · [下一页：SPI Core 与控制器驱动的执行过程](B-B.4.3_SPI Linux驱动框架_execution.md)
 
 </div>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>从引脚到内核：一笔 Fast Read 的 Linux 路径</title>
+<style>
+:root{
+  --bg:transparent;
+  --ink:#1f1f23;--sec:#54545a;--tert:#76767e;--quat:#a6a6ae;
+  --bord:#e3e3e8;--surf:#f2f2f5;--raised:#ffffff;
+  --blue:#2b7fff;--blue-bg:#eaf3ff;
+  --green:#1fa972;--green-bg:#e8f7f0;
+  --orange:#f5a623;--orange-bg:#fff8eb;
+  --purple:#7c4dff;--purple-bg:#f0ebff;
+  --gray-bg:#f0f0f2;
+  --t:180ms;--ease:cubic-bezier(.2,.8,.2,1);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#ededf0;--sec:#b9b9c0;--tert:#8f8f98;--quat:#5f5f66;
+    --bord:#38383f;--surf:#26262b;--raised:#1a1a1e;
+    --blue:#5ea2ff;--blue-bg:rgba(94,162,255,.12);
+    --green:#2fbf85;--green-bg:rgba(47,191,133,.12);
+    --orange:#f5a623;--orange-bg:rgba(245,166,35,.10);
+    --purple:#a78bfa;--purple-bg:rgba(167,139,250,.10);
+    --gray-bg:#2a2a30;
+  }
+}
+html,body{background:var(--bg);color:var(--ink);margin:0;padding:12px;}
+#app{max-width:960px;margin:0 auto;}
+h2{font-size:18px;margin:0 0 10px;text-align:center;}
+.controls{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+button{border:1px solid var(--bord);background:var(--raised);color:var(--ink);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:background var(--t) var(--ease);}
+button:hover{background:var(--surf);}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+button.primary:hover{filter:brightness(1.1);}
+.step-chip{border:1px solid var(--bord);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--quat);background:transparent;cursor:pointer;transition:all var(--t) var(--ease);}
+.step-chip.on{color:var(--ink);border-color:var(--ink);font-weight:500;background:var(--surf);}
+#stage{width:100%;height:auto;display:block;}
+#status{font-size:13px;margin-top:10px;padding:12px;border-radius:8px;background:var(--surf);border:1px solid var(--bord);line-height:1.7;min-height:3.2em;}
+#code-panel{font-family:"SF Mono",Menlo,Monaco,monospace;font-size:12px;margin-top:8px;padding:12px;border-radius:8px;background:var(--gray-bg);border:1px solid var(--bord);white-space:pre-wrap;overflow-x:auto;color:var(--sec);}
+.hl{color:var(--blue);font-weight:600;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h2>从引脚到内核：一笔 Fast Read 的 Linux 路径</h2>
+  <div class="controls">
+    <button id="btnPrev">&lt; 上一步</button>
+    <button id="btnPlay" class="primary">▶ 播放</button>
+    <button id="btnNext">下一步 &gt;</button>
+    <span style="font-size:12px;color:var(--tert);">第 <span id="stepNum">0</span> / 8 步</span>
+  </div>
+  <div class="controls" id="chips"></div>
+  <svg id="stage" viewBox="0 0 960 340"></svg>
+  <div id="status">4.2 已把 Fast Read 拆成 72 拍引脚波形；4.3 看同一笔事务在 Linux 中的完整路径。点击「播放」或下方步骤芯片逐步展开。</div>
+  <div id="code-panel"></div>
+</div>
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('stage');
+function E(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(x,y,s,a,p){const t=E('text',{x,y,'font-size':a.fs||11,fill:a.fill||'var(--sec)'},p);if(a.ta)t.setAttribute('text-anchor',a.ta);if(a.fw)t.setAttribute('font-weight',a.fw);t.textContent=s;return t;}
+
+const INK='var(--ink)',SEC='var(--sec)',TERT='var(--tert)',QUAT='var(--quat)',BORD='var(--bord)';
+const BLUE='var(--blue)',BLUE_BG='var(--blue-bg)',GREEN='var(--green)',GREEN_BG='var(--green-bg)';
+const ORANGE='var(--orange)',ORANGE_BG='var(--orange-bg)',PURPLE='var(--purple)',PURPLE_BG='var(--purple-bg)';
+const GRAY_BG='var(--gray-bg)';
+
+// ---- defs ----
+const defs=E('defs',{},svg);
+function mkArrow(id,color){E('marker',{id,viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto'},defs).innerHTML=`<path d="M0 0 L10 5 L0 10 z" fill="${color}"/>`;}
+mkArrow('ar',SEC); mkArrow('arb',BLUE); mkArrow('arg',GREEN); mkArrow('aro',ORANGE); mkArrow('arp',PURPLE);
+
+// ---- 波形区 y=44~92 ----
+const WX=80, WB=10.5, WY=56, WH=28;
+const waveSegs=[[1,8,'命令 0B',BLUE_BG,BLUE],[9,32,'地址 00 12 34',BLUE_BG,BLUE],[33,40,'dummy',GRAY_BG,TERT],[41,72,'数据 D0 D1 D2 D3',GREEN_BG,GREEN]];
+waveSegs.forEach(s=>{const x=WX+(s[0]-1)*WB,w=(s[1]-s[0]+1)*WB;E('rect',{x,y:WY,width:w,height:WH,fill:s[3],stroke:s[4],'stroke-width':1},svg);T(x+w/2,WY+18,s[2],{fs:10,ta:'middle',fill:s[4]},svg);});
+// 拍号刻度
+[[1,'1'],[8,'8'],[9,'9'],[32,'32'],[33,'33'],[40,'40'],[41,'41'],[72,'72']].forEach(t=>{
+  const x=WX+(t[0]-1)*WB;E('line',{x1:x,y1:WY+WH+6,x2:x,y2:WY+WH+12,stroke:QUAT,'stroke-width':1},svg);
+  T(x,WY+WH+24,t[1],{fs:8,ta:'middle',fill:QUAT},svg);
+});
+T(WX-10,WY+WH+24,'拍',{fs:9,ta:'end',fill:TERT},svg);
+T(480,38,'4.2 引脚波形（72 拍）',{fs:12,ta:'middle',fw:'bold',fill:INK},svg);
+
+// ---- 对象卡片 y=210 ----
+const cards=[
+  {id:'dts',x:40,w:110,label:'DTS',sub:'设备树描述',color:TERT,bg:GRAY_BG,stroke:BORD},
+  {id:'dev',x:170,w:120,label:'spi_device',sub:'Core 创建 spi1.0',color:BLUE,bg:BLUE_BG,stroke:BLUE},
+  {id:'drv',x:310,w:120,label:'spi_driver',sub:'协议驱动',color:GREEN,bg:GREEN_BG,stroke:GREEN},
+  {id:'msg',x:450,w:120,label:'spi_message',sub:'5+4 字节事务',color:ORANGE,bg:ORANGE_BG,stroke:ORANGE},
+  {id:'t0',x:590,w:100,label:'transfer[0]',sub:'tx[5] · 前 40 拍',color:BLUE,bg:BLUE_BG,stroke:BLUE},
+  {id:'t1',x:710,w:100,label:'transfer[1]',sub:'rx[4] · 后 32 拍',color:GREEN,bg:GREEN_BG,stroke:GREEN},
+  {id:'ctl',x:830,w:110,label:'spi_controller',sub:'Rockchip 执行',color:PURPLE,bg:PURPLE_BG,stroke:PURPLE},
+];
+const cardEls={};
+cards.forEach(c=>{
+  const g=E('g',{class:'card',id:'c-'+c.id},svg);
+  E('rect',{x:c.x,y:210,width:c.w,height:58,rx:8,fill:c.bg,stroke:c.stroke,'stroke-width':1.5,opacity:'0.35'},g);
+  T(c.x+c.w/2,234,c.label,{fs:12,ta:'middle',fw:'bold',fill:c.color},g);
+  T(c.x+c.w/2,254,c.sub,{fs:9,ta:'middle',fill:TERT},g);
+  cardEls[c.id]=g;
+});
+
+// ---- 连接箭头（初始隐藏）----
+const arrows=[];
+function addArrow(x1,y1,x2,y2,color,strokeW,marker){const l=E('line',{x1,y1,x2,y2,stroke:color,'stroke-width':strokeW,'marker-end':'url(#'+marker+')',opacity:0},svg);arrows.push(l);return l;}
+addArrow(95,190,95,210,TERT,1.2,'ar'); // wave->dts
+addArrow(150,245,170,245,TERT,1.2,'ar'); // dts->dev
+addArrow(290,245,310,245,TERT,1.2,'ar'); // dev->drv
+addArrow(430,245,450,245,TERT,1.2,'ar'); // drv->msg
+addArrow(590,268,590,268,BLUE,1.2,'arb'); // placeholder msg->t0
+addArrow(690,268,690,268,GREEN,1.2,'arg'); // placeholder msg->t1
+addArrow(840,268,840,268,PURPLE,1.2,'arp'); // placeholder t->ctl
+
+// 重新画精确的连接箭头（覆盖上面的占位）
+svg.querySelectorAll('line[opacity="0"]').forEach(el=>el.remove());
+const conns=[];
+function conn(id,x1,y1,x2,y2,color,mk){const l=E('line',{x1,y1,x2,y2,stroke:color,'stroke-width':1.4,'marker-end':'url(#'+mk+')',opacity:0},svg);conns.push({id,el:l});return l;}
+conn('c0',95,190,95,208,TERT,'ar');
+conn('c1',150,240,170,240,TERT,'ar');
+conn('c2',290,240,310,240,TERT,'ar');
+conn('c3',430,240,450,240,TERT,'ar');
+conn('c4a',540,240,590,240,BLUE,'arb');
+conn('c4b',570,240,640,240,GREEN,'arg'); // msg -> t1 (curved)
+conn('c5a',690,268,760,268,BLUE,'arb'); // t0->ctl path (via msg center)
+conn('c5b',760,268,830,268,PURPLE,'arp');
+
+// 再简化：直接用一组清晰的折线
+conns.forEach(c=>c.el.remove());
+const pathGroup=E('g',{opacity:0},svg);
+function path(d,color,mk){const p=E('path',{d,fill:'none',stroke:color,'stroke-width':1.6,'marker-end':'url(#'+mk+')'},pathGroup);return p;}
+// 路径定义在 step 里动态显示，这里先建一个 group
+const dynPaths=E('g',{},svg);
+
+// ---- 步骤数据 ----
+const steps=[
+  {text:'4.2 已把 Fast Read 拆成 72 拍引脚波形；4.3 看同一笔事务在 Linux 中的完整路径。点击「播放」或下方步骤芯片逐步展开。',code:'',cards:[],wave:''},
+  {text:'Step 1/8：DTS 描述芯片接在哪个控制器的哪根 CS 上、用什么频率、什么模式。',code:'// spi-frame-observer.dts\nspi-frame-observer@0 {\n    <span class="hl">compatible = "kimi,spi-frame-observer";</span>\n    reg = &lt;0&gt;;\n    spi-max-frequency = &lt;1000000&gt;;\n};',cards:['dts'],wave:'all'},
+  {text:'Step 2/8：SPI Core 解析 DTS 子节点，分配并注册 spi_device。本例控制器是 spi1，片选 0，因此设备名为 spi1.0。',code:'// drivers/spi/spi.c\nspi_alloc_device(ctlr);\n<span class="hl">spi_add_device(spi);</span>  // 设备名 spi1.0',cards:['dts','dev'],wave:'all'},
+  {text:'Step 3/8：compatible 字符串是匹配钥匙。DTS 中的 "kimi,spi-frame-observer" 与驱动 of_match_table 对上号，Core 调用 probe。',code:'// 驱动匹配表\nstatic const struct of_device_id match[] = {\n    { .compatible = <span class="hl">"kimi,spi-frame-observer"</span> },\n    { }\n};',cards:['dts','dev','drv'],wave:'all'},
+  {text:'Step 4/8：probe 中把 72 拍组装成 spi_message，包含两段 transfer。message 是 Core 调度的最小事务单位。',code:'// probe 中\nstruct spi_message m;\n<span class="hl">spi_message_init(&m);</span>\nspi_message_add_tail(&t[0], &m);\nspi_message_add_tail(&t[1], &m);',cards:['dts','dev','drv','msg'],wave:'all'},
+  {text:'Step 5/8：transfer[0] 负责前 40 拍。tx_buf 指向 5 字节前导（0B 00 12 34 00），rx_buf=NULL 表示同步接收值丢弃。',code:'// 第一段：前 40 拍\ntransfers[0].tx_buf = tx;\n<span class="hl">transfers[0].len = 5;</span>  // 命令+地址+dummy\ntransfers[0].rx_buf = NULL;  // 丢弃',cards:['dts','dev','drv','msg','t0'],wave:'tx'},
+  {text:'Step 6/8：transfer[1] 负责后 32 拍。rx_buf 指向 4 字节缓冲区，tx_buf=NULL 表示同步发送零以提供时钟。',code:'// 第二段：后 32 拍\ntransfers[1].rx_buf = rx;\n<span class="hl">transfers[1].len = 4;</span>   // 数据\ntransfers[1].tx_buf = NULL;  // 发零占位',cards:['dts','dev','drv','msg','t0','t1'],wave:'rx'},
+  {text:'Step 7/8：spi_sync() 提交后，Core 逐段调用控制器驱动的 transfer_one。RK3568 配置时钟、CS、GPIO，产生实际波形。',code:'// Core → 控制器\n<span class="hl">ret = spi_sync(spi, &m);</span>\n// 内部：ctlr->transfer_one(ctlr, msg->spi, xfer)\n// → rockchip_spi_transfer_one()',cards:['dts','dev','drv','msg','t0','t1','ctl'],wave:'all'},
+  {text:'Step 8/8：控制器完成 72 拍位移，Core 回收缓冲区，spi_sync() 返回 0。驱动从 rx[0..3] 取得 4 字节数据。',code:'// 完成\nif (ret == 0 && m.actual_length == 9) {\n    // rx[0]=D0 rx[1]=D1 rx[2]=D2 rx[3]=D3\n}',cards:['dts','dev','drv','msg','t0','t1','ctl'],wave:'done'}
+];
+
+// 芯片按钮
+const chipsDiv=document.getElementById('chips');
+steps.forEach((s,i)=>{
+  const chip=document.createElement('span');
+  chip.className='step-chip'+(i===0?' on':'');
+  chip.textContent=i===0?'起点':'S'+i;
+  chip.onclick=()=>go(i);
+  chipsDiv.appendChild(chip);
+});
+
+let cur=0,timer=null;
+function setOpacity(el,v){el.style.transition='opacity '+180+'ms var(--ease)';el.style.opacity=v;}
+function setRectOpacity(id,v){const r=cardEls[id].querySelector('rect');r.style.transition='opacity '+180+'ms var(--ease), stroke-width '+180+'ms var(--ease)';r.style.opacity=v;r.style.strokeWidth=v>0.5?2:1.5;}
+
+function highlightWave(mode){
+  const segs=svg.querySelectorAll('rect[y="56"]');
+  segs.forEach((r,idx)=>{
+    r.style.transition='opacity 200ms var(--ease)';
+    if(mode==='')r.style.opacity='0.35';
+    else if(mode==='all')r.style.opacity='1';
+    else if(mode==='tx' && idx<=2)r.style.opacity='1'; // 前3段
+    else if(mode==='tx' && idx===3)r.style.opacity='0.25';
+    else if(mode==='rx' && idx===3)r.style.opacity='1';
+    else if(mode==='rx' && idx<=2)r.style.opacity='0.25';
+    else if(mode==='done'){r.style.opacity='1';r.style.filter='brightness(1.05)';setTimeout(()=>r.style.filter='',200);}
+  });
+}
+
+function drawConnections(step){
+  dynPaths.innerHTML='';
+  if(step>=1){path('M95 190 V208',TERT,'ar');}
+  if(step>=2){path('M150 240 H170',TERT,'ar');}
+  if(step>=3){path('M290 240 H310',TERT,'ar');}
+  if(step>=4){path('M430 240 H450',TERT,'ar');}
+  if(step>=5){path('M540 240 Q565 180 590 240',BLUE,'arb');}
+  if(step>=6){path('M570 240 Q640 180 710 240',GREEN,'arg');}
+  if(step>=7){path('M810 240 H840 V268 H930',PURPLE,'arp');}
+}
+
+function go(n){
+  if(n<0||n>=steps.length)return;
+  cur=n;
+  document.getElementById('stepNum').textContent=n;
+  document.querySelectorAll('.step-chip').forEach((c,i)=>c.className='step-chip'+(i===n?' on':''));
+  const s=steps[n];
+  document.getElementById('status').innerHTML=s.text;
+  document.getElementById('code-panel').innerHTML=s.code?s.code:'<span style="color:var(--quat)">// 本步骤无代码片段</span>';
+  highlightWave(s.wave);
+  cards.forEach(c=>setRectOpacity(c.id,s.cards.includes(c.id)?'1':'0.25'));
+  drawConnections(n);
+}
+
+document.getElementById('btnPrev').onclick=()=>go(cur-1);
+document.getElementById('btnNext').onclick=()=>go(cur+1);
+document.getElementById('btnPlay').onclick=function(){
+  if(timer){clearInterval(timer);timer=null;this.textContent='▶ 播放';return;}
+  this.textContent='⏸ 暂停';
+  if(cur>=steps.length-1)go(0);
+  timer=setInterval(()=>{if(cur>=steps.length-1){clearInterval(timer);timer=null;document.getElementById('btnPlay').textContent='▶ 播放';}else go(cur+1);},1200);
+};
+
+// init
+go(0);
+})();
+</script>
+</body>
+</html>
