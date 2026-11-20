@@ -1,0 +1,102 @@
+{
+  "output": "spi-framework-fullcode.js",
+  "globalName": "SPI_FULL_CODE",
+  "entries": {
+    "observerFile": {
+      "source": "../code/B-B.4.3/spi_frame_observer.c",
+      "displayPath": "code/B-B.4.3/spi_frame_observer.c",
+      "origin": "原创教学模块，Linux v6.6 外设协议驱动模型，未编译或上板",
+      "wholeFile": true
+    },
+    "observerRead": {
+      "source": "../code/B-B.4.3/spi_frame_observer.c",
+      "displayPath": "code/B-B.4.3/spi_frame_observer.c",
+      "origin": "原创教学模块，未编译或上板",
+      "function": "spi_frame_observer_read"
+    },
+    "observerProbe": {
+      "source": "../code/B-B.4.3/spi_frame_observer.c",
+      "displayPath": "code/B-B.4.3/spi_frame_observer.c",
+      "origin": "原创教学模块，未编译或上板",
+      "function": "spi_frame_observer_probe"
+    },
+    "rockchipSpiProbe": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi-rockchip.c",
+      "displayPath": "drivers/spi/spi-rockchip.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "rockchip_spi_probe"
+    },
+    "ofSpiParseDt": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "of_spi_parse_dt"
+    },
+    "ofRegisterSpiDevice": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照；连续区间包含返回类型跨行的 of_register_spi_device()",
+      "functions": ["of_spi_parse_dt", "of_register_spi_devices"]
+    },
+    "ofRegisterSpiDevices": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "of_register_spi_devices"
+    },
+    "spiMatchDevice": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_match_device"
+    },
+    "spiProbe": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_probe"
+    },
+    "spiSyncInternal": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "__spi_sync"
+    },
+    "spiSync": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_sync"
+    },
+    "spiTransferOneMessage": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_transfer_one_message"
+    },
+    "spiFinalizeCurrentMessage": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_finalize_current_message"
+    },
+    "rockchipSpiTransferOne": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi-rockchip.c",
+      "displayPath": "drivers/spi/spi-rockchip.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "rockchip_spi_transfer_one"
+    },
+    "rockchipSpiCanDma": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi-rockchip.c",
+      "displayPath": "drivers/spi/spi-rockchip.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "rockchip_spi_can_dma"
+    },
+    "spiWriteThenRead": {
+      "source": "../../../../help-docs/kernel-src-v6.6/drivers_spi_spi.c",
+      "displayPath": "drivers/spi/spi.c",
+      "origin": "Linux v6.6 源码快照",
+      "function": "spi_write_then_read"
+    }
+  }
+}

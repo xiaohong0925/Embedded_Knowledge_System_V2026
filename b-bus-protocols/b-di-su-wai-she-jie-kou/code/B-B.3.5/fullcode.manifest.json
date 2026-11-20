@@ -1,0 +1,27 @@
+{
+  "output": "../../html/at24-fullcode.js",
+  "globalName": "LAB_FULL_CODE",
+  "entries": {
+    "userMain": { "source": "at24c02c_rw.c", "displayPath": "code/B-B.3.5/at24c02c_rw.c", "origin": "本篇原创教学文件（未编译）", "function": "main" },
+    "userWait": { "source": "at24c02c_rw.c", "displayPath": "code/B-B.3.5/at24c02c_rw.c", "origin": "本篇原创教学文件（未编译）", "function": "at24_wait_ready" },
+    "userWritePage": { "source": "at24c02c_rw.c", "displayPath": "code/B-B.3.5/at24c02c_rw.c", "origin": "本篇原创教学文件（未编译）", "function": "at24_write_page" },
+    "userRead": { "source": "at24c02c_rw.c", "displayPath": "code/B-B.3.5/at24c02c_rw.c", "origin": "本篇原创教学文件（未编译）", "function": "at24_read" },
+    "at24Probe": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_probe" },
+    "at24Adjust": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_adjust_write_count" },
+    "at24RegmapWrite": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_regmap_write" },
+    "at24Read": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_read" },
+    "at24Write": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_write" },
+    "at24RegmapRead": { "source": "linux-v6.6/drivers/misc/eeprom/at24.c", "displayPath": "drivers/misc/eeprom/at24.c", "origin": "Linux v6.6", "function": "at24_regmap_read" },
+    "nvmemRead": { "source": "linux-v6.6/drivers/nvmem/core.c", "displayPath": "drivers/nvmem/core.c", "origin": "Linux v6.6", "function": "bin_attr_nvmem_read" },
+    "nvmemWrite": { "source": "linux-v6.6/drivers/nvmem/core.c", "displayPath": "drivers/nvmem/core.c", "origin": "Linux v6.6", "function": "bin_attr_nvmem_write" },
+    "nvmemCompat": { "source": "linux-v6.6/drivers/nvmem/core.c", "displayPath": "drivers/nvmem/core.c", "origin": "Linux v6.6", "function": "nvmem_sysfs_setup_compat" },
+    "nvmemManagedRegister": { "source": "linux-v6.6/drivers/nvmem/core.c", "displayPath": "drivers/nvmem/core.c", "origin": "Linux v6.6", "function": "devm_nvmem_register" },
+    "nvmemRelease": { "source": "linux-v6.6/drivers/nvmem/core.c", "displayPath": "drivers/nvmem/core.c", "origin": "Linux v6.6", "function": "nvmem_device_release" },
+    "regmapRawWriteImpl": { "source": "linux-v6.6/drivers/base/regmap/regmap.c", "displayPath": "drivers/base/regmap/regmap.c", "origin": "Linux v6.6", "function": "_regmap_raw_write_impl" },
+    "regmapBulkWrite": { "source": "linux-v6.6/drivers/base/regmap/regmap.c", "displayPath": "drivers/base/regmap/regmap.c", "origin": "Linux v6.6", "function": "regmap_bulk_write" },
+    "regmapI2cWrite": { "source": "linux-v6.6/drivers/base/regmap/regmap-i2c.c", "displayPath": "drivers/base/regmap/regmap-i2c.c", "origin": "Linux v6.6", "function": "regmap_i2c_write" },
+    "regmapI2cGather": { "source": "linux-v6.6/drivers/base/regmap/regmap-i2c.c", "displayPath": "drivers/base/regmap/regmap-i2c.c", "origin": "Linux v6.6", "function": "regmap_i2c_gather_write" },
+    "regmapI2cRead": { "source": "linux-v6.6/drivers/base/regmap/regmap-i2c.c", "displayPath": "drivers/base/regmap/regmap-i2c.c", "origin": "Linux v6.6", "function": "regmap_i2c_read" },
+    "rk3xFunc": { "source": "linux-v6.6/drivers/i2c/busses/i2c-rk3x.c", "displayPath": "drivers/i2c/busses/i2c-rk3x.c", "origin": "Linux v6.6", "function": "rk3x_i2c_func" }
+  }
+}

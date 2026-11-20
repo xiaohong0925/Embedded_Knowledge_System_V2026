@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>Framework Lab Template</title>
+  <link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="lab">
+  <header class="lab-header">
+    <div>
+      <span class="lab-kicker" id="lab-kicker">REUSABLE TEACHING TEMPLATE</span>
+      <h1 id="lab-title">Framework Lab Template</h1>
+      <p id="lab-subtitle">让代码、状态和观察结果在同一步骤里出现。</p>
+    </div>
+    <div class="transaction-tag" id="transaction-tag" aria-label="贯穿实例"></div>
+  </header>
+
+  <div class="lab-body">
+    <nav class="chapter-rail" aria-label="实验室视图">
+      <button class="rail-item is-active" data-view="mechanism" type="button" aria-label="机制单步">
+        <span>01</span><small>机制</small>
+      </button>
+      <button class="rail-item" data-view="source" type="button" aria-label="完整源码">
+        <span>02</span><small>源码</small>
+      </button>
+    </nav>
+
+    <main class="lab-main">
+      <section id="view-mechanism" class="lab-view is-active" aria-labelledby="mechanism-title">
+        <div class="view-heading">
+          <div class="view-number">01 / MECHANISM</div>
+          <div class="view-copy">
+            <h2 id="mechanism-title">沿同一笔操作推进代码与状态</h2>
+            <p>每一步只回答一个问题：执行了哪行代码，哪个对象因此改变，读者能观察到什么。</p>
+          </div>
+          <label class="select-label" for="scenario-mode">实验条件
+            <select id="scenario-mode">
+              <option value="normal">占位：正常路径</option>
+              <option value="failure">占位：失败路径</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="step-toolbar">
+          <div class="button-group">
+            <button class="control-button" id="step-prev" type="button">← 上一步</button>
+            <button class="control-button control-primary" id="step-next" type="button">下一步 →</button>
+            <button class="control-button control-quiet" id="step-reset" type="button">复位</button>
+          </div>
+          <output id="step-counter" class="step-counter" aria-live="polite"></output>
+        </div>
+        <div id="step-strip" class="step-strip" aria-label="机制步骤"></div>
+
+        <div class="workbench">
+          <section class="code-pane" aria-label="当前步骤代码">
+            <div class="pane-heading"><span id="step-code-path"></span><button class="code-full-toggle" id="step-full-toggle" type="button" aria-pressed="false">完整函数</button></div>
+            <pre class="code-window"><code id="step-code"></code></pre>
+            <div class="mechanism-note" id="step-note" aria-live="polite"></div>
+          </section>
+          <section class="state-pane" aria-label="对象状态和观察结果">
+            <div class="pane-heading"><span>对象与返回值</span><span class="live-indicator">MODEL</span></div>
+            <dl class="state-grid" id="state-grid"></dl>
+            <div class="observation-pane">
+              <span class="section-label">此刻可以观察到什么</span>
+              <ul id="step-observations"></ul>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-source" class="lab-view" aria-labelledby="source-title">
+        <div class="view-heading">
+          <div class="view-number">02 / SOURCE WORKBENCH</div>
+          <div class="view-copy">
+            <h2 id="source-title">完整源码工作台</h2>
+            <p>加载正文引用的同一份文件，不再维护一份容易失同步的页面内副本。</p>
+          </div>
+          <button class="control-button" id="copy-source" type="button">复制当前文件</button>
+        </div>
+        <div class="source-layout">
+          <nav class="source-files" id="source-files" aria-label="教学文件列表"></nav>
+          <section class="source-editor">
+            <div class="pane-heading"><span id="source-path">等待选择</span><a id="source-download" href="./code/example.c" download="example.c">下载文件</a></div>
+            <div class="source-context" id="source-context"></div>
+            <pre class="code-window source-code-window"><code id="source-code">正在加载…</code></pre>
+            <div class="source-status" id="source-status" role="status" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="lab-footer">
+    <span id="model-basis">占位模型：请替换为已核验的机制依据</span>
+    <span>模板数据不代表编译、运行或上板结果</span>
+    <span>机制视图快捷键：← / →</span>
+  </footer>
+</div>
+<noscript><div class="noscript-note">交互实验室需要 JavaScript。正文必须能够独立讲清同一机制，不得依赖本页面才能成立。</div></noscript>
+<script src="fullcode.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>

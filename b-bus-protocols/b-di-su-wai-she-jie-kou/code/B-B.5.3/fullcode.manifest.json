@@ -1,0 +1,90 @@
+{
+  "output": "../../html/uart-framework-lab-fullcode.js",
+  "globalName": "LAB_FULL_CODE",
+  "entries": {
+    "uartRegisterDriver": {
+      "source": "serial_core.c",
+      "displayPath": "drivers/tty/serial/serial_core.c",
+      "origin": "Linux v6.6",
+      "function": "uart_register_driver"
+    },
+    "dw8250Probe": {
+      "source": "8250_dw.c",
+      "displayPath": "drivers/tty/serial/8250/8250_dw.c",
+      "origin": "Linux v6.6",
+      "function": "dw8250_probe"
+    },
+    "uartOpen": {
+      "source": "serial_core.c",
+      "displayPath": "drivers/tty/serial/serial_core.c",
+      "origin": "Linux v6.6",
+      "function": "uart_open"
+    },
+    "serial8250ReadChar": {
+      "source": "8250_port.c",
+      "displayPath": "drivers/tty/serial/8250/8250_port.c",
+      "origin": "Linux v6.6",
+      "function": "serial8250_read_char"
+    },
+    "uartInsertChar": {
+      "source": "serial_core.c",
+      "displayPath": "drivers/tty/serial/serial_core.c",
+      "origin": "Linux v6.6",
+      "function": "uart_insert_char"
+    },
+    "ttyFlipBufferPush": {
+      "source": "tty_buffer.c",
+      "displayPath": "drivers/tty/tty_buffer.c",
+      "origin": "Linux v6.6",
+      "function": "tty_flip_buffer_push"
+    },
+    "flushToLdisc": {
+      "source": "tty_buffer.c",
+      "displayPath": "drivers/tty/tty_buffer.c",
+      "origin": "Linux v6.6",
+      "function": "flush_to_ldisc"
+    },
+    "ttyLdiscReceiveBuf": {
+      "source": "tty_buffer.c",
+      "displayPath": "drivers/tty/tty_buffer.c",
+      "origin": "Linux v6.6",
+      "function": "tty_ldisc_receive_buf"
+    },
+    "nTtyReceiveBuf": {
+      "source": "n_tty.c",
+      "displayPath": "drivers/tty/n_tty.c",
+      "origin": "Linux v6.6",
+      "function": "n_tty_receive_buf"
+    },
+    "iterateTtyRead": {
+      "source": "tty_io.c",
+      "displayPath": "drivers/tty/tty_io.c",
+      "origin": "Linux v6.6",
+      "function": "iterate_tty_read"
+    },
+    "ttySetTermios": {
+      "source": "tty_ioctl.c",
+      "displayPath": "drivers/tty/tty_ioctl.c",
+      "origin": "Linux v6.6",
+      "function": "tty_set_termios"
+    },
+    "uartSetTermios": {
+      "source": "serial_core.c",
+      "displayPath": "drivers/tty/serial/serial_core.c",
+      "origin": "Linux v6.6",
+      "function": "uart_set_termios"
+    },
+    "dw8250SetTermios": {
+      "source": "8250_dw.c",
+      "displayPath": "drivers/tty/serial/8250/8250_dw.c",
+      "origin": "Linux v6.6",
+      "function": "dw8250_set_termios"
+    },
+    "nTtySetTermios": {
+      "source": "n_tty.c",
+      "displayPath": "drivers/tty/n_tty.c",
+      "origin": "Linux v6.6",
+      "function": "n_tty_set_termios"
+    }
+  }
+}

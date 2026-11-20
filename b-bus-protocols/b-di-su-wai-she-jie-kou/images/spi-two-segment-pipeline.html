@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPI 两段传输：从线上帧到 RX 缓冲区</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --kimi-color-text-primary:#1f1f23;
+  --kimi-color-text-secondary:#54545a;
+  --kimi-color-text-tertiary:#76767e;
+  --kimi-color-text-quaternary:#a6a6ae;
+  --kimi-color-surface-muted:#f2f2f5;
+  --kimi-color-surface-raised:#ffffff;
+  --kimi-color-border:#e3e3e8;
+  --kimi-color-danger:#e5484d;
+  --kimi-chart-1:#2b7fff;
+  --kimi-chart-3:#1fa972;
+  --t-fast:150ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#ededf0;
+    --kimi-color-text-secondary:#b9b9c0;
+    --kimi-color-text-tertiary:#8f8f98;
+    --kimi-color-text-quaternary:#5f5f66;
+    --kimi-color-surface-muted:#26262b;
+    --kimi-color-surface-raised:#1a1a1e;
+    --kimi-color-border:#38383f;
+    --kimi-color-danger:#f2555a;
+    --kimi-chart-1:#5ea2ff;
+    --kimi-chart-3:#2fbf85;
+  }
+}
+html,body{background:transparent;margin:0;padding:16px;}
+</style>
+</head>
+<body>
+
+<style>
+#pl button{border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:background var(--t-fast,150ms) var(--ease-out,ease-out)}
+#pl button:hover{background:var(--kimi-color-surface-muted)}
+#pl .chip{border:1px solid var(--kimi-color-border);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--kimi-color-text-tertiary);background:transparent}
+#pl .chip.on{color:var(--kimi-color-text-primary);font-weight:500;border-color:var(--kimi-color-text-primary)}
+#pl svg text{font-family:var(--kimi-font-sans,sans-serif)}
+</style>
+<div id="pl" style="font-family:var(--kimi-font-sans,sans-serif);color:var(--kimi-color-text-primary);max-width:920px;margin:0 auto;">
+  <div id="plRail" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+  <svg id="plSvg" viewBox="0 0 900 300" style="width:100%;height:auto;display:block;"></svg>
+  <div id="plStatus" style="font-size:14px;color:var(--kimi-color-text-secondary);margin:10px 0;"></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button id="plPlay" style="min-width:64px;">播放</button>
+    <button id="plStep">单步</button>
+    <button id="plReset">重置</button>
+    <span id="plCount" style="font-size:12px;color:var(--kimi-color-text-quaternary);"></span>
+  </div>
+</div>
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('plSvg');
+function E(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(x,y,s,a,p){var t=E('text',{x:x,y:y,'font-size':a.fs||12,fill:a.fill||'var(--kimi-color-text-secondary)'},p);if(a.ta)t.setAttribute('text-anchor',a.ta);t.textContent=s;return t;}
+var INK='var(--kimi-color-text-primary)',GRAY='var(--kimi-color-text-tertiary)',QGRAY='var(--kimi-color-text-quaternary)',BORD='var(--kimi-color-border)';
+var BLUE='var(--kimi-chart-1)',GREEN='var(--kimi-chart-3)';
+
+var rail=document.getElementById('plRail');
+['第一段 · TX 5 字节（前 40 拍）','第二段 · RX 4 字节（后 32 拍）','两段 = 同一笔事务，CS 不释放'].forEach(function(s,i){
+  var d=document.createElement('div');d.className='chip';d.id='plC'+i;d.textContent=s;rail.appendChild(d);
+});
+
+var defs=E('defs',{},svg);
+var mk1=E('marker',{id:'plAhr',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto'},defs);
+E('path',{d:'M0 0 L10 5 L0 10 z',fill:GRAY},mk1);
+var mk2=E('marker',{id:'plAhl',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto-start-reverse'},defs);
+E('path',{d:'M0 0 L10 5 L0 10 z',fill:GRAY},mk2);
+// 两条单向车道：MOSI 向右、MISO 向左
+E('line',{x1:40,y1:100,x2:778,y2:100,stroke:GRAY,'stroke-width':1.4},svg);
+E('line',{x1:778,y1:126,x2:44,y2:126,stroke:GRAY,'stroke-width':1.4},svg);
+E('rect',{x:780,y:66,width:115,height:76,rx:8,fill:'var(--kimi-color-surface-muted)',stroke:BORD},svg);
+var fT=T(837,102,'Flash',{fs:13,ta:'middle',fill:INK},svg);fT.setAttribute('font-weight','bold');
+T(837,120,'W25Q128JV',{fs:10,ta:'middle',fill:GRAY},svg);
+T(42,90,'MOSI · 主机 → Flash',{fs:10,fill:QGRAY},svg);
+T(44,144,'MISO · Flash → 主机',{fs:10,fill:QGRAY},svg);
+
+var BOX=[['TX 发送缓冲区 · 5 字节',60,250,BLUE],['同步接收值 · 丢弃',350,540,QGRAY],['RX 数据缓冲区 · 4 字节',640,840,GREEN]];
+BOX.forEach(function(b){
+  E('rect',{x:b[1],y:190,width:b[2]-b[1],height:88,rx:8,fill:'transparent',stroke:b[3],'stroke-width':1.4,'stroke-dasharray':b[3]===QGRAY?'5 4':'none'},svg);
+  T((b[1]+b[2])/2,212,b[0],{fs:11,ta:'middle',fill:INK},svg);
+});
+var txS=[],binS=[],rxS=[];
+for(var i=0;i<5;i++){
+  txS.push(E('rect',{x:67+i*36,y:230,width:32,height:26,rx:4,fill:'transparent',stroke:BORD,'stroke-width':1},svg));
+  binS.push(E('rect',{x:357+i*36,y:230,width:32,height:26,rx:4,fill:'transparent',stroke:QGRAY,'stroke-width':0.8,'stroke-dasharray':'3 3'},svg));
+}
+for(i=0;i<4;i++){
+  rxS.push(E('rect',{x:651+i*46,y:230,width:40,height:26,rx:4,fill:'transparent',stroke:BORD,'stroke-width':1},svg));
+  T(671+i*46,272,'RX['+i+']',{fs:9,ta:'middle',fill:GRAY},svg);
+}
+var rx0ring=E('rect',{x:651-4,y:226,width:48,height:34,rx:6,fill:'none',stroke:GREEN,'stroke-width':2,opacity:0},svg);
+var note2=T(330,170,'第二段：控制器同时从 TX 发占位 00，只为维持时钟',{fs:10,ta:'middle',fill:GRAY},svg);note2.setAttribute('opacity',0);
+
+var STEPS=[
+  {tx:'0B'},{tx:'00'},{tx:'12'},{tx:'34'},{tx:'00'},
+  {rx:'A7',idx:0},{rx:'5C',idx:1},{rx:'3F',idx:2},{rx:'19',idx:3}
+];
+var cur=0,playing=false,token=0;
+var stEl=document.getElementById('plStatus'),cntEl=document.getElementById('plCount');
+
+function chip(hex,color,ghost){
+  var g=E('g',{},svg);
+  E('rect',{x:0,y:0,width:34,height:22,rx:5,fill:ghost?'transparent':'color-mix(in srgb, '+color+' 12%, transparent)',stroke:color,'stroke-width':1.4,opacity:ghost?0.65:1,'stroke-dasharray':ghost?'4 3':'none'},g);
+  T(17,15,hex,{fs:11,ta:'middle',fill:color},g);
+  return g;
+}
+function fly(el,x1,x2,y1,y2,dur,tok){
+  return new Promise(function(res){
+    el.setAttribute('transform','translate('+x1+','+y1+')');
+    var t0=null;
+    function fr(ts){
+      if(tok!==token){res(false);return;}
+      if(t0===null)t0=ts;
+      var p=Math.min(1,(ts-t0)/dur);
+      var e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      el.setAttribute('transform','translate('+(x1+(x2-x1)*e)+','+(y1+(y2-y1)*e)+')');
+      if(p<1)requestAnimationFrame(fr);
+      else res(true);
+    }
+    requestAnimationFrame(fr);
+  });
+}
+function slotFill(slot,hex,color){
+  slot.setAttribute('stroke',color);slot.setAttribute('stroke-width',1.6);
+  var t=T(slot.getAttribute('x')*1+(slot.getAttribute('width')*1)/2,slot.getAttribute('y')*1+17,hex,{fs:11,ta:'middle',fill:color},svg);
+  t.setAttribute('class','dyn');
+}
+// 字节从缓冲区出发：升起 → 沿 MOSI 车道向右驶出
+function outRun(el,cx,tok){
+  el.setAttribute('class','dyn');
+  return fly(el,cx-17,cx-17,230,89,240,tok).then(function(ok){
+    if(!ok)return false;
+    return fly(el,cx-17,790,89,89,480,tok);
+  }).then(function(ok){if(el.parentNode)el.parentNode.removeChild(el);return ok!==false;});
+}
+// 字节从线上到达：沿 MISO 车道向左 → 落入槽位
+function inRun(el,cx,slot,hex,color,tok){
+  el.setAttribute('class','dyn');
+  return fly(el,773,cx-17,115,115,520,tok).then(function(ok){
+    if(!ok)return false;
+    return fly(el,cx-17,cx-17,115,230,240,tok);
+  }).then(function(ok){
+    if(ok)slotFill(slot,hex,color);
+    if(el.parentNode)el.parentNode.removeChild(el);
+    return ok;
+  });
+}
+function updateChrome(){
+  for(var i=0;i<3;i++){var c=document.getElementById('plC'+i);if(!c)continue;
+    c.className='chip'+((cur<=5&&i===0)||(cur>5&&cur<9&&i===1)||(cur>=9&&i===2)?' on':'');
+  }
+  cntEl.textContent=cur>=9?'9 / 9 字节':(cur===0?'0 / 9 字节':cur+' / 9 字节');
+  if(cur===0)stEl.textContent='一笔读取 = 先发一段、再收一段。点"单步"逐字节看：前 5 字节从 TX 出发经 MOSI 送往 Flash，后 4 字节从 MISO 落入 RX，中间 CS 不释放。';
+  else if(cur<=5)stEl.textContent='第 '+cur+'/5 字节：从 TX['+(cur-1)+'] 出发，经 MOSI 送向 Flash；同一拍 MISO 上同步移入的值不是数据，进丢弃区。';
+  else if(cur<9)stEl.textContent='第 '+(cur-4)+'/4 数据字节：Flash 经 MISO 送来 → 落入 RX['+(cur-5)+']；控制器同时从 TX 发占位 00 维持时钟。';
+  else stEl.textContent='完成：线上 72 拍 = TX 5 字节 + RX 4 字节。驱动丢弃了前 5 个同步接收值，所以 A7 落在 RX[0] 而不是 RX[5]——2.2 会展开这个坑。';
+  rx0ring.setAttribute('opacity',cur>=9?1:0);
+  note2.setAttribute('opacity',cur>=6?1:0);
+}
+function doStep(n,tok){
+  var st=STEPS[n],jobs=[];
+  if(st.tx){
+    slotFill(txS[n],st.tx,BLUE);
+    jobs.push(outRun(chip(st.tx,BLUE,false),83+n*36,tok));
+    jobs.push(inRun(chip('??',QGRAY,true),373+n*36,binS[n],'×',QGRAY,tok));
+  }
+  if(st.rx){
+    jobs.push(inRun(chip(st.rx,GREEN,false),671+st.idx*46,rxS[st.idx],st.rx,GREEN,tok));
+    jobs.push(outRun(chip('00',QGRAY,true),155,tok));
+  }
+  Promise.all(jobs).then(function(rs){
+    if(tok!==token||rs.indexOf(false)>=0)return;
+    cur=n+1;updateChrome();
+    if(playing&&cur<9){setTimeout(function(){doStep(cur,token);},350);}
+    else pause();
+  });
+}
+function pause(){playing=false;document.getElementById('plPlay').textContent='播放';}
+document.getElementById('plPlay').onclick=function(){
+  if(playing){pause();return;}
+  if(cur>=9){resetAll();}
+  playing=true;this.textContent='暂停';
+  doStep(cur,token);
+};
+document.getElementById('plStep').onclick=function(){
+  pause();if(cur<9)doStep(cur,token);
+};
+function resetAll(){
+  token++;playing=false;cur=0;
+  document.getElementById('plPlay').textContent='播放';
+  var dyn=svg.querySelectorAll('.dyn');
+  Array.prototype.forEach.call(dyn,function(e){if(e.parentNode)e.parentNode.removeChild(e);});
+  txS.forEach(function(s){s.setAttribute('stroke',BORD);s.setAttribute('stroke-width',1);s.removeAttribute('stroke-dasharray');});
+  binS.forEach(function(s){s.setAttribute('stroke',QGRAY);s.setAttribute('stroke-width',0.8);s.setAttribute('stroke-dasharray','3 3');});
+  rxS.forEach(function(s){s.setAttribute('stroke',BORD);s.setAttribute('stroke-width',1);s.removeAttribute('stroke-dasharray');});
+  rx0ring.setAttribute('opacity',0);
+  updateChrome();
+}
+document.getElementById('plReset').onclick=function(){resetAll();};
+updateChrome();
+})();
+</script>
+
+</body>
+</html>

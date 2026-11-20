@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "browser": "Google Chrome headless（真实 Chromium DOM/CDP）",
+  "article": "构建后正文 iframe 可访问；真实点击在新标签页打开且正文保留",
+  "mechanism": [
+    "normal:12步（片段/完整函数均通过）",
+    "secondFail:4步（片段/完整函数均通过）",
+    "unaligned:3步（片段/完整函数均通过）",
+    "locking:4步（片段/完整函数均通过）",
+    "pollFallback:3步（片段/完整函数均通过）",
+    "rebind:4步（片段/完整函数均通过）"
+  ],
+  "keyboard": "右方向键、上一步、复位通过",
+  "source": "10 个文件 HTTP 加载、复制、首个文件下载通过",
+  "errorRecovery": "人为单次 regmap-i2c.c 404 显示可读错误，随后重新加载成功",
+  "hash": "#source 刷新保持，#mechanism 切换通过",
+  "layout": [
+    "375px:无页面级横向溢出",
+    "768px:无页面级横向溢出",
+    "1024px:无页面级横向溢出",
+    "1440px:无页面级横向溢出"
+  ],
+  "javascriptExceptions": 0,
+  "unexpectedConsoleErrors": 0,
+  "unexpectedResourceFailures": 0,
+  "intentionalFailures": "1 次 regmap-i2c.c HTTP 404",
+  "note": "这是 DOM 交互与布局检查，不包含人工视觉截图验收，也不验证 C/DTB 构建或硬件。"
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPI 调用链：从 spi_sync 到硬件执行</title>
+<style>
+:root {
+  --bg: #f7f8fa; --panel: #fff; --border: #e3e5e8;
+  --ink: #1f1f23; --gray: #76767e; --qgray: #a6a6ae;
+  --green: #1fa972; --green-bg: #e8f7f0;
+  --blue: #2b7fff;  --blue-bg: #eaf3ff;
+  --purple:#7c4dff; --purple-bg:#f0ebff;
+  --orange:#f5a623; --orange-bg:#fff8eb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0e10; --panel: #1a1b1f; --border: #2a2b30;
+    --ink: #e8e8ec; --gray: #9999a3; --qgray: #6c6c78;
+    --green-bg: #143328; --blue-bg: #162a4a; --purple-bg:#231a3d; --orange-bg:#3d2e0f;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;}
+#app{width:100%;padding:14px;}
+h1{font-size:17px;text-align:center;margin-bottom:4px;color:var(--ink)}
+.sub{text-align:center;font-size:12px;color:var(--qgray);margin-bottom:12px}
+
+/* 缩放容器 */
+#stage-wrap{width:100%;overflow:hidden;margin:0 auto 10px}
+#stage{width:960px;height:460px;position:relative;transform-origin:top left;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+
+.layer{position:absolute;border-radius:8px;padding:8px 10px;font-size:11px;line-height:1.5;transition:all .35s ease;opacity:.22;transform:scale(.96);min-height:85px}
+.layer.active{opacity:1;transform:scale(1);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.layer .title{font-weight:700;font-size:12px;margin-bottom:2px}
+.layer .fn{font-family:monospace;font-size:10px;color:var(--gray);margin-top:4px;white-space:pre-line}
+
+#sw-driver  {left:50px; top:24px;  width:180px; background:var(--green-bg); border:1.5px solid var(--green); color:var(--green)}
+#sw-core    {left:50px; top:128px; width:180px; background:var(--blue-bg);  border:1.5px solid var(--blue);  color:var(--blue)}
+#sw-ctlr    {left:50px; top:232px; width:180px; background:var(--purple-bg);border:1.5px solid var(--purple);color:var(--purple)}
+#hw-regs    {left:700px;top:24px;  width:210px; background:var(--orange-bg);border:1.5px solid var(--orange);color:var(--orange);min-height:130px}
+#hw-bus     {left:700px;top:174px; width:210px; background:#fafafa;         border:1.5px solid var(--border); color:var(--ink);min-height:100px}
+@media (prefers-color-scheme: dark){#hw-bus{background:#141518;color:var(--ink)}}
+
+.packet{position:absolute;min-width:128px;padding:6px 10px;border-radius:6px;background:#fff;border:1.5px solid var(--gray);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--ink);transition:all .5s cubic-bezier(.4,0,.2,1);z-index:5;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+#arrow-overlay{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1}
+#arrow-overlay path,#arrow-overlay line{fill:none;stroke:var(--gray);stroke-width:1.6;transition:stroke .3s,opacity .3s,stroke-width .3s;opacity:.12}
+#arrow-overlay path.active,#arrow-overlay line.active{stroke:var(--blue);stroke-width:2.2;opacity:1}
+#arrow-overlay path.dashed{stroke-dasharray:5 4}
+
+.arrow-label{position:absolute;font-size:9px;color:var(--gray);background:var(--bg);padding:0 4px;border-radius:3px;transition:color .3s,opacity .3s;white-space:nowrap;opacity:.25;z-index:3}
+.arrow-label.active{color:var(--blue);font-weight:700;opacity:1}
+
+.reg-line{font-family:monospace;font-size:9px;color:var(--qgray);margin-top:3px;transition:color .3s}
+.reg-line.hl{color:var(--orange);font-weight:700}
+
+.bus-state{position:absolute;right:30px;top:295px;font-size:11px;font-weight:700;color:var(--qgray);transition:color .3s}
+.bus-state.on{color:var(--orange)}
+
+#ctrl{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+#ctrl button{border:1px solid var(--border);background:var(--panel);color:var(--ink);border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;transition:all .15s}
+#ctrl button:hover{background:var(--blue-bg);border-color:var(--blue)}
+#ctrl button:disabled{opacity:.4;cursor:not-allowed}
+#progress{display:flex;gap:6px;justify-content:center;margin-bottom:8px;flex-wrap:wrap}
+.dot{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--qgray);cursor:pointer;transition:all .2s}
+.dot.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
+.dot.done{background:var(--green);border-color:var(--green);color:#fff}
+#desc{text-align:center;font-size:12px;color:var(--ink);min-height:34px;line-height:1.5;padding:0 20px}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>SPI 调用链：从 spi_sync 到硬件执行</h1>
+  <div class="sub">点击步骤或播放，追踪一笔 Fast Read 在内核中的完整路径</div>
+
+  <div id="stage-wrap">
+    <div id="stage">
+      <!-- 软件层 -->
+      <div class="layer" id="sw-driver">
+        <div class="title">协议驱动</div>
+        <div>spi_frame_observer_read()</div>
+        <div class="fn" id="fn-driver">等待返回...</div>
+      </div>
+      <div class="layer" id="sw-core">
+        <div class="title">SPI Core</div>
+        <div>spi.c / spi_sync()</div>
+        <div class="fn" id="fn-core">等待提交...</div>
+      </div>
+      <div class="layer" id="sw-ctlr">
+        <div class="title">控制器驱动</div>
+        <div>spi-rockchip.c</div>
+        <div class="fn" id="fn-ctlr">等待调度...</div>
+      </div>
+
+      <!-- 硬件层 -->
+      <div class="layer" id="hw-regs">
+        <div class="title">硬件寄存器</div>
+        <div class="reg-line" id="r-ctrlr0">CTRLR0: 待配置</div>
+        <div class="reg-line" id="r-baudr">BAUDR: 待配置</div>
+        <div class="reg-line" id="r-txflr">TXFLR: 0</div>
+        <div class="reg-line" id="r-rxflr">RXFLR: 0</div>
+        <div class="reg-line" id="r-sr">SR: 空闲</div>
+      </div>
+      <div class="layer" id="hw-bus">
+        <div class="title">SPI 总线</div>
+        <div style="margin-top:6px;font-size:10px;color:var(--qgray);line-height:1.6">
+          CS: <span id="v-cs">高电平</span><br>
+          SCLK: <span id="v-sclk">停止</span><br>
+          MOSI: <span id="v-mosi">-</span><br>
+          MISO: <span id="v-miso">-</span>
+        </div>
+      </div>
+
+      <div class="bus-state" id="bus-state">总线空闲</div>
+
+      <!-- 数据包 -->
+      <div class="packet" id="pkt" style="left:260px;top:28px">
+        <div id="pkt-text" style="text-align:center;line-height:1.45">spi_message<br><span style="font-size:9px;color:var(--gray)">5B TX + 4B RX</span></div>
+      </div>
+
+      <!-- 箭头 SVG -->
+      <svg id="arrow-overlay" viewBox="0 0 960 460">
+        <defs>
+          <marker id="mk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--gray)"/>
+          </marker>
+          <marker id="mka" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--blue)"/>
+          </marker>
+        </defs>
+        <line id="a1" x1="235" y1="70" x2="235" y2="128" marker-end="url(#mk)"/>
+        <line id="a2" x1="235" y1="175" x2="235" y2="232" marker-end="url(#mk)"/>
+        <path id="a3" d="M235 280 Q460 180 700 89" marker-end="url(#mk)"/>
+        <line id="a4" x1="805" y1="154" x2="805" y2="174" marker-end="url(#mk)"/>
+        <path id="a6" class="dashed" d="M45 274 Q30 222 45 170" marker-end="url(#mk)"/>
+        <path id="a7" class="dashed" d="M45 170 Q30 118 45 66" marker-end="url(#mk)"/>
+      </svg>
+
+      <!-- 箭头标签 -->
+      <div class="arrow-label" id="l1" style="left:242px;top:94px">spi_sync()</div>
+      <div class="arrow-label" id="l2" style="left:242px;top:200px">transfer_one()</div>
+      <div class="arrow-label" id="l3" style="left:400px;top:120px">配置寄存器 → 写 FIFO</div>
+      <div class="arrow-label" id="l4" style="left:812px;top:156px">触发硬件</div>
+      <div class="arrow-label" id="l6" style="left:52px;top:218px">complete</div>
+      <div class="arrow-label" id="l7" style="left:52px;top:114px">唤醒</div>
+    </div>
+  </div>
+
+  <div id="progress"></div>
+  <div id="ctrl">
+    <button id="btnPrev">上一步</button>
+    <button id="btnPlay">播放</button>
+    <button id="btnNext">下一步</button>
+  </div>
+  <div id="desc">点击播放或选择步骤，追踪 Fast Read 的完整调用链</div>
+</div>
+
+<script>
+// ---- 自适应缩放 ----
+function fitStage(){
+  const wrap = document.getElementById('stage-wrap');
+  const stage = document.getElementById('stage');
+  const w = wrap.clientWidth;
+  const scale = w >= 960 ? 1 : w / 960;
+  stage.style.transform = 'scale(' + scale + ')';
+  wrap.style.height = (460 * scale) + 'px';
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+
+// ---- 步骤数据 ----
+const steps = [
+  {act:[], pkt:[260,28], pktText:'spi_message<br><span style="font-size:9px;color:var(--gray)">5B TX + 4B RX</span>', desc:"初始状态：协议驱动已组装好 spi_message（TX 5 字节 + RX 4 字节），准备提交。", fnD:"等待返回...", fnC:"等待提交...", fnR:"等待调度...", reg:{ctrlr0:"待配置",baudr:"待配置",txflr:"0",rxflr:"0",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-driver","a1","l1"], pkt:[260,145], pktText:'<span style="color:var(--green)">spi_sync()</span><br><span style="font-size:9px;color:var(--gray)">线程睡眠等待</span>', desc:"① 协议驱动调用 spi_sync(spi, &message)。当前线程进入睡眠，等待传输完成。", fnD:"spi_sync() 调用\n线程睡眠等待", fnC:"收到 message", fnR:"等待调度...", reg:{ctrlr0:"待配置",baudr:"待配置",txflr:"0",rxflr:"0",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-core","a1","l1"], pkt:[260,145], pktText:'<span style="color:var(--blue)">message 入队</span><br><span style="font-size:9px;color:var(--gray)">等待调度...</span>', desc:"② __spi_sync() 把 message 挂到控制器队列，调用 __spi_pump_messages() 启动调度。", fnD:"spi_sync() 调用\n线程睡眠等待", fnC:"__spi_sync()\n加入队列", fnR:"等待调度...", reg:{ctrlr0:"待配置",baudr:"待配置",txflr:"0",rxflr:"0",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-core","sw-ctlr","a2","l2"], pkt:[260,250], pktText:'<span style="color:var(--purple)">prepare_message()</span><br><span style="font-size:9px;color:var(--gray)">配置 CTRLR0 / BAUDR</span>', desc:"③ Core 取出 message，先调用控制器驱动的 prepare_message() 做硬件准备。", fnD:"睡眠中...", fnC:"spi_transfer_one_message()\n调用 prepare", fnR:"prepare_message()\n配置 CTRLR0 / BAUDR", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"0",sr:"准备"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-ctlr","a3","l3"], pkt:[460,220], pktText:'<span style="color:var(--orange)">写 CTRLR0 / BAUDR</span><br><span style="font-size:9px;color:var(--gray)">TX FIFO 待命</span>', desc:"④ 控制器驱动配置寄存器：CTRLR0 设 Mode0/8bit，BAUDR 设分频，使能控制器；然后写 TX FIFO。", fnD:"睡眠中...", fnC:"等待完成...", fnR:"写寄存器\nCTRLR0=0x0007\nBAUDR=0x0032", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"5",rxflr:"0",sr:"就绪"}, bus:{cs:"高电平",sclk:"停止",mosi:"0x0B..0x00",miso:"-",state:"总线空闲"} },
+  {act:["sw-ctlr","hw-regs","a3","l3","a4","l4"], pkt:[740,85], pktText:'<span style="color:var(--green)">TX FIFO &larr; 5B</span><br><span style="font-size:9px;color:var(--gray)">0B 00 12 34 00</span>', desc:"⑤ 控制器驱动填充 TX FIFO：依次写入 0x0B、0x00、0x12、0x34、0x00（5 字节），硬件开始移位。", fnD:"睡眠中...", fnC:"等待完成...", fnR:"transfer_one()\n写 TX FIFO", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"5",rxflr:"0",sr:"发送中"}, bus:{cs:"高电平",sclk:"停止",mosi:"0x0B..0x00",miso:"-",state:"总线空闲"} },
+  {act:["hw-regs","hw-bus"], pkt:[740,220], pktText:'<span style="color:var(--orange)">72 拍移位中</span><br><span style="font-size:9px;color:var(--gray)">CS&darr; SCLK 翻转</span>', desc:"⑥ 硬件开始移位：CS 拉低，SCLK 翻转 72 拍。MOSI 发出命令+地址+dummy，MISO 同时采样数据。", fnD:"睡眠中...", fnC:"等待中断...", fnR:"ISR 等待...", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"4",sr:"传输中"}, bus:{cs:"低电平",sclk:"72 拍",mosi:"命令→地址→dummy",miso:"D0→D1→D2→D3",state:"总线传输中"} },
+  {act:["hw-regs","hw-bus"], pkt:[740,220], pktText:'<span style="color:var(--blue)">TX FIFO 空</span><br><span style="font-size:9px;color:var(--gray)">RX FIFO = 4B</span>', desc:"⑦ 72 拍完成：TX FIFO 空，RX FIFO 有 4 字节数据。控制器产生中断（或 DMA 完成回调）。", fnD:"睡眠中...", fnC:"收到中断...", fnR:"ISR 处理中", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"4",sr:"完成"}, bus:{cs:"低电平→高",sclk:"停止",mosi:"-",miso:"-",state:"传输完成"} },
+  {act:["sw-ctlr","sw-core","a6","l6"], pkt:[260,250], pktText:'<span style="color:var(--blue)">finalize</span><br><span style="font-size:9px;color:var(--gray)">回收描述符</span>', desc:"⑧ 中断服务程序调用 spi_finalize_current_message()：标记 message 完成，回收描述符。", fnD:"睡眠中...", fnC:"finalize message\n标记完成", fnR:"IRQ handler\n清中断状态", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"4",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-core","sw-driver","a7","l7"], pkt:[260,145], pktText:'<span style="color:var(--blue)">唤醒</span><br><span style="font-size:9px;color:var(--gray)">actual_length=9</span>', desc:"⑨ Core 唤醒等待队列：__spi_sync() 被唤醒，检查 actual_length == 9，返回 0。", fnD:"被唤醒", fnC:"唤醒等待队列\n返回 0", fnR:"等待调度...", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"4",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} },
+  {act:["sw-driver"], pkt:[260,28], pktText:'<span style="color:var(--green)">rx_buf 可用</span><br><span style="font-size:9px;color:var(--gray)">D0 D1 D2 D3</span>', desc:"⑩ 协议驱动继续执行：rx_buf[0..3] 已有有效数据，memcpy 到调用者缓冲区。", fnD:"spi_sync() 返回 0\nrx_buf 数据可用", fnC:"等待提交...", fnR:"等待调度...", reg:{ctrlr0:"Mode0|8bit|使能",baudr:"分频=50",txflr:"0",rxflr:"0",sr:"空闲"}, bus:{cs:"高电平",sclk:"停止",mosi:"-",miso:"-",state:"总线空闲"} }
+];
+
+let cur = 0, timer = null, playing = false;
+
+function setLayer(id, on) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) el.classList.add('active');
+  else el.classList.remove('active');
+}
+function setArrow(id, on) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) { el.classList.add('active'); el.style.opacity = '1'; }
+  else { el.classList.remove('active'); el.style.opacity = '0.12'; }
+}
+function setLabel(id, on) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (on) { el.classList.add('active'); el.style.opacity = '1'; }
+  else { el.classList.remove('active'); el.style.opacity = '0.25'; }
+}
+
+function render() {
+  const s = steps[cur];
+  ['sw-driver','sw-core','sw-ctlr','hw-regs','hw-bus'].forEach(id=>setLayer(id,false));
+  ['a1','a2','a3','a4','a6','a7'].forEach(id=>setArrow(id,false));
+  ['l1','l2','l3','l4','l6','l7'].forEach(id=>setLabel(id,false));
+
+  s.act.forEach(id=>{
+    if (id.startsWith('sw-') || id==='hw-regs' || id==='hw-bus') setLayer(id,true);
+    else if (id.startsWith('a')) setArrow(id,true);
+    else if (id.startsWith('l')) setLabel(id,true);
+  });
+
+  const p = document.getElementById('pkt');
+  p.style.left = s.pkt[0] + 'px';
+  p.style.top  = s.pkt[1] + 'px';
+  if (s.pktText) document.getElementById('pkt-text').innerHTML = s.pktText;
+
+  document.getElementById('desc').textContent = s.desc;
+  document.getElementById('fn-driver').textContent = s.fnD;
+  document.getElementById('fn-core').textContent = s.fnC;
+  document.getElementById('fn-ctlr').textContent = s.fnR;
+
+  const rmap = {ctrlr0:'r-ctrlr0', baudr:'r-baudr', txflr:'r-txflr', rxflr:'r-rxflr', sr:'r-sr'};
+  Object.entries(rmap).forEach(([k,id])=>{
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = k.toUpperCase() + ': ' + s.reg[k];
+    const hl = s.reg[k] !== '待配置' && s.reg[k] !== '0' && s.reg[k] !== '空闲';
+    el.classList.toggle('hl', hl);
+  });
+
+  document.getElementById('v-cs').textContent = s.bus.cs;
+  document.getElementById('v-sclk').textContent = s.bus.sclk;
+  document.getElementById('v-mosi').textContent = s.bus.mosi;
+  document.getElementById('v-miso').textContent = s.bus.miso;
+  const bs = document.getElementById('bus-state');
+  bs.textContent = s.bus.state;
+  bs.classList.toggle('on', s.bus.state !== '总线空闲');
+
+  document.querySelectorAll('.dot').forEach((d,i)=>{
+    d.classList.toggle('on', i === cur);
+    d.classList.toggle('done', i < cur);
+  });
+
+  document.getElementById('btnPrev').disabled = cur === 0;
+  document.getElementById('btnNext').disabled = cur === steps.length - 1;
+  document.getElementById('btnPlay').textContent = playing ? '暂停' : '播放';
+}
+
+function next() { if (cur < steps.length - 1) { cur++; render(); } else { playing = false; render(); } }
+function prev() { if (cur > 0) { cur--; render(); } }
+
+const prog = document.getElementById('progress');
+steps.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  d.textContent = i;
+  d.onclick = () => { cur = i; if (playing) { playing = false; clearInterval(timer); } render(); };
+  prog.appendChild(d);
+});
+
+document.getElementById('btnPrev').onclick = () => { playing = false; clearInterval(timer); prev(); };
+document.getElementById('btnNext').onclick = () => { playing = false; clearInterval(timer); next(); };
+document.getElementById('btnPlay').onclick = () => {
+  playing = !playing;
+  if (playing) {
+    if (cur === steps.length - 1) cur = 0;
+    timer = setInterval(() => {
+      if (!playing) { clearInterval(timer); return; }
+      next();
+      if (cur === steps.length - 1) { playing = false; render(); clearInterval(timer); }
+    }, 1300);
+  } else {
+    clearInterval(timer);
+  }
+  render();
+};
+
+render();
+</script>
+</body>
+</html>

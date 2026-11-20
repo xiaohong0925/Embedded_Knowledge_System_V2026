@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I2C 时钟延展与总线清除交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-color-danger:#cf222e;
+  --kimi-color-warning:#9a6700;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+    --kimi-color-warning:#d29922;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#cs-wrap button{font:inherit;}
+#cs-wrap svg text{font-family:var(--kimi-font-sans);}
+.cs-h{font-size:15px;font-weight:500;margin:0 0 8px 0;color:var(--kimi-color-text-primary);}
+.cs-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:13px;transition:background var(--t-fast) var(--ease-out);}
+.cs-btn.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.cs-controls{display:flex;gap:8px;align-items:center;margin:0 0 10px 0;flex-wrap:wrap;}
+.cs-expl{font-size:13px;line-height:21px;color:var(--kimi-color-text-secondary);margin:8px 0 0 0;}
+.cs-note{font-size:11px;color:var(--kimi-color-text-tertiary);margin-top:6px;}
+.mode-cs #sec-bus{display:none;}
+.mode-bus #sec-cs{display:none;}
+.cs-step{font-size:13px;line-height:20px;color:var(--kimi-color-text-tertiary);padding:4px 10px;border-radius:6px;transition:all var(--t-fast) var(--ease-out);margin:2px 0;}
+.cs-step.on{background:var(--kimi-color-surface-muted);color:var(--kimi-color-text-primary);}
+.cs-step b{font-weight:500;color:inherit;}
+</style>
+</head>
+<body>
+<div id="cs-wrap" class="mode-cs" style="font-family:var(--kimi-font-sans);width:100%;max-width:640px;margin:0 auto;">
+
+<div class="cs-controls">
+  <button id="cs-tab-cs" class="cs-btn active">场景 1：时钟延展（SCL 被从设备拉住）</button>
+  <button id="cs-tab-bus" class="cs-btn">场景 2：SDA 卡低（补 9 拍总线清除）</button>
+</div>
+
+<section id="sec-cs">
+  <svg viewBox="0 0 640 210" style="width:100%;height:auto;display:block;">
+    <text x="26" y="65" font-size="12" fill="var(--kimi-color-text-secondary)">SCL</text>
+    <g clip-path="url(#cs-clip)">
+      <path d="M 40 60 L 120 60 L 120 110 L 160 110 L 160 60 L 200 60 L 200 110 L 330 110 L 330 60 L 370 60 L 370 110 L 410 110 L 410 60 L 450 60" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+      <rect x="200" y="100" width="130" height="20" rx="4" fill="rgba(154,103,0,.18)"/>
+      <text x="265" y="45" text-anchor="middle" font-size="11" fill="var(--kimi-color-warning)">从设备继续拉住 SCL（尚未准备好）</text>
+      <line x1="200" y1="135" x2="245" y2="135" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2"/>
+      <line x1="200" y1="130" x2="200" y2="140" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2"/>
+      <line x1="245" y1="130" x2="245" y2="140" stroke="var(--kimi-color-text-tertiary)" stroke-width="1.2"/>
+      <text x="222" y="152" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-secondary)">主设备低电平结束，已释放 SCL</text>
+      <text x="265" y="168" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)">主设备回读 SCL = 低 → 不能采样，继续等（须有超时上限）</text>
+      <line x1="330" y1="185" x2="330" y2="118" stroke="var(--kimi-color-text-tertiary)" stroke-width="1" marker-end="url(#cs-arrow)"/>
+      <text x="342" y="190" font-size="11" fill="var(--kimi-color-text-primary)">从设备准备完成，释放 SCL → 总线变高，传输继续</text>
+    </g>
+    <line id="cs-cursor" x1="40" y1="30" x2="40" y2="200" stroke="var(--kimi-color-text-quaternary)" stroke-width="1" stroke-dasharray="4 3"/>
+    <defs>
+      <clipPath id="cs-clip"><rect id="cs-clip-rect" x="40" y="0" width="0" height="210"/></clipPath>
+      <marker id="cs-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--kimi-color-text-tertiary)"/></marker>
+    </defs>
+  </svg>
+  <div style="margin-top:8px;">
+    <div class="cs-step" data-s="0"><b>①</b> 主设备结束 SCL 低电平阶段，释放 SCL，等待上拉电阻把它拉高</div>
+    <div class="cs-step" data-s="1"><b>②</b> 从设备尚未准备好，继续把 SCL 拉低</div>
+    <div class="cs-step" data-s="2"><b>③</b> 主设备回读 SCL：实际仍为低 → 不能进入采样阶段，继续等待</div>
+    <div class="cs-step" data-s="3"><b>④</b> 从设备准备完成、释放 SCL，SCL 升高，当前拍和后续传输继续</div>
+  </div>
+  <div class="cs-controls" style="margin-top:10px;">
+    <button id="cs-play" class="cs-btn active">播放 / 重播</button>
+  </div>
+  <p class="cs-expl">时钟延展是从设备用"拉住 SCL"实现的流控：主设备释放 SCL ≠ 总线变高，必须回读实际电平。等待要有系统定义的超时上限，否则异常器件一直拉住 SCL，软件会永久卡住。</p>
+  <p class="cs-note">支持时钟延展是可选能力，延展发生的位置和最长时限查器件手册；GPIO 软件模拟 I2C 时不能只"拉高 + 固定延时"，必须确认 SCL 实际已变高。</p>
+</section>
+
+<section id="sec-bus">
+  <svg viewBox="0 0 640 240" style="width:100%;height:auto;display:block;">
+    <text x="26" y="65" font-size="12" fill="var(--kimi-color-text-secondary)">SDA</text>
+    <text x="26" y="155" font-size="12" fill="var(--kimi-color-text-secondary)">SCL</text>
+    <g clip-path="url(#bus-clip)">
+      <path d="M 40 110 L 380 110 L 380 60 L 620 60" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="2.5"/>
+      <path d="M 40 200 L 40 150 L 70 150 L 70 200 L 100 200 L 100 150 L 130 150 L 130 200 L 160 200 L 160 150 L 190 150 L 190 200 L 220 200 L 220 150 L 250 150 L 250 200 L 280 200 L 280 150 L 310 150 L 310 200 L 340 200 L 340 150 L 370 150 L 370 200 L 400 200 L 400 150 L 430 150 L 430 200 L 460 200 L 460 150 L 490 150 L 490 200 L 520 200 L 520 150 L 550 150 L 550 200 L 580 200 L 580 150 L 620 150" fill="none" stroke="var(--kimi-color-text-secondary)" stroke-width="2"/>
+      <rect x="40" y="100" width="160" height="20" rx="4" fill="rgba(207,34,46,.12)"/>
+      <text x="120" y="140" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-secondary)">从设备卡在发送状态，SDA 被拉低，无法开始新事务</text>
+      <circle cx="380" cy="85" r="4" fill="var(--kimi-color-positive)"/>
+      <text x="394" y="89" font-size="11" fill="var(--kimi-color-positive)">第 6 拍：从设备走完残余位，释放 SDA</text>
+      <text x="500" y="45" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">9 拍打完、SDA 已回高 → 主设备收尾</text>
+      <text x="55" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">1</text>
+      <text x="115" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">2</text>
+      <text x="175" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">3</text>
+      <text x="235" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">4</text>
+      <text x="295" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">5</text>
+      <text x="355" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">6</text>
+      <text x="415" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">7</text>
+      <text x="475" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">8</text>
+      <text x="535" y="225" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-secondary)">9</text>
+    </g>
+    <defs>
+      <clipPath id="bus-clip"><rect id="bus-clip-rect" x="40" y="0" width="0" height="240"/></clipPath>
+    </defs>
+  </svg>
+  <div class="cs-controls" style="margin-top:10px;">
+    <button id="bus-play" class="cs-btn active">播放 / 重播</button>
+  </div>
+  <p class="cs-expl">总线清除针对"读事务中途被打断、从设备残留发送把 SDA 拉低"的场景：主设备连打 9 个时钟，让残余发送走完。9 拍后 SDA 仍为低 → 硬件复位或重新上电；若卡低的是 SCL，补钟失去前提。</p>
+  <p class="cs-note">这是 NXP UM10204 给出的恢复方法；补钟期间要观察 SDA，不能打完 9 拍就默认总线已恢复。</p>
+</section>
+
+<script>
+(function(){
+  var wrap=document.getElementById('cs-wrap');
+  var tabCs=document.getElementById('cs-tab-cs');
+  var tabBus=document.getElementById('cs-tab-bus');
+  tabCs.addEventListener('click',function(){wrap.classList.add('mode-cs');wrap.classList.remove('mode-bus');tabCs.classList.add('active');tabBus.classList.remove('active');});
+  tabBus.addEventListener('click',function(){wrap.classList.add('mode-bus');wrap.classList.remove('mode-cs');tabBus.classList.add('active');tabCs.classList.remove('active');});
+
+  function animator(clipId,cursorId,stepsSel,thresholds,dur){
+    var clip=document.getElementById(clipId);
+    var cursor=cursorId?document.getElementById(cursorId):null;
+    var steps=stepsSel?document.querySelectorAll(stepsSel):null;
+    var raf=null;
+    function setSteps(x){
+      if(!steps)return;
+      var active=-1;
+      for(var i=0;i<thresholds.length;i++){if(x>=thresholds[i])active=i;}
+      steps.forEach(function(s){s.classList.toggle('on',+s.dataset.s===active);});
+    }
+    return function(){
+      if(raf)cancelAnimationFrame(raf);
+      clip.setAttribute('width',0);
+      if(cursor){cursor.setAttribute('x1',40);cursor.setAttribute('x2',40);}
+      setSteps(0);
+      var startT=null;
+      function step(ts){
+        if(!startT)startT=ts;
+        var p=Math.min((ts-startT)/dur,1);
+        var x=40+580*p;
+        clip.setAttribute('width',580*p);
+        if(cursor){cursor.setAttribute('x1',x);cursor.setAttribute('x2',x);}
+        setSteps(x);
+        if(p<1){raf=requestAnimationFrame(step);}else{raf=null;}
+      }
+      raf=requestAnimationFrame(step);
+    };
+  }
+  var playCs=animator('cs-clip-rect','cs-cursor','.cs-step',[200,250,300,336],6000);
+  var playBus=animator('bus-clip-rect',null,null,null,5500);
+  document.getElementById('cs-play').addEventListener('click',playCs);
+  document.getElementById('bus-play').addEventListener('click',playBus);
+  setTimeout(playCs,500);
+})();
+</script>
+</div>
+</body>
+</html>

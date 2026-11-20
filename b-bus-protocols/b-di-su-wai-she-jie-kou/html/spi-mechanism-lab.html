@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPI 物理机制动画</title>
+<style>
+  :root{color-scheme:dark;--black:#000;--ink:#ededed;--muted:#a4a4a4;--line:#363636;--orange:#ff8e4d;--blue:#0099ff;--panel:#101010;--green:#7fd8a4}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--black);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  button,select,a{-webkit-tap-highlight-color:transparent}button,select{font:inherit}
+  .lab{min-height:100vh;background:var(--black)}
+  .masthead{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:14px;align-items:start;padding:17px 22px 14px;border-bottom:1px solid var(--line)}
+  .mark{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--ink);font:600 12px/1 ui-monospace,monospace}
+  .eyebrow{margin:0 0 5px;color:var(--muted);font:11px/1.2 ui-monospace,monospace;letter-spacing:1.4px;text-transform:uppercase}
+  h1{margin:0;font-size:clamp(20px,3vw,32px);font-weight:650;letter-spacing:-.5px;line-height:1.15}h1 span{color:var(--orange)}
+  .new-tab{color:var(--blue);font-size:13px;text-underline-offset:4px;white-space:nowrap}.new-tab:hover{color:var(--ink)}
+  .intro{margin:0;padding:13px 22px;color:var(--muted);font-size:13px;line-height:1.65;border-bottom:1px solid var(--line)}
+  .control-deck{display:flex;gap:12px;align-items:end;flex-wrap:wrap;padding:14px 22px;border-bottom:1px solid var(--line)}
+  .transport{display:flex;gap:8px;flex-wrap:wrap}.transport button{min-width:88px}
+  button{cursor:pointer;padding:9px 14px;border:1px solid #666;border-radius:0;color:var(--ink);background:transparent;transition:background .12s,color .12s,border-color .12s}
+  button:hover:not(:disabled),button:focus-visible{border-color:var(--orange);color:var(--orange);outline:2px solid transparent}
+  button.primary{background:var(--orange);border-color:var(--orange);color:#111;font-weight:700}button.primary:hover:not(:disabled){background:var(--ink);border-color:var(--ink);color:#000}
+  button:disabled{opacity:.35;cursor:not-allowed}.speed-label{display:grid;gap:5px;color:var(--muted);font-size:11px}
+  select{padding:9px 30px 9px 10px;color:var(--ink);background:var(--panel);border:1px solid #555;border-radius:0}
+  .shortcut{margin-left:auto;color:var(--muted);font:11px/1.5 ui-monospace,monospace;text-align:right}
+  .stage{padding:18px 22px 14px;min-height:390px}.readout{display:flex;gap:10px 22px;align-items:baseline;flex-wrap:wrap;margin-bottom:14px}
+  .step-readout{color:var(--orange);font:600 17px/1.3 ui-monospace,"Microsoft YaHei",monospace}.action-readout{font-size:14px;line-height:1.5}
+  .diagram{width:100%;min-height:260px;border:1px solid var(--line);background:#050505;overflow:hidden}.diagram svg{display:block;width:100%;height:auto;min-height:260px}
+  svg text{font-family:ui-monospace,"Microsoft YaHei",monospace;fill:var(--ink)}svg .muted{fill:var(--muted)}svg .orange{fill:var(--orange)}svg .blue{fill:var(--blue)}
+  svg .wire{fill:none;stroke:var(--ink);stroke-width:2}svg .faint{stroke:#444;fill:none;stroke-width:1.5}svg .hot{stroke:var(--orange);fill:none;stroke-width:3}
+  svg .box{fill:#111;stroke:#666;stroke-width:1.5}svg .active-box{fill:#19120d;stroke:var(--orange);stroke-width:2}svg .off{opacity:.4}
+  .status{margin:14px 0 0;padding:12px 14px;border-left:3px solid var(--orange);background:#111;font-size:13px;line-height:1.65}
+  .foot{display:flex;justify-content:space-between;gap:14px;padding:11px 22px;border-top:1px solid var(--line);color:var(--muted);font-size:11px;line-height:1.55}
+  .bit-layout{display:grid;gap:14px}.register{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}.register-label{font-size:13px;line-height:1.5}.register-label small{display:block;color:var(--muted);margin-top:4px}
+  .bit-cells{display:grid;grid-template-columns:repeat(8,minmax(34px,1fr));gap:5px}.bit-cell{position:relative;display:grid;place-items:center;min-height:60px;border:1px solid #4a4a4a;background:#0b0b0b;font:600 22px/1 ui-monospace,monospace;transition:border-color .18s,color .18s,background .18s}
+  .bit-cell small{position:absolute;bottom:5px;color:var(--muted);font:9px/1 ui-monospace,monospace}.bit-cell.current{border-color:var(--orange);color:var(--orange);background:#21150e}.bit-cell.received{border-color:var(--blue);color:var(--blue)}
+  .exchange-result{display:grid;grid-template-columns:1fr 1fr;gap:10px}.result-card{padding:12px;border:1px solid var(--line);font-size:12px;color:var(--muted)}.result-card strong{display:block;margin-top:7px;color:var(--ink);font:600 20px/1.3 ui-monospace,monospace;letter-spacing:2px}.result-card.complete strong{color:var(--blue)}
+  .motion-dot{fill:var(--orange)}.is-playing .motion-dot{animation:travel 1.1s linear infinite}.is-playing .motion-dot[cx="825"],.is-playing .motion-dot[cx="205"]{animation-name:travel-back}.is-playing .conflict-current{animation:dash .7s linear infinite}@keyframes travel{0%{transform:translateX(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(90px);opacity:0}}@keyframes travel-back{0%{transform:translateX(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateX(-90px);opacity:0}}@keyframes dash{to{stroke-dashoffset:-28}}
+  .drive-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}.drive-tabs button{font-size:12px;padding:7px 10px}.drive-tabs button[aria-pressed="true"]{border-color:var(--orange);color:var(--orange)}
+  .conflict-current{stroke-dasharray:10 7}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mode-card{border:1px solid var(--line);background:#050505;min-width:0}.mode-card h2{margin:0;padding:10px 12px 0;font-size:15px}.mode-card h2 span{color:var(--orange)}.mode-card p{margin:5px 12px 0;color:var(--muted);font-size:11px;line-height:1.5}.mode-card svg{display:block;width:100%;height:auto}.mode-card.current{border-color:#765139}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:760px){.masthead{grid-template-columns:38px 1fr;padding:14px;gap:11px}.mark{width:34px;height:34px}.new-tab{grid-column:2}.intro,.control-deck,.stage,.foot{padding-left:14px;padding-right:14px}.shortcut{display:none}.mode-grid{grid-template-columns:1fr}.register{grid-template-columns:1fr;gap:6px}.bit-cell{min-height:52px;font-size:18px}.stage{min-height:340px}.foot{flex-direction:column;gap:3px}}
+  @media(max-width:430px){.control-deck{display:grid;grid-template-columns:1fr auto}.transport{grid-column:1/-1;display:grid;grid-template-columns:1.2fr 1fr 1fr}.transport button{min-width:0;padding:9px 7px}.exchange-result{grid-template-columns:1fr}.bit-cells{gap:3px}.bit-cell{min-height:46px;font-size:16px}.bit-cell small{font-size:8px}.diagram{min-height:220px}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="lab" aria-label="SPI 物理机制动画实验室">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true">SPI</div>
+    <div><p class="eyebrow" id="eyebrow">Physical mechanism / animation</p><h1 id="title"></h1></div>
+    <a class="new-tab" id="new-tab" href="spi-mechanism-lab.html" target="_blank" rel="noopener">新标签页打开 ↗</a>
+  </header>
+  <p class="intro" id="intro"></p>
+  <section class="control-deck" aria-label="动画控制">
+    <div class="transport">
+      <button id="play" class="primary" type="button" aria-label="播放动画">▶ 播放</button>
+      <button id="step" type="button" aria-label="前进一步">单步 →</button>
+      <button id="reset" type="button">复位</button>
+    </div>
+    <label class="speed-label" for="speed">播放速度
+      <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+    </label>
+    <div class="shortcut">空格 播放／暂停　→ 单步<br>Home 复位；初始不自动播放</div>
+  </section>
+  <section class="stage" id="stage" aria-label="动画舞台">
+    <div class="readout"><span class="step-readout" id="step-readout"></span><span class="action-readout" id="action-readout"></span></div>
+    <div id="view"></div>
+    <p class="status" id="status" role="status"></p>
+  </section>
+  <footer class="foot"><span id="footnote">机制动画，不是仪器实测。</span><span>橙色＝当前动作／播放头　蓝色＝已接收或有效结果</span></footer>
+</main>
+<script>
+(() => {
+  "use strict";
+  const allowed = new Set(["shift","drive","modes"]);
+  const params = new URLSearchParams(location.search);
+  const view = allowed.has(params.get("view")) ? params.get("view") : "shift";
+  const $ = id => document.getElementById(id);
+  const controls = {play:$("play"),step:$("step"),reset:$("reset"),speed:$("speed")};
+  const copy = {
+    shift:{title:"逐位交换 <span>00 → EF</span>",eyebrow:"Full duplex / clocks 9–16",intro:"取主事务第 9～16 拍：主机发送占位字节 00，Flash 返回制造商 ID EF。先看两侧当前 b7，再逐拍观察采样与移位；这不是命令 9F 的 8 拍。"},
+    drive:{title:"共享 MISO 的 <span>驱动权</span>",eyebrow:"Push-pull / high impedance / contention",intro:"依次观察选中驱动、未选中高阻和两个推挽输出争用。橙色路径只解释电流机制，不代表安全或可复现的实验。"},
+    modes:{title:"同一规则推出 <span>四种模式</span>",eyebrow:"CPOL × CPHA / first two clocks",intro:"四组共用前两个时钟的时间位置。先看空闲电平，再看第一、第二个边沿分别是采样 S 还是更新 U，最后核对 b7 的预载或首边沿更新。"}
+  }[view];
+  const maxStep = view === "shift" ? 8 : view === "drive" ? 2 : 4;
+  let step = 0, playing = false, speed = 1, timer = null;
+  const tx = "00000000", rx = "11101111";
+  const modeInfo = [
+    {mode:0,cpol:0,cpha:0,idle:"低",sample:"上升沿",update:"下降沿",first:"首位预载"},
+    {mode:1,cpol:0,cpha:1,idle:"低",sample:"下降沿",update:"上升沿",first:"首边沿更新 b7"},
+    {mode:2,cpol:1,cpha:0,idle:"高",sample:"下降沿",update:"上升沿",first:"首位预载"},
+    {mode:3,cpol:1,cpha:1,idle:"高",sample:"上升沿",update:"下降沿",first:"首边沿更新 b7"}
+  ];
+
+  function renderShift() {
+    const received = rx.slice(0,step), sent = tx.slice(0,step);
+    const cells = (bits,dir) => Array.from({length:8},(_,i) => {
+      const current = step < 8 && i === step;
+      return `<div class="bit-cell ${current ? "current" : ""} ${i < step ? "received" : ""}" data-bit-index="${i}" data-direction="${dir}">${bits[i]}<small>b${7-i}</small></div>`;
+    }).join("");
+    $("view").innerHTML = `<div class="bit-layout">
+      <div class="register"><div class="register-label">Flash 输出 → 主机输入<small>MISO 原始位 11101111</small></div><div class="bit-cells" id="miso-cells">${cells(rx,"miso")}</div></div>
+      <svg viewBox="0 0 900 82" role="img" aria-label="MOSI 与 MISO 同拍反向移位"><path class="faint" d="M70 22H810"/><path class="hot" d="M70 22H140M760 60H830"/><circle class="motion-dot" cx="75" cy="22" r="5"/><circle class="motion-dot" cx="825" cy="60" r="5"/><text x="70" y="49" font-size="12" class="muted">同一 SCLK：MOSI 向右进入 Flash，MISO 向左进入主机</text><text x="810" y="18" text-anchor="end" font-size="13" class="orange">第 ${Math.min(step+1,8)} 拍</text></svg>
+      <div class="register"><div class="register-label">主机输出 → Flash 输入<small>MOSI 原始位 00000000</small></div><div class="bit-cells" id="mosi-cells">${cells(tx,"mosi")}</div></div>
+      <div class="exchange-result"><div class="result-card ${step===8?"complete":""}">主机已从 MISO 收齐<strong id="host-received">${received.padEnd(8,"·")}</strong></div><div class="result-card ${step===8?"complete":""}">Flash 已从 MOSI 收齐<strong id="flash-received">${sent.padEnd(8,"·")}</strong></div></div>
+    </div>`;
+    $("step-readout").textContent = `第 9～16 拍中的 ${step} / 8 拍`;
+    $("action-readout").textContent = step < 8 ? `下一采样：双方 b${7-step}；MOSI=${tx[step]}，MISO=${rx[step]}` : "8 拍完成：主机得到 EF，Flash 得到 00";
+    $("status").textContent = step === 0 ? "首位已经预载。第 9 个上升沿同时采样 MOSI 的 0 和 MISO 的 1；采样后双方推进一位。" : step < 8 ? `已完成 ${step} 个采样边沿。主机接收 ${received || "尚无位"}，Flash 接收 ${sent || "尚无位"}；两条数据线始终同时工作。` : "11101111 即 0xEF。主事务的下一组 8 拍才接收 0x40；本视图只展开第 9～16 拍。";
+  }
+
+  function driveSvg(state) {
+    const selected = state === 0, idle = state === 1, conflict = state === 2;
+    const line = conflict ? "#ff8e4d" : selected ? "#ededed" : "#666";
+    const aDrive = selected || conflict, bDrive = conflict;
+    return `<svg viewBox="0 0 940 340" role="img" aria-labelledby="drive-title drive-desc"><title id="drive-title">MISO 驱动权状态</title><desc id="drive-desc">${idle?"两个从机均未选中，输出高阻":conflict?"两个从机同时推挽驱动，一高一低形成争用":"只有从机 A 被选中并驱动 MISO，从机 B 高阻"}</desc>
+      <text x="35" y="38" font-size="14" class="muted">主机 MISO 输入</text><rect class="box" x="35" y="60" width="150" height="110"/><text x="110" y="105" text-anchor="middle" font-size="18">主机</text><text x="110" y="136" text-anchor="middle" font-size="13" class="muted">只读取，不驱动</text>
+      <path d="M185 115H755" stroke="${line}" stroke-width="3" fill="none"/><text x="470" y="101" text-anchor="middle" font-size="14" class="${conflict?"orange":"muted"}">共享 MISO ${idle?"· 无主动驱动，电平不可据此判为 0 或 1":conflict?"· 电平与数据不可信":""}</text>
+      <rect class="${aDrive?"active-box":"box off"}" x="650" y="35" width="235" height="100"/><text x="767" y="65" text-anchor="middle" font-size="16">从机 A · 推挽输出 1</text><text x="767" y="94" text-anchor="middle" font-size="13" class="${aDrive?"orange":"muted"}">${aDrive?"CS 低 · 主动拉高":"CS 高 · 高阻"}</text>
+      <rect class="${bDrive?"active-box":"box off"}" x="650" y="210" width="235" height="100"/><text x="767" y="242" text-anchor="middle" font-size="16">从机 B · 推挽输出 0</text><text x="767" y="272" text-anchor="middle" font-size="13" class="${bDrive?"orange":"muted"}">${bDrive?"CS 低 · 主动拉低（错误状态）":"CS 高 · 高阻"}</text>
+      <path class="${aDrive?"hot":"faint"}" d="M650 85H585V115H650"/><path class="${bDrive?"hot":"faint"}" d="M650 260H585V115" opacity="${bDrive?1:.35}"/>
+      ${idle?`<path d="M570 90L610 140M570 140L610 90" stroke="#ff8e4d" stroke-width="2"/><text x="590" y="174" text-anchor="middle" font-size="13" class="orange">高阻＝退出驱动，不等于输出 0</text>`:""}
+      ${conflict?`<path class="hot conflict-current" d="M805 10V35M650 85H560V260H650M805 310V330"/><text x="40" y="235" font-size="16" class="orange">电源 → A 输出级 → MISO → B 输出级 → 地</text><text x="40" y="267" font-size="13" class="muted">直通电流可能使输出级过热或损坏</text><text x="40" y="295" font-size="13" class="muted">这是机制演示，不是上板试验步骤</text>`:""}
+      ${selected?`<circle class="motion-dot" cx="205" cy="115" r="6"/><text x="40" y="240" font-size="15" class="blue">唯一从机驱动：A 输出 1，B 退出线路</text><text x="40" y="270" font-size="13" class="muted">CS 同时决定器件是否参与交换与能否驱动 DO</text>`:""}
+    </svg>`;
+  }
+
+  function renderDrive() {
+    const names = ["选中驱动","未选中高阻","错误争用"];
+    $("view").innerHTML = `<div class="drive-tabs" aria-label="直接选择驱动状态">${names.map((name,i)=>`<button type="button" data-drive-state="${i}" aria-pressed="${i===step}">${i+1}. ${name}</button>`).join("")}</div><div class="diagram" id="drive-diagram">${driveSvg(step)}</div>`;
+    document.querySelectorAll("[data-drive-state]").forEach(button=>button.addEventListener("click",()=>{stop();step=Number(button.dataset.driveState);render();}));
+    $("step-readout").textContent = `状态 ${step+1} / 3 · ${names[step]}`;
+    $("action-readout").textContent = ["A 独占总线，B 高阻","所有 CS 无效，MISO 没有从机主动驱动","两个 CS 同时有效，推挽输出一高一低"][step];
+    $("status").textContent = ["CS 只选中 A。A 的 DO 主动形成电平，B 的 DO 高阻，因此主机只看到 A 的输出。","高阻不是低电平，也不是确定高电平；没有主动驱动时，不能把这根线解释成一个有效接收位。","A 拉高、B 拉低形成电源到地的直通路径。橙色虚线的流动只强调争用机制；实际系统必须避免进入该状态。"][step];
+  }
+
+  function modeSvg(info) {
+    const x0=50, half=72, lowY=100, highY=52;
+    const initial=info.cpol?highY:lowY, opposite=info.cpol?lowY:highY;
+    const levels=[initial]; for(let i=1;i<=4;i++) levels.push(i%2?opposite:initial);
+    let d=`M${x0} ${levels[0]}`;
+    for(let i=1;i<=4;i++) d+=`H${x0+(i-1)*half}V${levels[i]}H${x0+i*half}`;
+    const playX=x0+step*half;
+    const marks=Array.from({length:4},(_,i)=>{
+      const edge=i+1, isSample=info.cpha===0?edge%2===1:edge%2===0;
+      const active=step===edge, label=isSample?"S":"U";
+      return `<g data-mode="${info.mode}" data-edge="${edge}" data-action="${label}" opacity="${step===0||active?1:.42}"><circle cx="${x0+i*half}" cy="${levels[edge]}" r="${active?8:5}" fill="${active?"#ff8e4d":"#0099ff"}"/><text x="${x0+i*half}" y="${levels[edge]+(levels[edge]===highY?-15:25)}" text-anchor="middle" font-size="13" class="${active?"orange":"blue"}">${label}</text></g>`;
+    }).join("");
+    const b7Visible=info.cpha===0||step>=1;
+    return `<svg viewBox="0 0 360 178" role="img" aria-label="Mode ${info.mode} 前两个时钟"><text x="14" y="126" font-size="11" class="muted">SCLK</text><text x="14" y="157" font-size="11" class="muted">DATA</text><path class="wire" d="${d}"/><line x1="${playX}" y1="28" x2="${playX}" y2="137" stroke="#ff8e4d" stroke-width="1.5" class="mode-playhead" data-mode="${info.mode}"/>${marks}<path class="faint" d="M50 151H338"/><text x="194" y="166" text-anchor="middle" font-size="11" class="${b7Visible?"orange":"muted"}">${b7Visible?"b7 已上线":"b7 等待第一个边沿更新"}</text><text x="28" y="45" font-size="10" class="muted">空闲${info.idle}</text></svg>`;
+  }
+
+  function renderModes() {
+    $("view").innerHTML = `<div class="mode-grid">${modeInfo.map(info=>`<article class="mode-card ${step>0?"current":""}" data-mode-card="${info.mode}"><h2>Mode ${info.mode} <span>CPOL=${info.cpol} · CPHA=${info.cpha}</span></h2><p>${info.sample}采样 · ${info.update}更新 · ${info.first}</p>${modeSvg(info)}</article>`).join("")}</div>`;
+    $("step-readout").textContent = step===0?"空闲／首位准备":`时间位置 ${step} / 4 · 第 ${Math.ceil(step/2)} 拍${step%2?"第一":"第二"}边沿`;
+    const sampleEdge=step>0&&(step%2===1?"第一":"第二");
+    $("action-readout").textContent=step===0?"CPHA=0 已预载 b7；CPHA=1 等待首边沿更新":`四组播放头同步；各格按自己的 CPHA 标记 S 或 U`;
+    const details=modeInfo.map(info=>{
+      if(step===0) return `Mode ${info.mode}：${info.first}`;
+      const edge=step, isSample=info.cpha===0?edge%2===1:edge%2===0;
+      return `Mode ${info.mode} 当前为${isSample?"采样 S":"更新 U"}`;
+    }).join("；");
+    $("status").textContent=step===0?"S 是采样，U 是更新下一位。Mode 0/2 的首位已预载；Mode 1/3 要等第一个边沿先更新 b7，不能提前把同一采样规则套到四组。":`${details}。四组共享时间位置，不共享空闲电平或采样边沿。`;
+  }
+
+  function render() {
+    $("stage").classList.toggle("is-playing",playing);
+    controls.play.textContent=playing?"Ⅱ 暂停":"▶ 播放";
+    controls.play.setAttribute("aria-label",playing?"暂停动画":"播放动画");
+    controls.step.disabled=step>=maxStep;
+    controls.play.disabled=step>=maxStep&&!playing;
+    if(view==="shift") renderShift(); else if(view==="drive") renderDrive(); else renderModes();
+    document.title=`SPI ${view}｜${step}/${maxStep}${playing?"｜播放中":""}`;
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if(!playing) return;
+    timer=setTimeout(()=>{
+      if(!playing) return;
+      if(step>=maxStep){stop();return;}
+      step+=1;
+      if(step>=maxStep) playing=false;
+      render();
+      if(playing) schedule();
+    },900/speed);
+  }
+  function play() { if(step>=maxStep) step=0; playing=true; render(); schedule(); }
+  function stop() { playing=false; clearTimeout(timer); timer=null; render(); }
+  function single() { stop(); if(step<maxStep) step+=1; render(); }
+  function reset() { playing=false; clearTimeout(timer); timer=null; step=0; render(); }
+  controls.play.addEventListener("click",()=>playing?stop():play());
+  controls.step.addEventListener("click",single);
+  controls.reset.addEventListener("click",reset);
+  controls.speed.addEventListener("change",event=>{speed=Number(event.target.value);if(playing)schedule();render();});
+  document.addEventListener("keydown",event=>{
+    if(event.altKey||event.ctrlKey||event.metaKey||["SELECT","INPUT"].includes(document.activeElement.tagName)) return;
+    if(event.key===" "){event.preventDefault();playing?stop():play();}
+    if(event.key==="ArrowRight"){event.preventDefault();single();}
+    if(event.key==="Home"){event.preventDefault();reset();}
+  });
+  document.addEventListener("visibilitychange",()=>{if(document.hidden&&playing)stop();});
+  $("title").innerHTML=copy.title;$("eyebrow").textContent=copy.eyebrow;$("intro").textContent=copy.intro;
+  $("new-tab").href=`spi-mechanism-lab.html?view=${view}`;
+  window.spiMechanismLab=Object.freeze({getState:()=>({view,step,playing,speed,received:view==="shift"?rx.slice(0,step):null,driveState:view==="drive"?["selected","high-z","contention"][step]:null})});
+  reset();
+})();
+</script>
+</body>
+</html>
