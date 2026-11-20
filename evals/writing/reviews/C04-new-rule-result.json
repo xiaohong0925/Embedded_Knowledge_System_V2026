@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "case_id": "C04",
+  "candidate": "evals/writing/runs/calibrated-preferences/C04.md",
+  "rule_version": {
+    "agent_md_sha256": "5ba9f53e79ef0e02f0d6b233a2bfec3554100425982960cd950dc7d586d010db",
+    "plan_md_sha256": "604abfe82b7ae1ff9ba4135e268261f42cf85ad311a250b9521d5b3496d7f99e",
+    "rubric_json_sha256": "1ceb4f69423e19699d6cbf8529e757237323ee1b13e210a310ca47bad9c2195f"
+  },
+  "independent_judge_verdict": "N_better",
+  "judge_report": "evals/writing/reviews/C04-new-vs-human-judge.json",
+  "observed_strengths": [
+    "先固定同一笔 message 的对象、职责和完整交接，再逐层细化",
+    "标题链与实际执行顺序一致，跨层后仍能追踪对象与结果去向",
+    "较短代码节选、教学注释和相邻解释减少长代码对首读主线的打断",
+    "源码链接主要承担可选回查"
+  ],
+  "remaining_issues": [
+    "DMA、回退、CS、双完成通知和末尾异步对照仍然偏密",
+    "CS 与错误路径的视觉支持弱于人工参考中的交互演示",
+    "实际渲染、链接、交互成本与全部技术事实尚未验收"
+  ],
+  "human_verdict": "equivalent",
+  "human_review": "evals/writing/reviews/C04-new-human.json",
+  "human_observed_result": "与人工稿各有优劣、没有明显优劣；Markdown 粗读未发现明显的信息密度或回读问题。视觉效果与交互尚未验收。",
+  "reviewer_use_boundary": "N_better 仅是独立阅读评审结果，不构成人工偏好、技术事实或代码质量通过。",
+  "constraint_files_changed": false
+}

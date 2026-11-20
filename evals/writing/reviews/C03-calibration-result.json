@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "human_verdict": "B_better",
+  "independent_judge_verdict": "A_better",
+  "preference_alignment": "fail",
+  "human_target_issue": "A 从‘5＋4 字节为什么对应 72 拍’跳到‘先建立描述符，再挂上两段缓冲区’，标题链断裂。",
+  "judge_detected_human_target_issue": false,
+  "judge_instead_flagged_B": [
+    "‘用 message 和 transfer 组织一次传输’已经展示实例和代码，随后‘实例教学’再次起头，推进关系不够清楚。",
+    "‘后面再用封装函数减少重复代码’的预告在本页没有兑现。",
+    "传输组织之后进入配套 Makefile、加载和卸载，发生任务类型切换。"
+  ],
+  "interpretation": "独立评审既没有复现人工对 A 的关键判断，也没有复现整体偏好，当前不能扩大自动评审使用范围；其对 B 的新发现需由人工单独裁决，不能因偏好不一致而自动丢弃。",
+  "new_rule_candidate": {
+    "path": "evals/writing/runs/current-rules/C03.md",
+    "generation_status": "completed",
+    "quality_status": "not_verified",
+    "agent_md_sha256": "5ba9f53e79ef0e02f0d6b233a2bfec3554100425982960cd950dc7d586d010db",
+    "plan_md_sha256": "604abfe82b7ae1ff9ba4135e268261f42cf85ad311a250b9521d5b3496d7f99e",
+    "observed_structure": "72 拍映射 → 按执行顺序建立请求 → 返回值与数据 → 完整模块回查；尚未经人工阅读偏好验收。"
+  },
+  "expansion_decision": "hold",
+  "required_human_adjudication": "B 的‘实例教学’二次起头与配套 Makefile 是否也造成真实跳读或换题感？",
+  "constraint_files_changed": false
+}

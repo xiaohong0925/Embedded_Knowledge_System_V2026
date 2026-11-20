@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "review_id": "C03-independent-judge-v2",
+  "pairwise_verdict": "B_better",
+  "verdict_rationale": "B 的优势主要来自代码跟随和局部问题承接：读者先看到读取函数的输入、输出与声明，再按分配、组装、提交、判断与清理的真实顺序阅读，较少需要保留未解决的代码位置。A 的实例映射和标题主线同样清楚，且完整源码有明确回查作用；其劣势不能归因于篇幅或认知性重现。B 的 Makefile 与构建命令反而形成额外的详略负担，但不足以抵消其代码跟随优势。",
+  "A_independent_issues": [
+    {
+      "location": "A 第 45-68 行，‘先建立描述符，再挂上两段缓冲区’及首个代码块",
+      "issue": "标题先说建立描述符，实际首段代码却从地址检查和缓冲区分配开始；代码虽标注为函数开头节选，但没有函数签名、参数、局部变量和常量声明，tx_buf、rx_buf、ret 等符号要读到后面的完整源码才能完全定位。",
+      "reading_impact": "首次进入代码时需要在脑中保留若干未定位符号，并回核标题与当前动作是否一致；不妨碍理解机制，但降低局部代码入口的自足性。",
+      "dimension_or_gate": "code_followability",
+      "suggested_fix": "在首个节选前补出最小函数签名和相关声明，或把标题改为覆盖参数检查与缓冲区准备的实际动作。",
+      "severity": "minor"
+    },
+    {
+      "location": "A 第 62-68 行与第 132-149 行，goto out_free 到出口定义之间的距离",
+      "issue": "分配失败分支先跳到 out_free，相邻解释说明统一出口能够清理，但出口标签及其两次 kfree 要到后文才出现。",
+      "reading_impact": "读者在跟随第一条失败路径时必须暂时悬置‘具体在哪里、怎样释放’，容易向前查找标签或暂时中断顺序阅读。",
+      "dimension_or_gate": "code_followability",
+      "suggested_fix": "在首次出现 goto 时就近展示最小出口骨架，或明确指出出口将在结果判断之后立即展开。",
+      "severity": "minor"
+    },
+    {
+      "location": "A 第 159-293 行，‘完整教学驱动：从 probe 发起读取到统一清理’",
+      "issue": "叙述从已经逐段解释的 message 机制扩展为整个模块源码，并继续解释 probe、设备树匹配、模块注册和 remove。标题与‘同一文件的完整内容’已经说明来源关系，因此不是无承接的换题，但阅读粒度和任务范围在这里明显放大。",
+      "reading_impact": "希望连续追踪双段 message 的读者需要暂时穿过模块生命周期细节，才能回到正常与失败路径的归纳；主要影响主线密度，而非造成无法理解。",
+      "dimension_or_gate": "density_control",
+      "suggested_fix": "保留完整源码回查，但压缩匹配表、模块宏和 remove 的正文复述，把正文注意力留在本页读取函数及其调用者。",
+      "severity": "minor"
+    },
+    {
+      "location": "A 第 289-293 行，probe、模块注册与 remove 的连续解释",
+      "issue": "这些解释各自清楚，但设备模型绑定、自动加载和解绑均不是本页‘双段 message 怎样完成并释放’的难点，连续展开后次要内容占据主线。",
+      "reading_impact": "读者需要额外区分哪些内容服务于当前传输问题、哪些只是完整模块的周边知识，详略焦点有所分散。",
+      "dimension_or_gate": "density_control",
+      "suggested_fix": "保留 probe 对读取函数的调用及错误交付，压缩其余模块样板的逐项释义。",
+      "severity": "minor"
+    }
+  ],
+  "dimension_findings": [
+    {
+      "dimension": "local_question",
+      "finding": "两者都先回收上一页的 spi_device 与 probe，再提出本次读取问题。B 进一步把 4.2 的 72 拍引脚事实牵回当前页，并立即问这些时钟在 Linux 中怎样由两个 transfer 和一个 message 表达，局部问题出现得更直接；A 的导读完整但更偏定义先行。",
+      "advantage": "B_slight"
+    },
+    {
+      "dimension": "example_mapping",
+      "finding": "两者都持续使用同一笔 0x0B、地址 0x001234、5＋4 字节、72 拍实例，并把空缓冲区、actual_length=9 和四字节结果落回代码。未发现因实例重现本身造成的阅读缺陷。",
+      "advantage": "equivalent"
+    },
+    {
+      "dimension": "object_continuity",
+      "finding": "两者都能说明 spi_device 来自匹配后的 probe，message 和 transfer 由 Core 使用，接收数据最终交给调用者。B 在第一步就给出函数签名及 spi、address、data 的职责，因此对象交接更早闭合；A 要到完整源码和 probe 段才全部展开。",
+      "advantage": "B_slight"
+    },
+    {
+      "dimension": "code_followability",
+      "finding": "B 按真实执行顺序组织为分配、组装、挂接与同步提交、返回及长度判断、统一清理，代码与解释相邻，out_free 也在同一函数链内收束。A 的逐步解释本身清楚，spi_sync 的再次出现也有助于把提交和结果判断连起来，不能作为重复扣分；但首个节选缺少声明、失败出口延后，增加了局部悬置。",
+      "advantage": "B_better"
+    },
+    {
+      "dimension": "density_control",
+      "finding": "A 对 72 拍、全双工、返回值与长度、清理路径等难点展开充分，完整源码和末尾核对具有回查与巩固作用，不能仅因再次列出代码或结论而扣分；其主要冗余风险在模块生命周期周边解释。B 的步骤注释减少了一些前后往返，但‘配套 Makefile’、加载卸载和交叉编译命令更明显地离开了 message 机制主线。双方在详略上各有负担。",
+      "advantage": "equivalent"
+    },
+    {
+      "dimension": "language_directness",
+      "finding": "A 的主体、动作、条件和结果写得完整，但导读及完整源码后的说明较充分地复述已建立内容。B 以‘拿到 spi 后发起读取’和四个步骤持续推动当前操作，引导更直接；其构建段则是另一项内容密度问题，不改变这一局部优势。",
+      "advantage": "B_slight"
+    },
+    {
+      "dimension": "comparison_validity",
+      "finding": "本页核心不是方案对比，该维度不作为胜负依据。B 关于后续便捷封装的引导已另做跨页兑现检查，没有把尚未在本页展开的比较误判为缺陷。",
+      "advantage": "not_applicable"
+    }
+  ],
+  "A_heading_chain_assessment": {
+    "overall": "基本连续，无实质性标题链断裂",
+    "chain": [
+      "本节导读：回收 spi_device，并限定双段读取问题",
+      "5＋4 字节为什么对应 72 拍：建立本页实例的线上尺度",
+      "先建立描述符，再挂上两段缓冲区：进入对象和缓冲区准备",
+      "spi_sync 提交整个事务：从静态描述转入执行",
+      "返回值、完成长度和有效数据：收束执行结果",
+      "完整教学驱动：把前面的节选放回同一源码全貌",
+      "正常路径、失败路径与验证边界：归纳并限定可检查结论",
+      "本页总结与本页自查：结束当前问题"
+    ],
+    "assessment": "主标题链沿‘实例尺度—描述符—提交—结果—源码回查—路径核对’推进，连续阅读成立。‘完整教学驱动’处发生的是从局部机制到完整模块的粒度扩大，而不是无说明换题，因为该节明确说明是同一文件的完整内容。首个描述符标题与实际先分配缓冲区的动作有轻微错位，完整驱动后的周边说明则削弱详略焦点；两者均不足以判定标题承接整体断裂。"
+  },
+  "cross_page_promise_check": {
+    "candidate": "B",
+    "promise_location": "B 第 57-61 行：‘后面再用封装函数减少重复代码’",
+    "checked_page": "B-B.4.3_SPI Linux驱动框架_api.md",
+    "evidence_location": "api 页第 9-17 行及第 82-110 行",
+    "result": "fulfilled",
+    "assessment": "后续第 5 页以同一笔 5＋4 字节 Fast Read 展示 spi_write_then_read()，并与手工 message 对照缓冲区、对象管理、完成长度和适用场景，预告已兑现。原句没有指明具体页码，只构成可改进的局部导向，不构成未兑现、换题或标题链断裂。"
+  },
+  "scope": {
+    "review_mode": "全新独立阅读评审；先只读 A 并记录停顿与回读位置，再读取 rubric 和 B 做配对比较，最后仅为跨页预告读取 api 页。",
+    "focus": [
+      "连续阅读",
+      "标题链",
+      "代码跟随",
+      "详略与局部承接"
+    ],
+    "rubric_boundaries_applied": [
+      "cognitive_repetition：没有仅因实例、代码或结论重现而扣分。",
+      "cross_page_promise：核查后续 api 页后才判断封装预告，结果为已兑现。",
+      "task_transition：从机制进入完整驱动或构建不自动记为换题，只评价是否有承接及是否干扰主线。"
+    ],
+    "technical_quality_endorsement": false,
+    "technical_scope_note": "本次判断不构成对代码可编译性、内核接口技术正确性、硬件行为或验证状态的质量背书；未以篇幅长短决定胜负。",
+    "files_read": [
+      "evals/writing/runs/old-rules-a61e/C03.md",
+      "evals/writing/rubric.json",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "candidate": "evals/writing/runs/current-rules/C03.md",
+  "rule_version": {
+    "agent_md_sha256": "5ba9f53e79ef0e02f0d6b233a2bfec3554100425982960cd950dc7d586d010db",
+    "plan_md_sha256": "604abfe82b7ae1ff9ba4135e268261f42cf85ad311a250b9521d5b3496d7f99e"
+  },
+  "independent_judge_verdict": "N_better",
+  "judge_report": "evals/writing/reviews/C03-new-vs-human-judge.json",
+  "observed_heading_chain": [
+    "组织传输请求",
+    "拆解 72 拍",
+    "按执行顺序建立请求",
+    "分配缓冲区",
+    "设置双 transfer",
+    "初始化并提交 message",
+    "检查结果并交付数据",
+    "接回 probe 和 remove"
+  ],
+  "remaining_issues": [
+    "完整模块较长，可能短暂占据阅读主线",
+    "‘分别判断返回值、完成长度和数据’对第三步复制数据的概括不够准确",
+    "完整模块是否适合折叠仍需真实阅读确认"
+  ],
+  "human_verdict": "equivalent",
+  "human_review": "evals/writing/reviews/C03-new-human.json",
+  "human_observed_improvement": "比最早版本更通顺，与人工稿整体差不多；人工稿风格仍更明显。",
+  "reviewer_use_boundary": "独立评审整体偏好已与人工校准过一次，但仍漏检人工指出的 A 标题链问题；只能辅助，不能单独签收。",
+  "constraint_files_changed": false
+}

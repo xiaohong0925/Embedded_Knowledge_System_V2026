@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "rubric_id": "human-reading-calibration-v1",
+  "case_id": "C03",
+  "A_independent_issues": [
+    {
+      "location": "A 第 13-41 行，‘本节导读’及其三级标题‘5＋4 字节为什么对应 72 拍’",
+      "problem": "名为‘导读’的章节已经容纳了一项核心机制的完整展开；标题没有提前显示导读中会进入实质计算和双段方向解释。",
+      "reading_impact": "按标题预期只做阅读定位的读者会在这里提前进入细节，章节层级所提示的内容类型与实际内容略有不一致，但不至于找不到主线。",
+      "suggested_fix": "若保留现有层级，可把该三级标题提升为独立的机制小节，或把‘本节导读’收窄为真正的阅读定位。",
+      "severity": "minor"
+    },
+    {
+      "location": "A 第 124 行，‘删除这张图后……’",
+      "problem": "正文突然讨论删除插图后的文本完整性，从机制讲解转为对稿件自身的说明。",
+      "reading_impact": "读者会短暂离开 spi_sync 的执行路径，确认这句话是否要求自己另做操作；属于可避免的停顿。",
+      "suggested_fix": "删除该元说明，直接让图前后的机制文字承担解释。",
+      "severity": "minor"
+    },
+    {
+      "location": "A 第 55-149 行与第 159-285 行",
+      "problem": "前面已按执行顺序展示分配、组帧、提交和清理节选，后面又完整重复同一驱动；其中 spi_sync 调用也在相邻两个节选块中重复出现。第 161 行虽明确说明是同一文件的完整内容，但两次呈现仍有重叠。",
+      "reading_impact": "跟随代码的读者在完整源码出现时需要辨认它是新代码还是前文汇总，并可能回读核对；不会丢失执行顺序，但增加一次定位成本。",
+      "suggested_fix": "保留完整源码回查入口；若正文仍保留全文，可减少前文重复，或把完整正文源码设为明确的折叠回查区。",
+      "severity": "minor"
+    }
+  ],
+  "pairwise_verdict": "A_better",
+  "verdict_rationale": "B 在代码跟随上更顺：声明、分配、组帧、提交、结果判断和 probe 基本按执行顺序出现，并紧跟解释。但整页比较中，A 的问题链和标题承诺更稳定，主线从双段读取一直落到结果与资源释放。B 在已经展示同一实例和手工组帧代码后又以‘实例教学’重新起头，并预告后文使用封装函数却未兑现，随后转到 Makefile 编译加载，造成更明显的回读和换题。判断依据是连续性、标题承接和详略，不是篇幅长短。",
+  "dimension_findings": [
+    {
+      "dimension": "local_question",
+      "finding": "两稿都回收了上一页的 spi_device/probe 语境，并提出怎样组织一次读取的问题。A 在开头把本页限定为一个明确问题，后文基本持续回答它。B 的开局也自然，但第 57-59 行再次宣布进入实例和手工构造，而前文第 19-44 行已经完成同样的实例定位和代码展示，削弱了局部问题的推进感。",
+      "advantage": "A"
+    },
+    {
+      "dimension": "example_mapping",
+      "finding": "两稿都把 message、transfer、缓冲区、72 拍、返回值和 actual_length 落回同一组 5＋4 字节示例，代码字段也能与字节阶段对应。本项只评价阅读映射，不对技术正确性作背书。",
+      "advantage": "equivalent"
+    },
+    {
+      "dimension": "object_continuity",
+      "finding": "A 持续交代 spi_device、message、两段 transfer、收发缓冲区、调用者 data 和统一出口之间的关系。B 也能沿代码指出对象来源与去向，尤其在 read 函数内部的逐段呈现较直接；但转入 Makefile 后，当前操作对象从传输事务切为模块构建产物。",
+      "advantage": "A_slight"
+    },
+    {
+      "dimension": "code_followability",
+      "finding": "B 的局部优势明确：函数声明、变量、分配、命令组装、提交、长度检查、复制与清理按真实阅读顺序分段，解释紧邻各段。A 的节选也能按顺序跟随，但 spi_sync 重复出现，随后完整源码再次覆盖前文，增加回读诱因。",
+      "advantage": "B"
+    },
+    {
+      "dimension": "density_control",
+      "finding": "A 有全文重复、元说明和若干次要驱动注册说明，但大部分内容仍围绕同一读取及其回收路径。B 除开局的实例重复外，第 261-293 行加入 Makefile、编译、加载、卸载、日志和交叉编译，改变了任务类型；这些材料并非没有使用价值，但插在本页主线与自查之间，分散了 message 组织与结果判断的注意力。",
+      "advantage": "A"
+    },
+    {
+      "dimension": "language_directness",
+      "finding": "A 多数机制句直接写明主体、动作和结果，但标题‘5＋4 字节怎样完成并释放’略生硬，第 124 行也有元话语。B 的步骤标题和代码旁解释较直接，然而‘后面再用封装函数减少重复代码’形成了后文没有承接的阅读承诺。",
+      "advantage": "A_slight"
+    },
+    {
+      "dimension": "heading_chain",
+      "finding": "A 的标题虽把实质内容放在‘本节导读’之下，但后续依次进入描述符、同步提交、完整驱动和验证边界，没有要求读者重新判定篇目任务。B 的‘用 message 和 transfer 组织一次传输’已包含具体实例和手工代码，随后‘实例教学’再次宣布同一动作；‘probe 与驱动注册’尚能延续完整驱动，‘配套 Makefile’则明显换到构建与运行。",
+      "advantage": "A"
+    }
+  ],
+  "detected_heading_chain_break": {
+    "detected": true,
+    "candidate": "B",
+    "severity": "major",
+    "evidence": [
+      {
+        "location": "B 第 13-55 行与第 57-59 行",
+        "evidence": "第一节已经用 0x0B、00 12 34、72 拍和 transfers[0]/transfers[1] 展示同一实例，并给出 spi_message_init/add_tail 代码；下一节却以‘实例教学’和‘下面先手工构造一笔完整的读取’重新起头。",
+        "reading_impact": "读者需要回读确认这是新实例、补充实例，还是对刚才内容的重复，标题没有清楚标记推进关系。"
+      },
+      {
+        "location": "B 第 59 行，对照第 196、261 行",
+        "evidence": "第 59 行预告‘后面再用封装函数减少重复代码’，后续实际进入‘probe 与驱动注册’和‘配套 Makefile’，没有相应的封装函数小节。",
+        "reading_impact": "读者为预告保留的期待落空，需要重新判断本页后半部分究竟继续讲传输组织，还是转向完整模块构建。"
+      },
+      {
+        "location": "B 第 261-293 行",
+        "evidence": "‘配套 Makefile’在传输代码之后引入编译、insmod、rmmod、dmesg 和交叉编译，随后才回到实验室与本页自查。",
+        "reading_impact": "主线从 message/transfer 的语义与代码路径切到模块构建操作，形成明显换题；不是仅由文字变多导致的问题。"
+      }
+    ],
+    "A_evidence": "A 未独立发现同等级的标题承接断裂。‘本节导读’包含实质机制属于层级命名不够准确，‘完整教学驱动’转入 probe/注册也由该标题预先覆盖。"
+  },
+  "additional_pairwise_issues": [
+    {
+      "location": "B 第 57-59 行",
+      "dimension_or_gate": "local_question / heading_chain",
+      "reading_impact": "同一实例和手工构造被二次宣布，造成回读。",
+      "suggested_fix": "把开头代码明确标为全貌预览，或取消后文重复起头，直接按步骤深化同一实例。",
+      "severity": "major"
+    },
+    {
+      "location": "B 第 59 行及后续标题",
+      "dimension_or_gate": "object_continuity / language_directness",
+      "reading_impact": "封装函数的预告没有后文承接，读者的问题链中断。",
+      "suggested_fix": "若本页不讲封装函数，删除该预告；若确需保留，则给出对应小节并说明与手工路径的关系。",
+      "severity": "major"
+    },
+    {
+      "location": "B 第 261-293 行",
+      "dimension_or_gate": "density_control / content_scope",
+      "reading_impact": "从传输组织切换到构建和加载操作，打断本页收束，并稀释自查前的核心问题。",
+      "suggested_fix": "将构建运行材料移到独立的实践附录或对应实验页；本页只保留源码回查入口和传输主线。",
+      "severity": "major"
+    }
+  ],
+  "length_used_as_decisive_factor": false,
+  "scope": {
+    "review_type": "独立连续阅读与 A/B 成对评审",
+    "focus": [
+      "连续阅读",
+      "标题链",
+      "代码跟随",
+      "详略与重复",
+      "局部问题承接",
+      "实例和对象连续性"
+    ],
+    "A_reviewed_before_B": true,
+    "technical_correctness_assessed": false,
+    "technical_quality_endorsement": false,
+    "excluded": "未核验源码事实、接口版本正确性、编译结果、硬件行为或实测结论；篇幅仅作背景，未作为胜负依据。"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "human_adjudication": [
+    {
+      "judge_issue": "前面展示过实例和代码，后面又用‘实例教学’重新起头",
+      "verdict": "reviewer_false_positive",
+      "human_reason": "前面内容信息量较大，后文重新取出实例是为了快速翻找和对应，避免读者回到前文寻找原文，从而保证阅读连续性。",
+      "review_boundary": "不得仅因实例或代码重复出现就扣分；先判断重现是否减少回读、支持当前比较或帮助局部跟随。"
+    },
+    {
+      "judge_issue": "‘后面再用封装函数’的预告在本页没有兑现",
+      "verdict": "cross_page_promise_not_false_positive",
+      "human_reason": "封装内容在后续页面完成，这是有意设计；但‘后面’没有指明位置，存在轻微的指向不清。",
+      "review_boundary": "判断预告未兑现前必须检查后续页面；跨页兑现不是缺陷，可以把明确写出目标页面作为表达改进。"
+    },
+    {
+      "judge_issue": "传输组织后突然进入配套 Makefile",
+      "verdict": "confirmed_true_positive",
+      "human_reason": "这里确实有点跳脱，缺少衔接说明。",
+      "review_boundary": "转入构建或运行任务本身不构成问题；若缺少‘为什么此时需要它、它与刚才代码有什么关系’的承接，才记录为标题链或局部承接问题。"
+    }
+  ],
+  "interpretation": "评审既存在对人工偏好的误判，也发现了一处真实衔接问题。校准目标是提高判断精度，不是要求评审机械赞同人工参考稿。",
+  "constraint_files_changed": false
+}

@@ -1,0 +1,206 @@
+{
+  "review_type": "independent_reading_organization_comparison",
+  "pairwise_verdict": "N_better",
+  "scope": {
+    "purpose": "仅比较候选 N 与当前人工正文 B 的阅读组织，不构成技术质量、源码准确性或硬件行为背书。",
+    "files_read": [
+      "evals/writing/rubric.json",
+      "evals/writing/runs/calibrated-preferences/C04.md",
+      "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_execution.md"
+    ],
+    "reading_order": "先独立阅读 N，再阅读 rubric 核对边界，最后阅读 B 做成对比较。",
+    "excluded": "未读取其他评审、状态文件、当前 agent.md 或 plan.md，未检查前后页，未核验源码事实，未渲染页面或操作交互演示。",
+    "decision_basis": "依据首读认知顺序、局部承接、对象连续性、代码跟随、实例映射、详略、语言以及注释和源码回查是否减少阅读负担；不以篇幅长短本身定胜负。"
+  },
+  "overall_judgment": {
+    "summary": "N 更好地落实了代码／框架篇目的先全貌再细化：先用同一笔 5 字节前导加 4 字节接收的 message 固定参与者、输入、交接和两类完成通知，再沿校验、调度、逐段执行、硬件完成、CS 和返回状态展开。B 也有明确问题意识、良好的局部实例化和交互演示，但首读较早进入两大段逐行注释代码，随后重复节选，读者需要在长代码内部自行维持全局主线。",
+    "why_not_length_based": "N 的优势来自顺序、分段和相邻解释，而不是内容更多；N 自身仍有分支细节偏密和收尾负载偏重的问题。B 的交互图、CS 反例和就地注释是实质优点，不能仅因 N 更长或更完整而忽略。",
+    "technical_gate_status": "not_assessed",
+    "cross_page_boundary": "未把任何跨页预告判为未兑现；上一页对象是否完全吻合仍需结合前页人工确认。",
+    "task_transition_boundary": "N 末尾对 spi_async 的对照直接服务于同步与异步的生命周期差异，不自动判为换题；B 从 Core 转入 Rockchip、CS 和 Lab 均有承接，也不自动判为换题。"
+  },
+  "N_heading_chain_assessment": {
+    "verdict": "成立，且明显优于 B 的首读导航。",
+    "heading_chain": [
+      "spi_sync 之后：Core 和 Rockchip 各做什么",
+      "先沿同一笔 message 看清完整交接",
+      "先校验描述，再允许硬件启动",
+      "同步只规定等待结果，不固定必须排队",
+      "Core 保留整条消息，Rockchip 接收当前一段",
+      "Rockchip 把当前 transfer 写成一次硬件操作",
+      "当前段结束后，Rockchip 通知 Core 继续",
+      "CS 由 Core 决定何时变化，由 Rockchip 落实到引脚",
+      "最后结束整个 message，再把状态交回调用者",
+      "本页总结与本页自查"
+    ],
+    "evidence": [
+      "N 9-23 行先回收上一页对象，提出谁校验、调度、操作硬件、处理 CS 和返回状态的问题，并列出参与者及职责。",
+      "N 25-53 行用正常路径时序图先给出完整交接，并预先区分 transfer 与 message 两层完成通知。",
+      "N 63-476 行的标题顺序基本对应实际阅读问题链，读者可从标题定位当前层次，不必记住长代码中的位置。",
+      "B 13-380 行的大部分正文置于一个宽泛的“SPI Core 怎样调度控制器驱动”二级标题下，虽有三级、四级标题，但全局阶段导航弱于 N。"
+    ],
+    "caveat": "N 的同级章节较多，DMA、回退、CS 和异步对照连续出现，导航清晰不等于认知负载已经最优。"
+  },
+  "long_code_assessment": {
+    "N": {
+      "verdict": "长代码不再主导首读，但代码与分支的总密度仍会拖慢主线。",
+      "evidence": [
+        "N 将 spi_sync、校验、队列、消息泵、transfer_one、PIO、CS 和 finalize 分成多个短节选，每块前后都有当前问题或实例结果。",
+        "N 61 行明确省略号与教学注释的性质，55-59 行另给完整源码入口，完整模块没有反复占据首读主线。",
+        "N 289-299、341-374 行连续加入 DMA 门槛、双方向完成、返回值和 PIO 回退，正常双段路径的读者仍需暂存多个条件。"
+      ]
+    },
+    "B": {
+      "verdict": "仍存在明显的长代码打断。",
+      "evidence": [
+        "B 35-92 行把 __spi_sync 与 spi_sync 合在一个大代码块中，95-102 行才集中提炼阅读要点。",
+        "B 110-177 行再放入几乎完整的逐段循环、CS 和出口，180 行之后才回到本例。",
+        "B 182-218 行重复展示循环、出口和返回链节选；这些重现有一部分是在收束调用链，但紧邻前文的重复仍增加首读切换，不宜全部视为有效认知性重现。"
+      ]
+    },
+    "comparison": "N 更符合按真实执行顺序拆分代码、解释相邻放置的偏好；B 的逐行注释能部分补偿长代码，却不能消除读者在大代码块内自行维持主线的负担。"
+  },
+  "dimension_findings": [
+    {
+      "dimension": "local_question",
+      "verdict": "N_slightly_better",
+      "N_evidence": "N 9-11 行先回收已知再列出本页问题；各节标题持续回答当前自然出现的局部问题。",
+      "B_evidence": "B 15-17 行的提问直接自然，220-225 行从 Core 的函数指针顺接到 Rockchip 也很清楚。",
+      "finding": "两者局部问题意识都强；N 的优势是这一问题链贯穿全页，B 的优势是若干转折更口语、更轻快。"
+    },
+    {
+      "dimension": "overview_then_detail",
+      "verdict": "N_better",
+      "N_evidence": "N 15-61 行先给对象、职责、完整正常路径和源码地图，然后进入细节。",
+      "B_evidence": "B 9-17 行只有总问题和上一页回收，19-26 行直接进入交互演示，28 行后进入长函数；全貌更多依赖读者操作演示或自行从代码重建。",
+      "finding": "N 的先全貌再细化在正文内部即可成立，不依赖额外交互。"
+    },
+    {
+      "dimension": "object_continuity",
+      "verdict": "N_better",
+      "N_evidence": "N 17-23、225、229、261、303、429-476 行持续标明同一 message、当前 xfer、rs、完成通知及结果去向。",
+      "B_evidence": "B 199-200、222-225 行也明确同一段 xfer 和 5+4 字节实例。",
+      "finding": "N 在更多跨层和错误出口处保持对象链；其重复主要起定位作用，不按认知性重复扣分。"
+    },
+    {
+      "dimension": "example_mapping",
+      "verdict": "equivalent_with_different_strengths",
+      "N_evidence": "N 95、285-287、339、376、469-476 行把通用规则落回 5、4、9、actual_length 和各失败结局。",
+      "B_evidence": "B 199-200、306、374 行把 DMA 与 CS 规则落回本例，374 行的第一段 cs_change 反例尤其直观。",
+      "finding": "N 的结局矩阵更完整，B 的 CS 反例更集中；阅读组织上各有优势。"
+    },
+    {
+      "dimension": "code_followability",
+      "verdict": "N_better",
+      "N_evidence": "代码块较小，解释紧跟当前动作，并能回查完整文件。",
+      "B_evidence": "两段长代码内部注释丰富，但代码后集中总结并重复节选。",
+      "finding": "N 更少要求读者在完整代码与后文之间来回跳转。"
+    },
+    {
+      "dimension": "teaching_comments",
+      "verdict": "N_better",
+      "N_evidence": "N 61 行声明“// 教学：”为本页新增；多数注释解释当前对象、状态或错误意义，而非机械复述语法。",
+      "B_evidence": "B 的块注释包含完成量、提交结果与传输结果等有用信息，能在代码内自洽解释；但 37-80、114-176 行注释篇幅大，早期还引入锁和 READ_ONCE 等次要难点。",
+      "finding": "N 的注释更短、更显性地区分教学增补，减负效果更稳定；B 的注释信息量是优点，但也放大了长代码的视觉密度。"
+    },
+    {
+      "dimension": "source_links",
+      "verdict": "N_better",
+      "N_evidence": "N 55-61 行先给三份完整源码的用途地图，后文在当前问题旁给具体行范围；链接是可选回查，不要求读者离开当前上下文后才能理解主线。",
+      "B_evidence": "B 30、106、229-230、249、316、360、367 行也有就地回查链接，具备减负基础。",
+      "finding": "两者都不是无链接堆代码；N 额外提供全局源码地图，并让正文节选保持独立可读，因此链接更像回查工具而非理解主线的必要前置。"
+    },
+    {
+      "dimension": "visual_support",
+      "verdict": "mixed",
+      "N_evidence": "N 25-51 行的静态正常路径时序图直接服务于全貌，但 CS 位置语义和错误分支主要靠文字。",
+      "B_evidence": "B 19-26 行有调用链交互演示，345-352 行有 cs_change 三场景交互演示，后者与当前难点相邻，具有潜在优势。",
+      "finding": "N 的全貌入口更直接，B 的局部动态演示更丰富；未渲染页面，不能判断实际交互是否顺畅或是否造成额外任务切换。"
+    },
+    {
+      "dimension": "density_control",
+      "verdict": "N_slightly_better",
+      "N_evidence": "N 的主线顺序更稳定，但 DMA、回退、CS、双完成通知和末尾异步对照形成持续高信息密度。",
+      "B_evidence": "B 长代码和重复节选增加密度，370-372 行维护者历史与 spidev 命名补充虽相关，却拉长了 CS 主线。",
+      "finding": "双方都有可下沉的次要内容；N 的密度问题仍在，只是较少破坏执行顺序。"
+    },
+    {
+      "dimension": "comparison_validity",
+      "verdict": "equivalent",
+      "N_evidence": "N 同场比较队列与快路径、PIO 与 DMA、transfer 与 message 完成、正常与错误结局。",
+      "B_evidence": "B 同场比较两条同步路径、PIO 与 DMA、末段与非末段 cs_change。",
+      "finding": "双方的选择依据大多来自具体条件和结果差异，而非抽象褒贬。"
+    },
+    {
+      "dimension": "language_directness",
+      "verdict": "N_slightly_better",
+      "N_evidence": "主体、动作、条件和结果通常在同一段内闭合，标题本身也概括机制。",
+      "B_evidence": "提问和过渡自然，但部分长注释同时承担代码解释、并发背景和结论，句子负载较高。",
+      "finding": "N 更适合连续首读，B 更有现场讲解感。"
+    }
+  ],
+  "N_independent_issues": [
+    {
+      "location": "N 175-225、289-299、341-374 行",
+      "dimension_or_gate": "density_control / code_followability",
+      "reading_impact": "主消息循环尚未完全收束时，读者依次处理拆分映射、DMA 门槛、双方向回调、返回值和 PIO 回退；短代码虽然避免超长块，却没有完全消除条件分支造成的持有负担。",
+      "suggested_fix": "人工判断是否把 DMA 回退等次要分支改为可展开回查，或在进入这些分支前用一小段正常 PIO 路径收束主线。",
+      "severity": "minor"
+    },
+    {
+      "location": "N 25-53 行及 378-425 行",
+      "dimension_or_gate": "visual_support",
+      "reading_impact": "全貌图只覆盖正常路径，CS 的末段／非末段语义和首段／次段失败仍主要靠代码与文字；相比 B 的 cs_change 场景演示，N 对这一空间／时序难点的视觉支持较弱。",
+      "suggested_fix": "保留现有全貌图，人工评估是否增加一张小型 CS 位置对照或错误路径状态图，而不是继续扩写正文。",
+      "severity": "minor"
+    },
+    {
+      "location": "N 126、372-374、476 行",
+      "dimension_or_gate": "density_control",
+      "reading_impact": "spi_setup 边界、DMA 回退与等待超时、末尾 spi_async 生命周期均有解释价值，但连续出现会使首读结尾不够轻；其中异步对照有明确承接，不应误判为换题。",
+      "suggested_fix": "由目标读者测试哪些澄清必须留在主线，哪些可移入折叠说明或源码回查。",
+      "severity": "minor"
+    },
+    {
+      "location": "N 55-59 行及全页多处行范围链接",
+      "dimension_or_gate": "source_links / density_control",
+      "reading_impact": "源码地图和就地链接总体减负，但相同文件名的链接频繁出现，视觉噪声可能使读者忽略真正需要回查的入口。",
+      "suggested_fix": "保留首次源码地图和独立难点链接，人工检查相邻重复链接是否可合并；不要在未验证渲染效果前直接删减。",
+      "severity": "minor"
+    }
+  ],
+  "B_strengths_to_preserve": [
+    "B 15-17 行以读者自然问题开启本页，220-225 行跨层承接清楚。",
+    "B 19-26、345-352 行的交互演示分别服务调用链和 CS 场景，尤其后者与局部难点相邻。",
+    "B 的就地注释提供完成量、提交结果与传输结果等理解信息，不应简单删除注释来缩短代码。",
+    "B 306、374 行把 DMA 条件和 cs_change 反例落回本例，实例化表达直观。"
+  ],
+  "not_counted_as_defects": [
+    "N 多次重提同一 message、两段 5+4 和 9 字节，主要用于跨层定位和结果核对，属于有功能的认知性重现。",
+    "N 或 B 的总结、自查与正文存在结论重现，不因重复本身扣分。",
+    "未检查后续页面，因此没有任何跨页预告被判定为未兑现。",
+    "N 末尾异步对照和 Framework Lab 链接均与当前机制或验证有关，不因形式变化自动判为任务切换。"
+  ],
+  "remaining_human_review_needed": [
+    {
+      "item": "目标读者首读测试",
+      "question": "N 的短代码加高密度分支是否确实比 B 更容易跟随，尤其 DMA、回退、CS 和双完成通知部分；必要时记录读者在哪一节开始回读。"
+    },
+    {
+      "item": "渲染与交互检查",
+      "question": "确认 N 的 Mermaid 全貌图、代码查看器链接以及 B 的两个 iframe 在实际阅读器中的可见性、加载和任务切换成本；本评审只读 Markdown，未对这些效果作结论。"
+    },
+    {
+      "item": "跨页对象核对",
+      "question": "结合上一页确认 N 所述同一 message、两个堆缓冲区和 5+4 字节描述与读者已知完全一致；本评审不以此推断跨页缺陷。"
+    },
+    {
+      "item": "次要内容取舍",
+      "question": "由人工决定 N 的 spi_setup、DMA 回退、末尾异步对照，以及 B 的 CS 历史补充哪些应留主线、折叠或下沉，避免把信息更多误当作组织更好。"
+    },
+    {
+      "item": "独立技术审校",
+      "question": "另行核验双方技术事实、代码节选、注释和链接目标；本报告的 N_better 只表示阅读组织偏好。"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task": "B-B.4.4 两页篇级重设计预览",
+  "candidates": [
+    "evals/writing/runs/redesign-b-b-4-4/B-B.4.4_SPI调试与选型.md",
+    "evals/writing/runs/redesign-b-b-4-4/B-B.4.4_SPI调试与选型_selection.md"
+  ],
+  "interactive_asset": "evals/writing/runs/redesign-b-b-4-4/spi-debug-path.html",
+  "static_checks": {
+    "status": "pass",
+    "observed": "两页链接、源码行号和 JEDEC 实例检查为 0 个发现。"
+  },
+  "preview_build": {
+    "status": "pass",
+    "scope": "非 strict 的评测预览构建。"
+  },
+  "browser_check": {
+    "status": "pass",
+    "observed": "第 1 页交互图按钮切换已在上一轮验证；第 2 页可直接打开，标题、主要小节和上一页链接存在。"
+  },
+  "human_reading": {
+    "page_1": "用户粗看一眼没什么问题",
+    "page_2": "not_verified"
+  },
+  "original_docs_modified": false,
+  "git_commit_created": false,
+  "technical_quality_endorsement": false
+}

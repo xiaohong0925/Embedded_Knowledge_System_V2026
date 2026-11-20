@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "comparison": {
+    "A": "evals/writing/runs/old-rules-a61e/C03.md",
+    "B": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md"
+  },
+  "human_verdict": "B_better",
+  "human_feedback": "B 更顺，A 从第一个标题开始就很累，第二个标题就开始跟上个标题对不上。",
+  "confirmed_reading_issue": {
+    "type": "heading_chain_break",
+    "A_first_content_heading": "5＋4 字节为什么对应 72 拍",
+    "A_second_content_heading": "先建立描述符，再挂上两段缓冲区",
+    "reading_impact": "前者仍在线上时序，后者突然进入软件对象和内存管理；标题没有交代为什么前一个问题的答案会引出后一个任务，读者需要自行重建主线。"
+  },
+  "calibrated_insight": "不仅要检查标题与正文是否对齐，还要检查相邻标题是否形成“上一标题的答案或产出 → 下一标题的自然任务”的连续关系。",
+  "scope": "仅确认阅读组织偏好，不构成对任一候选技术事实或代码的验收。",
+  "constraint_files_changed": false,
+  "next_use": "作为标题连续性与局部承接维度的校准样本。"
+}

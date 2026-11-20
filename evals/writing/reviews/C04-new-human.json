@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "case_id": "C04",
+  "candidate": "evals/writing/runs/calibrated-preferences/C04.md",
+  "human_verdict": "equivalent",
+  "human_feedback": "新样稿不差，与人工稿各有优劣、都挺不错，没有明显优劣。粗读未发现明显的信息密度或回读问题。",
+  "confirmed_style_preferences": [
+    "更喜欢 SVG 矢量图和内嵌 HTML 动态图辅助理解",
+    "教学代码中，几乎每个需要读者思考的代码点都应有注释",
+    "在约 2～3 屏上下滚动的范围内，如果找不到相关代码或函数的前文出处，就就地提供代码链接"
+  ],
+  "reading_context": "本次为 Markdown 文档粗读，未完成站点渲染后的桌面阅读、SVG/HTML 交互或视觉密度验收。",
+  "technical_quality_endorsement": false,
+  "constraint_files_changed": false
+}

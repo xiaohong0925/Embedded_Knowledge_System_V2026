@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "suite_id": "b-b-4-3-human-reading-v1",
+  "rule_set": {
+    "commit": "a61e8402a",
+    "paths": [
+      "agent.md",
+      "plan.md"
+    ]
+  },
+  "generation_status": "completed",
+  "generation_method": "6 个独立 coder 子代理分别生成；每个子代理只读取旧规则、旧正文和指定证据，使用中性任务说明，不读取人工参考稿或当前规则。",
+  "candidate_directory": "evals/writing/runs/old-rules-a61e",
+  "original_docs_modified": false,
+  "quality_notice": "completed 仅表示候选已生成，不表示技术事实、代码或阅读质量通过。",
+  "data_validation": {
+    "status": "pass",
+    "command": "python evals/writing/validate.py",
+    "observed_result": "6 个用例、7 个阅读维度、5 个硬性门槛、33 个 Git 文件引用均通过校验"
+  },
+  "cases": [
+    {
+      "case_id": "C01",
+      "candidate": "evals/writing/runs/old-rules-a61e/C01.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified"
+    },
+    {
+      "case_id": "C02",
+      "candidate": "evals/writing/runs/old-rules-a61e/C02.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified"
+    },
+    {
+      "case_id": "C03",
+      "candidate": "evals/writing/runs/old-rules-a61e/C03.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified"
+    },
+    {
+      "case_id": "C04",
+      "candidate": "evals/writing/runs/old-rules-a61e/C04.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified",
+      "precheck_status": "fail",
+      "observed_defect": "第 15 行将 5 字节前导写成 0x0b 0x12 0x34 0x00，仅列出 4 个十六进制字节，与同句长度及贯穿实例不一致。"
+    },
+    {
+      "case_id": "C05",
+      "candidate": "evals/writing/runs/old-rules-a61e/C05.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified"
+    },
+    {
+      "case_id": "C06",
+      "candidate": "evals/writing/runs/old-rules-a61e/C06.md",
+      "generation_status": "completed",
+      "quality_status": "not_verified"
+    }
+  ],
+  "selected_comparison": {
+    "case_id": "C03",
+    "A": "evals/writing/runs/old-rules-a61e/C03.md",
+    "B": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md",
+    "reason": "两份篇幅接近，主要差异集中在代码组织、实例映射和阅读顺序，适合人工成对判断。",
+    "human_verdict": "B_better",
+    "human_review": "evals/writing/reviews/C03-human.json",
+    "confirmed_issue": "A 的相邻标题从 72 拍计算突然切换到描述符与缓冲区，标题之间缺少产出到下一任务的承接。",
+    "independent_calibration": {
+      "status": "fail",
+      "judge_verdict": "A_better",
+      "human_verdict": "B_better",
+      "judge_detected_human_target_issue": false,
+      "result": "evals/writing/reviews/C03-calibration-result.json",
+      "expansion_decision": "hold"
+    }
+  },
+  "required_next_action": "由人工裁决评审对 B 提出的二次实例起头和 Makefile 换题是否构成真实阅读问题；在校准失败解决前，不扩大自动评审范围。"
+}

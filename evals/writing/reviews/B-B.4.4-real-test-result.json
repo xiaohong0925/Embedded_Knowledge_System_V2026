@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task": "B-B.4.4 真实未复检篇目写作验证",
+  "rule_version": {
+    "agent_md_sha256": "dc5ac34be2ecc0e250634ba9fbbbb42f449b978e4a406b76b4785e41fabe3ea2",
+    "plan_md_sha256": "5f6eae73ef7f86b521b84956dfec1b24e33023b7e0d4b2f0e1de3f5ac70c8fae",
+    "rubric_json_sha256": "860222a459cecf8e45abaa715851e2215a319efdc0592b526dd90c81a9435f76"
+  },
+  "candidates": [
+    "evals/writing/runs/real-b-b-4-4/B-B.4.4_SPI调试与选型.md",
+    "evals/writing/runs/real-b-b-4-4/B-B.4.4_SPI调试与选型_selection.md"
+  ],
+  "static_checks": {
+    "status": "pass",
+    "command": "python evals/writing/check_b_b_4_4.py",
+    "observed": "原稿与候选的链接、源码行号和 JEDEC 实例检查均为 0 个发现。",
+    "scope_limit": "不构成技术事实、编译、目标运行、仪器测量或渲染质量通过。"
+  },
+  "independent_judge": {
+    "report": "evals/writing/reviews/B-B.4.4-independent-judge.json",
+    "page_1_verdict": "N_better",
+    "page_2_verdict": "N_better",
+    "main_concern": "第 2 页扩写后的连续阅读负担，以及速率约束转入接口比较时是否仍顺畅。"
+  },
+  "human_verdict": "needs_redesign",
+  "human_review": "evals/writing/reviews/B-B.4.4-human.json",
+  "human_observed_result": "候选更通顺，但篇级主问题不清；局部修改不足，需要先重设计。",
+  "original_docs_modified": false,
+  "constraint_files_changed_after_recorded_hash": false
+}

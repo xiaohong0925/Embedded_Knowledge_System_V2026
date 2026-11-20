@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "human_verdict": "B_better",
+  "judge_v2_verdict": "B_better",
+  "preference_alignment": "pass",
+  "cross_page_promise_check": "pass：确认封装内容在后续 API 页兑现，未再记为本页缺陷。",
+  "cognitive_repetition_check": "pass：未因实例或代码重现本身扣分。",
+  "human_target_issue_recall": "fail：仍将 A 的‘72 拍 → 描述符与缓冲区’判断为整体连续，未复现人工指出的标题链断裂。",
+  "calibration_status": "partial",
+  "allowed_use": "可辅助比较整体阅读偏好、跨页承诺和代码跟随；不得单独签收标题链或替代人工抽检。",
+  "expansion_policy": "可以继续小范围评测，但标题链问题必须保留人工复核或专项验证。",
+  "constraint_files_changed": false
+}

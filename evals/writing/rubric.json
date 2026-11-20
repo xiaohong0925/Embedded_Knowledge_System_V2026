@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "rubric_id": "human-reading-calibration-v1",
+  "principles": [
+    "先检查硬性门槛，再进行阅读质量比较",
+    "人工参考稿用于校准偏好，不用于文本相似度评分",
+    "优先使用带证据位置的成对比较，不制造空泛总分",
+    "篇幅只作背景信息，不能因更长而判定更好",
+    "全新会话分别生成候选，避免作者会话中的隐性上下文",
+    "模型评审必须经过人工判断校准后才能扩大使用范围"
+  ],
+  "content_type_sequences": {
+    "rule": "先判断内容类型，再评价展开顺序；不得把一种篇目的认知入口机械套到另一类篇目。",
+    "code_or_framework": {
+      "preferred_order": [
+        "先给足以定位层次、输入、输出和交接关系的全貌",
+        "再沿同一操作的问题链逐层细化",
+        "用相邻的代码与解释完成每一步，并保留完整源码回查"
+      ],
+      "review_question": "读者是否先知道这次操作经过哪些层，再顺着每个局部问题进入代码细节？"
+    },
+    "physical_layer": {
+      "preferred_order": [
+        "先定义基本对象、信号、术语和各自职责",
+        "再按物理作用、需求升级或技术发展的逻辑链补齐细节",
+        "最后进入需要这些定义支撑的波形、参数、约束和演进"
+      ],
+      "review_question": "基本定义是否已经建立，后续细节是否沿物理作用或发展逻辑自然出现？"
+    },
+    "human_evidence": "evals/writing/reviews/content-order-human.json"
+  },
+  "teaching_code_preferences": {
+    "human_evidence": [
+      "evals/writing/reviews/C03-new-human.json",
+      "evals/writing/reviews/C04-new-human.json"
+    ],
+    "in_place_expansion": "优先在当前实例和当前问题中展开机制与想象，不让读者离开当前上下文重新建模。",
+    "visual_assets": "需要辅助空间关系、状态或时序理解时，优先评估 SVG 矢量图与内嵌 HTML 动态图；Markdown 粗读不能替代渲染后的桌面视觉与交互验收。",
+    "inline_comments": "教学代码中，几乎每个需要读者停下来思考的代码点都应有注释，解释当前功能、关键参数、状态变化和错误路径；明显语法不机械复述，注释仍须提供理解信息。",
+    "source_links": "对读者不熟悉、使用频率较高或相对独立的代码就地提供源码链接；以桌面阅读约 2～3 屏为经验参考，若上下滚动后仍找不到相关代码或函数出处，就补就地链接，不作机械像素规则。",
+    "long_code_control": "避免超长代码之后再跟一大段集中解释。优先按真实执行顺序拆分代码，把解释放入相邻正文或有信息量的注释；完整模块主要用于回查，不反复占据首读主线。",
+    "production_distinction": "教学代码注释服务于学习路径，生产代码仍应优先保持实现清晰，不能用注释掩盖复杂或晦涩的实现。"
+  },
+  "adjudicated_review_boundaries": [
+    {
+      "id": "cognitive_repetition",
+      "rule": "不得仅因实例、代码或结论重复出现就扣分；先判断重现是否减少回读、支持当前比较或帮助局部跟随。",
+      "human_evidence": "evals/writing/reviews/C03-adjudication.json"
+    },
+    {
+      "id": "cross_page_promise",
+      "rule": "判断预告未兑现前必须检查后续页面；跨页兑现不是缺陷，指向不够明确只能作为局部表达改进。",
+      "human_evidence": "evals/writing/reviews/C03-adjudication.json"
+    },
+    {
+      "id": "task_transition",
+      "rule": "从机制转入构建、运行或产品路径不自动构成换题；缺少为什么此时需要它、它与前文有什么关系的承接时，才记录衔接问题。",
+      "human_evidence": "evals/writing/reviews/C03-adjudication.json"
+    }
+  ],
+  "hard_gates": [
+    {
+      "id": "technical_evidence",
+      "question": "新增技术事实、源码引用、代码和命令是否有当前证据支持？",
+      "failure": "出现未核验事实、伪造实现或无法回到所给证据的引用。"
+    },
+    {
+      "id": "verification_boundary",
+      "question": "教学假设、预期输出、实测结果和未验证状态是否明确区分？",
+      "failure": "把预期或假设写成已经完成的编译、运行或硬件测量。"
+    },
+    {
+      "id": "example_consistency",
+      "question": "同一实例中的对象、地址、命令、长度、返回值和输出是否一致？",
+      "failure": "不同段落或材料之间发生无说明的实例漂移。"
+    },
+    {
+      "id": "content_scope",
+      "question": "是否保持当前篇目职责，并保留当前任务要求的机制？",
+      "failure": "侵占其他篇目职责，或删除当前理解链所必需的内容。"
+    },
+    {
+      "id": "required_preservation",
+      "question": "用例列出的 required_preservation 是否全部保留？",
+      "failure": "任一必需机制、错误路径、验证边界或回查入口缺失。"
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "local_question",
+      "question": "是否先回收读者已知，再提出当前自然出现的局部疑问？"
+    },
+    {
+      "id": "example_mapping",
+      "question": "每个新概念或通用规则是否落回实例中的具体字节、字段、对象、动作或结果？"
+    },
+    {
+      "id": "object_continuity",
+      "question": "跨层后能否仍指出当前对象从哪里来、由谁使用、结果交给谁？"
+    },
+    {
+      "id": "code_followability",
+      "question": "能否按真实执行顺序阅读代码与相邻解释，而不必在完整代码和后文之间反复跳转？"
+    },
+    {
+      "id": "comparison_validity",
+      "question": "比较双方是否同场出现，选择依据是否来自实际差异而非抽象褒贬？"
+    },
+    {
+      "id": "density_control",
+      "question": "难点是否充分展开，次要内容是否离开主线，是否避免机械分段和无效重复？"
+    },
+    {
+      "id": "language_directness",
+      "question": "引导是否直接自然，机制是否写清主体、动作、条件和结果？"
+    }
+  ],
+  "pairwise_verdicts": [
+    "A_better",
+    "B_better",
+    "equivalent"
+  ],
+  "defect_severity": [
+    "blocker",
+    "major",
+    "minor"
+  ],
+  "defect_record_fields": [
+    "location",
+    "dimension_or_gate",
+    "reading_impact",
+    "suggested_fix",
+    "severity"
+  ],
+  "procedure": [
+    "固定输入、技术资料、规则版本和任务说明",
+    "在全新会话中分别生成 A 与 B",
+    "运行可用的确定性检查",
+    "任一硬性门槛失败时记录并停止风格比较",
+    "隐藏候选的规则来源并随机交换展示顺序",
+    "仅按用例 evaluation_focus 比较相关维度",
+    "记录具体位置、阅读影响和修改建议",
+    "由人工处理冲突、失败和抽检样本",
+    "把确认后的争议样本纳入后续校准"
+  ],
+  "human_metrics": [
+    "review_minutes",
+    "human_edited_paragraphs",
+    "page_restructure_required",
+    "full_rewrite_required",
+    "reviewer_missed_defects",
+    "reviewer_false_positives"
+  ],
+  "calibration_rule": "若评审无法识别已知改前版与人工参考版之间的目标差异，先修正评测卡或评审流程，不用它判断后续规则变更。"
+}

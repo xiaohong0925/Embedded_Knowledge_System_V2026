@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "case_id": "C03",
+  "candidate": "evals/writing/runs/current-rules/C03.md",
+  "human_verdict": "equivalent",
+  "human_feedback": "新规则稿与人工稿差不多，比最早版本更通顺；人工稿的风格仍更明显，代码密集型页面上的差异相对不突出。",
+  "confirmed_preferences": [
+    "更喜欢就地展开想象，并用图像辅助理解",
+    "喜欢在代码中添加辅助理解功能的注释",
+    "对不熟悉、高频、相对独立或上下文距离较远的代码，直接提供源码链接",
+    "规避超长代码之后再跟一大段解释",
+    "尽量把解释拆入代码注释，并拆分代码，使解释与当前动作相邻"
+  ],
+  "interpretation": "当前新规则改善了结构通顺度，但还没有完整覆盖人工风格中的就地可视化、教学注释、按需链接和长代码控制。",
+  "technical_quality_endorsement": false,
+  "constraint_files_changed": false
+}

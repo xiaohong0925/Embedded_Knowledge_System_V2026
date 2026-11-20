@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "suite_id": "b-b-4-3-human-reading-v1",
+  "description": "从 B-B.4.3 两次人工提交提取的最小阅读偏好回归集。人工参考用于校准判断，不要求逐字复刻。",
+  "base_commit": "a61e8402a",
+  "reference_commit": "2a4f43946",
+  "rule_set": {
+    "commit": "a61e8402a",
+    "paths": [
+      "agent.md",
+      "plan.md"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "C01",
+      "task_type": "chapter_overview",
+      "title": "页首与分页导读",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.2_SPI协议层与时序.md"
+      ],
+      "task_instruction": "重写本页的导读与分页说明，使软件工程师能直接理解各分页任务和一次 SPI 传输的完整路径。保留既有技术内容、实例和验证边界，不要求复刻参考稿措辞。",
+      "human_change_intent": [
+        "分页标题使用通用、直白、简短的任务名称",
+        "先建立完整传输路径，再进入分页细节",
+        "导读、分页和导航承担同一套阅读顺序"
+      ],
+      "evaluation_focus": [
+        "local_question",
+        "density_control",
+        "language_directness"
+      ],
+      "required_preservation": [
+        "5 字节前导与 4 字节读取的贯穿实例",
+        "SPI Core、协议驱动、控制器驱动和 DTS 的职责区别",
+        "完整源码与 Framework Lab 的回查入口"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "使用相同的分页标题措辞",
+        "增加新的技术主题"
+      ]
+    },
+    {
+      "case_id": "C02",
+      "task_type": "object_lifecycle",
+      "title": "设备描述与驱动匹配",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_startup.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_startup.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架.md",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/arch/arm64/boot/dts/rockchip/rk356x.dtsi",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi-rockchip.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h"
+      ],
+      "task_instruction": "重写设备描述、注册与驱动匹配页，使读者能从静态 DTS 跟到 spi_device 创建、属性解析、compatible 匹配和 probe 调用。沿当前 RK3568 实例展开，不增加未经源码核验的结论。",
+      "human_change_intent": [
+        "解释厂商 DTSI 引用与板级 DTS 描述的分工",
+        "在源码前提出静态子节点怎样成为活动对象的问题",
+        "把 DTS 属性明确映射到 spi_device 字段",
+        "说明注册阶段的 spi_setup 与 probe 的职责边界"
+      ],
+      "evaluation_focus": [
+        "local_question",
+        "example_mapping",
+        "object_continuity",
+        "density_control"
+      ],
+      "required_preservation": [
+        "控制器注册先于外设设备创建",
+        "probe 接收已经创建的 spi_device",
+        "设备树、SPI Core 和协议驱动的职责边界",
+        "正常匹配、绑定失败与解绑路径"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "为每个 DTS 属性增加同等篇幅",
+        "把时钟或 pinctrl 细节扩成独立主题"
+      ]
+    },
+    {
+      "case_id": "C03",
+      "task_type": "code_heavy_mechanism",
+      "title": "传输代码的分段讲解",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_startup.md",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi_frame_observer.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h"
+      ],
+      "task_instruction": "重写 SPI 传输请求组织页。先建立 72 拍与 message、transfer 的对应，再按真实执行顺序组织完整教学驱动，使代码和解释相邻。保留正常与错误路径，不要求固定步骤数量。",
+      "human_change_intent": [
+        "先回收上一页产物并提出 probe 后的自然任务",
+        "先把 72 拍映射成两个 transfer 和一个 message",
+        "用最小骨架建立结构，再按执行顺序展开代码",
+        "每段代码后就地解释动作、原因、返回值和资源释放"
+      ],
+      "evaluation_focus": [
+        "local_question",
+        "example_mapping",
+        "code_followability",
+        "density_control"
+      ],
+      "required_preservation": [
+        "正常路径和错误路径",
+        "spi_sync 返回值与 actual_length 的区别",
+        "缓冲区与描述符的生命周期",
+        "完整源码回查入口"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "机械使用步骤一至步骤四",
+        "通过增加篇幅证明讲解充分"
+      ]
+    },
+    {
+      "case_id": "C04",
+      "task_type": "source_callchain",
+      "title": "Core 与控制器调用链",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_execution.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_execution.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi-rockchip.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/include/linux/spi/spi.h"
+      ],
+      "task_instruction": "重写 SPI Core 与控制器驱动执行页。沿 spi_sync、默认 message 循环和 Rockchip transfer_one 跟踪同一笔事务，说明校验、调度、CS、完成和错误返回。源码引用必须能回到所给 v6.6 证据。",
+      "human_change_intent": [
+        "把七步摘要展开为可跟随的真实源码路径",
+        "区分提交结果与最终传输结果",
+        "跨层时明确仍使用同一个 spi、message 和当前 xfer",
+        "通用规则之后回答本例的执行路径和 CS 结果"
+      ],
+      "evaluation_focus": [
+        "local_question",
+        "object_continuity",
+        "code_followability",
+        "example_mapping",
+        "density_control"
+      ],
+      "required_preservation": [
+        "同步接口的可睡眠语义",
+        "noqueue 与排队等待的同等同步语义",
+        "错误停止后续段并撤销 CS 的路径",
+        "actual_length、message.status 与调用者返回值的关系",
+        "DMA 与 IRQ 选择的证据边界"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "展示与本例无关的全部源码",
+        "用源码行数或注释数量代替机制解释"
+      ]
+    },
+    {
+      "case_id": "C05",
+      "task_type": "api_comparison",
+      "title": "手工实现与便捷封装比较",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md",
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_execution.md",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi_frame_observer.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/kernel-v6.6/drivers/spi/spi.c"
+      ],
+      "task_instruction": "重写手工 message 与 spi_write_then_read 的比较页。双方必须在同一阅读位置出现，再比较缓冲区所有权、完成长度、复制成本、定制能力和适用场景，并说明封装仍进入同一执行路径。",
+      "human_change_intent": [
+        "从底层执行回到协议驱动的实际选择",
+        "同场列出同一事务的手工版与封装版",
+        "先比较具体实现，再归纳选择依据",
+        "明确 actual_length 是否暴露给调用者"
+      ],
+      "evaluation_focus": [
+        "comparison_validity",
+        "example_mapping",
+        "code_followability",
+        "density_control",
+        "language_directness"
+      ],
+      "required_preservation": [
+        "两种写法的输入、输出和底层路径一致",
+        "spi_write_then_read 的复制成本与 DMA-safe 边界",
+        "spi_sync 成功返回 0、失败返回负错误码",
+        "小量标准写后读与精确控制场景的选择区别"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "为了简短而省略手工版",
+        "增加与当前比较无关的接口实现细节"
+      ]
+    },
+    {
+      "case_id": "C06",
+      "task_type": "verification_handoff",
+      "title": "验证与产品边界",
+      "base": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_practice.md"
+      },
+      "reference": {
+        "path": "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_practice.md",
+        "role": "human_preference_reference"
+      },
+      "input_context": [
+        "docs/B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi_frame_observer.c",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/spi-frame-observer.dts",
+        "docs/B. 总线协议/B. 低速外设接口/code/B-B.4.3/Makefile"
+      ],
+      "task_instruction": "重写驱动构建、运行验证与产品边界页。承接前页接口选择，使用同一教学模块完成构建和观察，区分预期输出与实测，并说明正式 W25Q 产品为何进入 spi-nor 与 MTD。删除不服务主线的内容。",
+      "human_change_intent": [
+        "先承接接口选择，再进入同一事务的验证",
+        "保留能证明教学路径的构建与观察步骤",
+        "压缩不服务当前主问题的部署细节",
+        "在教学观察完成后明确移交 spi-nor 与 MTD 产品路径"
+      ],
+      "evaluation_focus": [
+        "local_question",
+        "density_control",
+        "example_mapping",
+        "language_directness"
+      ],
+      "required_preservation": [
+        "目标内核构建树与交叉编译前提",
+        "构建、加载、观察和解绑路径",
+        "教学假设数据不是实测结果",
+        "教学驱动与 spi-nor、MTD 产品路径的职责区别"
+      ],
+      "not_required": [
+        "逐字复刻人工参考稿",
+        "保留所有 DTS 构建和部署细节",
+        "把日志样式写成已经完成的硬件测量"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task": "B-B.4.4 第 1 页篇级重设计与交互图预览",
+  "candidate": "evals/writing/runs/redesign-b-b-4-4/B-B.4.4_SPI调试与选型.md",
+  "interactive_asset": "evals/writing/runs/redesign-b-b-4-4/spi-debug-path.html",
+  "static_checks": {
+    "status": "pass",
+    "observed": "原稿、候选与重设计页的链接、源码行号和 JEDEC 实例检查为 0 个发现。"
+  },
+  "preview_build": {
+    "status": "pass",
+    "scope": "非 strict 的评测预览构建，不是正式全站严格验收。"
+  },
+  "browser_check": {
+    "status": "pass",
+    "observed": [
+      "预览首页在内置浏览器打开，标题为第 1 页：正常基线与分层调试。",
+      "交互 iframe 成功加载，存在正常 ID、内部回环、外部短接、数字帧、模拟波形五个按钮。",
+      "点击内部回环后 aria-pressed=true，证据标题、盲区和覆盖节点同步更新。",
+      "文字兜底存在。"
+    ],
+    "scope": "桌面 DOM 与交互检查；未据此宣称视觉舒适度、技术事实或硬件行为通过。"
+  },
+  "original_docs_modified": false,
+  "second_page_modified": false,
+  "human_reading_verdict": "not_verified"
+}

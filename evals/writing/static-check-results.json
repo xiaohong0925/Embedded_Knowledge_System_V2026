@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "checker": "evals/writing/check_static.py",
+  "scope": [
+    "B-B.4.3 当前 6 个正式页面",
+    "evals/writing/runs 下的 C01～C06 候选稿"
+  ],
+  "checks": [
+    "Markdown 与源码弹窗链接目标存在性",
+    "data-code-lines 行号区间格式与目标文件范围",
+    "5＋4 字节、72 拍和 actual_length=9 的实例一致性",
+    "首页分页标题、H1、前后页链接与 mkdocs.yml 导航名称一致性"
+  ],
+  "self_test": {
+    "status": "pass",
+    "observed": "旧 C04 第 15 行的 5 字节前导实际只列 4 字节，已被 instance-command-length 识别。"
+  },
+  "current_findings": [],
+  "candidate_findings": [
+    {
+      "path": "evals/writing/runs/old-rules-a61e/C04.md",
+      "line": 15,
+      "rule": "instance-command-length",
+      "finding": "前导声称为 5 字节，但命令序列实际列出 4 字节。",
+      "classification": "confirmed_known_defect"
+    }
+  ],
+  "approved_title_exception": {
+    "page": "C05",
+    "navigation_title": "手工与封装",
+    "full_h1_title": "手工 message 与便捷封装",
+    "decision": "人工允许目录使用短标题，正文保留完整标题；不修改文章。"
+  },
+  "initial_checker_false_positives_corrected": [
+    "首页分页正则增加多行模式，修复六项列表被误判为零项。",
+    "actual_length 检查区分第一段成功与整笔事务成功，移除对旧 C04 第 203 行的误报。",
+    "经人工确认，C05 的短导航与完整 H1 组合不再报告为问题。"
+  ],
+  "not_checked": [
+    "正文自然度与标题链等语义质量",
+    "SVG、HTML 和实际桌面视觉效果",
+    "教学代码编译、目标运行和硬件测量"
+  ],
+  "auto_fix_applied": false
+}

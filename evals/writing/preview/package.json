@@ -1,0 +1,8 @@
+{
+  "name": "b-b-4-4-writing-preview",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}

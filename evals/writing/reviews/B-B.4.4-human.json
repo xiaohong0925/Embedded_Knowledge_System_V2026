@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task": "B-B.4.4 真实未复检篇目写作验证",
+  "human_verdict": "needs_redesign",
+  "human_feedback": "候选整体比之前通顺不少，但 4.4 更大的问题是读者不知道它想讲什么；在整体问题存在时，局部修改于事无补。",
+  "confirmed_design_direction": {
+    "main_question": "SPI 访问不通或数据异常时，怎样用一笔已知答案的事务逐层判断故障位于软件、接线、数字帧还是模拟波形？",
+    "main_example": "以 W25Q128JV 的 JEDEC ID 读取作为已知答案事务，用 9F 00 00 00 和预期 EF 40 18 建立可判定基线。",
+    "reader_outcome": "知道每份证据能支持什么、不能支持什么，并能据此选择下一项检查，最后恢复原状并复测正常基线。",
+    "structure": "把调试组织为故障分层与决策路径，而不是证据知识点的顺序罗列。",
+    "discipline": [
+      "一次只改一个参数",
+      "每项结论写明证据边界",
+      "恢复原状并复测"
+    ]
+  },
+  "candidate_disposition": "不推进到正式正文；先重做篇级主问题和两页职责，再考虑正文改写。",
+  "scope": "这是篇级设计与阅读判断，不构成对候选技术事实或代码的验收。",
+  "constraint_files_changed": false
+}
