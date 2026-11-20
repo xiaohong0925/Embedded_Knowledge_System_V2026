@@ -728,8 +728,8 @@ nav:
                   - 设备描述、注册与驱动匹配: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_startup.md
                   - SPI 传输请求的组织: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_message.md
                   - SPI Core 与控制器驱动的执行过程: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_execution.md
-                  - 常用传输接口及其适用场景: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md
-                  - 驱动构建、运行验证与应用边界: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_practice.md
+                  - 手工与封装: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_api.md
+                  - 验证与产品移交: B. 总线协议/B. 低速外设接口/B-B.4.3_SPI Linux驱动框架_practice.md
               - B-B.4.4 SPI调试与选型:
                   - 正常基线与分层调试: B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型.md
                   - 速率与接口选择: B. 总线协议/B. 低速外设接口/B-B.4.4_SPI调试与选型_selection.md
