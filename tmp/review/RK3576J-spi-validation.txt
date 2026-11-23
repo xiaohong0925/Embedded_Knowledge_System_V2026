@@ -1,0 +1,492 @@
+User: root@linaro-alip:~$ spidev_test -D /dev/spidev3.0 -s 1000000 -p '\x9f\x00\x00\x00' -v
+-bash: spidev_test: command not found
+root@linaro-alip:~$ spidev_test
+-bash: spidev_test: command not found
+root@linaro-alip:~$
+Kimi: `spidev_test` 是内核源码里的工具（`tools/spi/spidev_test.c`），Debian/ALIP 仓库里没有对应的软件包，所以装不了，只能自己编译。几行命令搞定：
+
+```bash
+apt-get update && apt-get install -y build-essential wget
+wget https://raw.githubusercontent.com/torvalds/linux/master/tools/spi/spidev_test.c -O spidev_test.c
+gcc -Wall -O2 -o spidev_test spidev_test.c
+```
+
+然后就能跑了：
+
+```bash
+./spidev_test -D /dev/spidev3.0 -s 1000000 -p "\x9f\x00\x00\x00" -v
+```
+
+几点说明：
+
+1. **引号要用双引号**：`-p "\x9f\x00\x00\x00"`。spidev_test 自己解析 `\x` 转义，单引号也能传进去（只是 bash 原样传字符串），效果一样；关键是别在 shell 层就被展开掉。
+
+2. **先确认设备节点存在**：`ls -l /dev/spidev3.0`，且 DTB 里该 SPI 控制器和 CS 已使能、`spidev` 已绑定。如果节点不存在，问题在设备树而不是工具。
+
+3. **读 JEDEC ID 的常见坑**：`\x9f` 是 SPI Flash 的读 ID 命令，但前提是从设备确实是 Flash 且处于正确模式。如果 MISO 一直返回 `00` 或 `FF`，先查接线（MISO/MOSI 是否接反、CS 是否选对、共地）。
+
+4. **不想编译的替代方案**：可以直接用 shell 验证节点是否通：
+
+```bash
+echo -ne '\x9f\x00\x00\x00' > /dev/spidev3.0 &
+dd if=/dev/spidev3.0 bs=4 count=1 | hexdump -C
+```
+
+但这种方式是半双工拆开的，时序和真实全双工传输不完全等价，调试时还是建议用 spidev_test 或 Python 的 `spidev` 模块（`apt install python3-spidev`）做全双工读写。
+
+编译报错的话把错误信息贴出来。
+Kimi: 编译失败的原因很简单：你拉的是 master 分支的最新版 `spidev_test.c`，它用了内核内部宏（`ARRAY_SIZE`、`min_t` 等）和只有较新内核头文件才有的模式位（`SPI_RX_CPHA_FLIP`、`SPI_MOSI_IDLE_LOW`），而你系统里的头文件（Ubuntu 22.04 / jammy，内核 5.15 系列）跟不上。
+
+解决办法：不要追新，拉一个和系统头文件匹配的稳定版本重新编译即可，比如 v5.15：
+
+```bash
+rm spidev_test.c
+wget https://raw.githubusercontent.com/torvalds/linux/v5.15/tools/spi/spidev_test.c -O spidev_test.c
+gcc -Wall -O2 -o spidev_test spidev_test.c
+```
+
+这个版本是自包含的，用系统自带的 `/usr/include/linux/spi/spidev.h` 就能编过。
+
+如果还想更严谨一点，可以拉与你**实际运行内核**完全一致的 tag（先看 `uname -r`），例如 `uname -r` 是 5.15.x 就用上面的 v5.15，是 4.19 就用 `v4.19`，替换 URL 里的 tag 名即可。
+
+编完后跑：
+
+```bash
+./spidev_test -D /dev/spidev3.0 -s 1000000 -p "\x9f\x00\x00\x00" -v
+```
+
+把输出贴出来，我帮你看返回值是否正常（正常读 JEDEC ID 应该返回类似 `c2 20 18` 之类的厂商+容量字节，全 `00`/`FF` 说明物理链路有问题）。
+User: root@linaro-alip:~$ ./spidev_test -D /dev/spidev3.0 -s 1000000 -p "\x9f\x00\x00\x00" -v
+spi mode: 0x0
+bits per word: 8
+max speed: 1000000 Hz (1000 kHz)
+TX | 9F 00 00 00 __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __  |....|
+RX | 00 00 00 00 __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __  |....|
+root@linaro-alip:~$
+Kimi: 输出本身说明工具、驱动、设备节点都工作正常（SPI mode、速率都设置成功了），但 MISO 上全 `00` —— 数据没回来。全 `00` 通常意味着 MISO 被一直拉低或从机根本没在驱动总线。按下面顺序排查：
+
+**第 1 步：回环测试（先证明控制器和驱动没问题）**
+
+把 SPI 排针上的 **MOSI 和 MISO 短接**，然后：
+
+```bash
+./spidev_test -D /dev/spidev3.0 -v
+```
+
+- 如果 RX 和 TX 完全一致（默认 TX 是 `00 01 02 03...`）→ 控制器、驱动、设备节点没问题，问题出在板子到 Flash 之间，走第 2 步。
+- 如果 RX 还是全 `00` 或全 `FF` → 设备树/节点配错了（比如 spidev3.0 根本不是你想测的那组引脚），去查 DTB。
+
+**第 2 步：检查物理链路（回环通过后）**
+
+1. **WP# 和 HOLD# 必须上拉**：这是最常见的坑。很多 SPI Flash 模块的 WP（写保护）和 HOLD 引脚悬空，Flash 完全不响应。这两个脚要用 10kΩ 左右电阻上拉到 VCC（很多模块已经带，但裸芯片/自制板经常漏）。
+2. **MOSI/MISO 是否接反**：MOSI（主机出）→ Flash 的 DI，MISO ← Flash 的 DO。
+3. **CS 是否选对**：spidev3.0 对应哪个 CS 脚？用示波器或逻辑分析仪看发送时 CS 有没有拉低。没有仪器的话，可以临时把 `-s` 降到 `10000`（10kHz），在 CS 脚并一个 LED（串 1kΩ 到地）看是否闪烁。
+4. **共地和供电**：Flash 的 VCC 实际量一下是不是 3.3V。
+5. **这确实是一颗 SPI NOR Flash 吗**：`\x9f` 是 JEDEC ID 命令，只适用于标准 SPI NOR Flash。如果挂的是 SPI NAND、EEPROM（如 24 系列是 I2C 的，但 25 系列 SPI EEPROM 有些不支持 9F）或传感器，是不会响应的。
+
+**第 3 步：排除软件配置**
+
+- 降速试：`./spidev_test -D /dev/spidev3.0 -s 100000 -p "\x9f\x00\x00\x00" -v`（1MHz 对飞线/长杜邦线来说可能已经边沿太陡）
+- 确认没别的程序占用这个 SPI（比如内核里的 mtd/spi-nor 驱动已经把这颗 Flash 占了——`cat /proc/mtd` 和 `dmesg | grep -i spi` 看一下。如果内核已经把它识别成 mtd 设备，spidev 就不会同时绑定，或者会出现竞争）
+
+**一个有信息量的细节**：全 `00` 和全 `FF` 含义不同。全 `FF` 一般是 MISO 悬空/上拉、从机没接或没选中；全 `00` 更像是 MISO 被拉低或从机处于复位/不响应状态，优先怀疑 WP#/HOLD# 没上拉、CS 没真正到达芯片。
+
+你先做回环测试，把结果贴出来。
+User: root@linaro-alip:~$ ./spidev_test -D /dev/spidev3.0 -v
+spi mode: 0x0
+bits per word: 8
+max speed: 500000 Hz (500 kHz)
+TX | FF FF FF FF FF FF 40 00 00 00 00 95 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF F0 0D  |......@.........................|
+RX | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  |................................|
+root@linaro-alip:~$
+Kimi: 回环失败，这反而把问题定位清楚了：**RX 全 `00` 而 TX 是 `FF..40..` —— 即使把 MOSI/MISO 短接，数据也原样回不来**。这说明数据根本没能从引脚移出/移入，问题不在 Flash，而在更底层：控制器 ↔ 引脚之间。CS 信号在回环测试里完全不参与，所以不用考虑。
+
+按可能性从高到低排查：
+
+**1. 先确认短接的引脚确实是 spidev3.0 对应的引脚（最常见的乌龙）**
+
+`/dev/spidev3.0` 是 SPI 总线 3，核对板卡原理图/扩展头丝印，确认你短接的那对 MOSI/MISO 就是 Bus 3 的。很多板子扩展头上标 SPI 的是 Bus 0/6，Bus 3 可能根本没引出来。
+
+**2. 确认这个节点真的 probe 成功了**
+
+```bash
+dmesg | grep -i spi
+ls -l /dev/spidev*
+```
+
+看有没有类似 `spi_qup ... SPI bus 3` 的注册信息，有没有 pinctrl/clock 相关的报错。
+
+**3. 查设备树：引脚复用是否配对**
+
+```bash
+# 反编译当前生效的 DTB
+dtc -I fs /proc/device-tree > /tmp/live.dts 2>/dev/null
+# 或者
+dtc -I fs /sys/firmware/devicetree/base > /tmp/live.dts 2>/dev/null
+grep -n "spi" /tmp/live.dts | head -30
+```
+
+找到 SPI3 节点，检查三点：
+- `status = "okay"` 且 `spidev` 是子节点（不是 `spi-nor`/mtd 驱动占了它——`cat /proc/mtd` 也确认一下）；
+- `pinctrl-0` 指向的引脚组，其引脚号是否真的是扩展头那对 MOSI/MISO（对比原理图 net name）；
+- 这个 pinctrl 组是否被别的节点（如 UART、GPIO）抢占。
+
+**4. 终极手段：上示波器/逻辑分析仪**
+
+在回环短接的状态下抓 MOSI（或 CLK）脚，发送时应该能看到时钟和数据。什么波形都没有 → 引脚没被 mux 成 SPI 功能（pinctrl 没生效），或者你测的引脚不对。这也是区分"软件配错"和"引脚找错"的唯一权威方法。
+
+**另外两点提醒：**
+
+- 这块板子（linaro-alip 一般是 DragonBoard/HiKey 系）扩展头 IO 电平**很可能是 1.8V 而不是 3.3V**。回环能过之后接 Flash 时，如果 Flash 是 3.3V 供电，电平不匹配也要处理（电平转换或选 1.8V 的 Flash），否则还会读出全 0。
+- 如果第 2 步发现 `spidev3.0` 的驱动压根没注册成功，把 `dmesg` 完整输出贴出来。
+
+先告诉我板卡具体型号（410c？HiKey？其他？），以及 `dmesg | grep -i spi` 和 `ls /dev/spidev*` 的输出。
+User: root@linaro-alip:~$ dmesg | grep -i spi
+ls -l /dev/spidev*
+[    1.971594] rockchip-spi 2ad20000.spi: no high_speed pinctrl state
+[    1.971890] rockchip-spi 2ad20000.spi: probed, poll=0, rsd=0, cs-inactive=0, ready=0
+crw------- 1 root root 153, 0 Nov 23 10:42 /dev/spidev3.0
+root@linaro-alip:~$
+Kimi: 驱动层没问题：`rockchip-spi 2ad20000.spi probed` 成功，`spidev3.0` 就是这根总线（`no high_speed pinctrl state` 是无害的警告，可忽略）。所以问题收缩到**引脚复用/引脚路由**这一层——数据没出现在你测的那对引脚上。
+
+Rockchip 平台有一个非常经典的坑：**同一组 SPI 功能有 M0/M1 多组引脚可选**，设备树里 pinctrl 选的组可能和板子实际走线的组不是同一组。比如 DTB 配的是 `SPI3_TX_M0`，而板子把 SPI3 信号布线到了 M1 引脚，或者反过来——probe 照样成功，但引脚上永远没波形。
+
+直接验证引脚当前的复用状态：
+
+```bash
+mount -t debugfs none /sys/kernel/debug 2>/dev/null
+cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins | grep -i spi
+```
+
+把输出贴出来。如果 grep 不到任何 SPI 引脚，说明 pinctrl 根本没生效（mux 没切到 SPI 功能）；如果有，看引脚号是否对应你短接的那两个脚。
+
+同时反编译 DTB 对比一下配置：
+
+```bash
+dtc -I fs /sys/firmware/devicetree/base > /tmp/live.dts 2>/dev/null
+grep -n -A 30 'spi@2ad20000' /tmp/live.dts
+```
+
+重点看：
+- `pinctrl-0 = <&spi3m0_*>` 还是 `<&spi3m1_*>`（M0/M1 组）；
+- 组里的引脚（`SPI3_TX_M0_xx` 之类）和原理图/扩展头丝印对不对得上；
+- 这组引脚有没有被别的节点占用（比如调试 UART、GPIO、板载 SPI Flash）——`grep` 一下这些引脚号在 live.dts 里还出现在哪里。
+
+另一个可能性别排除：这颗 SoC 的 SPI3 引脚可能根本没引到外部排针（板厂只引出了 SPI0 之类），那你短接的永远是错的脚。这时候只能靠示波器确认。
+
+顺便告诉我：**板卡具体型号**是什么（RK3588？RK3568？几家的开发板？），以及你短接的是哪两个引脚（排针丝印）。有这些信息可以直接帮你对 M0/M1 组和丝印。
+User: root@linaro-alip:~$ dmesg | grep -i spi
+ls -l /dev/spidev*
+[    1.971594] rockchip-spi 2ad20000.spi: no high_speed pinctrl state
+[    1.971890] rockchip-spi 2ad20000.spi: probed, poll=0, rsd=0, cs-inactive=0, ready=0
+crw------- 1 root root 153, 0 Nov 23 10:42 /dev/spidev3.0
+root@linaro-alip:~$
+root@linaro-alip:~$ mount -t debugfs none /sys/kernel/debug 2>/dev/null
+cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins | grep -i spi
+pin 95 (gpio2-31): 2ad20000.spi (GPIO UNCLAIMED) function spi3 group spi3m0-csn1
+pin 96 (gpio3-0): 2ad20000.spi (GPIO UNCLAIMED) function spi3 group spi3m0-pins
+pin 97 (gpio3-1): 2ad20000.spi (GPIO UNCLAIMED) function spi3 group spi3m0-pins
+pin 98 (gpio3-2): 2ad20000.spi (GPIO UNCLAIMED) function spi3 group spi3m0-pins
+pin 99 (gpio3-3): 2ad20000.spi (GPIO UNCLAIMED) function spi3 group spi3m0-csn0
+root@linaro-alip:~$
+root@linaro-alip:~$ dtc -I fs /sys/firmware/devicetree/base > /tmp/live.dts 2>/dev/null
+grep -n -A 30 'spi@2ad20000' /tmp/live.dts
+root@linaro-alip:~$
+Kimi: 这组信息很有价值：**引脚复用是对的**。SPI3 已经被 mux 到 M0 组，占了 5 个脚：
+
+| pin | SoC 引脚 | 功能 |
+|---|---|---|
+| 95 | GPIO2_D7 | SPI3_CSN1 |
+| 96 | GPIO3_A0 | spi3m0-pins（clk/tx/rx 之一） |
+| 97 | GPIO3_A1 | spi3m0-pins |
+| 98 | GPIO3_A2 | spi3m0-pins |
+| 99 | GPIO3_A3 | SPI3_CSN0 |
+
+也就是说，SoC 侧配置完全正常，问题只剩两种可能：**板子没把这组引脚引到外部排针**（或引到了别的位置），或者你短接的脚不对。
+
+另外注意：你第二条命令没有任何输出，很可能系统里**没装 `dtc`**（错误被 `2>/dev/null` 吞了）。可以 `apt install -y device-tree-compiler` 后重跑，或者直接看节点：
+
+```bash
+ls /sys/firmware/devicetree/base/spi@2ad20000/
+cat /sys/firmware/devicetree/base/spi@2ad20000/pinctrl-names 2>/dev/null
+```
+
+**现在最有效的两个动作：**
+
+**动作 1：万用表/示波器确认这组脚连到哪**
+
+不用示波器也能做：把这 5 个脚临时当 GPIO 用，轮流翻转电平，拿万用表在扩展头候选引脚上找哪个跟着变：
+
+```bash
+apt install -y gpiod
+# 把 GPIO3_A0 设为输出并拉高（chip3 的 line0），然后万用表找哪个排针脚变高
+gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1 &
+gpioinfo | head
+```
+
+对每个候选脚（96/97/98 对应 chip3 line0/1/2，95 对应 chip2 line31）依次拉高拉低，在排针上找对应的脚。如果哪个排针脚都不动 → 这组 SPI3 信号根本没引出来，板子上没有可用的 SPI3，得换总线或放弃。
+
+**动作 2：确认板卡型号和原理图**
+
+请告诉我：
+1. 板卡具体型号（RK3562？RK3576？哪家出的开发板/核心板？）——`2ad20000.spi` 这个地址 + `linaro-alip` 我可以帮你判断这是哪颗 SoC 的哪版 BSP；
+2. 有没有这块板的原理图或扩展头引脚定义文档。
+
+如果扩展头文档里没有 SPI3（GPIO2_D7 / GPIO3_A0~A3）这组 net，那答案就是这组信号没引出来，别在它身上耗时间了——回环不过的所有现象都符合这个结论。
+User: root@linaro-alip:~$ ls /sys/firmware/devicetree/base/spi@2ad20000/
+'#address-cells'   clock-names   compatible   dmas         name     phandle     pinctrl-names   spidev@0
+'#size-cells'      clocks        dma-names    interrupts   num-cs   pinctrl-0   reg             status
+root@linaro-alip:~$ cat /sys/firmware/devicetree/base/spi@2ad20000/pinctrl-names 2>/dev/null
+defaultroot@linaro-alip:~$
+root@linaro-alip:~$ apt install -y gpiod
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+gpiod is already the newest version (1.6.3-1build1).
+0 upgraded, 0 newly installed, 0 to remove and 231 not upgraded.
+root@linaro-alip:~$ gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1 &
+[1] 3868
+root@linaro-alip:~$ gpioset: at least one GPIO line offset to value mapping must be specified
+
+[1]+  Exit 1                  gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1
+root@linaro-alip:~$
+root@linaro-alip:~$ gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1 &
+gpioinfo | head
+[1] 3870
+gpiochip0 - 32 lines:
+        line   0:      unnamed       unused   input  active-high
+        line   1:      unnamed       unused   input  active-high
+        line   2:      unnamed       unused   input  active-high
+        line   3:      unnamed       unused   input  active-high
+        line   4:      unnamed       unused   input  active-high
+        line   5:      unnamed       "work"  output  active-high [used]
+        line   6:      unnamed  "interrupt"   input  active-high [used]
+        line   7:      unnamed       unused   input  active-high
+        line   8:      unnamed       unused   input  active-high
+root@linaro-alip:~$ gpioset: at least one GPIO line offset to value mapping must be specified
+
+[1]+  Exit 1                  gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1
+root@linaro-alip:~$
+Kimi: `gpiofind` 失败是因为这些 GPIO 没有名字（`gpioinfo` 显示 `unnamed`），`gpiofind` 按名字找不到就返回空。直接用 **chip + line 编号**操作即可，编号和上表对应：GPIO3_A0 = `gpiochip3` line 0，依次类推。
+
+```bash
+# GPIO3_A0 拉高（这条命令会阻塞，保持输出状态）
+gpioset gpiochip3 0=1
+```
+
+另开一个终端（或先 `&` 再 `disown`），用万用表直流电压档在扩展头候选引脚上找 3.3V/1.8V。测完把值拉低：
+
+```bash
+gpioset gpiochip3 0=0
+```
+
+依次测这 4 个脚：
+
+| 命令 | SoC 引脚 | 对应 SPI3 信号 |
+|---|---|---|
+| `gpioset gpiochip3 0=1` | GPIO3_A0 | clk/tx/rx 之一 |
+| `gpioset gpiochip3 1=1` | GPIO3_A1 | clk/tx/rx 之一 |
+| `gpioset gpiochip3 2=1` | GPIO3_A2 | clk/tx/rx 之一 |
+| `gpioset gpiochip2 31=1` | GPIO2_D7 | CSN1 |
+
+（CSN0 是 gpiochip3 line 3，但先看前几个就够了。）
+
+两个注意点：
+
+1. **Rockchip 的引脚被 SPI 占用时，gpioset 会自动把该引脚 mux 切回 GPIO 功能**（驱动层支持），所以这个测试是有效的。测完想恢复 SPI 功能，重新插拔或重启即可，或者执行一次 spidev 传输也会切回。
+2. 如果某个 `gpioset` 报 `line already requested / busy`，说明这个脚被别的驱动占着，那本身也是重要线索。
+
+不过说实话，如果有条件，**示波器或逻辑分析仪是捷径**：直接抓 CLK/MOSI 脚，跑一次 spidev_test 就真相大白了，比逐脚摸排快得多。
+
+另外我注意到你一直没回答：**这块板子的具体型号是什么？**（RK3562/RK3576/RK3588？哪家厂商的开发板？）有原理图的话，直接查 GPIO3_A0~A2 有没有引到排针，比软件摸排快得多。从你贴的地址 `2ad20000` 和 BSP 看是 Rockchip 较新的平台，这类平台很多开发板的 SPI3 根本就没引出到排针——如果原理图证实没引出，就不用再折腾了，直接换引出的总线（比如 SPI0/SPI1）或者确认是否被板载 eMMC/SPI Flash 占用。
+User: 会不会是100M的频率错了？
+Kimi: 可能性很低，但你的思路方向值得快速排除一下。先澄清几个概念：
+
+**1. 你用的根本不是 100 MHz**
+
+`-s 1000000` 是 1 MHz，第一次回环测试没加 `-s`，用的默认 500 kHz（输出里那行 `max speed: 500000 Hz` 就是这个）。这些都是慢速，任何正常板子都不可能因为这个速度出错。
+
+**2. 就算分频/Source clock 配错，也不该是这个现象**
+
+时钟频率对错影响的是波形质量和速率，不是"有没有数据"。回环测试里 MOSI/MISO 是短接的，只要控制器在移位，RX 就应该回显 TX——哪怕时钟偏到 2 MHz 或 200 kHz，看到的也只会是**波形速率不对**，而不是整整齐齐全 `00`。频率参数错不会让数据凭空消失。
+
+**3. 唯一和时钟沾边的理论可能**
+
+只有一种情况时钟配置会导致全 0：**SCLK 根本没出来**（比如 DTB 里给 SPI 配的时钟源没使能、rate 设置失败）。这时控制器不移位，RX 缓冲区保持初始化时的全 0，现象和你看到的完全一样。
+
+用软件快速排除：
+
+```bash
+# 看 SPI 控制器实际拿到的时钟
+mount -t debugfs none /sys/kernel/debug 2>/dev/null
+grep -i spi /sys/kernel/debug/clk/clk_summary
+```
+
+应该能看到 rockchip-spi 对应的几路时钟（spiclk、apb 之类）有非零的 rate 且 enable_count 不为 0。如果 spiclk 是 0 或没使能，那就是时钟问题，去查 DTB 的 `clocks`/`assigned-clocks` 属性。
+
+**4. 但要我说，别再软件猜了，上示波器**
+
+你现在处于"软件层一切正常、物理层无信号"的阶段，继续猜不如一测了之：
+
+- 探头点在 GPIO3_A0~A2 这三个脚（就是刚才让你 gpio toggle 找的那几个脚）；
+- 跑一次 `./spidev_test -D /dev/spidev3.0 -v`；
+- 三个脚挨个看，应该有一个出 SCLK、一个出 MOSI 数据。
+
+有波形 → 说明信号到了这些 SoC 引脚，问题在引脚到排针的板级走线，接着用万用表对照原理图找断点。没波形 → 控制器在空转，回去查时钟/pinctrl/DTB。
+
+顺便再问一次：**板子型号到底是什么？** 如果是买的开发板，型号一查，原理图上 SPI3 引没引出、引到哪排针，一目了然，比我们现在这样盲人摸象快得多。
+User: root@linaro-alip:~$ gpioset: at least one GPIO line offset to value mapping must be specified
+
+[1]+  Exit 1                  gpioset --mode=wait $(gpiofind 'GPIO3_A0')=1
+root@linaro-alip:~$ gpioinfo | head
+gpiochip0 - 32 lines:
+        line   0:      unnamed       unused   input  active-high
+        line   1:      unnamed       unused   input  active-high
+        line   2:      unnamed       unused   input  active-high
+        line   3:      unnamed       unused   input  active-high
+        line   4:      unnamed       unused   input  active-high
+        line   5:      unnamed       "work"  output  active-high [used]
+        line   6:      unnamed  "interrupt"   input  active-high [used]
+        line   7:      unnamed       unused   input  active-high
+        line   8:      unnamed       unused   input  active-high
+root@linaro-alip:~$
+root@linaro-alip:~$ # 看 SPI 控制器实际拿到的时钟
+mount -t debugfs none /sys/kernel/debug 2>/dev/null
+grep -i spi /sys/kernel/debug/clk/clk_summary
+          sclk_fspi1_x2              0       0        0        396000000   0          0     50000      N            deviceless                      no_connection_id
+          sclk_fspi_x2               0       0        0        148500000   0          0     50000      N            deviceless                      no_connection_id
+             aclk_spinlock           0       0        0        396000000   0          0     50000      N               deviceless                      no_connection_id
+                hclk_fspi1           0       0        0        198000000   0          0     50000      N                  deviceless                      no_connection_id
+                hclk_fspi            0       0        0        198000000   0          0     50000      N                  deviceless                      no_connection_id
+             clk_spi4                0       0        0        198000000   0          0     50000      N               deviceless                      no_connection_id
+             clk_spi3                1       1        0        198000000   0          0     50000      Y               2ad20000.spi                    spiclk
+             clk_spi2                0       0        0        198000000   0          0     50000      N               deviceless                      no_connection_id
+             clk_spi1                0       0        0        198000000   0          0     50000      N               deviceless                      no_connection_id
+             clk_spi0                0       0        0        198000000   0          0     50000      N               deviceless                      no_connection_id
+                pclk_spi4            0       0        0        100000000   0          0     50000      N                  deviceless                      no_connection_id
+                pclk_spi3            1       1        0        100000000   0          0     50000      Y                  2ad20000.spi                    apb_pclk
+                pclk_spi2            0       0        0        100000000   0          0     50000      N                  deviceless                      no_connection_id
+                pclk_spi1            0       0        0        100000000   0          0     50000      N                  deviceless                      no_connection_id
+                pclk_spi0            0       0        0        100000000   0          0     50000      N                  deviceless                      no_connection_id
+root@linaro-alip:~$
+
+
+root@linaro-alip:~$ uname -a
+Linux linaro-alip 6.1.118 #13 SMP Mon Jul 13 18:14:33 CST 2026 aarch64 aarch64 aarch64 GNU/Linux
+root@linaro-alip:~$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="22.04"
+VERSION="22.04.5 LTS (Jammy Jellyfish)"
+VERSION_CODENAME=jammy
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=jammy
+root@linaro-alip:~$
+
+
+
+
+RK3576J
+Kimi: 时钟的疑点可以排除了：数据手册和内核信息完全对上了。先把这组引脚的确切定义给你（RK3576 数据手册的 pinmux 表）：
+
+| SPI3_M0 信号 | GPIO | gpiochip/line |
+|---|---|---|
+| SPI3_CLK_M0 | GPIO3_A0 | gpiochip3 line 0 |
+| **SPI3_MOSI_M0** | GPIO3_A1 | **gpiochip3 line 1** |
+| **SPI3_MISO_M0** | GPIO3_A2 | **gpiochip3 line 2** |
+| SPI3_CSN0_M0 | GPIO3_A3 | gpiochip3 line 3 |
+| SPI3_CSN1_M0 | GPIO2_D7 | gpiochip2 line 31 |
+
+注意 **MISO/MOSI 是 A2/A1 这一对**——你之前的回环测试短接的是哪两个脚？如果短错成别的组合（比如把 CLK 和 MISO 短了），现象就是现在这样的全 0。这很有可能就是之前回环失败的直接原因。
+
+**请重新做一次回环：短接 GPIO3_A1 和 GPIO3_A2（即 gpiochip3 的 line1 和 line2）**，然后：
+
+```bash
+./spidev_test -D /dev/spidev3.0 -v
+```
+
+- **能回显** → 一切正常，接下来接 Flash 即可（CS 用 GPIO3_A3 或 GPIO2_D7，记得先确认你的排针/杜邦线连的是哪几个脚）。
+- **仍全 0** → 短接的物理位置不对（这几个脚没引到你以为的地方），用万用表跟着刚才的 gpio toggle 法逐脚定位。
+
+另外一个要警惕的点：这组脚的原生功能是 **VI_CIF（摄像头并行接口）**——MOSI 那个脚默认还是 `VI_CIF_VSYNC` 的 ball。如果你的板子上装了摄像头或者这批脚被板厂接到别的功能上，SPI3 就用不了。查一下你的板子是不是 **Forlinx OK3576-C** 这类平台，或者直接把板卡型号/丝印告诉我，我帮你对着原理图确认这组脚到底引到哪个排针。
+
+先做正确的 A1↔A2 短接回环，把结果贴出来。
+User: root@linaro-alip:~$ ./spidev_test -D /dev/spidev3.0 -v
+spi mode: 0x0
+bits per word: 8
+max speed: 500000 Hz (500 kHz)
+TX | FF FF FF FF FF FF 40 00 00 00 00 95 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF F0 0D  |......@.........................|
+RX | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  |................................|
+root@linaro-alip:~$
+Kimi: 如果这次确实是短接的 **A1（MOSI）↔ A2（MISO）**，那结论就硬了：**软件栈全部正常，但这组信号没出现在你短接的位置**。到此为止软件层面已经排查穷尽：
+
+- ✅ 驱动 probe 成功（`rockchip-spi 2ad20000.spi probed`）
+- ✅ 时钟使能（clk_spi3 = 198 MHz，pclk = 100 MHz）
+- ✅ 引脚复用正确（A0~A3、GPIO2_D7 全部 mux 到 spi3 功能）
+- ✅ spidev 节点工作，ioctl 正常返回
+- ❌ 短接 MOSI/MISO 数据不回显 → 引脚上没有信号
+
+只剩一个可能：**SPI3 的这组引脚根本没引到你短接的位置**（排针上没有，或被引到了别处/被别的器件占用）。别再猜了，做下面两件事中的一个：
+
+**方案 A：万用表 + GPIO 翻转，找出这组脚连到哪**
+
+```bash
+# 保持 GPIO3_A1 输出高电平（命令会阻塞，开另一个终端或先 &）
+gpioset gpiochip3 1=1
+```
+
+然后用万用表电压档在扩展头**每一个候选引脚**上量。测完确认一下 mux 真的切了：
+
+```bash
+cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins | grep "pin 97"
+```
+
+应该显示 `function gpio`。如果排针上没有任何一个脚跟随变化 → 这组脚没引出，SPI3 在你这块板上用不了。
+
+再依次试 `gpiochip3 2=1`（A2）、`gpiochip3 0=1`（A0）、`gpiochip2 31=1`（CSN1），把每个脚对应的排针位置记下来。
+
+**方案 B：示波器/逻辑分析仪（最快）**
+
+探头点在 GPIO3_A0~A2 上，跑一次 spidev_test：有 SCLK/MOSI 波形 → 信号在 SoC 引脚处是好的，问题是板级走线；没波形 → 回头查 DTB/pinctrl。
+
+**另外，板卡型号请一定告诉我**——RK3576J 这个平台常见的有 Forlinx OK3576-C、Rockchip 官方 EVB、以及各厂核心板。有型号我直接帮你查这组脚的走线；有原理图更好，一眼的事。如果你这块是定制板，就问硬件工程师：**SPI3（GPIO3_A0~A3）引到哪个连接器了**。
+
+我判断大概率的结果是：这批引脚被板厂留作他用（这组脚和摄像头 VI_CIF、UART3 复用），SPI3 没出到排针。那样的话别在 SPI3 上耗了——`clk_summary` 里还能看到 `clk_spi0/1/2/4` 五路 SPI 控制器，看看 SPI0/SPI1 是不是引出来了，或者确认下板载 Boot Flash 用的是哪路总线，换一路有引脚的再做 Flash 读写。
+User: 哦， 那大概没有接
+Kimi: 嗯，大概率就是这个结论了——驱动、时钟、引脚复用全都正常，唯独短接不回显，那剩下的解释就是这组信号根本没出到你能碰到的位置（定制板上这批脚经常被留给摄像头/UART 复用功能，或者被板厂直接空着）。
+
+接下来给你两条实际的路：
+
+**1. 换一路有引出的 SPI**
+
+`clk_summary` 里能看到有 spi0~spi4 五路控制器，先看看 DTB 里哪几路是使能的、引脚在哪：
+
+```bash
+# 看哪些 SPI 节点 status = okay
+for d in /sys/firmware/devicetree/base/*spi*; do
+  echo "$d: $(cat $d/status 2>/dev/null)"
+done
+
+# 对使能的那路，查它的 pinctrl 占了哪些脚
+cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins
+```
+
+然后用同样的 gpio toggle 法（`gpioset gpiochipX N=1` + 万用表）确认哪路真正引到了排针。注意有些总线可能被板载器件占了——`clk_summary` 里 `hclk_fspi`/`fspi` 那几路是 Nand/Nor 启动 Flash 专用的，一般不动它；重点看 spi0/spi1/spi2/spi4。
+
+**2. 找硬件确认**
+
+如果你有原理图或能问硬件工程师，直接问一句"SPI0~4 哪些引到连接器了"，比软件摸排快得多。
+
+**顺带把这个排查看完的价值总结一下**（这套流程以后排查别的总线也通用）：
+
+1. `dmesg` 确认驱动 probe → 排除了驱动层
+2. `clk_summary` 确认时钟使能、速率正常 → 排除了时钟配置
+3. `pinmux-pins` 确认引脚 mux 状态 → 排除了引脚复用
+4. 回环测试定位到物理层 → 板上走线问题
+
+换好总线之后，之前编译好的 `spidev_test` 直接改 `-D /dev/spidevX.0` 就能用，Flash 那边记得 WP#/HOLD# 上拉。有进展再贴出来。

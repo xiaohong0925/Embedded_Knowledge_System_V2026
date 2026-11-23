@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPI / I2C / QSPI / OSPI：信号线对比</title>
+<style>
+  :root {
+    --fg:#1f2937; --dim:#6b7280; --line:#d1d5db; --band:rgba(100,116,139,.07);
+    --sclk:#7c3aed; --mosi:#2563eb; --miso:#059669; --cs:#dc2626;
+    --io:#0d9488; --sda:#d97706; --scl:#92400e; --vdd:#dc2626; --box:#ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg:#e5e7eb; --dim:#9ca3af; --line:#4b5563; --band:rgba(148,163,184,.08);
+      --sclk:#c084fc; --mosi:#60a5fa; --miso:#34d399; --cs:#f87171;
+      --io:#2dd4bf; --sda:#fbbf24; --scl:#f59e0b; --vdd:#f87171; --box:#1f2937;
+    }
+  }
+  html,body{margin:0;padding:0;background:transparent;}
+  body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--fg);}
+  svg text{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+</style>
+</head>
+<body>
+<svg id="svg" viewBox="0 0 1000 810" width="100%" role="img" aria-label="SPI I2C QSPI OSPI 接线对比图"></svg>
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var C = getComputedStyle(document.documentElement);
+  function col(n) { return C.getPropertyValue(n).trim(); }
+  var svg = document.getElementById('svg');
+
+  function el(tag, attrs, parent) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  function txt(x, y, s, o) {
+    o = o || {};
+    var t = el('text', { x: x, y: y, 'font-size': o.size || 12, fill: o.fill || col('--fg'),
+      'text-anchor': o.anchor || 'start', 'font-weight': o.weight || 'normal' });
+    t.textContent = s;
+    return t;
+  }
+
+  var defs = el('defs', {});
+  [['am', 'M0,0 L10,5 L0,10 z'], ['am2', 'M10,0 L0,5 L10,10 z']].forEach(function (d) {
+    var m = el('marker', { id: d[0], viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, defs);
+    el('path', { d: d[1], fill: col('--dim') }, m);
+  });
+
+  var W = { x1: 300, x2: 720 };
+  function wire(y, color) {
+    el('line', { x1: W.x1, y1: y, x2: W.x2, y2: y, stroke: color, 'stroke-width': 2.2 });
+  }
+  function arrow(y, dir) {
+    var a = el('line', { y1: y, y2: y, stroke: 'none' });
+    if (dir === 'ms') { a.setAttribute('x1', W.x1 + 6); a.setAttribute('x2', W.x2 - 8); a.setAttribute('marker-end', 'url(#am)'); }
+    else { a.setAttribute('x1', W.x2 - 6); a.setAttribute('x2', W.x1 + 8); a.setAttribute('marker-end', 'url(#am2)'); }
+  }
+  function dblArrow(y) {
+    el('line', { x1: W.x1 + 8, y1: y, x2: W.x2 - 10, y2: y, stroke: 'none', 'marker-end': 'url(#am)' });
+    el('line', { x1: W.x2 - 8, y1: y, x2: W.x1 + 10, y2: y, stroke: 'none', 'marker-end': 'url(#am2)' });
+  }
+  function masterBox(cy, label) {
+    el('rect', { x: 168, y: cy - 32, width: 110, height: 64, rx: 8, fill: col('--box'), stroke: col('--line'), 'stroke-width': 1.5 });
+    txt(223, cy - 4, label, { anchor: 'middle', weight: 700, size: 13 });
+    txt(223, cy + 15, '主机 SoC', { anchor: 'middle', size: 10, fill: col('--dim') });
+  }
+  function slaveBox(x, cy, w, label, sub) {
+    el('rect', { x: x, y: cy - 26, width: w, height: 52, rx: 8, fill: col('--box'), stroke: col('--line'), 'stroke-width': 1.5 });
+    txt(x + w / 2, cy - 2, label, { anchor: 'middle', weight: 700, size: 12 });
+    txt(x + w / 2, cy + 15, sub, { anchor: 'middle', size: 9.5, fill: col('--dim') });
+  }
+  function laneBadge(x, y, n) {
+    el('rect', { x: x, y: y, width: 84, height: 25, rx: 12, fill: col('--band'), stroke: col('--line'), 'stroke-width': 1 });
+    txt(x + 42, y + 16.5, '共 ' + n + ' 根', { anchor: 'middle', size: 11, weight: 700 });
+  }
+  function band(y, h, title, tag) {
+    el('rect', { x: 10, y: y, width: 980, height: h, rx: 12, fill: col('--band') });
+    txt(28, y + 26, title, { size: 17, weight: 800 });
+    txt(28, y + h - 12, tag, { size: 10.5, fill: col('--dim') });
+  }
+  function xyzBar(y, stages) {
+    var x = 300, bw = 130;
+    stages.forEach(function (s, i) {
+      el('rect', { x: x + i * (bw + 6), y: y, width: bw, height: 22, rx: 5, fill: 'none', stroke: col('--line'), 'stroke-width': 1 });
+      txt(x + i * (bw + 6) + bw / 2, y + 15, s, { anchor: 'middle', size: 10.5 });
+    });
+  }
+  function clkGlyph(x, y, color) {
+    el('path', { d: 'M0,0 h6 v-8 h6 v8 h6 v-8 h6 v8 h6', transform: 'translate(' + x + ',' + y + ')', fill: 'none', stroke: color, 'stroke-width': 2 });
+  }
+  // I2C 上拉电阻：VDD 横轨 + 电阻符号
+  function pullup(x, yRail, yLine) {
+    el('line', { x1: x - 20, y1: yRail, x2: x + 30, y2: yRail, stroke: col('--vdd'), 'stroke-width': 2 });
+    txt(x + 34, yRail + 4, 'VDD', { size: 10, fill: col('--vdd') });
+    var mid = (yRail + yLine) / 2;
+    el('polyline', { points: (x) + ',' + yRail + ' ' + (x + 7) + ',' + (mid - 8) + ' ' + (x - 7) + ',' + mid + ' ' + (x + 7) + ',' + (mid + 8) + ' ' + x + ',' + yLine,
+      fill: 'none', stroke: col('--fg'), 'stroke-width': 1.8 });
+  }
+
+  txt(500, 26, '四种接口的"线"差在哪里', { anchor: 'middle', size: 17, weight: 800 });
+  txt(500, 46, '左：主机 SoC　　右：从机器件　　箭头方向 = 信号驱动方　　双向线两端都有箭头', { anchor: 'middle', size: 11, fill: col('--dim') });
+
+  /* ============ SPI ============ */
+  band(58, 150, 'SPI', '全双工 · 主机供时钟 · 无 ACK · 每个从机单独一根 CS');
+  masterBox(133, 'SPI 控制器');
+  slaveBox(748, 133, 140, 'SPI Flash', '如 W25Q128');
+  var ys = [90, 120, 150, 180];
+  wire(ys[0], col('--sclk')); arrow(ys[0], 'ms'); clkGlyph(304, ys[0] - 6, col('--sclk'));
+  txt(352, ys[0] + 4, 'SCLK（仅主机输出，从机不协商频率）', { size: 11, fill: col('--sclk') });
+  wire(ys[1], col('--mosi')); arrow(ys[1], 'ms');
+  txt(352, ys[1] + 4, 'MOSI（主机→从机）', { size: 11, fill: col('--mosi') });
+  wire(ys[2], col('--miso')); arrow(ys[2], 'sm');
+  txt(352, ys[2] + 4, 'MISO（从机→主机）', { size: 11, fill: col('--miso') });
+  wire(ys[3], col('--cs')); arrow(ys[3], 'ms');
+  txt(352, ys[3] + 4, 'CS（每从机一根，低有效）', { size: 11, fill: col('--cs') });
+  laneBadge(896, 66, '4');
+
+  /* ============ I2C ============ */
+  band(220, 150, 'I2C', '两线共享多器件（靠地址区分）· 每字节 ACK/NACK · 从机可拉伸 SCL');
+  masterBox(295, 'I2C 控制器');
+  var ySda = 262, yScl = 330;
+  pullup(350, 240, ySda);
+  pullup(655, 246, yScl);
+  el('line', { x1: 300, y1: ySda, x2: 690, y2: ySda, stroke: col('--sda'), 'stroke-width': 2.2 });
+  el('line', { x1: 300, y1: yScl, x2: 690, y2: yScl, stroke: col('--scl'), 'stroke-width': 2.2 });
+  dblArrow(ySda); dblArrow(yScl);
+  txt(452, ySda + 4, 'SDA（双向，开漏需上拉）', { size: 11, fill: col('--sda') });
+  txt(452, yScl + 4, 'SCL（主机驱动，可拉伸）', { size: 11, fill: col('--scl') });
+  txt(452, yScl + 22, '↑ SDA/SCL 各需一个上拉电阻', { size: 9.5, fill: col('--dim') });
+  slaveBox(690, ySda, 186, 'EEPROM', '地址 0x50');
+  slaveBox(690, yScl, 186, '温度传感器', '地址 0x51');
+  laneBadge(896, 228, '2');
+
+  /* ============ QSPI ============ */
+  band(382, 162, 'QSPI', '数据线由 2 根单向换成 4 根双向 · x-y-z 记录三阶段线数');
+  masterBox(458, 'QSPI 控制器');
+  slaveBox(748, 458, 140, 'QSPI Flash', '如 W25Q64JV…Q');
+  var qy = [];
+  for (var i = 0; i < 6; i++) qy.push(412 + i * 21);
+  wire(qy[0], col('--sclk')); arrow(qy[0], 'ms'); clkGlyph(304, qy[0] - 6, col('--sclk'));
+  txt(352, qy[0] + 4, 'SCLK', { size: 11, fill: col('--sclk') });
+  wire(qy[1], col('--cs')); arrow(qy[1], 'ms');
+  txt(352, qy[1] + 4, 'CS', { size: 11, fill: col('--cs') });
+  for (i = 0; i < 4; i++) { wire(qy[2 + i], col('--io')); dblArrow(qy[2 + i]); }
+  txt(410, qy[4] + 4, 'IO0～IO3（双向，取代 MOSI/MISO）', { size: 11, fill: col('--io') });
+  xyzBar(520, ['命令 1 线', '地址 1 线', '数据 4 线']);
+  txt(712, 536, 'x-y-z = 1-1-4', { size: 10.5, fill: col('--dim'), anchor: 'start' });
+  laneBadge(896, 390, '6');
+
+  /* ============ OSPI ============ */
+  band(556, 196, 'OSPI', '8 根双向数据线 · 常配 DDR 双倍速率 · 接口差异必须原理图真实连线');
+  masterBox(650, 'OSPI 控制器');
+  slaveBox(748, 650, 140, 'OSPI Flash', '如 MX66U1G45');
+  var oy = [];
+  for (i = 0; i < 10; i++) oy.push(586 + i * 13);
+  wire(oy[0], col('--sclk')); arrow(oy[0], 'ms'); clkGlyph(304, oy[0] - 6, col('--sclk'));
+  txt(352, oy[0] + 4, 'SCLK', { size: 11, fill: col('--sclk') });
+  wire(oy[1], col('--cs')); arrow(oy[1], 'ms');
+  txt(352, oy[1] + 4, 'CS', { size: 11, fill: col('--cs') });
+  for (i = 0; i < 8; i++) { wire(oy[2 + i], col('--io')); dblArrow(oy[2 + i]); }
+  txt(420, oy[6] + 4, 'IO0～IO7（8 根双向）', { size: 11, fill: col('--io') });
+  xyzBar(716, ['命令 1 线', '地址 8 线', '数据 8 线']);
+  txt(712, 732, 'x-y-z = 1-8-8（以器件手册为准）', { size: 10.5, fill: col('--dim'), anchor: 'start' });
+  laneBadge(896, 564, '10');
+
+  /* ============ 图例 ============ */
+  var ly = 772;
+  [['--sclk', 'SCLK'], ['--mosi', 'MOSI（主机→从机）'], ['--miso', 'MISO（从机→主机）'],
+   ['--cs', 'CS'], ['--io', 'IOx 双向'], ['--sda', 'I2C SDA'], ['--scl', 'I2C SCL']].forEach(function (it, i) {
+    var x = 26 + i * 138;
+    el('line', { x1: x, y1: ly - 4, x2: x + 22, y2: ly - 4, stroke: col(it[0]), 'stroke-width': 2.5 });
+    txt(x + 28, ly, it[1], { size: 10.5, fill: col('--dim') });
+  });
+  txt(500, 798, 'QSPI/OSPI 新增的数据线必须在原理图上真实连接才有意义——软件配置不能创造物理连线', { anchor: 'middle', size: 11, fill: col('--dim') });
+})();
+</script>
+</body>
+</html>

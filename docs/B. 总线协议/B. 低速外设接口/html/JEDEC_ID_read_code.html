@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贯穿实例：JEDEC ID 读取（0x9F）32 拍事务</title>
+<style>
+  :root {
+    --fg: #1f2937;
+    --dim: #6b7280;
+    --wire: #374151;
+    --cs: #b91c1c;
+    --clk: #6d28d9;
+    --mosi: #2563eb;
+    --miso: #059669;
+    --accent: #d97706;
+    --bracket: #9ca3af;
+    --hl: rgba(217, 119, 6, 0.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e5e7eb;
+      --dim: #9ca3af;
+      --wire: #d1d5db;
+      --cs: #f87171;
+      --clk: #c084fc;
+      --mosi: #60a5fa;
+      --miso: #34d399;
+      --accent: #fbbf24;
+      --bracket: #6b7280;
+      --hl: rgba(251, 191, 36, 0.10);
+    }
+  }
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  svg text { font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 980 470" width="100%" role="img" aria-label="JEDEC ID 读取事务波形图">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--bracket)"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="490" y="24" text-anchor="middle" font-size="15" font-weight="600" fill="var(--fg)">
+    贯穿实例：0x9F 读 JEDEC ID —— 32 拍全双工事务
+  </text>
+  <text x="490" y="44" text-anchor="middle" font-size="11.5" fill="var(--dim)">
+    RK3568 SPI1 CS0 · W25Q128JV-IQ/JQ · Mode 0 · 8 位 · MSB-first · 低有效 CS · 1 MHz 请求
+  </text>
+
+  <!-- 阶段括号：命令 / 响应 -->
+  <line x1="96" y1="72" x2="266" y2="72" stroke="var(--bracket)" stroke-width="1.2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="181" y="66" text-anchor="middle" font-size="11.5" fill="var(--fg)">命令阶段 · 8 拍</text>
+  <line x1="272" y1="72" x2="788" y2="72" stroke="var(--bracket)" stroke-width="1.2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="530" y="66" text-anchor="middle" font-size="11.5" fill="var(--fg)">响应阶段 · 24 拍</text>
+
+  <!-- 有效判据高亮（RX[1]~RX[3]） -->
+  <rect x="266" y="282" width="528" height="46" fill="var(--hl)" rx="4"/>
+
+  <!-- 字节分隔虚线 -->
+  <g stroke="var(--bracket)" stroke-width="1" stroke-dasharray="4 4" opacity="0.6">
+    <line x1="90"  y1="80" x2="90"  y2="345"/>
+    <line x1="266" y1="80" x2="266" y2="345"/>
+    <line x1="442" y1="80" x2="442" y2="345"/>
+    <line x1="618" y1="80" x2="618" y2="345"/>
+    <line x1="794" y1="80" x2="794" y2="345"/>
+  </g>
+
+  <!-- ===== CS（低有效）===== -->
+  <text x="70" y="112" text-anchor="end" font-size="12" font-weight="600" fill="var(--cs)">CS</text>
+  <path d="M 30 100 L 90 100 L 90 128 L 794 128 L 794 100 L 860 100"
+        fill="none" stroke="var(--cs)" stroke-width="2"/>
+  <text x="440" y="121" text-anchor="middle" font-size="10" fill="var(--cs)">选中（低有效，覆盖全部 32 拍）</text>
+
+  <!-- ===== SCLK（Mode 0：空闲低，上升沿采样）===== -->
+  <text x="70" y="182" text-anchor="end" font-size="12" font-weight="600" fill="var(--clk)">SCLK</text>
+  <!-- 空闲段 -->
+  <line x1="30" y1="196" x2="90" y2="196" stroke="var(--clk)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+  <line x1="794" y1="196" x2="860" y2="196" stroke="var(--clk)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+  <!-- 32 拍：每拍低半格高半格，上升沿在中点（采样点） -->
+  <path id="clkpath" fill="none" stroke="var(--clk)" stroke-width="1.8"/>
+  <script type="text/plain"></script>
+  <!-- 采样点标注（第一拍） -->
+  <path d="M 101 158 L 107 170 L 95 170 z" fill="var(--accent)"/>
+  <text x="101" y="152" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--accent)">上升沿采样</text>
+
+  <!-- ===== MOSI（主机发）===== -->
+  <text x="70" y="262" text-anchor="end" font-size="12" font-weight="600" fill="var(--mosi)">MOSI</text>
+  <path id="mosipath" fill="none" stroke="var(--mosi)" stroke-width="2"/>
+  <!-- MOSI 字节标签 -->
+  <g font-size="12" font-weight="600" fill="var(--mosi)" text-anchor="middle">
+    <text x="178" y="258">9F</text>
+    <text x="354" y="258">00</text>
+    <text x="530" y="258">00</text>
+    <text x="706" y="258">00</text>
+  </g>
+  <text x="440" y="276" text-anchor="middle" font-size="10.5" fill="var(--dim)">命令 + 空拍（只为继续提供时钟）</text>
+
+  <!-- ===== MISO（从机答）===== -->
+  <text x="70" y="352" text-anchor="end" font-size="12" font-weight="600" fill="var(--miso)">MISO</text>
+  <path id="misopath" fill="none" stroke="var(--miso)" stroke-width="2"/>
+  <!-- MISO 字节标签 -->
+  <g font-size="12" text-anchor="middle">
+    <text x="178" y="348" fill="var(--dim)" font-weight="600">??</text>
+    <text x="354" y="348" fill="var(--miso)" font-weight="700">EF</text>
+    <text x="530" y="348" fill="var(--miso)" font-weight="700">40</text>
+    <text x="706" y="348" fill="var(--miso)" font-weight="700">18</text>
+  </g>
+  <g font-size="10" fill="var(--dim)" text-anchor="middle">
+    <text x="178" y="366">RX[0]</text>
+    <text x="354" y="366">RX[1]</text>
+    <text x="530" y="366">RX[2]</text>
+    <text x="706" y="366">RX[3]</text>
+  </g>
+  <!-- 有效判据标注 -->
+  <line x1="280" y1="386" x2="780" y2="386" stroke="var(--accent)" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="530" y="402" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--accent)">
+    有效判据：RX[1]～RX[3] ＝ EF 40 18（仅 IQ/JQ 后缀；RX[0] 不参与判断）
+  </text>
+
+  <!-- 底部说明 -->
+  <g font-size="10.5" fill="var(--dim)">
+    <text x="90" y="438">位序：每字节 MSB-first（第 1 拍是 bit7）。SCLK 每拍中点上升沿采样，边沿处数据保持有效。</text>
+    <text x="90" y="456">MISO 前 8 拍为命令阶段回读值，手册不作保证，故标 ?? —— 退出码 0 且 RX[1]～RX[3] 匹配，才是正常基线。</text>
+  </g>
+
+  <script>
+    // 生成 SCLK / MOSI / MISO 波形（32 拍，每拍宽 22px，x 从 90 起）
+    (function () {
+      var X0 = 90, W = 22, N = 32;
+      var clkHighY = 172, clkLowY = 196;      // SCLK：高/低电平 y
+      var mosiHighY = 236, mosiLowY = 260;    // MOSI
+      var misoHighY = 316, misoLowY = 340;    // MISO
+
+      var mosiBits = [1,0,0,1,1,1,1,1].concat(new Array(24).fill(0)); // 9F 00 00 00
+      var misoBits = null; // 前 8 拍 ?? ，后 24 拍 EF 40 18
+      var ef = [1,1,1,0,1,1,1,1], b40 = [0,1,0,0,0,0,0,0], b18 = [0,0,0,1,1,0,0,0];
+      misoBits = new Array(8).fill(null).concat(ef, b40, b18);
+
+      function lvl(bits, i, highY, lowY) { return bits[i] ? highY : lowY; }
+
+      // SCLK：空闲低 → 每拍低半格（X..X+11）高半格（X+11..X+22）
+      var d = 'M ' + X0 + ' ' + clkLowY;
+      for (var i = 0; i < N; i++) {
+        var x = X0 + i * W;
+        d += ' L ' + (x + W / 2) + ' ' + clkLowY + ' L ' + (x + W / 2) + ' ' + clkHighY +
+             ' L ' + (x + W) + ' ' + clkHighY + ' L ' + (x + W) + ' ' + clkLowY;
+      }
+      document.getElementById('clkpath').setAttribute('d', d);
+
+      // MOSI：每位从拍起点保持电平，边界处跳变（MSB-first）
+      var m = 'M ' + X0 + ' ' + lvl(mosiBits, 0, mosiHighY, mosiLowY);
+      for (i = 0; i < N; i++) {
+        x = X0 + i * W;
+        var y = lvl(mosiBits, i, mosiHighY, mosiLowY);
+        m += ' L ' + x + ' ' + y + ' L ' + (x + W) + ' ' + y;
+        if (i + 1 < N && mosiBits[i + 1] !== mosiBits[i]) {
+          m += ' L ' + (x + W) + ' ' + lvl(mosiBits, i + 1, mosiHighY, mosiLowY);
+        }
+      }
+      document.getElementById('mosipath').setAttribute('d', m);
+
+      // MISO：前 8 拍画成虚线中位 + ?；后 24 拍正常电平
+      var u = 'M ' + X0 + ' ' + ((misoHighY + misoLowY) / 2);
+      for (i = 0; i < 8; i++) {
+        u += ' L ' + (X0 + i * W + W / 2 - 3) + ' ' + ((misoHighY + misoLowY) / 2);
+        u += ' M ' + (X0 + i * W + W / 2 + 3) + ' ' + ((misoHighY + misoLowY) / 2);
+      }
+      u += ' L ' + (X0 + 8 * W) + ' ' + ((misoHighY + misoLowY) / 2);
+      u += ' L ' + (X0 + 8 * W) + ' ' + lvl(misoBits, 8, misoHighY, misoLowY);
+      for (i = 8; i < N; i++) {
+        x = X0 + i * W;
+        y = lvl(misoBits, i, misoHighY, misoLowY);
+        u += ' L ' + x + ' ' + y + ' L ' + (x + W) + ' ' + y;
+        if (i + 1 < N && misoBits[i + 1] !== misoBits[i]) {
+          u += ' L ' + (x + W) + ' ' + lvl(misoBits, i + 1, misoHighY, misoLowY);
+        }
+      }
+      var misoEl = document.getElementById('misopath');
+      misoEl.setAttribute('d', u);
+      misoEl.setAttribute('stroke-dasharray', 'none');
+      // 前 8 拍虚线：单独叠一层
+      var dashed = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      var dd = 'M ' + X0 + ' ' + ((misoHighY + misoLowY) / 2);
+      for (i = 0; i < 8; i++) {
+        dd += ' L ' + (X0 + i * W + W / 2 - 3) + ' ' + ((misoHighY + misoLowY) / 2);
+        dd += ' M ' + (X0 + i * W + W / 2 + 3) + ' ' + ((misoHighY + misoLowY) / 2);
+      }
+      dd += ' L ' + (X0 + 8 * W) + ' ' + ((misoHighY + misoLowY) / 2);
+      dashed.setAttribute('d', dd);
+      dashed.setAttribute('fill', 'none');
+      dashed.setAttribute('stroke', 'var(--dim)');
+      dashed.setAttribute('stroke-width', '1.5');
+      dashed.setAttribute('stroke-dasharray', '5 4');
+      document.querySelector('svg').appendChild(dashed);
+    })();
+  </script>
+</svg>
+</body>
+</html>

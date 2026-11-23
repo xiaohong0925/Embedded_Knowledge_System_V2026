@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build both redesigned B-B.4.4 pages for preview."""
+"""Build the official B-B.4.4 pages for preview without duplicating content."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from mkdocs.commands.build import build
 from mkdocs.config import load_config
 
 ROOT = Path(__file__).resolve().parents[2]
-CANDIDATES = ROOT / "evals" / "writing" / "runs" / "redesign-b-b-4-4"
+OFFICIAL_DIR = ROOT / "docs" / "B. 总线协议" / "B. 低速外设接口"
 PREVIEW_ROOT = ROOT / "evals" / "writing" / "preview"
 SITE = PREVIEW_ROOT / "site"
 TEMP_DOCS = ROOT / "docs" / "eval-preview"
@@ -21,6 +21,8 @@ LINK_RE = re.compile(r"(\[[^\]]*\]\()([^)]+)(\))")
 
 
 def rewrite_links(text: str) -> str:
+    text = re.sub(r'src="\.\./html/([^"]+)"', r'src="./\1"', text)
+
     def replace(match: re.Match) -> str:
         target = match.group(2).strip()
         if not target or target.startswith(("https://", "http://", "mailto:", "#")):
@@ -45,16 +47,17 @@ def main() -> None:
             ("B-B.4.4_SPI调试与选型.md", "index.md"),
             ("B-B.4.4_SPI调试与选型_selection.md", "selection.md"),
         ):
-            content = (CANDIDATES / source_name).read_text(encoding="utf-8")
+            content = (OFFICIAL_DIR / source_name).read_text(encoding="utf-8")
+            for asset_name in re.findall(r'src="\.\./html/([^"]+\.html)"', content):
+                shutil.copy2(OFFICIAL_DIR / "html" / asset_name, TEMP_DOCS / asset_name)
             (TEMP_DOCS / target_name).write_text(rewrite_links(content), encoding="utf-8")
-        shutil.copy2(CANDIDATES / "spi-debug-path.html", TEMP_DOCS / "spi-debug-path.html")
 
         config = load_config("mkdocs.yml")
         config["site_dir"] = str(SITE)
         config["strict"] = False
         config["nav"].append(
             {
-                "【评测预览】B-B.4.4 重设计": [
+                "【网页预览】B-B.4.4 正式正文": [
                     {"第 1 页：正常基线与分层调试": "eval-preview/index.md"},
                     {"第 2 页：速率与接口选择": "eval-preview/selection.md"},
                 ]

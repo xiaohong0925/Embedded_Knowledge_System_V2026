@@ -1,335 +1,65 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SPI 调试路径与证据覆盖范围</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #f7f8fa;
-      --panel: #ffffff;
-      --text: #1c2530;
-      --muted: #5b6673;
-      --line: #a6b0bc;
-      --node: #ffffff;
-      --covered: #e8f2ff;
-      --accent: #2166a5;
-      --accent-text: #174f80;
-      --button: #ffffff;
-      --button-active: #2166a5;
-      --button-active-text: #ffffff;
-      --border: #d6dce3;
-      --note: #eef1f4;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #171b20;
-        --panel: #20262d;
-        --text: #edf1f5;
-        --muted: #b4bec9;
-        --line: #778492;
-        --node: #242b33;
-        --covered: #193b55;
-        --accent: #79b9ec;
-        --accent-text: #a8d4f5;
-        --button: #272f38;
-        --button-active: #79b9ec;
-        --button-active-text: #102638;
-        --border: #414b56;
-        --note: #252c34;
-      }
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 22px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
-      font-size: 15px;
-      line-height: 1.65;
-    }
-    main { max-width: 1160px; margin: 0 auto; }
-    h1 { margin: 0 0 6px; font-size: 23px; line-height: 1.35; }
-    h2 { margin: 0 0 5px; font-size: 18px; }
-    p { margin: 7px 0; }
-    .subtitle, .hint, .small { color: var(--muted); }
-    .subtitle { font-size: 14px; }
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 16px 0 12px;
-    }
-    button {
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      background: var(--button);
-      color: var(--text);
-      padding: 7px 13px;
-      font: inherit;
-      cursor: pointer;
-    }
-    button:hover { border-color: var(--accent); }
-    button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-    button[aria-pressed="true"] {
-      background: var(--button-active);
-      border-color: var(--button-active);
-      color: var(--button-active-text);
-    }
-    .diagram {
-      margin: 0;
-      padding: 8px 10px 4px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--panel);
-    }
-    svg { display: block; width: 100%; height: auto; min-height: 310px; }
-    svg text { fill: currentColor; font-family: inherit; }
-    .node .box {
-      fill: var(--node);
-      stroke: var(--line);
-      stroke-width: 1.5;
-    }
-    .node .title { font-size: 16px; font-weight: 650; text-anchor: middle; }
-    .node .detail { fill: var(--muted); font-size: 12px; text-anchor: middle; }
-    .node { transition: opacity 150ms ease; }
-    .node.is-dim { opacity: 0.25; }
-    .node.is-covered .box { fill: var(--covered); stroke: var(--accent); stroke-width: 2.5; }
-    .flow {
-      fill: none;
-      stroke: var(--line);
-      stroke-width: 2;
-      marker-end: url(#arrow);
-      transition: opacity 150ms ease;
-    }
-    .flow.is-dim { opacity: 0.15; }
-    .flow.is-covered { stroke: var(--accent); stroke-width: 3; }
-    .loop { stroke-dasharray: 7 5; }
-    .edge-label { fill: var(--muted); font-size: 12px; text-anchor: middle; }
-    .edge-label.is-dim { opacity: 0.25; }
-    .edge-label.is-covered { fill: var(--accent-text); font-weight: 650; }
-    .legend { fill: var(--muted); font-size: 12px; }
-    #evidence-panel {
-      margin-top: 13px;
-      padding: 13px 16px;
-      border-left: 4px solid var(--accent);
-      border-radius: 6px;
-      background: var(--panel);
-    }
-    #evidence-panel p { margin: 4px 0; }
-    .label { font-weight: 650; color: var(--accent-text); }
-    details {
-      margin-top: 13px;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--note);
-    }
-    summary { cursor: pointer; font-weight: 650; }
-    details ul { margin: 9px 0 2px; padding-left: 21px; }
-    details li { margin: 6px 0; }
-    noscript p { padding: 10px; background: var(--note); }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPI 调试输出与下一步检查</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f8fa;--panel:#fff;--text:#1d2733;--muted:#5b6875;--border:#d4dce4;--accent:#236ca4;--soft:#eaf3fb;--button:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#171c21;--panel:#222a31;--text:#edf2f6;--muted:#b4c0ca;--border:#45515c;--accent:#83c1ee;--soft:#1b3a4e;--button:#29343d}}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1000px;margin:auto}h1{font-size:22px;margin:0 0 5px}h2{font-size:18px;margin:0 0 6px}p{margin:6px 0}.muted{color:var(--muted)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button{border:1px solid var(--border);border-radius:7px;background:var(--button);color:var(--text);padding:7px 11px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px 16px}svg{display:block;width:100%;height:auto;margin-top:10px}svg text{font-family:inherit;fill:var(--text)}.box{fill:var(--panel);stroke:var(--border);stroke-width:2}.active{fill:var(--soft);stroke:var(--accent);stroke-width:3}.arrow{stroke:var(--accent);stroke-width:2.5;fill:none;marker-end:url(#arrow)}.label{font-weight:650;color:var(--accent)}#panel{margin-top:12px;border-left:4px solid var(--accent)}code{background:var(--soft);padding:2px 5px;border-radius:4px}details{margin-top:12px}summary{cursor:pointer;font-weight:650}li{margin:6px 0}
+</style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>一笔 JEDEC ID 读取经过哪里，证据就停在哪里</h1>
-    <p class="subtitle">RK3568 SPI1 · W25Q128JV-IQ/JQ · Mode 0 · 8 位 · MSB-first · 低有效 CS · 1 MHz</p>
-    <p class="subtitle">TX = 9F 00 00 00；有效 RX = ?? EF 40 18；CS 连续覆盖 32 拍。?? 不参与身份判断。</p>
-  </header>
-
-  <p class="hint">选择一种证据，高亮它实际覆盖的路径。高亮表示“这项观察能支持到哪里”，不表示当前板卡已经实测通过。</p>
-  <nav class="toolbar" aria-label="选择证据类型">
-    <button type="button" data-evidence="normal" aria-pressed="true">正常 ID</button>
-    <button type="button" data-evidence="internal" aria-pressed="false">内部回环</button>
-    <button type="button" data-evidence="external" aria-pressed="false">外部短接</button>
-    <button type="button" data-evidence="digital" aria-pressed="false">数字帧</button>
-    <button type="button" data-evidence="analog" aria-pressed="false">模拟波形</button>
-  </nav>
-
-  <figure class="diagram">
-    <svg viewBox="0 0 1160 455" role="img" aria-labelledby="svg-title svg-desc">
-      <title id="svg-title">SPI 用户命令到 Flash 再返回用户结果的完整路径</title>
-      <desc id="svg-desc">用户命令经 spidev、SPI Core、RK3568 控制器、引脚接线到 Flash；Flash 经 MISO、接收缓冲区和用户结果返回。点击上方按钮可查看每种证据的覆盖范围，下方有完整文字版。</desc>
-      <defs>
-        <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
-          <path d="M0,0 L8,4 L0,8 Z" fill="context-stroke"></path>
-        </marker>
-      </defs>
-
-      <g class="node is-covered" data-node="user">
-        <rect class="box" x="20" y="70" width="170" height="110" rx="9"></rect>
-        <text class="title" x="105" y="105">用户命令 / spidev</text>
-        <text class="detail" x="105" y="132">open · ioctl</text>
-        <text class="detail" x="105" y="153">TX = 9F 00 00 00</text>
-      </g>
-      <g class="node is-covered" data-node="core">
-        <rect class="box" x="235" y="70" width="130" height="110" rx="9"></rect>
-        <text class="title" x="300" y="112">SPI Core</text>
-        <text class="detail" x="300" y="140">事务组织与调度</text>
-      </g>
-      <g class="node is-covered" data-node="controller">
-        <rect class="box" x="410" y="70" width="170" height="110" rx="9"></rect>
-        <text class="title" x="495" y="105">RK3568 控制器</text>
-        <text class="detail" x="495" y="132">模式 · 分频 · 移位</text>
-        <text class="detail" x="495" y="153">SPI1 / CS0</text>
-      </g>
-      <g class="node is-covered" data-node="pins">
-        <rect class="box" x="630" y="70" width="190" height="110" rx="9"></rect>
-        <text class="title" x="725" y="105">引脚与接线</text>
-        <text class="detail" x="725" y="132">CS · SCLK · MOSI</text>
-        <text class="detail" x="725" y="153">探针 / 外部短接点</text>
-      </g>
-      <g class="node is-covered" data-node="flash">
-        <rect class="box" x="890" y="70" width="190" height="110" rx="9"></rect>
-        <text class="title" x="985" y="105">W25Q128JV Flash</text>
-        <text class="detail" x="985" y="132">识别 0x9F</text>
-        <text class="detail" x="985" y="153">DO 输出 EF 40 18</text>
-      </g>
-
-      <g class="node is-covered" data-node="rx">
-        <rect class="box" x="500" y="295" width="250" height="105" rx="9"></rect>
-        <text class="title" x="625" y="329">MISO / 接收缓冲区</text>
-        <text class="detail" x="625" y="356">控制器采样并写入 RX</text>
-        <text class="detail" x="625" y="377">?? EF 40 18</text>
-      </g>
-      <g class="node is-covered" data-node="result">
-        <rect class="box" x="55" y="295" width="230" height="105" rx="9"></rect>
-        <text class="title" x="170" y="329">用户结果</text>
-        <text class="detail" x="170" y="356">工具返回 + RX[1]～RX[3]</text>
-        <text class="detail" x="170" y="377">两个判据都要成立</text>
-      </g>
-
-      <path class="flow is-covered" data-link="user-core" d="M190 125 H235"></path>
-      <path class="flow is-covered" data-link="core-controller" d="M365 125 H410"></path>
-      <path class="flow is-covered" data-link="controller-pins" d="M580 125 H630"></path>
-      <path class="flow is-covered" data-link="pins-flash" d="M820 125 H890"></path>
-      <path class="flow is-covered" data-link="flash-rx" d="M985 180 V240 H750 V295"></path>
-      <path class="flow is-covered" data-link="rx-result" d="M500 347 H285"></path>
-      <path class="flow loop is-dim" data-link="internal-loop" d="M495 180 V258 H625 V295"></path>
-      <path class="flow loop is-dim" data-link="external-loop" d="M725 180 V272 H675 V295"></path>
-
-      <text class="edge-label is-covered" data-label="forward" x="705" y="54">CS / SCLK / MOSI：9F 00 00 00</text>
-      <text class="edge-label is-covered" data-label="return" x="884" y="229">MISO：EF 40 18</text>
-      <text class="edge-label is-dim" data-label="internal" x="519" y="249">控制器内部回环</text>
-      <text class="edge-label is-dim" data-label="external" x="775" y="270">短接点回送</text>
-      <text class="legend" x="20" y="437">实线：正常事务路径　　虚线：按需启用的回环路径　　蓝色：当前证据覆盖范围</text>
-    </svg>
-  </figure>
-
-  <section id="evidence-panel" aria-live="polite" aria-atomic="true">
-    <h2 id="evidence-title">正常 ID：本次端到端事务符合已知答案</h2>
-    <p><span class="label">覆盖：</span><span id="evidence-covers">用户命令、spidev、Core、控制器、外部收发路径、Flash 应答和用户结果。必须同时满足工具成功返回与 RX[1]～RX[3] = EF 40 18。</span></p>
-    <p><span class="label">不能覆盖：</span><span id="evidence-misses">长期稳定、其他速率、其他板卡、接收端模拟裕量，以及所有产品访问。</span></p>
-    <p><span class="label">下一转向：</span><span id="evidence-next">若 ID 不符，根据异常选择回环、数字帧或模拟波形；恢复任何临时状态后都要回到本项复测。</span></p>
-  </section>
-
-  <details>
-    <summary>文字兜底：五种证据的覆盖范围与盲区</summary>
-    <ul>
-      <li><strong>正常 ID：</strong>覆盖本次完整事务；不能证明长期稳定、其他速率或模拟裕量。</li>
-      <li><strong>内部回环：</strong>覆盖用户传输、Core 和控制器提供的内部回环路径；不经过外部引脚、接线、CS 和 Flash。失败时查控制器配置，成功而正常 ID 仍错时抓完整数字帧。</li>
-      <li><strong>外部短接：</strong>覆盖短接点以内的当前收发路径；不证明 Flash 应答，也不证明短接点之外或其他 CS、速率正常。结束后断电移除短接并复测正常 ID。</li>
-      <li><strong>数字帧：</strong>覆盖探针处的 CS、SCLK、MOSI、MISO 位流关系；不证明用户缓冲区交付或接收端模拟裕量。线上 ID 正确而用户结果错误时，回查软件长度、前导和偏移。</li>
-      <li><strong>模拟波形：</strong>覆盖探针处的电平门限、边沿和采样窗口；不证明命令、位序、帧边界或 ID 内容。数字帧与波形都正确而用户结果错误时，回查 RX 交付路径。</li>
-    </ul>
-  </details>
-  <noscript><p>当前未启用 JavaScript，按钮不会切换高亮；上方静态路径和“文字兜底”仍完整说明五种证据的范围。</p></noscript>
+<h1>SPI 调试不是固定清单，按当前输出选下一步</h1>
+<p class="muted">同一笔 JEDEC ID：TX = 9F 00 00 00；有效 ID = EF 40 18。点击你实际看到的结果。</p>
+<nav class="toolbar" aria-label="当前调试结果">
+<button data-case="tool" aria-pressed="false">spidev_test 不存在</button>
+<button data-case="node" aria-pressed="false">没有 /dev/spidev*</button>
+<button data-case="call" aria-pressed="false">open / ioctl 失败</button>
+<button data-case="zero" aria-pressed="true">RX 全 00／FF</button>
+<button data-case="wrong" aria-pressed="false">ID 错误或错位</button>
+<button data-case="good" aria-pressed="false">ID 正确</button>
+</nav>
+<section class="card">
+<svg viewBox="0 0 960 190" role="img" aria-label="从当前输出到下一项检查，再到不能下的结论">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="context-stroke"/></marker></defs>
+<rect class="box active" x="20" y="35" width="250" height="105" rx="9"/><rect class="box active" x="355" y="35" width="250" height="105" rx="9"/><rect class="box active" x="690" y="35" width="250" height="105" rx="9"/>
+<path class="arrow" d="M270 88H350"/><path class="arrow" d="M605 88H685"/>
+<text id="svg-input" x="145" y="75" text-anchor="middle" font-size="17" font-weight="650">RX 全 00／FF</text><text x="145" y="105" text-anchor="middle" font-size="13">当前观察</text>
+<text id="svg-next" x="480" y="75" text-anchor="middle" font-size="17" font-weight="650">连接、CS、pinmux、数字帧</text><text x="480" y="105" text-anchor="middle" font-size="13">下一项有区分度的检查</text>
+<text id="svg-stop" x="815" y="75" text-anchor="middle" font-size="17" font-weight="650">不能直接定根因</text><text x="815" y="105" text-anchor="middle" font-size="13">不能推出的结论</text>
+</svg>
+</section>
+<section id="panel" class="card" aria-live="polite">
+<h2 id="title">RX 全 00／FF：先确认测的是正确对象</h2>
+<p><span class="label">下一步：</span><span id="next">核对原理图、实际连接、CS 和 pinmux，再抓完整数字帧。</span></p>
+<p><span class="label">不能推断：</span><span id="stop">不能仅凭数值宣布 Flash 损坏、某根线固定电平或软件栈全部正常。</span></p>
+<p><span class="label">有用命令：</span><code id="command">dmesg | grep -i spi</code></p>
+</section>
+<details class="card"><summary>不看图时的完整分支</summary>
+<ul>
+<li><strong>工具不存在：</strong>先编译或安装匹配版本，尚未开始验证 Flash。</li>
+<li><strong>没有设备节点：</strong>查 DTS、控制器注册和驱动绑定。</li>
+<li><strong>调用失败：</strong>保留原始错误，查权限、节点、配置和绑定。</li>
+<li><strong>全 00／FF：</strong>先核对实际连接和完整帧，不把现象当根因。</li>
+<li><strong>ID 错误或错位：</strong>比较线上帧与用户 RX，区分采样、帧边界和软件偏移。</li>
+<li><strong>ID 正确：</strong>只建立当前事务基线，再按需做速率和产品验证。</li>
+</ul></details>
 </main>
-
 <script>
-(function () {
-  "use strict";
-
-  var evidence = {
-    normal: {
-      title: "正常 ID：本次端到端事务符合已知答案",
-      covers: "用户命令、spidev、Core、控制器、外部收发路径、Flash 应答和用户结果。必须同时满足工具成功返回与 RX[1]～RX[3] = EF 40 18。",
-      misses: "长期稳定、其他速率、其他板卡、接收端模拟裕量，以及所有产品访问。",
-      next: "若 ID 不符，根据异常选择回环、数字帧或模拟波形；恢复任何临时状态后都要回到本项复测。",
-      nodes: ["user", "core", "controller", "pins", "flash", "rx", "result"],
-      links: ["user-core", "core-controller", "controller-pins", "pins-flash", "flash-rx", "rx-result"],
-      labels: ["forward", "return"]
-    },
-    internal: {
-      title: "内部回环：检查控制器内部回送，不经过板级线路",
-      covers: "用户测试数据、spidev、SPI Core、RK3568 控制器提供的内部回环路径，以及 RX 比较结果。",
-      misses: "外部引脚、pinctrl 输出、焊接、连接线、外部 CS 和 Flash 的供电及应答。",
-      next: "若模式不支持、传输失败或比较失败，保留错误并检查控制器配置；若回环成功而正常 ID 仍错，转完整数字帧。",
-      nodes: ["user", "core", "controller", "rx", "result"],
-      links: ["user-core", "core-controller", "internal-loop", "rx-result"],
-      labels: ["internal"]
-    },
-    external: {
-      title: "外部短接：把已知 TX=RX 的证据扩展到短接点",
-      covers: "用户命令、spidev、Core、控制器外部收发路径，以及所选短接点以内的线路。短接位置改变，覆盖范围也随之改变。",
-      misses: "短接点之外的线路、Flash 是否收到命令或正确应答、其他 CS 和其他速率。",
-      next: "TX≠RX 时查短接点以内路径；TX=RX 而正常 ID 仍错时转数字帧或 Flash 侧检查。结束后断电移除短接并复测正常 ID。",
-      nodes: ["user", "core", "controller", "pins", "rx", "result"],
-      links: ["user-core", "core-controller", "controller-pins", "external-loop", "rx-result"],
-      labels: ["forward", "external"]
-    },
-    digital: {
-      title: "数字帧：核对探针处的 CS、时钟、命令和响应",
-      covers: "CS 是否连续覆盖 32 拍、Mode 0 采样关系、MOSI 的 9F 00 00 00，以及 MISO 有效位置的 EF 40 18。观察范围以探针位置为界。",
-      misses: "分析仪门限之外的模拟裕量、探针未覆盖的线段，以及内核 RX 缓冲区和用户结果是否正确。",
-      next: "MOSI 错则回查软件与控制器；CS 错则查片选与事务边界；MISO 不动则查供电、就绪和驱动权；线上正确而用户结果错则查软件偏移。",
-      nodes: ["pins", "flash"],
-      links: ["controller-pins", "pins-flash", "flash-rx"],
-      labels: ["forward", "return"]
-    },
-    analog: {
-      title: "模拟波形：检查接收端附近的电平与采样窗口",
-      covers: "探针处的 CS、SCLK、MOSI、MISO 电平门限、过冲与下冲、边沿形态，以及输出有效到采样的时间窗口。",
-      misses: "0x9F 命令是否正确、位序和 32 拍边界是否正确、EF 40 18 是否出现在有效位置，以及软件交付是否正确。",
-      next: "窗口不足时按实际超限项处理；模拟条件满足而数字帧仍错时回查协议与配置；两者都正确而用户结果错时回查 RX 交付路径。",
-      nodes: ["controller", "pins", "flash"],
-      links: ["controller-pins", "pins-flash", "flash-rx"],
-      labels: ["forward", "return"]
-    }
-  };
-
-  function setEvidence(name) {
-    var current = evidence[name];
-    if (!current) return;
-
-    document.querySelectorAll("[data-evidence]").forEach(function (button) {
-      button.setAttribute("aria-pressed", String(button.getAttribute("data-evidence") === name));
-    });
-
-    document.querySelectorAll("[data-node]").forEach(function (node) {
-      var covered = current.nodes.indexOf(node.getAttribute("data-node")) !== -1;
-      node.classList.toggle("is-covered", covered);
-      node.classList.toggle("is-dim", !covered);
-    });
-
-    document.querySelectorAll("[data-link]").forEach(function (link) {
-      var covered = current.links.indexOf(link.getAttribute("data-link")) !== -1;
-      link.classList.toggle("is-covered", covered);
-      link.classList.toggle("is-dim", !covered);
-    });
-
-    document.querySelectorAll("[data-label]").forEach(function (label) {
-      var covered = current.labels.indexOf(label.getAttribute("data-label")) !== -1;
-      label.classList.toggle("is-covered", covered);
-      label.classList.toggle("is-dim", !covered);
-    });
-
-    document.getElementById("evidence-title").textContent = current.title;
-    document.getElementById("evidence-covers").textContent = current.covers;
-    document.getElementById("evidence-misses").textContent = current.misses;
-    document.getElementById("evidence-next").textContent = current.next;
-  }
-
-  document.querySelectorAll("[data-evidence]").forEach(function (button) {
-    button.addEventListener("click", function () {
-      setEvidence(button.getAttribute("data-evidence"));
-    });
-  });
-}());
+const cases={
+tool:{input:'spidev_test 不存在',next:'编译或安装匹配工具',stop:'与 Flash 状态无关',title:'工具不存在：先解决用户态程序',detail:'从匹配源码树取得 spidev_test.c 并编译。',command:'gcc -Wall -O2 -o spidev_test spidev_test.c'},
+node:{input:'没有 /dev/spidev*',next:'DTS、注册、绑定',stop:'不能说 Flash 没上电',title:'没有设备节点：问题还在设备入口',detail:'检查控制器注册、DTS 子节点和驱动绑定。',command:'dmesg | grep -i spi'},
+call:{input:'open / ioctl 失败',next:'原始错误、权限、配置',stop:'不要先改接线',title:'调用失败：保留错误值，沿调用路径检查',detail:'节点存在也不代表每次调用都能完成。',command:'ls -l /dev/spidev*'},
+zero:{input:'RX 全 00／FF',next:'连接、CS、pinmux、数字帧',stop:'不能直接定根因',title:'RX 全 00／FF：先确认测的是正确对象',detail:'核对原理图、实际连接、CS 和 pinmux，再抓完整数字帧。',command:'dmesg | grep -i spi'},
+wrong:{input:'ID 错误或错位',next:'比较数字帧与用户 RX',stop:'不要只切换模式碰运气',title:'ID 异常：先判断线上错还是软件交付错',detail:'线上正确而用户 RX 错时查长度、前导和偏移；线上也错时查采样和 CS 边界。',command:'spidev_test -D /dev/spidev1.0 -s 1000000 -p \'\\x9f\\x00\\x00\\x00\' -v'},
+good:{input:'ID 正确',next:'建立基线，再做后续验证',stop:'不能证明长期和其他速率',title:'ID 正确：当前事务可判定，后续仍需限定范围',detail:'恢复临时连接和参数后复测；正式产品回到 spi-nor 与 MTD。',command:'cat /proc/mtd'}
+};
+const buttons=[...document.querySelectorAll('button')];
+function show(id){const c=cases[id];buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.case===id)));document.querySelector('#svg-input').textContent=c.input;document.querySelector('#svg-next').textContent=c.next;document.querySelector('#svg-stop').textContent=c.stop;document.querySelector('#title').textContent=c.title;document.querySelector('#next').textContent=c.detail;document.querySelector('#stop').textContent=c.stop;document.querySelector('#command').textContent=c.command;}
+buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.case)));
 </script>
 </body>
 </html>
