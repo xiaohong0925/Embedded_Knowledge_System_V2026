@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spi-nor 页编程与 BUSY 等待</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f8fa;--panel:#fff;--text:#1d2733;--muted:#5b6875;--border:#d4dce4;--accent:#236ca4;--soft:#eaf3fb;--done:#e7f4ea;--button:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#171c21;--panel:#222a31;--text:#edf2f6;--muted:#b4c0ca;--border:#45515c;--accent:#83c1ee;--soft:#1b3a4e;--done:#203b2b;--button:#29343d}}
+*{box-sizing:border-box}body{margin:0;padding:18px 20px;background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1000px;margin:auto}h1{font-size:21px;line-height:1.35;margin:0 0 5px}p{margin:5px 0}.muted{color:var(--muted)}.toolbar{display:flex;flex-wrap:wrap;gap:7px;margin:13px 0 10px}button{border:1px solid var(--border);border-radius:7px;background:var(--button);color:var(--text);padding:6px 10px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px 15px}svg{display:block;width:100%;height:auto}svg text{font-family:inherit;fill:var(--text)}.box{fill:var(--panel);stroke:var(--border);stroke-width:2}.active{fill:var(--soft);stroke:var(--accent);stroke-width:3}.done{fill:var(--done);stroke:var(--accent);stroke-width:2}.arrow{stroke:var(--accent);stroke-width:2.5;fill:none;marker-end:url(#arrow)}#panel{margin-top:10px;border-left:4px solid var(--accent)}#step-title{font-size:17px;font-weight:650;margin-bottom:4px}.label{font-weight:650;color:var(--accent)}details{margin-top:10px}summary{cursor:pointer;font-weight:650}li{margin:5px 0}code{background:var(--soft);padding:2px 5px;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+<h1>32 字节为什么是两段编程、两次等待</h1>
+<p class="muted">教学顺序模型，不是实测波形。起始地址 <code>0x00F0</code>，长度 32 B，页大小 256 B。</p>
+<nav class="toolbar" aria-label="页编程执行步骤">
+<button data-step="0" aria-pressed="true">输入</button>
+<button data-step="1" aria-pressed="false">第 1 段</button>
+<button data-step="2" aria-pressed="false">等待 1</button>
+<button data-step="3" aria-pressed="false">第 2 段</button>
+<button data-step="4" aria-pressed="false">等待 2</button>
+<button data-step="5" aria-pressed="false">返回</button>
+</nav>
+<section class="card">
+<svg viewBox="0 0 960 345" role="img" aria-label="spi-nor 将跨页写入拆成两段，并分别等待 Flash 就绪">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="context-stroke"/></marker></defs>
+<rect class="box" x="25" y="25" width="205" height="65" rx="8"/>
+<text x="127" y="52" text-anchor="middle" font-size="16" font-weight="650">spi_nor_write()</text>
+<text x="127" y="75" text-anchor="middle" font-size="12">计算、发命令、等待</text>
+<rect class="box" x="730" y="25" width="205" height="65" rx="8"/>
+<text x="832" y="52" text-anchor="middle" font-size="16" font-weight="650">W25Q128JV</text>
+<text x="832" y="75" text-anchor="middle" font-size="12">串行命令＋内部编程</text>
+<path class="arrow" d="M230 58H725"/>
+<text id="action" x="480" y="42" text-anchor="middle" font-size="15" font-weight="650">接收 to=0x00F0，len=32</text>
+<text id="detail" x="480" y="82" text-anchor="middle" font-size="12">page_offset=0xF0，首个 page_remain=16</text>
+<text x="45" y="126" font-size="13" font-weight="650">数据落点（结构示意）</text>
+<rect class="box" x="45" y="145" width="415" height="75" rx="5"/>
+<rect class="box" x="500" y="145" width="415" height="75" rx="5"/>
+<text x="252" y="169" text-anchor="middle" font-size="13">当前页</text>
+<text x="707" y="169" text-anchor="middle" font-size="13">下一页</text>
+<rect id="seg1" class="box" x="350" y="180" width="100" height="30" rx="3"/>
+<rect id="seg2" class="box" x="510" y="180" width="100" height="30" rx="3"/>
+<text x="400" y="201" text-anchor="middle" font-size="12">16 B：F0～FF</text>
+<text x="560" y="201" text-anchor="middle" font-size="12">16 B：00～0F</text>
+<text x="195" y="201" text-anchor="middle" font-size="12">当前页前 240 B</text>
+<text x="762" y="201" text-anchor="middle" font-size="12">下一页其余空间</text>
+<rect class="box" x="45" y="250" width="415" height="60" rx="6"/>
+<rect class="box" x="500" y="250" width="415" height="60" rx="6"/>
+<text id="progress" x="252" y="286" text-anchor="middle" font-size="15">i = 0 / 32，尚未发送编程命令</text>
+<text id="busy" x="707" y="286" text-anchor="middle" font-size="15">Flash：READY</text>
+</svg>
+</section>
+<section id="panel" class="card" aria-live="polite">
+<div id="step-title">输入：先确定第一段不能超过当前页尾</div>
+<p><span class="label">本步结论：</span><span id="conclusion">当前页只剩 16 B，所以 32 B 请求必须拆分；此时还没有向 Flash 发出 Page Program。</span></p>
+</section>
+<details class="card"><summary>不看逐步视图时的完整顺序</summary>
+<ol>
+<li>由地址 <code>0x00F0</code> 算出当前页剩余 16 B，第一段取 <code>min(16, 32) = 16</code>。</li>
+<li>执行 Write Enable，把第一段写到当前页 <code>0xF0～0xFF</code>；CS 拉高只结束串行命令，内部编程仍在进行。</li>
+<li>调用 <code>spi_nor_wait_till_ready()</code>，BUSY 清除后才把第一段实际长度计入 <code>i</code>。</li>
+<li>第二段重新执行 Write Enable，把余下 16 B 写到下一页 <code>0x00～0x0F</code>。</li>
+<li>再次等待 BUSY 清除，累计第二段实际长度；正常路径到此完成 32 B。</li>
+<li>发送或等待任一步失败都进入 <code>write_err</code>，不能宣称后续数据也已写完。</li>
+</ol></details>
+</main>
+<script>
+const steps=[
+{action:'接收 to=0x00F0，len=32',detail:'page_offset=0xF0，首个 page_remain=16',progress:'i = 0 / 32，尚未发送编程命令',busy:'Flash：READY',title:'输入：先确定第一段不能超过当前页尾',conclusion:'当前页只剩 16 B，所以 32 B 请求必须拆分；此时还没有向 Flash 发出 Page Program。',seg1:'box',seg2:'box'},
+{action:'Write Enable → Page Program（第 1 段）',detail:'当前页 0xF0～0xFF；CS 拉高后开始内部编程',progress:'i 仍为 0 / 32，等待尚未完成',busy:'Flash：BUSY = 1',title:'第 1 段：16 B 已交给器件，但尚未等待完成',conclusion:'串行命令结束不等于内部编程结束；BUSY=1 时不能累加完成长度，也不能开始下一段。',seg1:'active',seg2:'box'},
+{action:'spi_nor_wait_till_ready()',detail:'BUSY 清除后，才累计第一段实际写入长度',progress:'i = 16 / 32，准备计算下一段',busy:'Flash：READY，第 1 段完成',title:'等待 1：第一段完成后才推进状态',conclusion:'第一次等待把“命令已发送”与“这一段已完成”分开，i 此刻才推进到 16。',seg1:'done',seg2:'box'},
+{action:'Write Enable → Page Program（第 2 段）',detail:'下一页 0x00～0x0F；不是回卷到当前页首',progress:'i 仍为 16 / 32，第二段等待尚未完成',busy:'Flash：BUSY = 1',title:'第 2 段：重新取得写使能，再写下一页首',conclusion:'第二段有自己的 Write Enable 和 Page Program，地址进入下一页，不会覆盖当前页首。',seg1:'done',seg2:'active'},
+{action:'再次 spi_nor_wait_till_ready()',detail:'第二次等待独立发生，不能由第一次等待代替',progress:'i = 32 / 32，两段均已完成',busy:'Flash：READY，第 2 段完成',title:'等待 2：第二个内部忙过程也要单独等待',conclusion:'只有第二次等待完成，32 B 正常写入路径才完整；两段之间隔着两次独立的就绪判断。',seg1:'done',seg2:'done'},
+{action:'返回本次调用结果',detail:'正常路径完成 32 B；发送或等待失败则进入 write_err',progress:'正常路径：本次 32 B 已处理',busy:'Flash：READY',title:'返回：完成结论只属于实际走通的路径',conclusion:'任何发送或等待失败都会转入错误路径，不能把尚未执行或尚未等待的数据也算作成功。',seg1:'done',seg2:'done'}
+];
+const buttons=[...document.querySelectorAll('button[data-step]')];
+function show(index){const s=steps[index];buttons.forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.step)===index)));document.querySelector('#action').textContent=s.action;document.querySelector('#detail').textContent=s.detail;document.querySelector('#progress').textContent=s.progress;document.querySelector('#busy').textContent=s.busy;document.querySelector('#step-title').textContent=s.title;document.querySelector('#conclusion').textContent=s.conclusion;document.querySelector('#seg1').setAttribute('class',s.seg1);document.querySelector('#seg2').setAttribute('class',s.seg2);}
+buttons.forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.step))));
+</script>
+</body>
+</html>

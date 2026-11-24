@@ -737,7 +737,8 @@ nav:
                   - 导读与实验地图: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端.md
                   - 准备与识别: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端_setup.md
                   - 备份与正常烧写: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端_write.md
-                  - 机制、异常观察与恢复: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端_mechanism.md
+                  - 一次 MTD 写入到达 Flash: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端_mechanism.md
+                  - 不擦除写入与恢复: B. 总线协议/B. 低速外设接口/B-B.4.5_实战W25Qxx_SPI_NOR_Flash端到端_experiment.md
           - B.5 UART:
               - B-B.5.1 UART物理层与电气连接: B. 总线协议/B. 低速外设接口/B-B.5.1_UART物理层与电气连接.md
               - B-B.5.2 UART帧、采样与波特率: B. 总线协议/B. 低速外设接口/B-B.5.2_UART帧、采样与波特率.md
