@@ -11,6 +11,12 @@
 > 
 > 根据你的经验水平（初学者 / 3年经验 / 5年+经验），选择最适合你的阅读路径。含能力盘点表、个性化路线图、螺旋学习策略。
 
+## 当前阅读基线（2026-11-24）
+
+最新复检更关注读者能否沿同一实例走完整条理解链：先明确主问题，再核对手册与源码证据，跟随代码或命令完成验证，并看清正常路径、错误边界和恢复方式。机制追踪与操作实验可以按阅读任务拆页；命令与输出一一对应；自有教学代码提供完整实现和详细注释；图示只在确实降低理解成本时使用。
+
+**近期 B-B.3 I2C 与 B-B.4 SPI 已按这套方式做了较多优化，读起来更连贯，也更容易跟随。**其他章节仍以首页状态和实际正文为准，不把这两组的变化扩大成全站已经完成。
+
 ---
 ??? details "第一部 系统启动与运行  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年6月10日</span>"
     | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
@@ -90,11 +96,11 @@
 
     **[→ 进入A扩展目录](A.%20应用层编程/README.md)**
 
-??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年9月21日</span>"
+??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年11月24日</span>"
     | 章节 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
     |------|---------|------|------------|------------|
     | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 是 | 2026年10月19日 |
-    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
+    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；I2C 与 SPI 已按最新规则重点优化，其余内容继续逐篇复检 | <span class="tag tag-done">返工完成</span> | 否 | 2026年11月24日 |
     | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
     | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
     | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优；全组 6 篇已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
@@ -114,11 +120,11 @@
     | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](C.%20专用技术与前沿趋势/05-Linux长期演进与技术路线图/README.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
     | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](C.%20专用技术与前沿趋势/06-嵌入式Linux实时化技术/01-Linux实时性基础.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
 
-??? details "D. 驱动开发实战 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月12日</span>"
+??? details "D. 驱动开发实战 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年11月24日</span>"
     | 板块 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
     |------|---------|------|------------|------------|
     | Part 1 驱动骨架（D.1~D.9） | 模块框架、字符设备、阻塞等待、中断处理、定时器、DMA、设备树资源获取、电源管理、调试接口 | <span class="tag tag-done">完成</span> | 否 | 2026年8月12日 |
-    | Part 2 子系统写法（D.10~D.18） | input、IIO、hwmon、LED、watchdog、regmap、MFD、用户态驱动（UIO/VFIO）、选型速查 | <span class="tag tag-done">完成</span> | 否 | 2026年8月12日 |
+    | Part 2 子系统写法（D.10~D.18） | input、IIO、hwmon、LED、watchdog、regmap、MFD、用户态驱动（UIO/VFIO）、选型速查；D.19 MTD 子系统写法待补 | <span class="tag tag-done">完成</span> | 否 | 2026年11月24日 |
 
     **[→ 进入D扩展目录](D.%20驱动开发实战/README.md)**
 
