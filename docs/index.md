@@ -17,114 +17,118 @@
 
 **近期 B-B.3 I2C 与 B-B.4 SPI 已按这套方式做了较多优化，读起来更连贯，也更容易跟随。**其他章节仍以首页状态和实际正文为准，不把这两组的变化扩大成全站已经完成。
 
+状态表分别记录旧规则基线、新规则复检和人工复检；三者不能互相替代。
+
 ---
-??? details "第一部 系统启动与运行  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年6月10日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 第1章 认识你的开发板 | 板子上有什么？ | 能识别SoC、存储、串口 | <span class="tag tag-done">完成</span> | 是 | 2026年5月13日 |
-    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | 有能用的交叉编译器 | <span class="tag tag-done">完成</span> | 是 | 2026年5月14日 |
-    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | U-Boot能运行，网络启动就绪 | <span class="tag tag-done">完成</span> | 是 | 2026年5月22日 |
-    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | 编译出可启动的内核 | <span class="tag tag-done">完成</span> | 是 | 2026年6月15日 |
-    | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | BusyBox rootfs，看到#提示符 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
-    | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | LED亮灭，理解驱动概念 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年6月18日 |
+??? details "第一部 系统启动与运行  <span class="tag tag-wip">完成</span> <span class="meta">最后更新： 2026年6月10日</span>"
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 第1章 认识你的开发板 | 板子上有什么？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年5月13日 |
+    | 第2章 交叉编译与工具链 | 怎么在PC上编译板子程序？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年5月14日 |
+    | 第3章 Bootloader：系统的第一段代码 | 上电后谁加载内核？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年5月22日 |
+    | 第4章 内核配置与编译 | 怎么让内核支持我的板子？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年6月15日 |
+    | 第5章 根文件系统与初始化 | 内核启动后怎么得到shell？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否（AI已检） | 2026年6月18日 |
+    | 第6章 第一个外设：点亮LED | 怎么让软件控制硬件？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否（AI已检） | 2026年6月18日 |
 
     **[→ 进入第一部目录](01-系统启动与运行/README.md)**
 
-??? details "第二部 核心机制深度解析  <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年8月6日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | 理解BootROM→SPL→U-Boot→Kernel→init的完整链路；AI复检（19节+7.99全量：节组级设计调研前置、7.6.1/7.6.2旧内核残留代码换v6.6真实实现、rootwait概念性错误修正、全章所属行与下一步衔接链统一） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月26日 |
-    | 第8章 进程与调度 | 内核如何管理任务与分配CPU？ | 掌握task_struct、CFS、RT调度、cgroups与EAS | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
-    | 第9章 内存管理 | 内核如何管理物理与虚拟内存？ | 掌握伙伴系统、SLUB、CMA、OOM | <span class="tag tag-done">完成</span> | 否 | 2026年5月22日 |
-    | 第10章 中断与时间 | 硬件中断如何变成软件事件？ | 掌握GIC、顶半部/底半部、hrtimer、tickless；AI三轮复检完成 | <span class="tag tag-done">ongoing</span> | 人工复检中 | 2026年9月14日 |
-    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | 掌握kobject、sysfs、bus/device/driver、platform；结构重组（新增11.0导学+11.1其然台阶8篇、机制文重编号11.2-11.6）+10张流程图补齐 | <span class="tag tag-done">完成</span> | 完成：需二次复查 | 2026年8月26日 |
-    | 第12章 文件系统 | 内核如何管理和访问文件？ | 掌握VFS、页缓存、ext4/f2fs/UBIFS、MTD/UBI、掉电保护；新增12.1.4字符设备与file_operations、12.3.4补overlayfs、12.3.5补iostat/blktrace落点 | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月12日 |
-    | 第13章 并发与同步 | 内核如何处理多核并发？ | 掌握spinlock/mutex、RCU、原子操作、lockdep/KASAN；AI复检（23节全量：虚构实现换v6.6真实源码核对、PI三处P0修正、13.7.1拆分为排查实战+RCU迁移实战两节、13.99去全局孤儿编号、4+1张待补图占位） | <span class="tag tag-done">完成</span> | AI复检完成 | 2026年8月11日 |
-    | 第14章 网络子系统 | 内核如何处理网络数据包？ | 掌握sk_buff、Netfilter、NAPI、XDP/eBPF | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
-    | 第15章 电源管理 | 嵌入式设备如何省电？ | 掌握Runtime PM、cpuidle/cpufreq、Thermal、Suspend | <span class="tag tag-done">完成</span> | 否 | 2026年6月8日 |
+??? details "第二部 核心机制深度解析  <span class="tag tag-wip">完成</span> <span class="meta">最后更新： 2026年8月6日</span>"
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 第7章 启动链深度解析 | 从复位到shell到底发生了什么？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否（AI已检） | 2026年8月26日 |
+    | 第8章 进程与调度 | 内核如何管理任务与分配CPU？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月22日 |
+    | 第9章 内存管理 | 内核如何管理物理与虚拟内存？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月22日 |
+    | 第10章 中断与时间 | 硬件中断如何变成软件事件？ | <span class="tag tag-wip">ongoing</span> | <span class="tag tag-wip">待检</span> | 进行中 | 2026年9月14日 |
+    | 第11章 设备模型 | 内核如何抽象和匹配设备？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 需二次复查 | 2026年8月26日 |
+    | 第12章 文件系统 | 内核如何管理和访问文件？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否（AI已检） | 2026年8月12日 |
+    | 第13章 并发与同步 | 内核如何处理多核并发？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否（AI已检） | 2026年8月11日 |
+    | 第14章 网络子系统 | 内核如何处理网络数据包？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年6月8日 |
+    | 第15章 电源管理 | 嵌入式设备如何省电？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年6月8日 |
 
     **[→ 进入第二部目录](02-核心机制深度解析/README.md)**
 
-??? details "第三部 系统设计与决策 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年9月22日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 第16章 内核版本与启动架构设计 | 一套内核版本与启动链方案怎么定下来，并在十年后仍然成立？ | 能用五维评分卡做版本选型、BSP 策略裁决、启动时间预算分配、DTS 组织裁决，并用 14 项评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
-    | 第17章 存储架构设计 | 一套存储方案怎么设计出来，并被证明是对的？ | 能完成数据生命周期分类、介质/文件系统/分区/断电四域决策与评审清单 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月7日 |
-    | 第18章 构建系统设计 | 一套构建流程怎么设计出来，并被证明它能撑五年？ | 能完成构建系统选型、TCO测算、Layer组织、CI/CD分层与SBOM合规闭环，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
-    | 第19章 安全架构设计 | 安全要做什么程度？TrustZone值得投入吗？ | 能做威胁模型三问法与分级、安全启动信任链、运行时最小权限、密钥载体选型、Safety/Security分辨，智能门锁$3预算实战（6节骨架待加厚） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第20章 实时性设计 | 需要硬实时吗？PREEMPT_RT够了吗？ | 能做实时需求评估、按决策树选PREEMPT_RT/Xenomai/混合关键性方案、做延迟预算设计，工业运动控制器实战（5节骨架待加厚） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第21章 OTA与更新架构设计 | 一套OTA方案怎么设计出来，并被证明变砖了也能自己爬回来？ | 能完成失败模式枚举、RAUC/SWUpdate/Mender选型、A/B/recovery/差分分区决策、bootcount回滚落地、签名与灰度策略，并用断电测试矩阵与评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
-    | 第22章 驱动架构设计 | 怎么设计"硬件变更时影响范围最小"的驱动层？ | 能做驱动放置量化决策、错误分级、电源依赖图、HAL位置裁决、总线故障域分析与多媒体带宽预算，并用评审清单举证 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月8日 |
+??? details "第三部 系统设计与决策 <span class="tag tag-wip">完成</span> <span class="meta">最后更新： 2026年9月22日</span>"
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 第16章 内核版本与启动架构设计 | 一套内核版本与启动链方案怎么定下来，并在十年后仍然成立？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月8日 |
+    | 第17章 存储架构设计 | 一套存储方案怎么设计出来，并被证明是对的？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月7日 |
+    | 第18章 构建系统设计 | 一套构建流程怎么设计出来，并被证明它能撑五年？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月8日 |
+    | 第19章 安全架构设计 | 安全要做什么程度？TrustZone值得投入吗？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第20章 实时性设计 | 需要硬实时吗？PREEMPT_RT够了吗？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第21章 OTA与更新架构设计 | 一套OTA方案怎么设计出来，并被证明变砖了也能自己爬回来？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月15日 |
+    | 第22章 驱动架构设计 | 怎么设计"硬件变更时影响范围最小"的驱动层？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月8日 |
 
     **[→ 进入第三部目录](03-系统设计与决策/README.md)**
 
 ??? details "第四部 系统思维与全链路实战 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年9月22日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 第23章 系统调试方法论 | 出了问题怎么系统调试？ | 掌握症状分类、信息收集四件套（pstore/看门狗/监控/远程日志）、假设树验证法与跨层误判陷阱，仓库机器人偶发死机完整排查实战 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第24章 启动全链路优化 | 每一毫秒启动时间去了哪里？愿不愿付代价消灭它？ | 能搭五层测量基础设施、按优化经济学三问排序、执行Bootloader/内核/用户空间三段优化，并用感知口径与CI门禁收口 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
-    | 第25章 Camera全链路：从Sensor到屏幕 | 一帧图像怎么从Sensor走到屏幕，慢在哪、坏在哪、怎么修？ | 掌握media-ctl拓扑、V4L2/VB2采集、DMA-BUF零拷贝、DRM/KMS atomic、七段延迟测量与预算表、四类故障排查，智能门铃300→120ms实战 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第26章 网络全链路：从PHY到Socket | 一个包从网线到应用，慢在哪、丢在哪、怎么修？ | 掌握PHY/MAC分诊、Rx/Tx路径观测、Netfilter开销量化、socket交接面诊断、延迟分段测量与吞吐分诊树，工业网关确定性调优实战（8节） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第27章 工业通信全链路 | 确定性怎么从传感器一路保证到执行器？ | 能画时间预算表、按三类失败姿势分诊、配置EtherCAT/CAN/TSN链路与RT调度协同，并用cyclictest烤机与SMI排查链验收 | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月15日 |
-    | 第28章 功耗全链路 | 每一毫瓦功耗从哪里来，怎么以最小的性能损失消灭它？ | 掌握分解-对账-归因方法论、三档测量手段、CPU/GPU/DDR/外设分解、Runtime PM补全与pinctrl sleep、suspend三档选型、权衡与回滚设计，WRM247LTE 720→199mW实战（7节） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月22日 |
-    | 第29章 安全全链路 | 安全怎么全链路设计？ | 能设计安全启动链和TEE方案 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
-    | 第30章 可靠性工程：让系统7×24运行 | 怎么让系统7×24运行？ | 能设计看门狗、健康检查和自动恢复策略 | <span class="tag tag-15">建设中</span> | 否 | 2026年7月2日 |
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 第23章 系统调试方法论 | 出了问题怎么系统调试？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第24章 启动全链路优化 | 每一毫秒启动时间去了哪里？愿不愿付代价消灭它？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月15日 |
+    | 第25章 Camera全链路：从Sensor到屏幕 | 一帧图像怎么从Sensor走到屏幕，慢在哪、坏在哪、怎么修？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第26章 网络全链路：从PHY到Socket | 一个包从网线到应用，慢在哪、丢在哪、怎么修？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第27章 工业通信全链路 | 确定性怎么从传感器一路保证到执行器？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月15日 |
+    | 第28章 功耗全链路 | 每一毫瓦功耗从哪里来，怎么以最小的性能损失消灭它？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月22日 |
+    | 第29章 安全全链路 | 安全怎么全链路设计？ | <span class="tag tag-15">建设中</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第30章 可靠性工程：让系统7×24运行 | 怎么让系统7×24运行？ | <span class="tag tag-15">建设中</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
 
     **[→ 进入第四部目录](04-系统思维与全链路实战/README.md)**
 
 ??? details "第五部 前沿技术与行业视野 <span class="tag tag-15">建设中</span> <span class="meta">最后更新： 2026年8月6日</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 第31章 嵌入式Linux行业全景 | 行业格局是怎样的？ | 全面了解行业格局与发展方向 | <span class="tag tag-15">骨架待写</span> | 否 | 2026年5月9日 |
-    | 第32章 RISC-V：变局者 | RISC-V如何改变嵌入式芯片格局？ | 理解RISC-V架构特点、生态现状、入局机会 | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第33章 Rust for Linux：新语言 | Rust能替代C写Linux驱动吗？ | 理解Rust在内核中的角色、优势与限制 | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第34章 边缘AI：智能无处不在 | 嵌入式设备怎么跑AI推理？ | 掌握边缘AI推理框架、模型部署、性能优化（C扩展01专题已有7篇工程级内容） | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第35章 虚拟化与混合关键性 | 怎么在一颗芯片上跑多个系统？ | 理解Jailhouse/Xen、混合关键性设计（C扩展02专题已有7篇异构多核内容） | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第36章 安全与合规：从可选到强制 | 嵌入式安全合规怎么落地？ | 掌握安全启动、加密、合规认证流程 | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第37章 长期维护：10年的承诺 | 怎么维护一个系统10年？ | 理解LTS策略、CVE管理、技术债控制（C扩展05专题已有3篇演进内容） | <span class="tag tag-15">骨架待写</span> | 否 | 2026年7月2日 |
-    | 第38章 技术路线规划：你的下一步 | 嵌入式工程师的职业下一步是什么？ | 制定个人技术路线和职业发展规划；脚注体系修复（85条定义转编号列表、212处引用转[N]标记） | <span class="tag tag-done">完成</span> | 待人工复检 | 2026年8月6日 |
-    | 第39章 具身智能与机器人革命（附加） | 嵌入式Linux在机器人领域如何应用？ | 理解市场格局、技术栈、入局路径 | <span class="tag tag-done">完成</span> | 重写拆分 | 2026年6月18日 |
-    | 第40章 赛博义体与碳硅融合（附加） | BCI/外骨骼与嵌入式Linux的关系？ | 理解人类增强技术边界与入局布局 | <span class="tag tag-done">完成</span> | 重写拆分 | 2026年6月18日 |
-    | 第41章 转行机器人：岗位地图与迁移路径（附加） | 3年+嵌入式工程师进机器人行业，去哪个岗位、差距在哪、怎么走？ | 八岗位族地图、技能平移矩阵、3/5/8/10+年迁移策略与四个转行案例（K3集群初稿+项目方复核填充） | <span class="tag tag-done">完成</span> | 否（待人工复检） | 2026年9月23日 |
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 第31章 嵌入式Linux行业全景 | 行业格局是怎样的？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月9日 |
+    | 第32章 RISC-V：变局者 | RISC-V如何改变嵌入式芯片格局？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第33章 Rust for Linux：新语言 | Rust能替代C写Linux驱动吗？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第34章 边缘AI：智能无处不在 | 嵌入式设备怎么跑AI推理？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第35章 虚拟化与混合关键性 | 怎么在一颗芯片上跑多个系统？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第36章 安全与合规：从可选到强制 | 嵌入式安全合规怎么落地？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第37章 长期维护：10年的承诺 | 怎么维护一个系统10年？ | <span class="tag tag-15">骨架待写</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年7月2日 |
+    | 第38章 技术路线规划：你的下一步 | 嵌入式工程师的职业下一步是什么？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年8月6日 |
+    | 第39章 具身智能与机器人革命（附加） | 嵌入式Linux在机器人领域如何应用？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年6月18日 |
+    | 第40章 赛博义体与碳硅融合（附加） | BCI/外骨骼与嵌入式Linux的关系？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年6月18日 |
+    | 第41章 转行机器人：岗位地图与迁移路径（附加） | 3年+嵌入式工程师进机器人行业，去哪个岗位、差距在哪、怎么走？ | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月23日 |
 
     **[→ 进入第五部目录](05-前沿技术与行业视野/README.md)**
 
 ??? details "A. 应用层编程 <span class="tag tag-hold">搁置</span> <span class="meta">最后更新： -</span>"
-    | 章节 | 核心问题 | 关键产出 | 状态 | 是否人工复检 | 最后修改日期 |
-    |:---|:---|:--- |:--- |:---|:---:|
-    | 待规划 | 应用层编程范式与框架 | - | <span class="tag tag-hold">搁置</span> | - | - |
+    | 章节 | 核心问题 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 待规划 | 应用层编程范式与框架 | <span class="tag tag-hold">搁置</span> | 不适用（搁置） | - | - |
 
     **[→ 进入A扩展目录](A.%20应用层编程/README.md)**
 
-??? details "B. 总线协议 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年11月24日</span>"
-    | 章节 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
-    |------|---------|------|------------|------------|
-    | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-done">完成</span> | 是 | 2026年10月19日 |
-    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；I2C 与 SPI 已按最新规则重点优化，其余内容继续逐篇复检 | <span class="tag tag-done">返工完成</span> | 否 | 2026年11月24日 |
-    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
-    | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇）；全组已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
-    | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优；全组 6 篇已加厚返工 | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
-    | F. 前沿高速串行 | SerDes 通识、JESD204C、USB4/Thunderbolt、Aurora；全组已加厚返工（含新写 2 篇） | <span class="tag tag-done">返工完成</span> | 否 | 2026年9月21日 |
-    | 知识图谱 | B.99 全局结构图、跨场景关联、选型速查、10 道自测题 | <span class="tag tag-done">完成</span> | 否 | 2026年8月18日 |
+??? details "B. 总线协议 <span class="tag tag-wip">待新规则复检</span> <span class="meta">最后更新： 2026年11月25日</span>"
+    | 章节 | 快速链接 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | A. 片内总线认知 | APB/AHB/AXI/TileLink、NoC、CHI/UCIe | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年10月19日 |
+    | B. 低速外设接口 | GPIO/PWM/ADC/DAC、I2C、SPI、UART、I3C（每组含实战篇）；I2C 与 SPI 先行优化，其余内容继续逐篇复检 | <span class="tag tag-wip">新规则复检进行中</span> | <span class="tag tag-wip">进行中</span> | 否 | 2026年11月24日 |
+    | C. 中高速外设与存储 | USB、eMMC/UFS、MIPI CSI/DSI（含 7.5/8.5/9.5 三篇实战）；旧规则下已成稿 | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月21日 |
+    | D. 专用网络总线 | PCIe（6 篇）、CAN/CANopen（6 篇）、工业以太网（5 篇）、音频（4 篇）、车载与高速管理面（5 篇）；旧规则下已成稿 | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月21日 |
+    | E. 综合实战 | 机械臂/AGV/人形机器人、整机总线架构设计方法、数通整机三面架构、PREEMPT_RT 调优；旧规则下已成稿 | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月21日 |
+    | F. 前沿高速串行 | SerDes 通识、JESD204C、USB4/Thunderbolt、Aurora；旧规则下已成稿 | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年9月21日 |
+    | 知识图谱 | B.99 全局结构图、跨场景关联、选型速查、10 道自测题 | <span class="tag tag-wip">待新规则复检</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年8月18日 |
+
+    旧规则下的人工复检或成稿状态不等于新规则通过；本扩展全部内容均需按最新规则复检，I2C 与 SPI 只是先行部分。
 
     **[→ 进入B扩展目录](B.%20总线协议/README.md)**
 
 ??? details "C. 专用技术与前沿趋势  <span class="tag tag-15">建设中</span> <span class="meta">最后更新：2026年5月7日</span>"
-    | 章节 | 快速链接 | 完成情况 | 是否人工复检 | 最后修改日期 |
-    |------|---------|---------|------------|------------|
-    | 10.0 模块概览与学习路径 [E] | [前沿趋势](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-done">建设完成</span> | 否 | 2026年5月7日 |
-    | 10.1 边缘 AI 推理 [E→M] | [边缘AI](C.%20专用技术与前沿趋势/01-边缘AI推理/README.md) | <span class="tag tag-l3">L3阶段</span> | 是 | 2026年5月4日 |
-    | 10.2 异构多核通信 [E→M] | [异构多核](C.%20专用技术与前沿趋势/02-异构多核通信/README.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月6日 |
-    | 10.3 虚拟化混合关键系统 [E→M] | [虚拟化](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 10.4 RISC-V 生态与开放 ISA 实践 [E→M] | [RISC-V](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设中</span> | 否 | / |
-    | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](C.%20专用技术与前沿趋势/05-Linux长期演进与技术路线图/README.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
-    | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](C.%20专用技术与前沿趋势/06-嵌入式Linux实时化技术/01-Linux实时性基础.md) | <span class="tag tag-l3">L3阶段</span> | 否 | 2026年5月7日 |
+    | 章节 | 快速链接 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | 10.0 模块概览与学习路径 [E] | [前沿趋势](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月7日 |
+    | 10.1 边缘 AI 推理 [E→M] | [边缘AI](C.%20专用技术与前沿趋势/01-边缘AI推理/README.md) | <span class="tag tag-l3">L3阶段</span> | <span class="tag tag-wip">待检</span> | 是 | 2026年5月4日 |
+    | 10.2 异构多核通信 [E→M] | [异构多核](C.%20专用技术与前沿趋势/02-异构多核通信/README.md) | <span class="tag tag-l3">L3阶段</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月6日 |
+    | 10.3 虚拟化混合关键系统 [E→M] | [虚拟化](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设中</span> | <span class="tag tag-wip">待检</span> | 否 | / |
+    | 10.4 RISC-V 生态与开放 ISA 实践 [E→M] | [RISC-V](C.%20专用技术与前沿趋势/README.md) | <span class="tag tag-wip">建设中</span> | <span class="tag tag-wip">待检</span> | 否 | / |
+    | 10.5 Linux 长期演进与技术路线图 [E→M] | [演进路线](C.%20专用技术与前沿趋势/05-Linux长期演进与技术路线图/README.md) | <span class="tag tag-l3">L3阶段</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月7日 |
+    | 10.6 嵌入式Linux实时化技术 [E→M] | [实时化](C.%20专用技术与前沿趋势/06-嵌入式Linux实时化技术/01-Linux实时性基础.md) | <span class="tag tag-l3">L3阶段</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年5月7日 |
 
-??? details "D. 驱动开发实战 <span class="tag tag-done">完成</span> <span class="meta">最后更新： 2026年11月24日</span>"
-    | 板块 | 快速链接 | 状态 | 是否人工复检 | 最后修改日期 |
-    |------|---------|------|------------|------------|
-    | Part 1 驱动骨架（D.1~D.9） | 模块框架、字符设备、阻塞等待、中断处理、定时器、DMA、设备树资源获取、电源管理、调试接口 | <span class="tag tag-done">完成</span> | 否 | 2026年8月12日 |
-    | Part 2 子系统写法（D.10~D.18） | input、IIO、hwmon、LED、watchdog、regmap、MFD、用户态驱动（UIO/VFIO）、选型速查；D.19 MTD 子系统写法待补 | <span class="tag tag-done">完成</span> | 否 | 2026年11月24日 |
+??? details "D. 驱动开发实战 <span class="tag tag-wip">完成</span> <span class="meta">最后更新： 2026年11月24日</span>"
+    | 章节 | 快速链接 | 旧规则基线 | 新规则复检 | 人工复检 | 最后修改日期 |
+    |:---|:---|:---|:---|:---|:---|
+    | Part 1 驱动骨架（D.1~D.9） | 模块框架、字符设备、阻塞等待、中断处理、定时器、DMA、设备树资源获取、电源管理、调试接口 | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年8月12日 |
+    | Part 2 子系统写法（D.10~D.18） | input、IIO、hwmon、LED、watchdog、regmap、MFD、用户态驱动（UIO/VFIO）、选型速查；D.19 MTD 子系统写法待补 | <span class="tag tag-wip">完成</span> | <span class="tag tag-wip">待检</span> | 否 | 2026年11月24日 |
 
     **[→ 进入D扩展目录](D.%20驱动开发实战/README.md)**
 

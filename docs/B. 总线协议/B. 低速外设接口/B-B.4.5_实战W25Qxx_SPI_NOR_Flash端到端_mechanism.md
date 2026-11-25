@@ -277,7 +277,7 @@ verify=OK
 
 ### 用户态程序先擦除，再调用 write()
 
-[`main()`](code/B-B.4.5/mtd_upgrade.c){: data-code-viewer="true" data-code-title="mtd_upgrade.c" data-code-path="本篇教学配套 · code/B-B.4.5/mtd_upgrade.c"} 先完整读取输入，再通过 `MEMGETINFO` 取得几何信息，通过 `MEMERASE` 擦除所需块。随后 `main()` 调用 `write_full()`，后者循环执行 `write(fd, buf + done, len - done)`，把数据交给 `/dev/mtd3`。这些动作都能在上面的完整程序中直接对照，不需要凭行号猜测流程。
+[`main()`](code/B-B.4.5/mtd_upgrade.c){: data-code-viewer="true" data-code-title="mtd_upgrade.c" data-code-path="本篇教学配套 · code/B-B.4.5/mtd_upgrade.c" data-code-lines="130-137"} 先完整读取输入，再通过 `MEMGETINFO` 取得几何信息，通过 `MEMERASE` 擦除所需块。随后 `main()` 调用 `write_full()`，后者循环执行 `write(fd, buf + done, len - done)`，把数据交给 `/dev/mtd3`。这些动作都能在上面的完整程序中直接对照，不需要凭行号猜测流程。
 
 ### MTD 字符接口把请求交给 MTD 核心
 
