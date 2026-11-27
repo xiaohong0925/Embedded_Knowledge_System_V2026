@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 650" role="img" aria-labelledby="title desc">
+<title id="title">0x0B Fast Read 的四阶段与首字节位序</title>
+<desc id="desc">命令八拍、地址二十四拍和 dummy 八拍组成四十拍前导，之后用三十二拍接收 A7 5C 3F 19。首字节 A7 按最高位先发。</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#d95f02"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#18222d}.line{fill:none;stroke:#18222d;stroke-width:2}.soft{fill:none;stroke:#72808d;stroke-width:1.5;stroke-dasharray:5 5}.label{font-size:18px}.small{font-size:15px;fill:#4c5966}.byte{font-size:21px;font-weight:700}.accent{fill:#fff1e5;stroke:#d95f02;stroke-width:2}.blue{fill:#e8f1f8;stroke:#1769aa;stroke-width:2}.plain{fill:#f5f7f9;stroke:#18222d;stroke-width:2}
+  </style>
+</defs>
+<rect width="1500" height="650" fill="#fff"/>
+<text x="750" y="42" text-anchor="middle" font-size="26" font-weight="700">0x0B Fast Read：40 拍前导之后才是有效数据</text>
+<text x="750" y="72" text-anchor="middle" class="small">Mode 0 · 单线 SDR · MSB-first · 本文从 1 开始数拍</text>
+<text x="45" y="135" class="label">协议阶段</text>
+<rect class="blue" x="180" y="100" width="150" height="90"/>
+<rect class="plain" x="330" y="100" width="300" height="90"/>
+<rect x="630" y="100" width="150" height="90" fill="#f0f1f2" stroke="#72808d" stroke-width="2" stroke-dasharray="6 4"/>
+<rect class="accent" x="780" y="100" width="150" height="90"/>
+<rect class="accent" x="930" y="100" width="150" height="90"/>
+<rect class="accent" x="1080" y="100" width="150" height="90"/>
+<rect class="accent" x="1230" y="100" width="150" height="90"/>
+<text x="255" y="137" text-anchor="middle" class="byte">0x0B</text><text x="255" y="168" text-anchor="middle" class="small">命令 · MOSI</text>
+<text x="480" y="137" text-anchor="middle" class="byte">00 12 34</text><text x="480" y="168" text-anchor="middle" class="small">地址 · MOSI</text>
+<text x="705" y="137" text-anchor="middle" class="byte">dummy</text><text x="705" y="168" text-anchor="middle" class="small">DO 不解释</text>
+<text x="855" y="137" text-anchor="middle" class="byte">A7</text><text x="855" y="168" text-anchor="middle" class="small">MISO</text>
+<text x="1005" y="137" text-anchor="middle" class="byte">5C</text><text x="1005" y="168" text-anchor="middle" class="small">MISO</text>
+<text x="1155" y="137" text-anchor="middle" class="byte">3F</text><text x="1155" y="168" text-anchor="middle" class="small">MISO</text>
+<text x="1305" y="137" text-anchor="middle" class="byte">19</text><text x="1305" y="168" text-anchor="middle" class="small">MISO</text>
+<text x="45" y="232" class="label">拍号</text>
+<text x="255" y="232" text-anchor="middle" class="label">1～8</text><text x="480" y="232" text-anchor="middle" class="label">9～32</text><text x="705" y="232" text-anchor="middle" class="label">33～40</text><text x="855" y="232" text-anchor="middle" class="label">41～48</text><text x="1005" y="232" text-anchor="middle" class="label">49～56</text><text x="1155" y="232" text-anchor="middle" class="label">57～64</text><text x="1305" y="232" text-anchor="middle" class="label">65～72</text>
+<path class="line" d="M180 280V300H780V280"/><text x="480" y="328" text-anchor="middle" class="label">8 + 24 + 8 = 40 拍前导</text>
+<path d="M780 280V300H1380V280" fill="none" stroke="#d95f02" stroke-width="2.5"/><text x="1080" y="328" text-anchor="middle" class="label">4 × 8 = 32 拍数据</text>
+<path d="M855 350V385" fill="none" stroke="#d95f02" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="750" y="425" text-anchor="middle" font-size="22" font-weight="700">放大首字节：A7 = 1010 0111</text>
+<text x="215" y="485" text-anchor="end" class="label">位编号</text><text x="215" y="555" text-anchor="end" class="label">MISO</text>
+<g>
+<rect class="plain" x="255" y="450" width="130" height="55"/><rect class="plain" x="385" y="450" width="130" height="55"/><rect class="plain" x="515" y="450" width="130" height="55"/><rect class="plain" x="645" y="450" width="130" height="55"/><rect class="plain" x="775" y="450" width="130" height="55"/><rect class="plain" x="905" y="450" width="130" height="55"/><rect class="plain" x="1035" y="450" width="130" height="55"/><rect class="plain" x="1165" y="450" width="130" height="55"/>
+<text x="320" y="486" text-anchor="middle" class="label">b7</text><text x="450" y="486" text-anchor="middle" class="label">b6</text><text x="580" y="486" text-anchor="middle" class="label">b5</text><text x="710" y="486" text-anchor="middle" class="label">b4</text><text x="840" y="486" text-anchor="middle" class="label">b3</text><text x="970" y="486" text-anchor="middle" class="label">b2</text><text x="1100" y="486" text-anchor="middle" class="label">b1</text><text x="1230" y="486" text-anchor="middle" class="label">b0</text>
+<rect class="accent" x="255" y="520" width="130" height="55"/><rect class="accent" x="385" y="520" width="130" height="55"/><rect class="accent" x="515" y="520" width="130" height="55"/><rect class="accent" x="645" y="520" width="130" height="55"/><rect class="accent" x="775" y="520" width="130" height="55"/><rect class="accent" x="905" y="520" width="130" height="55"/><rect class="accent" x="1035" y="520" width="130" height="55"/><rect class="accent" x="1165" y="520" width="130" height="55"/>
+<text x="320" y="557" text-anchor="middle" class="byte">1</text><text x="450" y="557" text-anchor="middle" class="byte">0</text><text x="580" y="557" text-anchor="middle" class="byte">1</text><text x="710" y="557" text-anchor="middle" class="byte">0</text><text x="840" y="557" text-anchor="middle" class="byte">0</text><text x="970" y="557" text-anchor="middle" class="byte">1</text><text x="1100" y="557" text-anchor="middle" class="byte">1</text><text x="1230" y="557" text-anchor="middle" class="byte">1</text>
+</g>
+<text x="750" y="615" text-anchor="middle" class="label">第 41 拍采 b7，第 48 拍采 b0；收齐 8 位后重组为 A7</text>
+</svg>

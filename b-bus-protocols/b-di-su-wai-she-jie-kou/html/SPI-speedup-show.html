@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPI 提速收益：时钟时间到底占多少</title>
+<style>
+  :root {
+    --fg: #1f2937; --dim: #6b7280; --line: #d1d5db;
+    --cmd: #64748b; --addr: #94a3b8; --dummy: #cbd5e1; --data: #2563eb;
+    --over: #d97706; --busy: #dc2626;
+    --panel: rgba(100,116,139,0.08); --accent: #2563eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e5e7eb; --dim: #9ca3af; --line: #4b5563;
+      --cmd: #94a3b8; --addr: #94a3b8; --dummy: #64748b; --data: #60a5fa;
+      --over: #fbbf24; --busy: #f87171;
+      --panel: rgba(148,163,184,0.10); --accent: #60a5fa;
+    }
+  }
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; color: var(--fg); }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 14px 16px 18px; }
+  h3 { font-size: 15px; margin: 0 0 2px; }
+  .sub { font-size: 11.5px; color: var(--dim); margin: 0 0 12px; }
+  .panel { background: var(--panel); border-radius: 10px; padding: 10px 14px 12px; margin-bottom: 10px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .pill {
+    border: 1px solid var(--line); background: transparent; color: var(--fg);
+    border-radius: 999px; padding: 4px 12px; font-size: 12.5px; cursor: pointer;
+  }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .ctl { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+  .sliderbox { flex: 1; min-width: 260px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); }
+  .fval { font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .fval small { font-weight: 400; color: var(--dim); font-size: 10.5px; }
+  label.qspi { font-size: 12px; display: flex; align-items: center; gap: 5px; }
+  label.qspi input { accent-color: var(--accent); }
+  .timeline { position: relative; height: 34px; border-radius: 6px; overflow: hidden; display: flex; margin-top: 6px; }
+  .seg { height: 100%; transition: width .35s ease; position: relative; }
+  .seg span {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; color: #fff; white-space: nowrap; overflow: hidden;
+  }
+  .seg.light span { color: var(--fg); }
+  .playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fg); opacity: .8; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 10.5px; color: var(--dim); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  .nums { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .num { flex: 1; min-width: 120px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+  .num .v { font-size: 16px; font-weight: 700; }
+  .num .k { font-size: 10.5px; color: var(--dim); }
+  .verdict { border-left: 4px solid var(--accent); padding: 8px 12px; font-size: 12.5px; line-height: 1.7; margin-top: 10px; }
+  .verdict b { color: var(--accent); }
+  .note { font-size: 10.5px; color: var(--dim); margin-top: 8px; line-height: 1.6; }
+  svg text { font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h3>T<sub>clock</sub> = N / f<sub>actual</sub>：提速的收益到底有多少</h3>
+  <p class="sub">拨动 SCLK、切换操作类型，看时钟时间在总耗时中的占比变化</p>
+
+  <div class="panel">
+    <div class="pills" id="pills"></div>
+    <div class="ctl">
+      <div class="sliderbox">
+        <div class="fval"><span id="fval">1 MHz</span> <small>f<sub>actual</sub>（实测值，非请求上限）</small></div>
+        <input type="range" id="f" min="5" max="8" step="0.01" value="6">
+        <div class="scale"><span>100 kHz</span><span>1 MHz</span><span>10 MHz</span><span>100 MHz</span></div>
+      </div>
+      <label class="qspi" id="qspilab"><input type="checkbox" id="qspi"> 数据阶段 4 线（QSPI）</label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="font-size:11.5px;color:var(--dim);">一笔事务的时间轴（按真实耗时等比分割，循环播放）</div>
+    <div class="timeline" id="tl"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="panel">
+    <div style="font-size:11.5px;color:var(--dim);">1 μs 时窗内可容纳的 SCLK 拍数</div>
+    <svg id="win" viewBox="0 0 880 74" width="100%"></svg>
+  </div>
+
+  <div class="nums">
+    <div class="num"><div class="v" id="n_clock">–</div><div class="k">T_clock（纯时钟时间）</div></div>
+    <div class="num"><div class="v" id="n_other">–</div><div class="k">CS/内核/调度（估算）</div></div>
+    <div class="num"><div class="v" id="n_busy">–</div><div class="k">Flash 内部忙</div></div>
+    <div class="num"><div class="v" id="n_total">–</div><div class="k">总时间</div></div>
+    <div class="num"><div class="v" id="n_share">–</div><div class="k">时钟时间占比</div></div>
+  </div>
+
+  <div class="verdict" id="verdict"></div>
+  <div class="note">
+    拍数 N 含命令、地址、dummy 和数据全部阶段；CS/内核/调度与 tPP/tSE 为数量级估算（W25Q128JV 典型值），
+    用于判断"值不值得优化"，不构成时序承诺。f_actual 请以逻辑分析仪/示波器实测为准。
+  </div>
+</div>
+
+<script>
+(function () {
+  var PRESETS = {
+    jedec:     { name: 'JEDEC ID 读取', cmd: 8, addr: 0, dummy: 0, data: 24,    over: 15,  busy: 0,     busyName: '',  qspi: false },
+    fastread:  { name: 'Fast Read 4 KiB', cmd: 8, addr: 24, dummy: 8, data: 32768, over: 30,  busy: 0,     busyName: '',  qspi: true },
+    program:   { name: 'Page Program 256 B', cmd: 8, addr: 24, dummy: 0, data: 2048, over: 20, busy: 700,   busyName: 'tPP ≈ 0.7 ms（页编程内部忙）', qspi: true },
+    erase:     { name: 'Sector Erase 4 KiB', cmd: 8, addr: 24, dummy: 0, data: 0,    over: 20, busy: 45000, busyName: 'tSE ≈ 45 ms（扇区擦除内部忙）', qspi: false }
+  };
+  var ORDER = ['jedec', 'fastread', 'program', 'erase'];
+  var SEGC = { cmd: 'var(--cmd)', addr: 'var(--addr)', dummy: 'var(--dummy)', data: 'var(--data)', over: 'var(--over)', busy: 'var(--busy)' };
+  var state = { p: 'jedec', f: 1e6, qspi: false };
+
+  // URL 参数（便于测试与深链）：?p=fastread&f=50e6&q=1
+  var qs = new URLSearchParams(location.search);
+  if (qs.get('p') && PRESETS[qs.get('p')]) state.p = qs.get('p');
+  if (qs.get('f')) state.f = Math.min(1e8, Math.max(1e5, parseFloat(qs.get('f'))));
+  if (qs.get('q') === '1') state.qspi = true;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = function (us) {
+    if (us == null) return '—';
+    if (us < 1) return us.toFixed(2) + ' μs';
+    if (us < 1000) return us.toFixed(us < 100 ? 1 : 0) + ' μs';
+    if (us < 1e6) return (us / 1000).toFixed(us < 1e4 ? 2 : 1) + ' ms';
+    return (us / 1e6).toFixed(2) + ' s';
+  };
+
+  function N_of(p, q) {
+    var n = p.cmd + p.addr + p.dummy + p.data;
+    if (q && p.qspi && p.data) n = p.cmd + p.addr + p.dummy + p.data / 4;
+    return n;
+  }
+
+  function buildPills() {
+    var box = $('pills'); box.innerHTML = '';
+    ORDER.forEach(function (k) {
+      var b = document.createElement('button');
+      b.className = 'pill' + (k === state.p ? ' active' : '');
+      b.textContent = PRESETS[k].name;
+      b.onclick = function () { state.p = k; if (!PRESETS[k].qspi) state.qspi = false; render(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderTimeline(segs, total) {
+    var tl = $('tl'); tl.innerHTML = '';
+    var W = tl.clientWidth || 880;
+    segs.forEach(function (s) {
+      var w = Math.max(s.us / total * 100, s.us > 0 ? 0.35 : 0); // 极小占比给 0.35% 示意宽度
+      var d = document.createElement('div');
+      d.className = 'seg' + (s.key === 'dummy' ? ' light' : '');
+      d.style.width = w + '%';
+      d.style.background = SEGC[s.key];
+      var label = (w > 7) ? s.label : '';
+      d.innerHTML = '<span>' + label + '</span>';
+      d.title = s.label + '：' + fmt(s.us);
+      tl.appendChild(d);
+    });
+    var ph = document.createElement('div');
+    ph.className = 'playhead'; ph.id = 'ph';
+    tl.appendChild(ph);
+  }
+
+  var t0 = performance.now();
+  (function anim(now) {
+    var ph = $('ph');
+    if (ph) {
+      var t = ((now - t0) % 5000) / 5000;
+      ph.style.left = (t * 100) + '%';
+    }
+    requestAnimationFrame(anim);
+  })(t0);
+
+  function renderLegend(p) {
+    var items = [
+      ['cmd', '命令 ' + p.cmd + ' 拍'],
+      p.addr ? ['addr', '地址 ' + p.addr + ' 拍'] : null,
+      p.dummy ? ['dummy', 'dummy ' + p.dummy + ' 拍'] : null,
+      ['data', '数据 ' + (state.qspi && p.qspi ? p.data / 4 : p.data) + ' 拍' + (state.qspi && p.qspi ? '（4 线）' : '')],
+      ['over', 'CS·内核·调度'],
+      p.busy ? ['busy', '内部忙'] : null
+    ].filter(function (x) { return x; });
+    $('legend').innerHTML = items.map(function (x) {
+      return '<span><i style="background:' + SEGC[x[0]] + '"></i>' + x[1] + '</span>';
+    }).join('');
+  }
+
+  function renderWindow() {
+    var svg = $('win'); svg.innerHTML = '';
+    var ns = 'http://www.w3.org/2000/svg';
+    var x0 = 10, w = 620, yH = 22, yL = 52;
+    var box = document.createElementNS(ns, 'rect');
+    box.setAttribute('x', x0); box.setAttribute('y', 10); box.setAttribute('width', w); box.setAttribute('height', 56);
+    box.setAttribute('fill', 'none'); box.setAttribute('stroke', 'var(--line)'); box.setAttribute('rx', '6');
+    svg.appendChild(box);
+    var t1 = document.createElementNS(ns, 'text');
+    t1.setAttribute('x', x0 + w / 2); t1.setAttribute('y', 70); t1.setAttribute('text-anchor', 'middle');
+    t1.setAttribute('font-size', '10.5'); t1.setAttribute('fill', 'var(--dim)');
+    t1.textContent = '这 620 px = 1 μs';
+    svg.appendChild(t1);
+    var n = state.f / 1e6; // 1 μs 内的拍数
+    var shown = Math.min(n, 200);
+    var step = w / Math.max(n, 1);
+    for (var i = 0; i < Math.floor(shown); i++) {
+      var high = i % 2 === 0;
+      var l = document.createElementNS(ns, 'line');
+      l.setAttribute('x1', x0 + i * step); l.setAttribute('x2', x0 + i * step);
+      l.setAttribute('y1', high ? yH : yL); l.setAttribute('y2', high ? yL : yH);
+      l.setAttribute('stroke', 'var(--data)'); l.setAttribute('stroke-width', '2');
+      svg.appendChild(l);
+    }
+    var cap = document.createElementNS(ns, 'text');
+    cap.setAttribute('x', x0 + w + 24); cap.setAttribute('y', 34);
+    cap.setAttribute('font-size', '13'); cap.setAttribute('font-weight', '700'); cap.setAttribute('fill', 'var(--fg)');
+    cap.textContent = '× ' + (n >= 100 ? Math.round(n) : (n >= 10 ? n.toFixed(1) : n.toFixed(2))) + ' 拍 / μs';
+    svg.appendChild(cap);
+    var cap2 = document.createElementNS(ns, 'text');
+    cap2.setAttribute('x', x0 + w + 24); cap2.setAttribute('y', 52);
+    cap2.setAttribute('font-size', '10.5'); cap2.setAttribute('fill', 'var(--dim)');
+    cap2.textContent = n > 200 ? '（超出绘制上限，示意）' : (n < 0.05 ? '（1 μs 连一拍都传不完）' : '');
+    svg.appendChild(cap2);
+  }
+
+  function render() {
+    var p = PRESETS[state.p];
+    buildPills();
+    var q = state.qspi && p.qspi;
+    $('qspi').checked = q;
+    $('qspi').disabled = !p.qspi;
+    $('qspilab').style.opacity = p.qspi ? 1 : 0.45;
+
+    var fMHz = state.f / 1e6;
+    $('fval').textContent = (fMHz >= 10 ? Math.round(fMHz) : fMHz.toFixed(fMHz < 1 ? 2 : 1)) + ' MHz';
+    $('f').value = Math.log10(state.f);
+
+    var N = N_of(p, q);
+    var tClock = N / state.f * 1e6; // μs
+    var total = tClock + p.over + p.busy;
+
+    var segs = [];
+    function clkUs(bits) { return bits / state.f * 1e6; }
+    if (p.cmd)   segs.push({ key: 'cmd',   us: clkUs(p.cmd),   label: '命令' });
+    if (p.addr)  segs.push({ key: 'addr',  us: clkUs(p.addr),  label: '地址' });
+    if (p.dummy) segs.push({ key: 'dummy', us: clkUs(p.dummy), label: 'dummy' });
+    if (p.data)  segs.push({ key: 'data',  us: clkUs(q ? p.data / 4 : p.data), label: q ? '数据×4线' : '数据' });
+    if (p.over)  segs.push({ key: 'over',  us: p.over,  label: 'CS·内核·调度' });
+    if (p.busy)  segs.push({ key: 'busy',  us: p.busy,  label: '内部忙' });
+    renderTimeline(segs, total);
+    renderLegend(p);
+    renderWindow();
+
+    $('n_clock').textContent = fmt(tClock) + '（N=' + N + '）';
+    $('n_other').textContent = fmt(p.over);
+    $('n_busy').textContent = p.busy ? fmt(p.busy) : '无';
+    $('n_total').textContent = fmt(total);
+    var share = tClock / total * 100;
+    $('n_share').textContent = share >= 9.95 ? share.toFixed(0) + '%' : share.toFixed(1) + '%';
+
+    var save = tClock / 2 / total * 100;
+    var v;
+    if (p.busy && p.busy > tClock * 3) {
+      v = '时钟时间占比仅 <b>' + share.toFixed(share < 1 ? 2 : 1) + '%</b>。瓶颈是 ' + p.busyName +
+          '，SCLK 从 ' + fMHz + ' MHz 提到 100 MHz 也省不了内部忙——<b>提速对这个操作没有意义</b>，别在这里花时间。';
+    } else if (share >= 60) {
+      v = '时钟时间占比 <b>' + share.toFixed(0) + '%</b>，SCLK 是主要瓶颈：翻倍到 ' +
+          (fMHz * 2 >= 100 ? '100 MHz 以上' : (fMHz * 2) + ' MHz') + ' 可省总时间约 <b>' + save.toFixed(0) + '%</b>，提速直接有效。';
+      if (p.qspi && p.data && !q) {
+        var dpct = clkUs(p.data) / tClock * 100;
+        v += ' 数据阶段占 ' + (dpct > 95 ? dpct.toFixed(1) : dpct.toFixed(0)) + '%，试试勾选「数据阶段 4 线（QSPI）」——接口扩展和提 SCLK 是两条独立的收益路径。';
+      }
+      if (q) v += ' 当前已开 QSPI：数据拍数÷4，命令/地址/dummy 不变，这正是「只有数据阶段变宽」的准确含义。';
+    } else if (share >= 15) {
+      v = '时钟时间占比 <b>' + share.toFixed(0) + '%</b>。SCLK 翻倍约省总时间 <b>' + save.toFixed(0) +
+          '%</b>——有收益但不是首要矛盾，先看清另外 ' + (100 - share).toFixed(0) + '% 花在哪里再决定。';
+    } else {
+      v = '时钟时间占比只有 <b>' + share.toFixed(1) + '%</b>，CS/内核/调度占大头。先把软件路径（CS 边界、调度延迟、ioctl 开销）理干净，提速收益很有限。';
+    }
+    $('verdict').innerHTML = v;
+  }
+
+  $('f').oninput = function () { state.f = Math.pow(10, parseFloat(this.value)); render(); };
+  $('qspi').onchange = function () { state.qspi = this.checked; render(); };
+  window.addEventListener('resize', render);
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480">
+<title>传统 PCI 共享并行总线与 PCIe 点对点串行的物理层对比</title>
+<style>
+  text { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  @media (prefers-color-scheme: dark) {
+    .fg { stroke: #d0d7de; }
+    .fgf { fill: #d0d7de; }
+    .panel { stroke: #d0d7de; }
+  }
+</style>
+
+<!-- 左面板：传统 PCI -->
+<rect class="panel" x="20" y="40" width="420" height="400" rx="8" fill="none" stroke="#24292f" stroke-width="1" opacity="0.35"/>
+<text class="fgf" x="230" y="72" text-anchor="middle" font-size="16" fill="#24292f">传统 PCI：共享并行总线</text>
+
+<!-- 并行线束 -->
+<text class="fgf" x="230" y="106" text-anchor="middle" font-size="12" fill="#24292f">AD[31:0]＋控制／仲裁 ≈50 根并行线</text>
+<line class="fg" x1="60" y1="118" x2="400" y2="118" fill="none" stroke="#24292f" stroke-width="2"/>
+<line class="fg" x1="60" y1="126" x2="400" y2="126" fill="none" stroke="#24292f" stroke-width="2"/>
+<line class="fg" x1="60" y1="134" x2="400" y2="134" fill="none" stroke="#24292f" stroke-width="2"/>
+<line class="fg" x1="60" y1="142" x2="400" y2="142" fill="none" stroke="#24292f" stroke-width="2"/>
+
+<!-- 设备挂接（支线） -->
+<line class="fg" x1="120" y1="142" x2="120" y2="172" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="230" y1="142" x2="230" y2="172" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="340" y1="142" x2="340" y2="172" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<rect class="fg" x="80" y="172" width="80" height="40" rx="4" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="120" y="197" text-anchor="middle" font-size="13" fill="#24292f">设备 1</text>
+<rect class="fg" x="190" y="172" width="80" height="40" rx="4" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="230" y="197" text-anchor="middle" font-size="13" fill="#24292f">设备 2</text>
+<rect class="fg" x="300" y="172" width="80" height="40" rx="4" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="340" y="197" text-anchor="middle" font-size="13" fill="#24292f">设备 3</text>
+
+<!-- 主机挂接 -->
+<line class="fg" x1="110" y1="142" x2="110" y2="258" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<rect class="fg" x="60" y="258" width="100" height="52" rx="4" fill="none" stroke="#24292f" stroke-width="2"/>
+<text class="fgf" x="110" y="289" text-anchor="middle" font-size="13" fill="#24292f">Host／桥</text>
+
+<!-- 左面板注释 -->
+<text class="fgf" x="40" y="352" font-size="12" fill="#24292f">· 约 133 MB/s 由全部设备瓜分（32 位 33 MHz）</text>
+<text class="fgf" x="40" y="376" font-size="12" fill="#24292f">· 同一时刻只能一个发送方：先仲裁，后传输</text>
+<text class="fgf" x="40" y="400" font-size="12" fill="#24292f">· 每加一个插槽＝一段支线＋一份电容负载</text>
+<text class="fgf" x="40" y="424" font-size="12" fill="#24292f">· 继续提速受制于几十根线之间的到达时间差</text>
+
+<!-- 右面板：PCIe -->
+<rect class="panel" x="480" y="40" width="420" height="400" rx="8" fill="none" stroke="#24292f" stroke-width="1" opacity="0.35"/>
+<text class="fgf" x="690" y="72" text-anchor="middle" font-size="16" fill="#24292f">PCIe：点对点串行</text>
+
+<rect class="fg" x="520" y="180" width="100" height="100" rx="4" fill="none" stroke="#24292f" stroke-width="2"/>
+<text class="fgf" x="570" y="235" text-anchor="middle" font-size="13" fill="#24292f">端口 A</text>
+<rect class="fg" x="760" y="180" width="100" height="100" rx="4" fill="none" stroke="#24292f" stroke-width="2"/>
+<text class="fgf" x="810" y="235" text-anchor="middle" font-size="13" fill="#24292f">端口 B</text>
+
+<!-- A→B 差分对 -->
+<text class="fgf" x="690" y="166" text-anchor="middle" font-size="11" fill="#24292f">方向 A → B</text>
+<line class="fg" x1="620" y1="200" x2="750" y2="200" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="620" y1="210" x2="750" y2="210" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<polygon class="fgf" points="750,200 740,196 740,204" fill="#24292f"/>
+<polygon class="fgf" points="750,210 740,206 740,214" fill="#24292f"/>
+
+<!-- B→A 差分对 -->
+<line class="fg" x1="750" y1="245" x2="620" y2="245" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="750" y1="255" x2="620" y2="255" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<polygon class="fgf" points="620,245 630,241 630,249" fill="#24292f"/>
+<polygon class="fgf" points="620,255 630,251 630,259" fill="#24292f"/>
+<text class="fgf" x="690" y="282" text-anchor="middle" font-size="11" fill="#24292f">方向 B → A</text>
+<text class="fgf" x="690" y="318" text-anchor="middle" font-size="12" fill="#24292f">1 条 Lane＝2 对差分线（共 4 根）</text>
+
+<!-- 右面板注释 -->
+<text class="fgf" x="500" y="352" font-size="12" fill="#24292f">· Gen1 x1 每方向约 250 MB/s，全链路独享</text>
+<text class="fgf" x="500" y="376" font-size="12" fill="#24292f">· 两对差分线同时收发：天然全双工，无仲裁</text>
+<text class="fgf" x="500" y="400" font-size="12" fill="#24292f">· 带宽不够：加 Lane 数（x4／x8／x16）或换代际</text>
+<text class="fgf" x="500" y="424" font-size="12" fill="#24292f">· 点对点：这条线上没有第三个端口</text>
+</svg>

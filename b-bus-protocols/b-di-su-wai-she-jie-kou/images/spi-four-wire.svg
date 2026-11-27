@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 590" role="img" aria-labelledby="title desc">
+<title id="title">RK3568 SPI1 与 W25Q128JV 的四线连接和共地</title>
+<desc id="desc">CS0 接 1 脚，DO 接 MISO，DI 接 MOSI，CLK 接 SCLK，双方共地。</desc>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker>
+  <style>
+    text{font-family:Arial,'Microsoft YaHei',sans-serif;fill:#18222d}
+    .line{fill:none;stroke:#18222d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .soft{fill:none;stroke:#72808d;stroke-width:1.5;stroke-dasharray:5 5}
+    .box{fill:#f5f7f9;stroke:#18222d;stroke-width:2}
+    .accent{fill:none;stroke:#d95f02;stroke-width:3}
+    .blue{fill:none;stroke:#1769aa;stroke-width:2.5}
+    .label{font-size:18px} .small{font-size:15px;fill:#4c5966} .tiny{font-size:13px;fill:#4c5966}
+  </style>
+</defs>
+<rect width="100%" height="100%" fill="#fff"/>
+
+<text x="500" y="38" text-anchor="middle" font-size="25" font-weight="700">标准四线 SPI：方向、引脚与共地</text>
+<rect class="box" x="70" y="95" width="265" height="310" rx="8"/>
+<rect class="box" x="675" y="75" width="220" height="330" rx="8"/>
+<path class="line" d="M675 95Q785 45 895 95"/>
+<text x="202" y="78" text-anchor="middle" font-size="22">RK3568 SPI1</text>
+<text x="785" y="125" text-anchor="middle" font-size="22">W25Q128JV-IQ/JQ</text>
+<text x="785" y="151" text-anchor="middle" class="small">SOIC-8 顶视图</text>
+<text class="label" x="95" y="145">CS0（低有效）</text><text class="label" x="95" y="215">MISO</text>
+<text class="label" x="95" y="285">MOSI</text><text class="label" x="95" y="355">SCLK</text>
+<path class="line" marker-end="url(#arrow)" d="M335 135H520V115H655"/>
+<path class="line" marker-end="url(#arrow)" d="M655 185H510V205H355"/>
+<path class="line" marker-end="url(#arrow)" d="M335 275H535V475H930V355H915"/>
+<path class="line" marker-end="url(#arrow)" d="M335 345H490V500H950V285H915"/>
+<circle cx="655" cy="115" r="5"/><circle cx="655" cy="185" r="5"/>
+<circle cx="915" cy="285" r="5"/><circle cx="915" cy="355" r="5"/>
+<text class="label" x="615" y="121" text-anchor="end">1 /CS</text><text class="label" x="615" y="191" text-anchor="end">2 DO</text>
+<text class="label" x="615" y="261" text-anchor="end">3 /WP</text><text class="label" x="615" y="331" text-anchor="end">4 GND</text>
+<text class="label" x="935" y="121">8 VCC</text><text class="label" x="935" y="191">7 /HOLD</text>
+<text class="label" x="935" y="291">6 CLK</text><text class="label" x="935" y="361">5 DI</text>
+<path class="line" d="M655 325V430M650 430h10M645 438h20M640 446h30M202 405V430M197 430h10M192 438h20M187 446h30"/>
+<text x="500" y="535" text-anchor="middle" class="label">同一 GND 符号表示共地：两侧用相同参考判断高、低电平</text>
+<text x="500" y="566" text-anchor="middle" class="small">VCC、/WP、/HOLD 的供电与无效电平仍须按手册和实际原理图处理</text>
+
+</svg>

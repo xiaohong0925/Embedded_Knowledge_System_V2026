@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="960" viewBox="0 0 1600 960">
+  <defs>
+    <style>
+      .title{font:700 42px 'Microsoft YaHei',sans-serif;fill:#172033}.sub{font:24px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .h{font:700 28px 'Microsoft YaHei',sans-serif;fill:#172033}.t{font:23px 'Microsoft YaHei',sans-serif;fill:#26334a}.s{font:20px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .box{stroke-width:3;rx:22}.arrow{stroke:#415a77;stroke-width:5;fill:none;marker-end:url(#a)}.dash{stroke-dasharray:12 10}.lbl{font:700 21px 'Microsoft YaHei',sans-serif;fill:#31527a}
+    </style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#415a77"/></marker>
+  </defs>
+  <rect width="1600" height="960" fill="#f7f9fc"/>
+  <text x="800" y="68" text-anchor="middle" class="title">Linux I2C：两类驱动在 Core 汇合</text>
+  <text x="800" y="110" text-anchor="middle" class="sub">左侧懂外设，右侧懂 SoC，中间负责统一接口、匹配与串行化</text>
+
+  <rect x="90" y="160" width="400" height="300" class="box" fill="#e8f1ff" stroke="#5284c4"/>
+  <text x="290" y="210" text-anchor="middle" class="h">设备驱动（你要写的部分）</text>
+  <text x="130" y="260" class="t">认识 AT24C02、传感器等外设</text>
+  <text x="130" y="303" class="t">拿到：i2c_client</text>
+  <text x="130" y="346" class="t">组装：i2c_msg</text>
+  <text x="130" y="389" class="t">调用：i2c_transfer() / i2c_smbus_*()</text>
+  <text x="130" y="432" class="s">只关心“读哪个寄存器、读几字节”</text>
+
+  <rect x="600" y="160" width="400" height="300" class="box" fill="#fff3d9" stroke="#d19a2a"/>
+  <text x="800" y="210" text-anchor="middle" class="h">I2C Core（内核提供）</text>
+  <text x="640" y="260" class="t">登记 adapter、client、driver</text>
+  <text x="640" y="303" class="t">按 compatible 完成设备与驱动匹配</text>
+  <text x="640" y="346" class="t">把传输请求路由到正确的 adapter</text>
+  <text x="640" y="389" class="t">锁定总线，避免事务互相穿插</text>
+  <text x="640" y="432" class="s">不知道具体外设寄存器的业务含义</text>
+
+  <rect x="1110" y="160" width="400" height="300" class="box" fill="#e8f7ed" stroke="#4b9c68"/>
+  <text x="1310" y="210" text-anchor="middle" class="h">控制器驱动（SoC 厂商提供）</text>
+  <text x="1150" y="260" class="t">注册：i2c_adapter</text>
+  <text x="1150" y="303" class="t">提供：i2c_algorithm</text>
+  <text x="1150" y="346" class="t">实现：master_xfer()</text>
+  <text x="1150" y="389" class="t">操作 SoC 的 I2C 控制器寄存器</text>
+  <text x="1150" y="432" class="s">只关心“怎样产生 START、字节与 STOP”</text>
+
+  <path d="M490 310 H600" class="arrow"/><path d="M1000 310 H1110" class="arrow"/>
+  <text x="545" y="287" text-anchor="middle" class="lbl">统一 API</text><text x="1055" y="287" text-anchor="middle" class="lbl">算法回调</text>
+
+  <rect x="1110" y="540" width="400" height="150" class="box" fill="#edf7f5" stroke="#3c8c86"/>
+  <text x="1310" y="590" text-anchor="middle" class="h">SoC 内的 I2C 控制器</text>
+  <text x="1310" y="635" text-anchor="middle" class="t">执行 master_xfer()，驱动 SDA / SCL</text>
+  <path d="M1310 460 V540" class="arrow"/>
+
+  <rect x="600" y="750" width="400" height="130" class="box" fill="#f0edff" stroke="#806cc1"/>
+  <text x="800" y="800" text-anchor="middle" class="h">AT24C02 / 传感器 / GPIO 扩展器</text>
+  <text x="800" y="845" text-anchor="middle" class="t">挂在同一条物理总线上的外设</text>
+  <path d="M1110 690 C1070 735 1050 770 1000 800" class="arrow"/>
+  <text x="1140" y="758" class="lbl">SDA / SCL</text>
+
+  <rect x="90" y="540" width="400" height="180" class="box" fill="#fff" stroke="#8b96a8"/>
+  <text x="290" y="590" text-anchor="middle" class="h">用户态旁路（原型与调试）</text>
+  <text x="290" y="635" text-anchor="middle" class="t">应用程序 → /dev/i2c-N → i2c-dev</text>
+  <text x="290" y="678" text-anchor="middle" class="s">不经过具体外设驱动，仍复用 Core 与控制器驱动</text>
+  <path d="M290 540 V500 H700 V460" class="arrow dash"/>
+</svg>

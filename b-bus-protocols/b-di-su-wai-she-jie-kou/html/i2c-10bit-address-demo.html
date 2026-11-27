@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I2C 10 位地址拆字节交互演示</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-color-text-primary:#1f2328;
+  --kimi-color-text-secondary:#59636e;
+  --kimi-color-text-tertiary:#8a94a0;
+  --kimi-color-text-quaternary:#c8cfd6;
+  --kimi-color-surface:#ffffff;
+  --kimi-color-surface-muted:#f0f2f5;
+  --kimi-color-border:#d8dee4;
+  --kimi-color-positive:#1a7f37;
+  --kimi-color-danger:#cf222e;
+  --kimi-color-warning:#9a6700;
+  --kimi-chart-1:#0969da;
+  --t-fast:120ms;
+  --t-normal:220ms;
+  --ease-out:cubic-bezier(.2,.7,.3,1);
+  --ease-standard:cubic-bezier(.4,0,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#f0f2f5;
+    --kimi-color-text-secondary:#b8c0ca;
+    --kimi-color-text-tertiary:#8a94a0;
+    --kimi-color-text-quaternary:#4d565f;
+    --kimi-color-surface:#0d1117;
+    --kimi-color-surface-muted:#1c2128;
+    --kimi-color-border:#30363d;
+    --kimi-color-warning:#d29922;
+  }
+}
+html,body{margin:0;padding:0;background:transparent;}
+#tb-wrap button{font:inherit;}
+#tb-wrap svg text{font-family:var(--kimi-font-sans);}
+.tb-h{font-size:15px;font-weight:500;margin:0 0 8px 0;color:var(--kimi-color-text-primary);}
+.tb-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);cursor:pointer;font-size:13px;transition:background var(--t-fast) var(--ease-out);}
+.tb-btn.active{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary);}
+.tb-controls{display:flex;gap:12px;align-items:center;margin:0 0 12px 0;flex-wrap:wrap;font-size:13px;color:var(--kimi-color-text-secondary);}
+.tb-controls input[type=range]{width:220px;accent-color:var(--kimi-color-text-primary);}
+.tb-val{font-variant-numeric:tabular-nums;color:var(--kimi-color-text-primary);font-weight:500;}
+.tb-chip{padding:4px 10px;border-radius:999px;border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-secondary);cursor:pointer;font-size:12px;}
+.tb-chip:hover{color:var(--kimi-color-text-primary);}
+.tb-expl{font-size:13px;line-height:21px;color:var(--kimi-color-text-secondary);margin:10px 0 0 0;}
+.tb-note{font-size:11px;color:var(--kimi-color-text-tertiary);margin-top:6px;}
+.tb-cell{transition:fill var(--t-fast) var(--ease-out);}
+</style>
+</head>
+<body>
+<div id="tb-wrap" style="font-family:var(--kimi-font-sans);width:100%;max-width:640px;margin:0 auto;">
+
+<p class="tb-h">10 位地址拆字节：拖地址、切读写方向，看首字节怎么拼出来</p>
+
+<div class="tb-controls">
+  <span>10 位地址</span>
+  <input type="range" id="tb-addr" min="0" max="1023" value="341" step="1">
+  <span class="tb-val" id="tb-addr-val"></span>
+  <button id="tb-rw0" class="tb-btn active">写（R/W = 0）</button>
+  <button id="tb-rw1" class="tb-btn">读（R/W = 1）</button>
+</div>
+<div class="tb-controls" style="margin-top:-4px;">
+  <span>快捷：</span>
+  <button class="tb-chip" data-a="341">0x155（正文例）</button>
+  <button class="tb-chip" data-a="0">0x000</button>
+  <button class="tb-chip" data-a="1023">0x3FF</button>
+</div>
+
+<svg viewBox="0 0 640 340" style="width:100%;height:auto;display:block;">
+  <text x="50" y="36" font-size="12" fill="var(--kimi-color-text-secondary)">首字节（标志 11110 + A9 A8 + R/W）</text>
+  <text id="tb-bin" x="610" y="36" text-anchor="end" font-size="12" font-weight="500" fill="var(--kimi-color-text-primary)"></text>
+
+  <g id="tb-row1"></g>
+  <text id="tb-fb" x="50" y="134" font-size="14" font-weight="500" fill="var(--kimi-color-text-primary)"></text>
+
+  <text x="50" y="166" font-size="12" fill="var(--kimi-color-text-secondary)">第二字节（地址低 8 位）</text>
+  <g id="tb-row2"></g>
+  <text id="tb-sb" x="50" y="264" font-size="14" font-weight="500" fill="var(--kimi-color-text-primary)"></text>
+
+  <rect x="50" y="282" width="556" height="50" rx="8" fill="var(--kimi-color-surface-muted)" stroke="var(--kimi-color-border)" stroke-width="1"/>
+  <text id="tb-sr" x="328" y="304" text-anchor="middle" font-size="12" fill="var(--kimi-color-text-primary)"></text>
+  <text x="328" y="322" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-tertiary)">重复 START 后只重发首字节、且 R/W = 1，不再发第二字节</text>
+</svg>
+
+<p class="tb-expl">10 位地址不是一次性发 10 个地址位，而是拆成两个字节：高 2 位（A9 A8）和 R/W 拼进首字节，低 8 位独占第二字节。首字节的低 3 位随地址和方向变化，所以整个首字节一定落在 0xF0 ~ 0xF7——这就是 7 位寻址中 0x78 ~ 0x7F 这 8 个地址被保留的原因。</p>
+<p class="tb-note">首字节范围固定 0xF0~0xF7 是由高 5 位 11110 决定的；A9、A8 只能改变第 2、1 位。</p>
+
+<script>
+(function(){
+  var ROW1_NAMES=['1','1','1','1','0','A9','A8','R/W'];
+  var svgNS='http://www.w3.org/2000/svg';
+  function buildRow(gid,names,y,prefix){
+    var g=document.getElementById(gid);
+    for(var i=0;i<8;i++){
+      var x=50+i*70;
+      var isDyn=i>=5;
+      var r=document.createElementNS(svgNS,'rect');
+      r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',64);r.setAttribute('height',56);r.setAttribute('rx',6);
+      r.setAttribute('class','tb-cell');
+      if(isDyn){r.setAttribute('fill','rgba(9,105,218,.10)');r.setAttribute('stroke','var(--kimi-chart-1)');}
+      else{r.setAttribute('fill','var(--kimi-color-surface-muted)');r.setAttribute('stroke','var(--kimi-color-border)');}
+      g.appendChild(r);
+      var t1=document.createElementNS(svgNS,'text');
+      t1.setAttribute('x',x+32);t1.setAttribute('y',y+22);t1.setAttribute('text-anchor','middle');
+      t1.setAttribute('font-size','13');t1.setAttribute('font-weight','500');
+      t1.setAttribute('fill',isDyn?'var(--kimi-chart-1)':'var(--kimi-color-text-tertiary)');
+      t1.textContent=names[i];g.appendChild(t1);
+      var t2=document.createElementNS(svgNS,'text');
+      t2.setAttribute('x',x+32);t2.setAttribute('y',y+46);t2.setAttribute('text-anchor','middle');
+      t2.setAttribute('font-size','16');t2.setAttribute('font-weight','600');
+      t2.setAttribute('fill','var(--kimi-color-text-primary)');
+      t2.setAttribute('id',prefix+i);g.appendChild(t2);
+    }
+  }
+  buildRow('tb-row1',ROW1_NAMES,48,'tb-f');
+  buildRow('tb-row2',['D7','D6','D5','D4','D3','D2','D1','D0'],178,'tb-s');
+
+  var slider=document.getElementById('tb-addr');
+  var addrVal=document.getElementById('tb-addr-val');
+  var binEl=document.getElementById('tb-bin');
+  var fbEl=document.getElementById('tb-fb');
+  var sbEl=document.getElementById('tb-sb');
+  var srEl=document.getElementById('tb-sr');
+  var rwBtns=[document.getElementById('tb-rw0'),document.getElementById('tb-rw1')];
+  var rw=0;
+
+  function setText(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function hex2(n){return '0x'+n.toString(16).toUpperCase().padStart(2,'0');}
+
+  function recompute(){
+    var addr=+slider.value;
+    var a9=(addr>>9)&1,a8=(addr>>8)&1;
+    var first=0xF0|(a9<<2)|(a8<<1)|rw;
+    var second=addr&0xFF;
+    addrVal.textContent='0x'+addr.toString(16).toUpperCase().padStart(3,'0');
+    var bin=addr.toString(2).padStart(10,'0');
+    binEl.textContent='A9A8 D7~D0 = '+bin.slice(0,2)+' '+bin.slice(2);
+    for(var i=0;i<8;i++){setText('tb-f'+i, i<5?ROW1_NAMES[i]:String((i===5?a9:i===6?a8:rw)));}
+    for(var j=0;j<8;j++){setText('tb-s'+j,String((second>>(7-j))&1));}
+    fbEl.textContent='首字节 = '+hex2(first)+(rw===0?'（写）':'（读）');
+    sbEl.textContent='第二字节 = '+hex2(second);
+    srEl.textContent='写后连读：S → '+hex2(0xF0|(a9<<2)|(a8<<1)|0)+' → '+hex2(second)+' → … → Sr → '+hex2(0xF0|(a9<<2)|(a8<<1)|1)+' → 数据 → P';
+  }
+  slider.addEventListener('input',recompute);
+  rwBtns[0].addEventListener('click',function(){rw=0;rwBtns[0].classList.add('active');rwBtns[1].classList.remove('active');recompute();});
+  rwBtns[1].addEventListener('click',function(){rw=1;rwBtns[1].classList.add('active');rwBtns[0].classList.remove('active');recompute();});
+  document.querySelectorAll('.tb-chip').forEach(function(c){
+    c.addEventListener('click',function(){slider.value=c.dataset.a;recompute();});
+  });
+  recompute();
+})();
+</script>
+</div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 600" width="950" height="600"
+     font-family="Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="475" y="42" text-anchor="middle" font-size="22" font-weight="bold" fill="#111">标准四线 SPI：方向、引脚与共地</text>
+
+  <!-- 左侧主机框 -->
+  <rect x="40" y="80" width="210" height="340" rx="8" fill="#fafafa" stroke="#333" stroke-width="1.8"/>
+  <text x="145" y="112" text-anchor="middle" font-size="16" font-weight="bold" fill="#111">RK3568 SPI1</text>
+  <text x="65" y="155" font-size="15" fill="#111">CS0（低有效）</text>
+  <text x="65" y="225" font-size="15" fill="#111">MISO</text>
+  <text x="65" y="295" font-size="15" fill="#111">MOSI</text>
+  <text x="65" y="365" font-size="15" fill="#111">SCLK</text>
+
+  <!-- 右侧芯片 SOIC-8 顶视图：左列 1~4，右列 5~8 -->
+  <rect x="560" y="80" width="200" height="340" rx="8" fill="#fdfdfd" stroke="#333" stroke-width="1.8"/>
+  <text x="660" y="116" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">W25Q128JV-IQ/JQ</text>
+  <text x="660" y="140" text-anchor="middle" font-size="12" fill="#777">SOIC-8 顶视图</text>
+
+  <!-- 芯片引脚名：有线的引脚标签放线上方，无线的贴引脚居中 -->
+  <text x="546" y="142" text-anchor="end" font-size="14" fill="#111">1 /CS</text>
+  <text x="546" y="212" text-anchor="end" font-size="14" fill="#111">2 DO</text>
+  <text x="546" y="295" text-anchor="end" font-size="14" fill="#111">3 /WP</text>
+  <text x="546" y="365" text-anchor="end" font-size="14" fill="#111">4 GND</text>
+  <text x="774" y="142" font-size="14" fill="#111">8 VCC</text>
+  <text x="774" y="225" font-size="14" fill="#111">7 /HOLD</text>
+  <text x="774" y="282" font-size="14" fill="#111">6 CLK</text>
+  <text x="774" y="352" font-size="14" fill="#111">5 DI</text>
+
+  <!-- 引脚焊点 -->
+  <g fill="#111">
+    <circle cx="560" cy="150" r="3.5"/><circle cx="560" cy="220" r="3.5"/>
+    <circle cx="560" cy="290" r="3.5"/><circle cx="560" cy="360" r="3.5"/>
+    <circle cx="760" cy="150" r="3.5"/><circle cx="760" cy="220" r="3.5"/>
+    <circle cx="760" cy="290" r="3.5"/><circle cx="760" cy="360" r="3.5"/>
+    <circle cx="250" cy="150" r="3.5"/><circle cx="250" cy="220" r="3.5"/>
+    <circle cx="250" cy="290" r="3.5"/><circle cx="250" cy="360" r="3.5"/>
+  </g>
+
+  <!-- 信号线：横平竖直，拐点落在固定通道 -->
+  <g stroke="#333" stroke-width="1.8" fill="none">
+    <!-- CS：主机 → 芯片 1 脚 -->
+    <path d="M250 150 H560" marker-end="url(#arr)"/>
+    <!-- MISO：芯片 2 脚 → 主机 -->
+    <path d="M560 220 H250" marker-end="url(#arr)"/>
+    <!-- MOSI：主机 → 芯片 5 脚 DI，从下方绕到芯片右侧（通道 y=460，右侧竖线 x=850） -->
+    <path d="M250 290 H470 V460 H850 V360 H760" marker-end="url(#arr)"/>
+    <!-- SCLK：主机 → 芯片 6 脚 CLK，从下方绕到芯片右侧（通道 y=490，右侧竖线 x=895） -->
+    <path d="M250 360 H440 V490 H895 V290 H760" marker-end="url(#arr)"/>
+    <!-- 主机地 -->
+    <path d="M145 420 V450 M133 450 H157 M139 458 H151 M144 466 H146"/>
+    <!-- 芯片 4 脚 GND：先下后左，避免压 4 GND 标签 -->
+    <path d="M560 360 V400 H520 M508 400 H532 M514 408 H526 M519 416 H521"/>
+  </g>
+
+  <!-- 底部说明 -->
+  <text x="475" y="552" text-anchor="middle" font-size="13" fill="#444">同一 GND 符号表示共地：两侧用相同参考判断高、低电平</text>
+  <text x="475" y="580" text-anchor="middle" font-size="13" fill="#888">VCC、/WP、/HOLD 的供电与无效电平仍须按手册和实际原理图处理</text>
+</svg>

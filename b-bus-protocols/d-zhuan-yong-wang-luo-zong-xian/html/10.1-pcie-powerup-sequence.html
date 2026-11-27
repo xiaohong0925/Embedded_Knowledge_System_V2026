@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PCIe 上电时序动画：电源、REFCLK 与 PERST#</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  svg { display: block; width: 100%; height: auto; max-width: 880px; margin: 0 auto; }
+  text { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  :root {
+    --fg: #24292f;
+    --ac: #0969da;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #d0d7de; --ac: #58a6ff; }
+  }
+</style>
+</head>
+<body>
+<svg viewBox="0 0 880 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PCIe 上电时序动画">
+  <!-- 信号标签（常驻） -->
+  <text x="14" y="67"  font-size="13" fill="var(--fg)">电源 3.3V/12V</text>
+  <text x="14" y="140" font-size="13" fill="var(--fg)">REFCLK</text>
+  <text x="14" y="210" font-size="13" fill="var(--fg)">PERST#</text>
+  <text x="66" y="200" font-size="11" fill="var(--fg)">1</text>
+  <text x="66" y="225" font-size="11" fill="var(--fg)">0</text>
+
+  <!-- 时间轴（常驻） -->
+  <line x1="80" y1="340" x2="720" y2="340" stroke="var(--fg)" stroke-width="1.5"/>
+  <polygon points="720,340 710,336 710,344" fill="var(--fg)"/>
+  <line x1="195" y1="333" x2="195" y2="347" stroke="var(--fg)" stroke-width="1.5"/>
+  <line x1="366" y1="333" x2="366" y2="347" stroke="var(--fg)" stroke-width="1.5"/>
+
+  <!-- 动态元素 -->
+  <path id="pPower" d="M60 86 H150 L195 52 H700" fill="none" stroke="var(--fg)" stroke-width="1.5"/>
+  <g id="gClk" opacity="0">
+    <polyline points="195,124 209,124 209,146 223,146 223,124 237,124 237,146 251,146 251,124 265,124 265,146 279,146 279,124 293,124 293,146 307,146 307,124 321,124 321,146 335,146 335,124 340,124" fill="none" stroke="var(--fg)" stroke-width="1.5"/>
+    <text x="360" y="140" font-size="11" fill="var(--fg)">100 MHz，先于 PERST# 释放稳定</text>
+  </g>
+  <path id="pPerstLow"  d="M80 220 H360"     fill="none" stroke="var(--fg)" stroke-width="1.5"/>
+  <path id="pPerstRise" d="M360 220 L372 192" fill="none" stroke="var(--fg)" stroke-width="1.5"/>
+  <path id="pPerstHigh" d="M372 192 H700"    fill="none" stroke="var(--fg)" stroke-width="1.5"/>
+  <text id="tHold" x="230" y="245" text-anchor="middle" font-size="11" fill="var(--fg)" opacity="0">复位保持</text>
+  <text id="tRelease" x="470" y="186" font-size="11" fill="var(--ac)" opacity="0">复位释放（0 → 1）</text>
+  <line id="eT0" x1="195" y1="44" x2="195" y2="300" stroke="var(--fg)" stroke-width="1" stroke-dasharray="4 3" opacity="0"/>
+  <line id="eT1" x1="366" y1="44" x2="366" y2="300" stroke="var(--fg)" stroke-width="1" stroke-dasharray="4 3" opacity="0"/>
+  <text id="tT0" x="195" y="366" text-anchor="middle" font-size="12" fill="var(--fg)" opacity="0">t0 电源达到规范值</text>
+  <text id="tT1" x="366" y="366" text-anchor="middle" font-size="12" fill="var(--fg)" opacity="0">t1 PERST# 释放</text>
+  <g id="gTpvperl" opacity="0">
+    <line x1="195" y1="272" x2="366" y2="272" stroke="var(--ac)" stroke-width="1.5"/>
+    <line x1="195" y1="265" x2="195" y2="279" stroke="var(--ac)" stroke-width="1.5"/>
+    <line x1="366" y1="265" x2="366" y2="279" stroke="var(--ac)" stroke-width="1.5"/>
+    <text x="280" y="295" text-anchor="middle" font-size="12" fill="var(--ac)">T_PVPERL ≥ 100 ms</text>
+    <text x="280" y="313" text-anchor="middle" font-size="10" fill="var(--fg)">（CEM 规范下限，具体以设备手册为准）</text>
+  </g>
+  <text id="tDetect" x="560" y="366" text-anchor="middle" font-size="12" fill="var(--ac)" opacity="0">→ 两端进入 Detect（LTSSM，见下一节）</text>
+  <circle id="pulse" cx="390" cy="192" r="6" fill="var(--ac)" opacity="0"/>
+  <line id="cursor" x1="80" y1="36" x2="80" y2="330" stroke="var(--ac)" stroke-width="1.2" stroke-dasharray="6 3" opacity="0.55"/>
+
+  <text x="440" y="402" text-anchor="middle" font-size="10" fill="var(--fg)" opacity="0.7">示意波形，时间与频率均不按真实比例绘制 · 动画循环播放</text>
+</svg>
+
+<script>
+(function () {
+  var CYCLE = 12000;           // 12 秒一循环
+  var SWEEP0 = 200, SWEEP1 = 7000, X0 = 80, X1 = 720;
+  // 测试/定格支持：?t=毫秒 定格在指定时刻；?paused 停在初始帧
+  var qs = new URLSearchParams(location.search);
+  var FIXED = qs.has("t") ? parseFloat(qs.get("t")) : null;
+  var PAUSED = qs.has("paused");
+  function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function ramp(t, a, b) { return clamp((t - a) / (b - a)); }
+  function reveal(path, f) {
+    if (f <= 0) { path.style.strokeDasharray = "none"; path.style.opacity = "0"; return; }
+    var L = path.getTotalLength();
+    path.style.opacity = "1";
+    path.style.strokeDasharray = L;
+    path.style.strokeDashoffset = L * (1 - f);
+  }
+  var el = {};
+  ["pPower","gClk","pPerstLow","pPerstRise","pPerstHigh","tHold","tRelease",
+   "eT0","eT1","tT0","tT1","gTpvperl","tDetect","pulse","cursor"].forEach(function (id) {
+    el[id] = document.getElementById(id);
+  });
+  var CX0 = 195, CX1 = 366;   // t0/t1 的 x 坐标
+
+  function frame(now) {
+    var t = (FIXED !== null) ? FIXED : (now % CYCLE);
+    // 时间游标
+    var sf = ramp(t, SWEEP0, SWEEP1);
+    var cx = X0 + (X1 - X0) * sf;
+    el.cursor.setAttribute("x1", cx); el.cursor.setAttribute("x2", cx);
+    el.cursor.style.opacity = (sf > 0 && sf < 1) ? "0.55" : "0";
+
+    // 电源：游标扫过后逐步画出
+    var pw = clamp((cx - 60) / 640);
+    reveal(el.pPower, pw * 3);                     // 3 倍速画出，游标到 1/3 时已完成
+    el.gClk.style.opacity = cx > CX0 + 10 ? "1" : "0";
+
+    // PERST#：低电平先画，t1 处爬坡，之后高电平
+    reveal(el.pPerstLow, ramp(t, 300, 1200));
+    var riseF = clamp((cx - CX1) / 14);
+    reveal(el.pPerstRise, riseF);
+    reveal(el.pPerstHigh, clamp((cx - CX1 - 8) / 30));
+    el.tHold.style.opacity   = (t > 1300 && cx < CX1) ? "1" : "0";
+    el.tRelease.style.opacity = cx > CX1 + 20 ? "1" : "0";
+
+    // 事件线与标签
+    el.eT0.style.opacity = cx > CX0 ? "0.5" : "0";
+    el.eT1.style.opacity = cx > CX1 ? "0.5" : "0";
+    el.tT0.style.opacity = cx > CX0 + 30 ? "1" : "0";
+    el.tT1.style.opacity = cx > CX1 + 30 ? "1" : "0";
+    el.gTpvperl.style.opacity = cx > CX1 + 40 ? "1" : "0";
+
+    // 收尾：脉冲滑向 Detect
+    var pf = ramp(t, 7300, 9200);
+    el.pulse.style.opacity = pf > 0 && pf < 1 ? "1" : "0";
+    el.pulse.setAttribute("cx", 390 + 260 * pf);
+    el.tDetect.style.opacity = ramp(t, 8500, 9500);
+
+    if (FIXED === null && !PAUSED) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

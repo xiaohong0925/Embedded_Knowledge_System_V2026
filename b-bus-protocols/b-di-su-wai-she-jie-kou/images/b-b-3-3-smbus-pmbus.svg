@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <style>
+      .title{font:700 42px 'Microsoft YaHei',sans-serif;fill:#172033}.sub{font:24px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .h{font:700 29px 'Microsoft YaHei',sans-serif;fill:#172033}.t{font:23px 'Microsoft YaHei',sans-serif;fill:#26334a}.s{font:20px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .box{stroke-width:3;rx:22}.arrow{stroke:#415a77;stroke-width:5;fill:none;marker-end:url(#a)}
+    </style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#415a77"/></marker>
+  </defs>
+  <rect width="1600" height="1000" fill="#f7f9fc"/>
+  <text x="800" y="68" text-anchor="middle" class="title">I2C、SMBus、PMBus：同一通信栈上的不同约定</text>
+  <text x="800" y="110" text-anchor="middle" class="sub">不是三种接线方式，而是逐层增加“字节怎样解释”的规则</text>
+
+  <rect x="150" y="720" width="1300" height="150" class="box" fill="#e8f1ff" stroke="#5284c4"/>
+  <text x="800" y="772" text-anchor="middle" class="h">I2C：物理与传输基础</text>
+  <text x="800" y="818" text-anchor="middle" class="t">SDA / SCL、7 位地址、START / Repeated START / STOP、ACK / NACK</text>
+  <text x="800" y="852" text-anchor="middle" class="s">只保证字节能传输，不规定每个寄存器与数值的业务含义</text>
+
+  <rect x="150" y="475" width="1300" height="180" class="box" fill="#e8f7ed" stroke="#4b9c68"/>
+  <text x="800" y="527" text-anchor="middle" class="h">SMBus：系统管理的共同约定</text>
+  <text x="800" y="573" text-anchor="middle" class="t">固定事务格式 + 命令字 + 时钟低超时 + 可选 PEC 校验</text>
+  <text x="800" y="617" text-anchor="middle" class="s">Linux 用 i2c_smbus_*() 表达这些事务；普通 I2C 控制器可模拟 SMBus 事务</text>
+  <path d="M800 655 V720" class="arrow"/>
+
+  <rect x="150" y="210" width="1300" height="200" class="box" fill="#fff3d9" stroke="#d19a2a"/>
+  <text x="800" y="262" text-anchor="middle" class="h">PMBus：电源管理的命令与数据格式</text>
+  <text x="800" y="308" text-anchor="middle" class="t">PAGE 选择电源轨 → READ_VOUT 读电压 → 按器件格式解码</text>
+  <text x="800" y="352" text-anchor="middle" class="t">STATUS_WORD 报告故障，LINEAR11 / LINEAR16 等格式表达测量值</text>
+  <text x="800" y="390" text-anchor="middle" class="s">仍通过 SMBus 事务收发，并未增加另一套总线波形</text>
+  <path d="M800 410 V475" class="arrow"/>
+
+  <rect x="150" y="35" width="1300" height="110" class="box" fill="#f0edff" stroke="#806cc1"/>
+  <text x="800" y="83" text-anchor="middle" class="h">Linux pmbus 驱动 → hwmon → 用户读到标准单位</text>
+  <text x="800" y="122" text-anchor="middle" class="s">例如把电源芯片返回的编码换算为毫伏，再导出 in1_input</text>
+  <path d="M800 145 V210" class="arrow"/>
+</svg>

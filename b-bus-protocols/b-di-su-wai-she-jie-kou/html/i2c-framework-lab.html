@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>I2C Framework Lab · 一笔读取，穿透 Linux</title>
+  <link rel="stylesheet" href="i2c-framework-lab.css?v=20261106">
+</head>
+<body>
+<div id="lab" class="lab">
+  <header class="lab-header">
+    <div class="lab-identity">
+      <span class="lab-kicker">LINUX v6.6 · RK3568 · AT24C02</span>
+      <h1>I2C Framework Lab</h1>
+      <p>一笔读取，穿透对象、代码与总线。</p>
+    </div>
+    <div class="transaction-tag" aria-label="贯穿实例">
+      <span>0x50</span><b>→</b><span>reg 0x10</span><b>→</b><span>msgs[2]</span><b>→</b><span>value 0x5a</span>
+    </div>
+  </header>
+
+  <div class="lab-body">
+    <nav class="chapter-rail" aria-label="实验室场景">
+      <button class="rail-item is-active" data-view="boot" aria-label="01 启动建链"><span>01</span><small>建链</small></button>
+      <button class="rail-item" data-view="transfer" aria-label="02 传输单步"><span>02</span><small>传输</small></button>
+      <button class="rail-item" data-view="userspace" aria-label="03 用户态入口"><span>03</span><small>入口</small></button>
+      <button class="rail-item" data-view="gpio" aria-label="04 替换控制器"><span>04</span><small>替换</small></button>
+      <button class="rail-item" data-view="source" aria-label="05 完整源码"><span>05</span><small>源码</small></button>
+    </nav>
+
+    <main class="lab-main">
+      <section id="view-boot" class="lab-view is-active" aria-labelledby="boot-title">
+        <div class="view-heading">
+          <div class="view-number">01 / BOOT</div>
+          <div>
+            <h2 id="boot-title">启动建链：对象逐个出现</h2>
+            <p>点击下一步，观察 DTS、控制器私有对象、client、驱动与用户入口如何建立关系。</p>
+          </div>
+          <div class="legend" aria-label="关系图例"><span><i class="legend-solid"></i>内嵌</span><span><i class="legend-dash"></i>指针</span></div>
+        </div>
+
+        <div class="step-toolbar">
+          <div class="button-group">
+            <button class="control-button" id="boot-prev" type="button">← 上一步</button>
+            <button class="control-button control-primary" id="boot-next" type="button">下一步 →</button>
+            <button class="control-button control-quiet" id="boot-reset" type="button">复位</button>
+          </div>
+          <output id="boot-counter" class="step-counter">01 / 08</output>
+        </div>
+        <div id="boot-step-strip" class="step-strip" aria-label="启动步骤"></div>
+
+        <div class="workbench boot-workbench">
+          <section class="code-pane" aria-label="当前启动代码">
+            <div class="pane-heading"><span id="boot-code-path">board.dts</span><span class="pane-badge">当前步骤</span></div>
+            <pre class="code-window"><code id="boot-code"></code></pre>
+            <div class="mechanism-note" id="boot-note" aria-live="polite"></div>
+          </section>
+          <section class="state-pane" aria-label="对象和观察结果">
+            <div class="pane-heading"><span>对象与接口</span><span class="live-indicator">MODEL</span></div>
+            <div class="object-map" id="boot-object-map">
+              <div class="object-node" data-node="dts"><small>DESCRIPTION</small><strong>eeprom@50</strong><code>reg = &lt;0x50&gt;</code></div>
+              <div class="object-link link-dashed">创建</div>
+              <div class="object-node object-contained" data-node="rk3x"><small>PRIVATE</small><strong>struct rk3x_i2c</strong><code>*i2c</code>
+                <div class="object-node inner-node" data-node="adap"><small>EMBEDDED</small><strong>i2c_adapter adap</strong><code>nr=1 · algo_data=i2c</code></div>
+              </div>
+              <div class="object-link link-dashed">client-&gt;adapter</div>
+              <div class="object-node" data-node="client"><small>PERIPHERAL</small><strong>struct i2c_client</strong><code>addr=0x50 · dev=1-0050</code></div>
+              <div class="object-node" data-node="algorithm"><small>OPERATIONS</small><strong>rk3x_i2c_algorithm</strong><code>master_xfer = rk3x_i2c_xfer</code></div>
+              <div class="object-node" data-node="driver"><small>CALLBACKS</small><strong>demo_driver</strong><code>probe(client)</code></div>
+              <div class="object-node" data-node="i2cdev"><small>USER ENTRY</small><strong>struct i2c_dev</strong><code>/dev/i2c-1</code></div>
+            </div>
+            <div class="observation-pane">
+              <span class="section-label">此刻可以观察到什么</span>
+              <ul id="boot-observations"></ul>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="view-transfer" class="lab-view" aria-labelledby="transfer-title">
+        <div class="view-heading">
+          <div class="view-number">02 / RUNTIME</div>
+          <div>
+            <h2 id="transfer-title">传输单步：同一代码，不同结局</h2>
+            <p>代码、消息、锁、控制器状态与总线事件同步推进。故障值来自 v6.6 错误路径。</p>
+          </div>
+          <label class="select-label">实验条件
+            <select id="fault-mode">
+              <option value="normal">正常读取</option>
+              <option value="nack">地址阶段 NACK</option>
+              <option value="timeout">等待控制器超时</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="step-toolbar">
+          <div class="button-group">
+            <button class="control-button" id="transfer-prev" type="button">← 上一步</button>
+            <button class="control-button control-primary" id="transfer-next" type="button">下一步 →</button>
+            <button class="control-button control-quiet" id="transfer-reset" type="button">复位</button>
+          </div>
+          <output id="transfer-counter" class="step-counter">01 / 10</output>
+        </div>
+        <div id="transfer-step-strip" class="step-strip" aria-label="传输步骤"></div>
+
+        <div class="message-ledger" aria-label="消息状态">
+          <div class="ledger-title">TRANSACTION</div>
+          <div class="message-item" id="message-zero"><span>msgs[0]</span><code>0x50 · WRITE · 0x10</code><b>未提交</b></div>
+          <div class="message-item" id="message-one"><span>msgs[1]</span><code>0x50 · READ · value</code><b>未提交</b></div>
+        </div>
+
+        <div class="workbench transfer-workbench">
+          <section class="code-pane" aria-label="当前传输代码">
+            <div class="pane-heading"><span id="transfer-code-path">demo_i2c.c</span><span class="pane-badge">同步视图</span></div>
+            <pre class="code-window"><code id="transfer-code"></code></pre>
+            <div class="mechanism-note" id="transfer-note" aria-live="polite"></div>
+          </section>
+          <section class="state-pane" aria-label="传输状态">
+            <div class="pane-heading"><span>运行时状态</span><span class="live-indicator">LIVE MODEL</span></div>
+            <dl class="state-grid">
+              <div><dt>bus_lock</dt><dd id="state-lock">unlocked</dd></div>
+              <div><dt>busy</dt><dd id="state-busy">false</dd></div>
+              <div><dt>state</dt><dd id="state-machine">IDLE</dd></div>
+              <div><dt>processed</dt><dd id="state-processed">0</dd></div>
+              <div><dt>error</dt><dd id="state-error">0</dd></div>
+              <div><dt>value</dt><dd id="state-value">—</dd></div>
+            </dl>
+            <div class="return-readout" id="transfer-return"><small>RETURN PATH</small><strong>尚未调用</strong><span>等待 msgs[2]</span></div>
+          </section>
+        </div>
+        <div class="bus-lane-wrap">
+          <div class="pane-heading"><span>总线事件 · 逻辑模型，非实测波形</span><span id="bus-condition" class="status-good">ACK PATH</span></div>
+          <div id="bus-lane" class="bus-lane"></div>
+        </div>
+      </section>
+
+      <section id="view-userspace" class="lab-view" aria-labelledby="userspace-title">
+        <div class="view-heading">
+          <div class="view-number">03 / USER ENTRY</div>
+          <div>
+            <h2 id="userspace-title">两个入口，同一条后半路</h2>
+            <p>先看接口从哪里来，再推演两个进程各自拥有和共同争用的状态。</p>
+          </div>
+        </div>
+
+        <div class="interface-explorer">
+          <div class="pane-heading"><span>接口来源检查器</span><span class="pane-badge">/dev ≠ eeprom</span></div>
+          <div class="segmented-control" id="interface-selector">
+            <button class="is-active" data-interface="adapter" type="button">I2C adapter</button>
+            <button data-interface="bound" type="button">client + at24</button>
+            <button data-interface="unbound" type="button">client 未绑定</button>
+          </div>
+          <div class="interface-result">
+            <div><small>创建链</small><code id="interface-chain"></code></div>
+            <div><small>用户可见结果</small><ul id="interface-files"></ul></div>
+          </div>
+        </div>
+
+        <div class="path-comparison">
+          <section><span class="section-label">内核入口</span><code>demo_read_reg(client)</code><code>i2c_transfer(adapter, msgs, 2)</code><b>成功：返回 2</b></section>
+          <div class="merge-marker">同一 Core<br>同一 adapter<br>同一总线锁</div>
+          <section><span class="section-label">用户态入口</span><code>open("/dev/i2c-1")</code><code>ioctl(I2C_RDWR, &amp;transaction)</code><b>v6.6 完整成功：返回 2</b></section>
+        </div>
+
+        <div class="step-toolbar process-toolbar">
+          <div class="button-group">
+            <button class="control-button" id="process-prev" type="button">← 上一步</button>
+            <button class="control-button control-primary" id="process-next" type="button">推进操作 →</button>
+            <button class="control-button control-quiet" id="process-reset" type="button">复位</button>
+          </div>
+          <output id="process-counter" class="step-counter">00 / 07</output>
+        </div>
+        <div class="process-model">
+          <section class="process-column" id="process-a"><div class="process-name">PROCESS A</div><code>fd A：—</code><code>client A：—</code><code>buffer A：—</code><b>等待操作</b></section>
+          <section class="adapter-lock" id="adapter-lock"><span>SHARED ADAPTER</span><strong>i2c_adapter · nr=1</strong><code>bus_lock = unlocked</code><small>共享总线，不共享消息与缓冲区</small></section>
+          <section class="process-column" id="process-b"><div class="process-name">PROCESS B</div><code>fd B：—</code><code>client B：—</code><code>buffer B：—</code><b>等待操作</b></section>
+        </div>
+        <div class="mechanism-note process-note" id="process-note" aria-live="polite"></div>
+      </section>
+
+      <section id="view-gpio" class="lab-view" aria-labelledby="gpio-title">
+        <div class="view-heading">
+          <div class="view-number">04 / REPLACEABLE ALGORITHM</div>
+          <div>
+            <h2 id="gpio-title">只换总线实现，不改外设读取</h2>
+            <p>切换控制器，观察调用链在哪里分叉；再让外设拉住 SCL，检查 getscl 的作用。</p>
+          </div>
+          <div class="segmented-control" id="gpio-mode-selector">
+            <button class="is-active" data-gpio-mode="rk3x" type="button">RK3568</button>
+            <button data-gpio-mode="gpio" type="button">GPIO 模拟</button>
+          </div>
+        </div>
+
+        <div class="unchanged-ledger"><span>保持不变</span><code>demo_read_reg()</code><code>msgs[2]</code><code>i2c_transfer()</code><code>Core + bus_lock</code></div>
+        <div class="implementation-switch" id="implementation-panel"></div>
+
+        <div class="gpio-simulator">
+          <div class="pane-heading"><span>GPIO 位模拟：SCL 时钟延展单步</span><label class="check-label"><input id="stretch-enabled" type="checkbox" checked> 外设暂时拉住 SCL</label></div>
+          <div class="gpio-mode-banner" id="gpio-mode-banner">
+            <div>
+              <strong>为什么 RK3568 模式下不能单步？</strong>
+              <p>下方演示的是 i2c-algo-bit 的 sclhi()：软件释放 SCL 后反复 getscl()。RK3568 由硬件状态机处理时钟，不执行这段软件等待循环。</p>
+            </div>
+            <button class="control-button control-primary" id="gpio-start" type="button">切换到 GPIO 模拟并演示</button>
+          </div>
+          <div class="step-toolbar">
+            <div class="button-group">
+              <button class="control-button" id="gpio-prev" type="button">← 上一步</button>
+              <button class="control-button control-primary" id="gpio-next" type="button">下一步 →</button>
+              <button class="control-button control-quiet" id="gpio-reset" type="button">复位</button>
+              <button class="control-button control-danger" id="gpio-timeout" type="button">推进到超时</button>
+            </div>
+            <output id="gpio-counter" class="step-counter">00 / 04</output>
+          </div>
+          <div class="line-model">
+            <div class="line-state"><span>主机动作</span><strong id="gpio-action">等待 setscl(1)</strong><small>开漏：1 表示释放，不是主动推高</small></div>
+            <div class="wire-visual" id="wire-visual"><i></i><b>SCL</b><span id="wire-level">LOW</span></div>
+            <div class="line-state"><span>读回结果</span><strong id="gpio-readback">getscl() = 0</strong><small id="gpio-wait-state">尚未开始等待</small></div>
+          </div>
+          <div class="return-readout gpio-return" id="gpio-return"><small>ALGORITHM RESULT</small><strong>等待执行</strong><span>sclhi() 尚未返回</span></div>
+          <div class="mechanism-note" id="gpio-note" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="view-source" class="lab-view" aria-labelledby="source-title">
+        <div class="view-heading">
+          <div class="view-number">05 / SOURCE WORKBENCH</div>
+          <div>
+            <h2 id="source-title">完整源码工作台</h2>
+            <p>这里加载正文使用的同一份教学文件。可复制、下载，并按文件核对构建上下文。</p>
+          </div>
+          <button class="control-button" id="copy-source" type="button">复制当前文件</button>
+        </div>
+        <div class="source-layout">
+          <nav class="source-files" id="source-files" aria-label="教学文件列表"></nav>
+          <section class="source-editor">
+            <div class="pane-heading"><span id="source-path">等待选择</span><a id="source-download" href="../code/B-B.3.3/demo_i2c.c" download="demo_i2c.c">下载文件</a></div>
+            <div class="source-context" id="source-context"></div>
+            <pre class="code-window source-code-window"><code id="source-code">正在加载…</code></pre>
+            <div class="source-status" id="source-status" role="status"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="lab-footer">
+    <span>模型依据：Linux v6.6 源码</span>
+    <span>0x5a 为样本值 · 非编译、非运行、非上板记录</span>
+    <span>快捷键：← / → 推进当前单步场景</span>
+  </footer>
+</div>
+<noscript><div class="noscript-note">交互实验室需要 JavaScript。请返回 B-B.3.3 正文阅读完整机制与源码；正文不依赖本实验室。</div></noscript>
+<script src="i2c-framework-fullcode.js?v=20261106-3"></script>
+<script src="i2c-framework-lab.js?v=20261106-2"></script>
+</body>
+</html>

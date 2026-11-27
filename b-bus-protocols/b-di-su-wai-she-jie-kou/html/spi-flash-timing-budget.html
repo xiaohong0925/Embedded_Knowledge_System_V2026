@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPI Flash 读时序预算图</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --kimi-font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --kimi-color-text-primary:#1c1d22;--kimi-color-text-secondary:#4c515b;
+  --kimi-color-text-tertiary:#878d98;--kimi-color-text-quaternary:#b9bec8;
+  --kimi-color-border:#e2e4e9;--kimi-color-surface:#ffffff;--kimi-color-surface-muted:#f4f5f7;
+  --kimi-color-accent:#3b6fe0;--kimi-color-danger:#cf4a41;--kimi-color-positive:#2e9e64;--kimi-color-warning:#c8902a;
+  --kimi-chart-1:#3b6fe0;--kimi-chart-2:#cf4a41;--kimi-chart-3:#2e9e64;--kimi-chart-4:#8a5cf0;--kimi-chart-5:#9aa1ad;
+  --t-fast:150ms;--ease-out:cubic-bezier(.2,.7,.3,1);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --kimi-color-text-primary:#e9ebf0;--kimi-color-text-secondary:#a6abb6;
+    --kimi-color-text-tertiary:#767c88;--kimi-color-text-quaternary:#4c515b;
+    --kimi-color-border:#2b2e35;--kimi-color-surface:#17181c;--kimi-color-surface-muted:#1f2126;
+    --kimi-color-accent:#6b9bff;--kimi-color-danger:#e06c63;--kimi-color-positive:#4cbd82;--kimi-color-warning:#d9ab4a;
+    --kimi-chart-1:#6b9bff;--kimi-chart-2:#e06c63;--kimi-chart-3:#4cbd82;--kimi-chart-4:#a583f5;--kimi-chart-5:#6b707b;
+  }
+}
+html,body{margin:0;padding:0;background:transparent}
+body{padding:16px}
+</style>
+</head>
+<body>
+<style>
+.wrap{font-family:var(--kimi-font-sans);color:var(--kimi-color-text-primary);max-width:780px;font-size:14px;line-height:1.5}
+.wrap button,.wrap input{font:inherit}
+.wrap svg text{font-family:var(--kimi-font-sans)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.title{font-size:15px;font-weight:500}
+.seg{display:flex;gap:4px}
+.seg button{border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-secondary);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;transition:all var(--t-fast) var(--ease-out)}
+.seg button.on{background:var(--kimi-color-text-primary);color:var(--kimi-color-surface);border-color:var(--kimi-color-text-primary)}
+.stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+.chip{border:1px solid var(--kimi-color-border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--kimi-color-text-secondary)}
+.chip b{display:block;font-size:17px;font-weight:500;color:var(--kimi-color-text-primary);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:2px}
+.chip.neg b{color:var(--kimi-color-danger)}
+.badge{margin-left:auto;border-radius:6px;padding:6px 12px;font-size:13px;font-weight:500}
+.badge.pass{background:color-mix(in srgb,var(--kimi-color-positive) 14%,transparent);color:var(--kimi-color-positive)}
+.badge.fail{background:color-mix(in srgb,var(--kimi-color-danger) 14%,transparent);color:var(--kimi-color-danger)}
+.formula{font-family:var(--kimi-font-mono);font-size:12px;color:var(--kimi-color-text-secondary);background:var(--kimi-color-surface-muted);border-radius:8px;padding:8px 12px;margin-bottom:8px;overflow-x:auto;white-space:nowrap}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--kimi-color-text-secondary);margin:8px 0 12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 20px}
+.ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--kimi-color-text-secondary)}
+.ctl .cl{flex:0 0 76px}
+.ctl input[type=range]{flex:1;accent-color:var(--kimi-color-text-primary);min-width:60px}
+.ctl .cv{flex:0 0 58px;text-align:right;font-variant-numeric:tabular-nums;color:var(--kimi-color-text-primary)}
+.note{margin-top:12px;font-size:12px;color:var(--kimi-color-text-tertiary)}
+</style>
+<div class="wrap">
+  <div class="head">
+    <div class="title">SPI Flash 读时序预算：启动沿 → 采样沿（Mode 0）</div>
+    <div class="seg" id="seg">
+      <button data-m="half" class="on">Δt = T/2（标准 Mode 0/3）</button>
+      <button data-m="full">Δt = T（同类型沿）</button>
+    </div>
+  </div>
+  <div id="svgbox"></div>
+  <div class="stats" id="stats"></div>
+  <div class="formula" id="formula"></div>
+  <div class="legend">
+    <span><i style="background:var(--kimi-chart-1)"></i>tCLQV · 器件手册</span>
+    <span><i style="background:var(--kimi-chart-4)"></i>tflight · PCB 走线</span>
+    <span><i style="background:var(--kimi-chart-3)"></i>tSU · 主机手册</span>
+    <span><i style="background:var(--kimi-chart-5)"></i>margin · 设计裕量</span>
+  </div>
+  <div class="ctrls">
+    <label class="ctl"><span class="cl">SCK 频率</span><input type="range" id="f" min="1" max="50" step="1" value="25"><span class="cv" id="fv"></span></label>
+    <label class="ctl"><span class="cl">tCLQV</span><input type="range" id="clqv" min="2" max="20" step="0.5" value="8"><span class="cv" id="clqvv"></span></label>
+    <label class="ctl"><span class="cl">tflight</span><input type="range" id="flight" min="0" max="5" step="0.1" value="1.5"><span class="cv" id="flightv"></span></label>
+    <label class="ctl"><span class="cl">tSU_host</span><input type="range" id="su" min="1" max="15" step="0.5" value="4"><span class="cv" id="suv"></span></label>
+    <label class="ctl"><span class="cl">margin</span><input type="range" id="margin" min="0" max="40" step="5" value="25"><span class="cv" id="marginv"></span></label>
+  </div>
+  <div class="note">Mode 0：下降沿启动输出 → 上升沿采样，两沿正好隔 T/2。换模式先确认哪条沿启动输出、哪条沿采样——不是 T/2 时左侧就不能写 T/2。</div>
+</div>
+<script>
+(function(){
+var S={f:25,clqv:8,flight:1.5,su:4,margin:25,mode:'half'};
+var $=function(id){return document.getElementById(id)};
+function fmt(v){return v.toFixed(1)}
+function br(xa,xb,y,label,ly){
+  var c='var(--kimi-color-text-tertiary)';
+  var m='<line x1="'+xa+'" y1="'+y+'" x2="'+xb+'" y2="'+y+'" stroke="'+c+'" stroke-width="1"/>';
+  m+='<line x1="'+xa+'" y1="'+(y-3)+'" x2="'+xa+'" y2="'+(y+3)+'" stroke="'+c+'"/>';
+  m+='<line x1="'+xb+'" y1="'+(y-3)+'" x2="'+xb+'" y2="'+(y+3)+'" stroke="'+c+'"/>';
+  m+='<text x="'+((xa+xb)/2)+'" y="'+(ly||y-5)+'" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)">'+label+'</text>';
+  return m;
+}
+function seg(x,w,color){
+  if(w<=0)return '';
+  return '<rect x="'+x+'" y="218" width="'+w+'" height="22" rx="2" fill="'+color+'"/>';
+}
+function render(){
+  var T=1000/S.f, dt=(S.mode==='half')?T/2:T;
+  var sub=S.clqv+S.flight+S.su, mg=sub*S.margin/100, bud=sub+mg;
+  var span=Math.max(dt,bud)*1.12;
+  var x0=96, W=600, XR=720;
+  function x(t){return x0+t/span*W}
+  var xl=x(0), xs=x(dt), xe=x(bud);
+  var s='<svg viewBox="0 0 760 268" width="100%" style="display:block">';
+  s+='<defs><pattern id="hatch" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--kimi-color-danger)" stroke-width="1" opacity="0.55"/></pattern></defs>';
+  // edge markers
+  s+='<line x1="'+xl+'" y1="22" x2="'+xl+'" y2="250" stroke="var(--kimi-color-border)" stroke-width="1"/>';
+  s+='<line x1="'+xs+'" y1="22" x2="'+xs+'" y2="250" stroke="var(--kimi-color-text-primary)" stroke-width="1" stroke-dasharray="4 3"/>';
+  s+='<text x="'+xl+'" y="14" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-secondary)">启动沿 ↓（Flash 放出数据）</text>';
+  s+='<text x="'+xs+'" y="14" text-anchor="middle" font-size="11" fill="var(--kimi-color-text-primary)">采样沿 ↑（主机锁存）</text>';
+  // row labels
+  var lab=function(y,t){return '<text x="88" y="'+y+'" text-anchor="end" font-size="11" fill="var(--kimi-color-text-tertiary)">'+t+'</text>'};
+  s+=lab(50,'SCK')+lab(110,'MISO @Flash')+lab(170,'MISO @主机')+lab(232,'预算');
+  // SCK: high -> fall at xl -> low -> rise at xs -> high
+  var p='M'+(xl-56)+' 34 H'+xl+' V58 H'+xs+' V34 H'+XR;
+  s+='<path d="'+p+'" fill="none" stroke="var(--kimi-color-text-primary)" stroke-width="1.6"/>';
+  // MISO @Flash: valid after tCLQV
+  var xf=x(S.clqv);
+  s+='<rect x="'+xf+'" y="88" width="'+(XR-xf)+'" height="32" fill="color-mix(in srgb,var(--kimi-chart-1) 8%,transparent)"/>';
+  s+='<path d="M'+(xl-56)+' 92 H'+(xf-3)+' L'+(xf+3)+' 116 H'+XR+'" fill="none" stroke="var(--kimi-chart-1)" stroke-width="1.6"/>';
+  // MISO @host: valid after tCLQV+tflight
+  var xh=x(S.clqv+S.flight);
+  s+='<rect x="'+xh+'" y="148" width="'+(XR-xh)+'" height="32" fill="color-mix(in srgb,var(--kimi-chart-1) 8%,transparent)"/>';
+  s+='<path d="M'+(xl-56)+' 152 H'+(xh-3)+' L'+(xh+3)+' 176 H'+XR+'" fill="none" stroke="var(--kimi-chart-1)" stroke-width="1.6"/>';
+  s+='<text x="'+(XR-6)+'" y="102" text-anchor="end" font-size="10" fill="var(--kimi-color-text-tertiary)">有效</text>';
+  s+='<text x="'+(XR-6)+'" y="162" text-anchor="end" font-size="10" fill="var(--kimi-color-text-tertiary)">有效（晚到 tflight）</text>';
+  // brackets
+  s+=br(xl,xf,80,'tCLQV');
+  s+=br(xf,xh,196,'tflight');
+  var xSu1=x(dt-mg-S.su), xSu2=x(dt-mg);
+  s+=br(xSu1,xSu2,140,'tSU');
+  if(S.margin>0) s+=br(xSu2,xs,140,'margin',156);
+  // budget bar
+  var t1=x(S.clqv), t2=x(S.clqv+S.flight), t3=x(S.clqv+S.flight+S.su);
+  s+=seg(xl,t1-xl,'var(--kimi-chart-1)')+seg(t1,t2-t1,'var(--kimi-chart-4)')+seg(t2,t3-t2,'var(--kimi-chart-3)')+seg(t3,xe-t3,'var(--kimi-chart-5)');
+  // overflow
+  if(bud>dt){
+    s+='<rect x="'+xs+'" y="212" width="'+(xe-xs)+'" height="34" fill="url(#hatch)" stroke="var(--kimi-color-danger)" stroke-width="1" stroke-dasharray="3 2" rx="3"/>';
+    var lx=Math.min((xs+xe)/2,660);
+    s+='<text x="'+lx+'" y="206" text-anchor="middle" font-size="11" font-weight="500" fill="var(--kimi-color-danger)">超出 Δt，采样可能出错</text>';
+  }
+  // axis
+  s+='<line x1="'+xl+'" y1="250" x2="'+XR+'" y2="250" stroke="var(--kimi-color-text-quaternary)" stroke-width="1"/>';
+  s+='<text x="'+xl+'" y="264" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-tertiary)">0（启动）</text>';
+  s+='<text x="'+xs+'" y="264" text-anchor="middle" font-size="10" fill="var(--kimi-color-text-secondary)">Δt = '+(S.mode==='half'?'T/2':'T')+' = '+fmt(dt)+' ns</text>';
+  s+='<text x="'+Math.min(xe,700)+'" y="264" text-anchor="'+(xe>700?'end':'middle')+'" font-size="10" fill="var(--kimi-color-text-secondary)">预算 = '+fmt(bud)+' ns</text>';
+  s+='</svg>';
+  $('svgbox').innerHTML=s;
+  // stats
+  var slack=dt-bud, ok=slack>=0;
+  $('stats').innerHTML=
+    '<div class="chip">可用 Δt（'+(S.mode==='half'?'T/2':'T')+'）<b>'+fmt(dt)+' ns</b></div>'+
+    '<div class="chip">需求预算<b>'+fmt(bud)+' ns</b></div>'+
+    '<div class="chip'+(ok?'':' neg')+'">余量（含抖动温漂）<b>'+(ok?'+':'')+fmt(slack)+' ns</b></div>'+
+    '<span class="badge '+(ok?'pass':'fail')+'">'+(ok?'✓ 满足建立时间':'✗ 不满足，降频或减小延迟')+'</span>';
+  $('formula').textContent='Δt = '+(S.mode==='half'?'T/2':'T')+' = '+fmt(dt)+' ns  ≥  tCLQV '+fmt(S.clqv)+' + tflight '+fmt(S.flight)+' + tSU '+fmt(S.su)+' + margin '+fmt(mg)+'（'+S.margin+'%）= '+fmt(bud)+' ns';
+  // slider values
+  $('fv').textContent=S.f+' MHz';
+  $('clqvv').textContent=fmt(S.clqv)+' ns';
+  $('flightv').textContent=fmt(S.flight)+' ns';
+  $('suv').textContent=fmt(S.su)+' ns';
+  $('marginv').textContent=S.margin+' %';
+}
+[['f','f'],['clqv','clqv'],['flight','flight'],['su','su'],['margin','margin']].forEach(function(p){
+  $(p[0]).addEventListener('input',function(){S[p[1]]=parseFloat(this.value);render()});
+});
+$('seg').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  S.mode=b.dataset.m;
+  this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});
+  render();
+});
+render();
+})();
+</script>
+</body>
+</html>

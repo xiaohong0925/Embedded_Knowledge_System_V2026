@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cs_change 三种场景的 CS 时序</title>
+<style>
+:root{
+  --bg:transparent; --fg:#1f2933; --muted:#5b6672; --line:#d0d7de;
+  --panel:rgba(175,184,194,.10); --cs:#e0533d; --clk:#4a6fa5;
+  --mosi:#2e8b57; --miso:#8a4fa8; --accent:#b45309; --shade:rgba(210,120,60,.10);
+}
+[data-theme="dark"]{
+  --fg:#e6edf3; --muted:#8b949e; --line:#30363d; --panel:rgba(110,118,129,.12);
+  --shade:rgba(210,120,60,.16);
+}
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]){
+    --fg:#e6edf3; --muted:#8b949e; --line:#30363d; --panel:rgba(110,118,129,.12);
+    --shade:rgba(210,120,60,.16);
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:14px/1.65 system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:14px 16px 18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:transparent;color:var(--fg);
+  border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer}
+.tab.active{border-color:var(--accent);color:var(--accent);font-weight:600}
+.desc{border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+  background:var(--panel);margin-bottom:10px}
+.desc h3{margin:0 0 4px;font-size:14px}
+.desc p{margin:4px 0}
+.desc .slave{border-left:3px solid var(--cs);padding-left:10px;margin-top:8px;
+  color:var(--muted);font-size:13px}
+svg{display:block;width:100%;height:auto;border:1px solid var(--line);
+  border-radius:10px;background:var(--panel)}
+.controls{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+button.ctl{border:1px solid var(--line);background:transparent;color:var(--fg);
+  border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;min-width:38px}
+select{border:1px solid var(--line);background:transparent;color:var(--fg);
+  border-radius:8px;padding:5px 8px;font-size:13px}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.treadout{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nowrap;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs" id="tabs"></div>
+  <div class="desc" id="desc"></div>
+  <svg id="wave" role="img" aria-label="SPI 时序图"></svg>
+  <div class="controls">
+    <button class="ctl" id="play">▶ 播放</button>
+    <button class="ctl" id="back">«</button>
+    <button class="ctl" id="fwd">»</button>
+    <input type="range" id="prog" min="0" max="1" value="0" step="1">
+    <span class="treadout" id="tread"></span>
+    <select id="speed">
+      <option value="14">慢</option>
+      <option value="30" selected>中</option>
+      <option value="60">快</option>
+    </select>
+  </div>
+</div>
+<script>
+"use strict";
+const BITW = 10, LABELW = 52, TOP = 62, BOT = 26, PAD = 10;
+const ROWS = { cs:{hi:TOP+16, lo:TOP+38, color:"var(--cs)",   name:"CS"},
+               clk:{hi:TOP+56, lo:TOP+76, color:"var(--clk)",  name:"SCLK"},
+               mosi:{hi:TOP+94, lo:TOP+114,color:"var(--mosi)", name:"MOSI"},
+               miso:{hi:TOP+132,lo:TOP+152,color:"var(--miso)", name:"MISO"}};
+
+const SCEN = [
+{ key:"a",
+  tab:"① 全为 0（本例）",
+  title:"cs_change 全为 0 —— 一条 message 一个 CS 周期",
+  desc:"Core 默认路径：message 内 CS 一直有效，收尾撤销。两段 cs_change 都是 0，Flash 把 5 字节前导 + 4 字节数据看成同一笔 Fast Read，最终读回 A7 5C 3F 19。",
+  slave:"Flash 视角：一个 CS 周期内收到完整命令（0x0B + 地址 + dummy），随后输出数据。这就是预期波形。",
+  slots:80,
+  cs:s=>(s<72?0:1),
+  mosi:[[0,0x0B],[8,0x00],[16,0x00],[24,0x00],[32,0x00]],
+  miso:[[40,0xA7],[48,0x5C],[56,0x3F],[64,0x19]],
+  segs:[[0,40,"transfer 1 · 5 字节前导"],[40,72,"transfer 2 · 4 字节数据"]],
+  delay:null, ghost:null, boundary:null,
+  notes:[[0,"① CS 拉低，Fast Read 开始"],[40,"② 两段之间无片选脉冲"],[72,"③ 收尾：CS 拉高，事务结束"]]
+},
+{ key:"b",
+  tab:"② 第一段 = 1（非末段）",
+  title:"第一段 cs_change = 1 —— 段间制造 CS 毛刺",
+  desc:"非末段置 1：Core 在前导传完后撤销 CS、按 cs_change_delay 等待（v6.6 默认 10 µs）、再恢复选中。对靠 CS 沿界定命令的器件，这个毛刺等于“当前命令到此结束”。",
+  slave:"Flash 视角：CS 一拉高，命令立即终止、状态机复位。第二个 CS 周期没有收到 0x0B 前导，进来的 4 字节被当作一条新的不完整命令——A7 5C 3F 19 无从读起。",
+  slots:88,
+  cs:s=>(s<40?0:(s<48?1:(s<80?0:1))),
+  mosi:[[0,0x0B],[8,0x00],[16,0x00],[24,0x00],[32,0x00]],
+  miso:[[48,0xA7],[56,0x5C],[64,0x3F],[72,0x19]],
+  segs:[[0,40,"transfer 1 · 前导"],[48,80,"transfer 2 · 数据"]],
+  delay:[40,48,"cs_change_delay"],
+  ghost:null, boundary:null,
+  notes:[[40,"① 段末 cs_change=1：CS 撤销"],[48,"② 等待后恢复——已是新片选周期"],[80,"③ 数据失去命令上下文"]]
+},
+{ key:"c",
+  tab:"③ 末段 = 1（keep_cs）",
+  title:"末段 cs_change = 1 —— CS 跨 message 保持选中",
+  desc:"末段置 1：message 1 收尾时不撤 CS（keep_cs），message 2 沿用了同一个 CS 周期；直到最后一条 message 默认收尾，事务才真正结束。用于协议要求跨多条命令保持选中、且后一条依赖前一条返回的器件。",
+  slave:"Flash 视角：CS 全程未拉高，两条 message 对它是一笔连续事务；CS 最终拉高时状态才锁存。注意它不是总线锁——多设备总线上访问别的设备照样切走 CS。",
+  slots:84,
+  cs:s=>(s<76?0:1),
+  mosi:[[0,0x0B],[8,0x00],[16,0x00],[24,0x00],[32,0x00]],
+  miso:[[44,0xA7],[52,0x5C],[60,0x3F],[68,0x19]],
+  segs:[[0,40,"message 1 · 命令"],[44,76,"message 2 · 读数据"]],
+  delay:null, ghost:[40,44,"默认应撤销（被阻止）"], boundary:42,
+  notes:[[40,"① message 1 收尾：CS 被保持"],[44,"② message 2 沿用同一 CS 周期"],[76,"③ 事务结束：CS 拉高"]]
+}];
+
+/* ---------- 渲染与播放 ---------- */
+const svg = document.getElementById("wave");
+const prog = document.getElementById("prog");
+const playBtn = document.getElementById("play");
+let sc = SCEN[0], cur = 0, raf = null, lastT = 0;
+
+/* URL 可强制主题：?theme=dark / ?theme=light（默认跟随系统） */
+const q = new URLSearchParams(location.search).get("theme");
+if (q) document.documentElement.setAttribute("data-theme", q);
+
+function el(t, a, p){
+  const e = document.createElementNS("http://www.w3.org/2000/svg", t);
+  for (const k in a) e.setAttribute(k, a[k]);
+  p.appendChild(e); return e;
+}
+const X = s => LABELW + s * BITW;
+
+function buildLevels(s){
+  const n = s.slots;
+  const mk = bytes => {
+    const a = new Array(n).fill('z');
+    bytes.forEach(([st, val]) => { for (let i = 0; i < 8; i++) a[st + i] = (val >> (7 - i)) & 1; });
+    return a;
+  };
+  return { cs: Array.from({length:n}, (_,i)=>s.cs(i)),
+           clk: Array.from({length:n}, (_,i)=>i%2),
+           mosi: mk(s.mosi), miso: mk(s.miso) };
+}
+
+function stepPath(lv, hi, lo){
+  let d = "", py = 0, open = false;
+  for (let i = 0; i < lv.length; i++){
+    const y = lv[i] === 'z' ? null : (lv[i] ? hi : lo);
+    const x = X(i);
+    if (y === null){ open = false; continue; }
+    d += open ? ` L${x},${py} L${x},${y}` : ` M${x},${y}`;
+    open = true; py = y;
+  }
+  if (open) d += ` L${X(lv.length)},${py}`;
+  return d;
+}
+function zRuns(lv, mid){
+  const out = []; let st = null;
+  for (let i = 0; i <= lv.length; i++){
+    if (i < lv.length && lv[i] === 'z'){ if (st === null) st = i; }
+    else if (st !== null){ out.push([st, i]); st = null; }
+  }
+  return out.map(([a,b]) => ({x1:X(a), x2:X(b), mid}));
+}
+
+function render(){
+  const n = sc.slots, W = LABELW + n * BITW + PAD, H = TOP + 176 + BOT;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+  const defs = el("defs", {}, svg);
+  const clip = el("clipPath", {id:"reveal"}, defs);
+  const revealRect = el("rect", {x:0, y:0, width:X(0), height:H}, clip);
+  svg._reveal = revealRect;
+
+  /* 段底色与括线 */
+  sc.segs.forEach(([a, b, label], idx) => {
+    el("rect", {x:X(a), y:TOP-6, width:(b-a)*BITW, height:170, fill:"var(--shade)", opacity: idx%2 ? .55 : 1}, svg);
+    el("line", {x1:X(a)+2, y1:TOP-2, x2:X(b)-2, y2:TOP-2, stroke:"var(--muted)", "stroke-width":1}, svg);
+    el("text", {x:X(a)+(b-a)*BITW/2, y:TOP-12, "text-anchor":"middle", "font-size":11, fill:"var(--muted)"}, svg).textContent = label;
+  });
+  /* 字节虚线 + 十六进制标注 */
+  [["mosi", sc.mosi], ["miso", sc.miso]].forEach(([k, bytes]) => {
+    const r = ROWS[k];
+    bytes.forEach(([st, val]) => {
+      el("line", {x1:X(st), y1:r.hi-4, x2:X(st), y2:r.lo+8, stroke:"var(--line)", "stroke-dasharray":"3,4"}, svg);
+      el("text", {x:X(st)+4*BITW, y:r.hi-8, "text-anchor":"middle", "font-size":10, fill:"var(--muted)"}, svg)
+        .textContent = "0x" + val.toString(16).toUpperCase().padStart(2, "0");
+    });
+  });
+  /* cs_change_delay 区域 */
+  if (sc.delay){
+    const [a, b, label] = sc.delay;
+    el("rect", {x:X(a), y:TOP-6, width:(b-a)*BITW, height:170, fill:"var(--accent)", opacity:.15}, svg);
+    el("text", {x:X(a)+(b-a)*BITW/2, y:ROWS.miso.lo+24, "text-anchor":"middle", "font-size":10, fill:"var(--accent)"}, svg).textContent = label;
+  }
+  /* 默认行为示意（被 keep_cs 阻止的撤销） */
+  if (sc.ghost){
+    const [a, b, label] = sc.ghost;
+    el("line", {x1:X(a), y1:ROWS.cs.hi, x2:X(b), y2:ROWS.cs.hi, stroke:"var(--cs)", "stroke-width":2, "stroke-dasharray":"5,4", opacity:.55}, svg);
+    el("text", {x:X(a)-5, y:ROWS.cs.hi-9, "text-anchor":"end", "font-size":10, fill:"var(--cs)", opacity:.85}, svg).textContent = label;
+  }
+  /* message 边界 */
+  if (sc.boundary != null){
+    el("line", {x1:X(sc.boundary), y1:TOP-4, x2:X(sc.boundary), y2:TOP+164, stroke:"var(--fg)", opacity:.35, "stroke-dasharray":"6,5"}, svg);
+    el("text", {x:X(sc.boundary), y:TOP+176, "text-anchor":"middle", "font-size":10, fill:"var(--muted)"}, svg).textContent = "message 边界";
+  }
+  /* 左側信号名 */
+  Object.entries(ROWS).forEach(([k, r]) => {
+    el("text", {x:LABELW-10, y:(r.hi+r.lo)/2+4, "text-anchor":"end", "font-size":12, fill:r.color, "font-weight":600}, svg).textContent = r.name;
+  });
+  /* 波形（裁剪到当前播放位置） */
+  const g = el("g", {"clip-path":"url(#reveal)"}, svg);
+  const L = buildLevels(sc);
+  [["cs",L.cs], ["clk",L.clk], ["mosi",L.mosi], ["miso",L.miso]].forEach(([k, lv]) => {
+    const r = ROWS[k];
+    el("path", {d:stepPath(lv, r.hi, r.lo), fill:"none", stroke:r.color, "stroke-width":2}, g);
+    zRuns(lv, (r.hi+r.lo)/2).forEach(z => {
+      el("line", {x1:z.x1, y1:z.mid, x2:z.x2, y2:z.mid, stroke:r.color, "stroke-width":1.5, "stroke-dasharray":"4,3", opacity:.7}, g);
+      if (z.x2 - z.x1 > 40)
+        el("text", {x:(z.x1+z.x2)/2, y:z.mid-6, "text-anchor":"middle", "font-size":9, fill:r.color, opacity:.7}, g).textContent = "Z";
+    });
+  });
+  /* 序号标注（按行记录已占宽度，选空隙最大的行） */
+  const estW = t => [...t].reduce((w, c) => w + (c.charCodeAt(0) > 255 ? 11 : 6.2), 0);
+  const maxX = LABELW + n * BITW - 12;
+  const rowX = [-1e9, -1e9], rowW = [0, 0];
+  sc.notes.forEach(([s, txt]) => {
+    let nx = X(s) + 7;
+    if (nx + estW(txt) > maxX) nx = Math.max(nx - (nx + estW(txt) - maxX), LABELW - 40);
+    const gaps = [nx - (rowX[0] + rowW[0]), nx - (rowX[1] + rowW[1])];
+    const row = gaps[1] > gaps[0] ? 1 : 0;
+    const ty = TOP - 32 - row * 22;
+    rowX[row] = nx; rowW[row] = estW(txt);
+    const nm = el("g", {class:"note", "data-slot":s}, svg);
+    el("line", {x1:X(s), y1:ty+10, x2:X(s), y2:TOP+164, stroke:"var(--accent)", "stroke-dasharray":"4,4"}, nm);
+    el("circle", {cx:X(s), cy:ty+4, r:3, fill:"var(--accent)"}, nm);
+    el("text", {x:nx, y:ty, "font-size":11, fill:"var(--accent)"}, nm).textContent = txt;
+  });
+  /* 图例 */
+  el("text", {x:LABELW, y:H-8, "font-size":11, fill:"var(--muted)"}, svg)
+    .textContent = "CS 低＝选中 · SCLK 每 bit 一个周期 · MOSI＝前导(0x0B+地址+dummy) · MISO＝数据(A7 5C 3F 19) · 竖虚线＝字节边界 · Z＝高阻";
+
+  prog.max = n;
+  update();
+}
+
+function update(){
+  svg._reveal.setAttribute("width", X(cur) + 2);
+  prog.value = cur;
+  document.getElementById("tread").textContent = `bit ${cur} / ${sc.slots}`;
+  document.querySelectorAll(".note").forEach(g => {
+    g.style.opacity = +g.dataset.slot <= cur ? 1 : .3;
+  });
+}
+
+function tick(ts){
+  if (!raf) return;
+  const dt = (ts - lastT) / 1000; lastT = ts;
+  cur = Math.min(sc.slots, cur + dt * +document.getElementById("speed").value);
+  update();
+  if (cur >= sc.slots){ stop(); return; }
+  raf = requestAnimationFrame(tick);
+}
+function play(){
+  if (cur >= sc.slots) cur = 0;
+  playBtn.textContent = "⏸ 暂停"; lastT = performance.now();
+  raf = requestAnimationFrame(tick);
+}
+function stop(){
+  if (raf) cancelAnimationFrame(raf);
+  raf = null; playBtn.textContent = "▶ 播放";
+}
+playBtn.onclick = () => raf ? stop() : play();
+document.getElementById("back").onclick = () => { stop(); cur = Math.max(0, cur - 8); update(); };
+document.getElementById("fwd").onclick  = () => { stop(); cur = Math.min(sc.slots, cur + 8); update(); };
+prog.oninput = () => { stop(); cur = +prog.value; update(); };
+
+/* 场景切换 */
+const tabs = document.getElementById("tabs");
+SCEN.forEach((s, i) => {
+  const b = document.createElement("button");
+  b.className = "tab"; b.textContent = s.tab;
+  b.onclick = () => {
+    stop(); sc = s; cur = 0;
+    [...tabs.children].forEach((c, j) => c.classList.toggle("active", j === i));
+    const d = document.getElementById("desc");
+    d.innerHTML = `<h3>${s.title}</h3><p>${s.desc}</p><p class="slave">${s.slave}</p>`;
+    render();
+  };
+  tabs.appendChild(b);
+});
+tabs.children[0].classList.add("active");
+const d0 = document.getElementById("desc");
+d0.innerHTML = `<h3>${sc.title}</h3><p>${sc.desc}</p><p class="slave">${sc.slave}</p>`;
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0x0B Fast Read 72 拍推演</title>
+<style>
+:root{
+  --kimi-font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --kimi-font-mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  --kimi-color-text-primary:#1f1f23;
+  --kimi-color-text-secondary:#54545a;
+  --kimi-color-text-tertiary:#76767e;
+  --kimi-color-text-quaternary:#a6a6ae;
+  --kimi-color-surface-muted:#f2f2f5;
+  --kimi-color-surface-raised:#ffffff;
+  --kimi-color-border:#e3e3e8;
+  --kimi-color-danger:#e5484d;
+  --kimi-chart-1:#2b7fff;
+  --kimi-chart-3:#1fa972;
+  --t-fast:150ms;
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --kimi-color-text-primary:#ededf0;
+    --kimi-color-text-secondary:#b9b9c0;
+    --kimi-color-text-tertiary:#8f8f98;
+    --kimi-color-text-quaternary:#5f5f66;
+    --kimi-color-surface-muted:#26262b;
+    --kimi-color-surface-raised:#1a1a1e;
+    --kimi-color-border:#38383f;
+    --kimi-color-danger:#f2555a;
+    --kimi-chart-1:#5ea2ff;
+    --kimi-chart-3:#2fbf85;
+  }
+}
+html,body{background:transparent;margin:0;padding:16px;}
+</style>
+</head>
+<body>
+
+<style>
+#frd button{border:1px solid var(--kimi-color-border);background:transparent;color:var(--kimi-color-text-primary);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;transition:background var(--t-fast,150ms) var(--ease-out,ease-out)}
+#frd button:hover{background:var(--kimi-color-surface-muted)}
+#frd .chip{border:1px solid var(--kimi-color-border);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--kimi-color-text-tertiary);background:transparent;cursor:default}
+#frd .chip.on{color:var(--kimi-color-text-primary);font-weight:500;border-color:var(--kimi-color-text-primary)}
+#frd .hx{font-family:var(--kimi-font-mono,monospace);font-variant-numeric:tabular-nums;font-size:13px}
+#frd .done{color:var(--kimi-color-text-primary);font-weight:500}
+#frd .act{color:var(--kimi-color-text-primary)}
+#frd .todo{color:var(--kimi-color-text-quaternary)}
+#frd .rev{color:var(--kimi-color-danger);font-weight:500}
+#frd svg text{font-family:var(--kimi-font-sans,sans-serif)}
+#spd2 button{padding:4px 10px;border-radius:6px}
+</style>
+<div id="frd" style="font-family:var(--kimi-font-sans,sans-serif);color:var(--kimi-color-text-primary);max-width:920px;margin:0 auto;">
+  <div id="railF" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+  <svg id="wfF" viewBox="0 0 850 228" style="width:100%;height:auto;display:block;"></svg>
+  <div id="stF" style="font-size:14px;color:var(--kimi-color-text-secondary);margin:8px 0;"></div>
+  <div style="margin-bottom:10px;">
+    <div style="margin-bottom:4px;"><span style="display:inline-block;width:80px;font-size:13px;color:var(--kimi-color-text-tertiary);">MOSI 已发</span><span id="dmF"></span></div>
+    <div><span style="display:inline-block;width:80px;font-size:13px;color:var(--kimi-color-text-tertiary);">MISO 已收</span><span id="diF"></span></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+    <button id="bPlayF" style="min-width:64px;">播放</button>
+    <button id="bPrevF">上一拍</button>
+    <button id="bNextF">下一拍</button>
+    <button id="bResetF">重置</button>
+    <button id="bRevF" title="演示位序读反的后果">位序读反演示</button>
+    <span style="flex:1;"></span>
+    <span style="display:flex;gap:4px;" id="spd2">
+      <button data-ms="320">慢</button><button data-ms="150" class="on">中</button><button data-ms="70">快</button>
+    </span>
+  </div>
+  <input id="scrubF" type="range" min="0" max="72" value="0" style="width:100%;margin-top:12px;accent-color:var(--kimi-color-text-primary);">
+</div>
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('wfF');
+function E(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function T(x,y,s,a,p){var t=E('text',{x:x,y:y,'font-size':a.fs||11,fill:a.fill||'var(--kimi-color-text-secondary)'},p);if(a.ta)t.setAttribute('text-anchor',a.ta);t.textContent=s;return t;}
+var INK='var(--kimi-color-text-primary)',GRAY='var(--kimi-color-text-tertiary)',QGRAY='var(--kimi-color-text-quaternary)',BORD='var(--kimi-color-border)';
+var BLUE='var(--kimi-chart-1)',GREEN='var(--kimi-chart-3)',RED='var(--kimi-color-danger)';
+
+var X0=70,BEAT=9,BW=72,GAP=10,EXTRA=14;
+var starts=[],xx=X0;
+for(var g=0;g<9;g++){starts.push(xx);xx+=BW+GAP+(g===4?EXTRA:0);}
+var ENDX=starts[8]+BW;
+var YCSH=60,YCSL=78,YSH=102,YSL=116,YMH=144,YML=158,YIH=186,YIL=200;
+function bx(i){return starts[i>>3]+(i&7)*BEAT;}
+
+var idle=E('g',{},svg);
+T(64,(YCSH+YCSL)/2+4,'CS',{fs:12,ta:'end'},idle);
+T(64,(YSH+YSL)/2+4,'SCLK',{fs:12,ta:'end'},idle);
+T(64,(YMH+YML)/2+4,'MOSI',{fs:12,ta:'end'},idle);
+T(64,(YIH+YIL)/2+4,'MISO',{fs:12,ta:'end'},idle);
+E('line',{x1:8,y1:YCSH,x2:ENDX+12,y2:YCSH,stroke:QGRAY,'stroke-width':1.6},idle);
+E('line',{x1:8,y1:YSL,x2:ENDX+12,y2:YSL,stroke:QGRAY,'stroke-width':1.6},idle);
+E('line',{x1:8,y1:YML,x2:ENDX+12,y2:YML,stroke:QGRAY,'stroke-width':1.6},idle);
+E('line',{x1:8,y1:YIL,x2:ENDX+12,y2:YIL,stroke:QGRAY,'stroke-width':1.6,'stroke-dasharray':'5 4'},idle);
+
+var gSep=E('g',{},svg);
+[starts[1]-GAP/2,starts[4]-GAP/2,starts[5]-(GAP+EXTRA)/2].forEach(function(x){
+  E('line',{x1:x,y1:52,x2:x,y2:210,stroke:BORD,'stroke-width':0.8,'stroke-dasharray':'2 5'},gSep);
+});
+var labels=['0B','00','12','34','dummy','A7','5C','3F','19'];
+for(g=0;g<9;g++){
+  var cx=starts[g]+BW/2;
+  T(cx,YMH-6,labels[g],{fs:11,ta:'middle',fill:g===4?QGRAY:INK},gSep);
+}
+
+var MOSI=[0x0B,0x00,0x12,0x34,0,0,0,0,0];
+var MISO=[null,null,null,null,null,0xA7,0x5C,0x3F,0x19];
+function bit(arr,i){var b=arr[i>>3];if(b===null||b===undefined)return null;return (b>>(7-(i&7)))&1;}
+
+var gBeats=E('g',{},svg);
+var beatE=[];
+for(var i=0;i<72;i++){
+  var gb=E('g',{opacity:0},gBeats),x0=bx(i),xr=x0+3;
+  E('path',{d:'M'+x0+' '+YSL+' H'+xr+' V'+YSH+' H'+(x0+6)+' V'+YSL+' H'+(x0+9),stroke:INK,'stroke-width':1.5,fill:'none'},gb);
+  E('line',{x1:xr,y1:YSH-3,x2:xr,y2:YSH,stroke:GRAY,'stroke-width':0.8},gb);
+  var dummy=(i>>3)===4;
+  var v=bit(MOSI,i),y=v?YMH:YML,py=i?(bit(MOSI,i-1)?YMH:YML):YML;
+  E('path',{d:'M'+x0+' '+py+' V'+y+' H'+(x0+9),stroke:dummy?QGRAY:BLUE,'stroke-width':1.8,fill:'none'},gb);
+  var w=bit(MISO,i);
+  if(w===null){E('line',{x1:x0,y1:YIL,x2:x0+9,y2:YIL,stroke:QGRAY,'stroke-width':1.8,'stroke-dasharray':'4 3'},gb);}
+  else{var wy=w?YIH:YIL,wp=i&&bit(MISO,i-1)===1?YIH:YIL;
+    E('path',{d:'M'+x0+' '+wp+' V'+wy+' H'+(x0+9),stroke:GREEN,'stroke-width':1.8,fill:'none'},gb);}
+  beatE.push(gb);
+}
+var csPath=E('path',{d:'M'+X0+' '+YCSH+' V'+YCSL+' H'+X0+' V'+YCSH,stroke:INK,'stroke-width':1.8,fill:'none'},svg);
+var band=E('rect',{y:52,width:BEAT,height:158,opacity:0,fill:'color-mix(in srgb, var(--kimi-color-surface-muted) 85%, transparent)'},svg);
+var ctick=E('line',{y1:YSH-5,y2:YIL+10,'stroke-width':1.5,opacity:0,stroke:BLUE},svg);
+var cm=T(0,-10,'',{fs:9,ta:'middle',fill:BLUE},svg);cm.setAttribute('opacity',0);
+var ci=T(0,-10,'',{fs:9,ta:'middle',fill:GREEN},svg);ci.setAttribute('opacity',0);
+
+var railEl=document.getElementById('railF');
+['1 · 命令 0B（1–8）','2 · 地址 00 12 34（9–32）','3 · dummy（33–40）','4 · 数据 A7 5C 3F 19（41–72）'].forEach(function(s,idx){
+  var d=document.createElement('div');d.className='chip';d.id='fc'+idx;d.textContent=s;railEl.appendChild(d);
+});
+function phaseOf(k){return k<=8?0:k<=32?1:k<=40?2:k<=72?3:-1;}
+function statusText(k){
+  if(k===0)return '空闲 · CS 高，SCLK 低；下一笔是 0x0B Fast Read（Mode 0，MSB-first，共 72 拍）';
+  if(k<=8)return '第 '+k+' 拍 · 发送命令 0x0B（bit'+(8-k)+'）';
+  if(k<=32)return '第 '+k+' 拍 · 发送地址 00 12 34（第 '+(k-8)+'/24 位）';
+  if(k<=40)return '第 '+k+' 拍 · dummy 占位（'+(k-32)+'/8）：Flash 用这 8 拍完成内部寻址，MISO 仍无有效输出';
+  if(k<=48)return '第 '+k+' 拍 · 接收首字节 A7 的第 '+(k-40)+' 位（b'+(48-k)+'）';
+  if(k<72)return '第 '+k+' 拍 · 继续接收 5C 3F 19（数据第 '+(k-48)+'/24 位）';
+  return '完成 · MOSI 发出 0B 00 12 34，MISO 收到 A7 5C 3F 19。CS 拉高只结束串行指令，不代表内部状态复位';
+}
+var REV=false;
+function cls(done,act){return done?'done':(act?'act':'todo');}
+function syncDecode(k){
+  var dm=document.getElementById('dmF'),di=document.getElementById('diF');
+  dm.innerHTML=['0B','00','12','34'].map(function(h,idx){return '<span class="hx '+cls(k>=(idx+1)*8,k>idx*8)+'">'+h+'</span>';}).join(' ')+' <span class="hx '+(k>=40?'done':'todo')+'">dummy ×8</span>';
+  di.innerHTML=['A7','5C','3F','19'].map(function(h,idx){
+    var done=k>=(idx+1)*8+40,act=k>idx*8+40;
+    if(REV&&idx===0&&done)return '<span class="hx rev">E5</span>';
+    return '<span class="hx '+cls(done,act)+'">'+(done?h:(act?'··':'——'))+'</span>';}).join(' ');
+  var st=statusText(k);
+  if(k>=48)st+=(REV?'；演示中：A7 被误按 LSB-first 重组，显示为 E5（实际线上传输永远是 MSB-first）':'；A7 = 1010 0111，若误按最低位先发重组会得到 E5——可点"位序读反演示"');
+  if(REV&&k>=48)st=statusText(k)+'；位序读反演示开启：A7 → E5（红色），线上位序本身没有变';
+  document.getElementById('stF').textContent=st;
+}
+
+var k=0,playing=false,speed=150,last=0;
+var bPlay=document.getElementById('bPlayF');
+function render(){
+  for(var i=0;i<72;i++)beatE[i].setAttribute('opacity',i<k?1:0);
+  csPath.setAttribute('d','M'+X0+' '+YCSH+' V'+YCSL+' H'+(k===0?X0:bx(k-1)+9)+' V'+YCSH);
+  if(k>0&&k<=72){
+    var x=bx(k-1);
+    band.setAttribute('x',x);band.setAttribute('opacity',1);
+    ctick.setAttribute('x1',x+3);ctick.setAttribute('x2',x+3);ctick.setAttribute('opacity',1);
+    var v=bit(MOSI,k-1);cm.setAttribute('x',x+6);cm.setAttribute('y',YMH-5);cm.textContent=v===null?'–':String(v);cm.setAttribute('fill',(k-1)>>3===4?QGRAY:BLUE);cm.setAttribute('opacity',1);
+    var w=bit(MISO,k-1);ci.setAttribute('x',x+6);ci.setAttribute('y',YIH-5);ci.textContent=w===null?'?':String(w);ci.setAttribute('fill',w===null?QGRAY:GREEN);ci.setAttribute('opacity',1);
+  }else{
+    band.setAttribute('opacity',0);ctick.setAttribute('opacity',0);cm.setAttribute('opacity',0);ci.setAttribute('opacity',0);
+  }
+  syncDecode(k);
+  var ph=phaseOf(k);
+  for(var idx=0;idx<4;idx++){var c=document.getElementById('fc'+idx);if(c)c.className='chip'+(idx===ph?' on':'');}
+  document.getElementById('scrubF').value=k;
+}
+function pause(){playing=false;bPlay.textContent='播放';}
+bPlay.onclick=function(){
+  if(k>=72)k=0;
+  playing=!playing;bPlay.textContent=playing?'暂停':'播放';last=performance.now();
+  if(playing)requestAnimationFrame(frame);
+};
+function frame(t){
+  if(!playing)return;
+  if(t-last>=speed){last=t;if(k<72){k++;render();}}
+  if(k>=72){pause();return;}
+  requestAnimationFrame(frame);
+}
+document.getElementById('bPrevF').onclick=function(){pause();if(k>0)k--;render();};
+document.getElementById('bNextF').onclick=function(){pause();if(k<72)k++;render();};
+document.getElementById('bResetF').onclick=function(){pause();k=0;render();};
+document.getElementById('bRevF').onclick=function(){REV=!REV;this.className=REV?'on':'';this.style.borderColor=REV?'var(--kimi-color-danger)':'';this.style.color=REV?'var(--kimi-color-danger)':'';render();};
+document.getElementById('scrubF').oninput=function(e){pause();k=+e.target.value;render();};
+document.getElementById('spd2').onclick=function(e){
+  var b=e.target.closest('button');if(!b)return;
+  speed=+b.dataset.ms;
+  this.querySelectorAll('button').forEach(function(x){x.className='';});
+  b.className='on';
+};
+render();
+})();
+</script>
+
+</body>
+</html>

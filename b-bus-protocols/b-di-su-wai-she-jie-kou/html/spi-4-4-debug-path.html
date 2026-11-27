@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPI 调试输出与下一步检查</title>
+<style>
+:root{color-scheme:light dark;--bg:#f6f8fa;--panel:#fff;--text:#1d2733;--muted:#5b6875;--border:#d4dce4;--accent:#236ca4;--soft:#eaf3fb;--button:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#171c21;--panel:#222a31;--text:#edf2f6;--muted:#b4c0ca;--border:#45515c;--accent:#83c1ee;--soft:#1b3a4e;--button:#29343d}}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}main{max-width:1000px;margin:auto}h1{font-size:22px;margin:0 0 5px}h2{font-size:18px;margin:0 0 6px}p{margin:6px 0}.muted{color:var(--muted)}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}button{border:1px solid var(--border);border-radius:7px;background:var(--button);color:var(--text);padding:7px 11px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:13px 16px}svg{display:block;width:100%;height:auto;margin-top:10px}svg text{font-family:inherit;fill:var(--text)}.box{fill:var(--panel);stroke:var(--border);stroke-width:2}.active{fill:var(--soft);stroke:var(--accent);stroke-width:3}.arrow{stroke:var(--accent);stroke-width:2.5;fill:none;marker-end:url(#arrow)}.label{font-weight:650;color:var(--accent)}#panel{margin-top:12px;border-left:4px solid var(--accent)}code{background:var(--soft);padding:2px 5px;border-radius:4px}details{margin-top:12px}summary{cursor:pointer;font-weight:650}li{margin:6px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>SPI 调试不是固定清单，按当前输出选下一步</h1>
+<p class="muted">同一笔 JEDEC ID：TX = 9F 00 00 00；有效 ID = EF 40 18。点击你实际看到的结果。</p>
+<nav class="toolbar" aria-label="当前调试结果">
+<button data-case="tool" aria-pressed="false">spidev_test 不存在</button>
+<button data-case="node" aria-pressed="false">没有 /dev/spidev*</button>
+<button data-case="call" aria-pressed="false">open / ioctl 失败</button>
+<button data-case="zero" aria-pressed="true">RX 全 00／FF</button>
+<button data-case="wrong" aria-pressed="false">ID 错误或错位</button>
+<button data-case="good" aria-pressed="false">ID 正确</button>
+</nav>
+<section class="card">
+<svg viewBox="0 0 960 190" role="img" aria-label="从当前输出到下一项检查，再到不能下的结论">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="context-stroke"/></marker></defs>
+<rect class="box active" x="20" y="35" width="250" height="105" rx="9"/><rect class="box active" x="355" y="35" width="250" height="105" rx="9"/><rect class="box active" x="690" y="35" width="250" height="105" rx="9"/>
+<path class="arrow" d="M270 88H350"/><path class="arrow" d="M605 88H685"/>
+<text id="svg-input" x="145" y="75" text-anchor="middle" font-size="17" font-weight="650">RX 全 00／FF</text><text x="145" y="105" text-anchor="middle" font-size="13">当前观察</text>
+<text id="svg-next" x="480" y="75" text-anchor="middle" font-size="17" font-weight="650">连接、CS、pinmux、数字帧</text><text x="480" y="105" text-anchor="middle" font-size="13">下一项有区分度的检查</text>
+<text id="svg-stop" x="815" y="75" text-anchor="middle" font-size="17" font-weight="650">不能直接定根因</text><text x="815" y="105" text-anchor="middle" font-size="13">不能推出的结论</text>
+</svg>
+</section>
+<section id="panel" class="card" aria-live="polite">
+<h2 id="title">RX 全 00／FF：先确认测的是正确对象</h2>
+<p><span class="label">下一步：</span><span id="next">核对原理图、实际连接、CS 和 pinmux，再抓完整数字帧。</span></p>
+<p><span class="label">不能推断：</span><span id="stop">不能仅凭数值宣布 Flash 损坏、某根线固定电平或软件栈全部正常。</span></p>
+<p><span class="label">有用命令：</span><code id="command">dmesg | grep -i spi</code></p>
+</section>
+<details class="card"><summary>不看图时的完整分支</summary>
+<ul>
+<li><strong>工具不存在：</strong>先编译或安装匹配版本，尚未开始验证 Flash。</li>
+<li><strong>没有设备节点：</strong>查 DTS、控制器注册和驱动绑定。</li>
+<li><strong>调用失败：</strong>保留原始错误，查权限、节点、配置和绑定。</li>
+<li><strong>全 00／FF：</strong>先核对实际连接和完整帧，不把现象当根因。</li>
+<li><strong>ID 错误或错位：</strong>比较线上帧与用户 RX，区分采样、帧边界和软件偏移。</li>
+<li><strong>ID 正确：</strong>只建立当前事务基线，再按需做速率和产品验证。</li>
+</ul></details>
+</main>
+<script>
+const cases={
+tool:{input:'spidev_test 不存在',next:'编译或安装匹配工具',stop:'与 Flash 状态无关',title:'工具不存在：先解决用户态程序',detail:'从匹配源码树取得 spidev_test.c 并编译。',command:'gcc -Wall -O2 -o spidev_test spidev_test.c'},
+node:{input:'没有 /dev/spidev*',next:'DTS、注册、绑定',stop:'不能说 Flash 没上电',title:'没有设备节点：问题还在设备入口',detail:'检查控制器注册、DTS 子节点和驱动绑定。',command:'dmesg | grep -i spi'},
+call:{input:'open / ioctl 失败',next:'原始错误、权限、配置',stop:'不要先改接线',title:'调用失败：保留错误值，沿调用路径检查',detail:'节点存在也不代表每次调用都能完成。',command:'ls -l /dev/spidev*'},
+zero:{input:'RX 全 00／FF',next:'连接、CS、pinmux、数字帧',stop:'不能直接定根因',title:'RX 全 00／FF：先确认测的是正确对象',detail:'核对原理图、实际连接、CS 和 pinmux，再抓完整数字帧。',command:'dmesg | grep -i spi'},
+wrong:{input:'ID 错误或错位',next:'比较数字帧与用户 RX',stop:'不要只切换模式碰运气',title:'ID 异常：先判断线上错还是软件交付错',detail:'线上正确而用户 RX 错时查长度、前导和偏移；线上也错时查采样和 CS 边界。',command:'spidev_test -D /dev/spidev1.0 -s 1000000 -p \'\\x9f\\x00\\x00\\x00\' -v'},
+good:{input:'ID 正确',next:'建立基线，再做后续验证',stop:'不能证明长期和其他速率',title:'ID 正确：当前事务可判定，后续仍需限定范围',detail:'恢复临时连接和参数后复测；正式产品回到 spi-nor 与 MTD。',command:'cat /proc/mtd'}
+};
+const buttons=[...document.querySelectorAll('button')];
+function show(id){const c=cases[id];buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.case===id)));document.querySelector('#svg-input').textContent=c.input;document.querySelector('#svg-next').textContent=c.next;document.querySelector('#svg-stop').textContent=c.stop;document.querySelector('#title').textContent=c.title;document.querySelector('#next').textContent=c.detail;document.querySelector('#stop').textContent=c.stop;document.querySelector('#command').textContent=c.command;}
+buttons.forEach(b=>b.addEventListener('click',()=>show(b.dataset.case)));
+</script>
+</body>
+</html>

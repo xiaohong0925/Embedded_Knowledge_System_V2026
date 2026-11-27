@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+  <defs>
+    <style>
+      .title{font:700 42px 'Microsoft YaHei',sans-serif;fill:#172033}.sub{font:24px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .h{font:700 27px 'Microsoft YaHei',sans-serif;fill:#172033}.t{font:22px 'Microsoft YaHei',sans-serif;fill:#26334a}.s{font:20px 'Microsoft YaHei',sans-serif;fill:#526078}
+      .box{stroke-width:3;rx:20}.arrow{stroke:#415a77;stroke-width:5;fill:none;marker-end:url(#a)}.n{font:700 24px 'Microsoft YaHei',sans-serif;fill:#fff}
+    </style>
+    <marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#415a77"/></marker>
+  </defs>
+  <rect width="1600" height="1050" fill="#f7f9fc"/>
+  <text x="800" y="66" text-anchor="middle" class="title">从设备树节点到一次真正的寄存器读取</text>
+  <text x="800" y="108" text-anchor="middle" class="sub">设备链与驱动链先分别注册，匹配成功后才进入 probe()</text>
+
+  <rect x="80" y="155" width="590" height="150" class="box" fill="#e8f1ff" stroke="#5284c4"/>
+  <text x="120" y="202" class="h">设备链：板级 DTS 描述硬件</text>
+  <text x="120" y="246" class="t">eeprom@50 { compatible = "atmel,24c02"; reg = &lt;0x50&gt;; }</text>
+  <text x="120" y="282" class="s">DTS 经 dtc 编译为 DTB，由 bootloader 交给内核</text>
+
+  <rect x="80" y="365" width="590" height="150" class="box" fill="#e8f1ff" stroke="#5284c4"/>
+  <text x="120" y="412" class="h">Core 创建 i2c_client</text>
+  <text x="120" y="456" class="t">地址 0x50 写入 client-&gt;addr</text>
+  <text x="120" y="492" class="s">client 还记住自己位于哪个 i2c_adapter</text>
+
+  <rect x="930" y="155" width="590" height="150" class="box" fill="#e8f7ed" stroke="#4b9c68"/>
+  <text x="970" y="202" class="h">驱动链：注册 i2c_driver</text>
+  <text x="970" y="246" class="t">module_i2c_driver(foo_driver)</text>
+  <text x="970" y="282" class="s">of_match_table 声明本驱动支持哪些 compatible</text>
+
+  <path d="M375 305 V365" class="arrow"/>
+  <path d="M670 440 H760" class="arrow"/>
+  <path d="M1225 305 V440 H840" class="arrow"/>
+
+  <polygon points="800,385 940,500 800,615 660,500" fill="#fff3d9" stroke="#d19a2a" stroke-width="3"/>
+  <text x="800" y="487" text-anchor="middle" class="h">compatible</text>
+  <text x="800" y="528" text-anchor="middle" class="t">匹配成功？</text>
+  <path d="M800 615 V675" class="arrow"/>
+
+  <rect x="490" y="675" width="620" height="130" class="box" fill="#fff3d9" stroke="#d19a2a"/>
+  <text x="800" y="724" text-anchor="middle" class="h">调用 foo_probe(client)</text>
+  <text x="800" y="768" text-anchor="middle" class="t">检查能力、读取 ID、申请资源、注册上层子系统接口</text>
+  <path d="M800 805 V860" class="arrow"/>
+
+  <rect x="330" y="860" width="940" height="130" class="box" fill="#f0edff" stroke="#806cc1"/>
+  <text x="800" y="910" text-anchor="middle" class="h">运行期：读寄存器</text>
+  <text x="800" y="955" text-anchor="middle" class="t">i2c_transfer(client-&gt;adapter, msgs, 2) → adapter-&gt;algo-&gt;master_xfer()</text>
+
+  <circle cx="55" cy="230" r="24" fill="#5284c4"/><text x="55" y="239" text-anchor="middle" class="n">1</text>
+  <circle cx="55" cy="440" r="24" fill="#5284c4"/><text x="55" y="449" text-anchor="middle" class="n">2</text>
+  <circle cx="1550" cy="230" r="24" fill="#4b9c68"/><text x="1550" y="239" text-anchor="middle" class="n">3</text>
+  <circle cx="625" cy="500" r="24" fill="#d19a2a"/><text x="625" y="509" text-anchor="middle" class="n">4</text>
+  <circle cx="455" cy="740" r="24" fill="#d19a2a"/><text x="455" y="749" text-anchor="middle" class="n">5</text>
+  <circle cx="295" cy="925" r="24" fill="#806cc1"/><text x="295" y="934" text-anchor="middle" class="n">6</text>
+</svg>
