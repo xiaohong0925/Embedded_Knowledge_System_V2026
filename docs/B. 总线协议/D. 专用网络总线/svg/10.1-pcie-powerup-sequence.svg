@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="420" viewBox="0 0 880 420">
+<title>PCIe 上电时序：电源、REFCLK 与 PERST# 的先后关系</title>
+<style>
+  text { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  .c1 { stroke: #0969da; fill: #0969da; }
+  @media (prefers-color-scheme: dark) {
+    .fg  { stroke: #d0d7de; }
+    .fgf { fill: #d0d7de; }
+    .c1  { stroke: #58a6ff; fill: #58a6ff; }
+  }
+</style>
+
+<!-- 信号标签 -->
+<text class="fgf" x="14" y="67" font-size="13" fill="#24292f">电源 3.3V/12V</text>
+<text class="fgf" x="14" y="140" font-size="13" fill="#24292f">REFCLK</text>
+<text class="fgf" x="14" y="210" font-size="13" fill="#24292f">PERST#</text>
+
+<!-- 电源：爬坡后保持 -->
+<line class="fg" x1="60" y1="86" x2="150" y2="86" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="150" y1="86" x2="195" y2="52" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="195" y1="52" x2="700" y2="52" fill="none" stroke="#24292f" stroke-width="1.5"/>
+
+<!-- REFCLK：示意方波，t0 之后出现 -->
+<polyline class="fg" points="195,124 209,124 209,146 223,146 223,124 237,124 237,146 251,146 251,124 265,124 265,146 279,146 279,124 293,124 293,146 307,146 307,124 321,124 321,146 335,146 335,124 340,124" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="360" y="140" font-size="11" fill="#24292f">100 MHz，先于 PERST# 释放稳定</text>
+
+<!-- PERST#：低有效，t1 处释放 -->
+<text class="fgf" x="66" y="200" font-size="11" fill="#24292f">1</text>
+<text class="fgf" x="66" y="225" font-size="11" fill="#24292f">0</text>
+<line class="fg" x1="80" y1="220" x2="360" y2="220" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="360" y1="220" x2="372" y2="192" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="372" y1="192" x2="700" y2="192" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="230" y="245" text-anchor="middle" font-size="11" fill="#24292f">复位保持</text>
+<text class="c1" x="470" y="186" font-size="11">复位释放（0 → 1）</text>
+
+<!-- 事件虚线 -->
+<line class="fg" x1="195" y1="44" x2="195" y2="300" fill="none" stroke="#24292f" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+<line class="fg" x1="366" y1="44" x2="366" y2="300" fill="none" stroke="#24292f" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+
+<!-- T_PVPERL 区间 -->
+<line class="c1" x1="195" y1="272" x2="366" y2="272" fill="none" stroke-width="1.5"/>
+<line class="c1" x1="195" y1="265" x2="195" y2="279" fill="none" stroke-width="1.5"/>
+<line class="c1" x1="366" y1="265" x2="366" y2="279" fill="none" stroke-width="1.5"/>
+<text class="c1" x="280" y="295" text-anchor="middle" font-size="12">T_PVPERL ≥ 100 ms</text>
+<text class="fgf" x="280" y="313" text-anchor="middle" font-size="10" fill="#24292f">（CEM 规范下限，具体以设备手册为准）</text>
+
+<!-- 时间轴 -->
+<line class="fg" x1="80" y1="340" x2="720" y2="340" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<polygon class="fgf" points="720,340 710,336 710,344" fill="#24292f"/>
+<line class="fg" x1="195" y1="333" x2="195" y2="347" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<line class="fg" x1="366" y1="333" x2="366" y2="347" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="195" y="366" text-anchor="middle" font-size="12" fill="#24292f">t0 电源达到规范值</text>
+<text class="fgf" x="366" y="366" text-anchor="middle" font-size="12" fill="#24292f">t1 PERST# 释放</text>
+<text class="fgf" x="560" y="366" text-anchor="middle" font-size="12" fill="#24292f">→ 两端进入 Detect（LTSSM，见下一节）</text>
+
+<!-- 比例声明 -->
+<text class="fgf" x="440" y="402" text-anchor="middle" font-size="10" fill="#24292f" opacity="0.7">示意波形，时间与频率均不按真实比例绘制</text>
+</svg>

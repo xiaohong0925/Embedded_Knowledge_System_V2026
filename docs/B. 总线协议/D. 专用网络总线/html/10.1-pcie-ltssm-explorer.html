@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>LTSSM 交互图解：两端怎样进入 L0</title>
+<style>
+  :root { --fg: #24292f; --dim: #6e7781; --ac: #0969da; --line: #d0d7de; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #d0d7de; --dim: #8b949e; --ac: #58a6ff; --line: #30363d; }
+  }
+  html, body { margin: 0; padding: 0; background: transparent; color: var(--fg); }
+  body { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; font-size: 14px; }
+  .wrap { display: flex; gap: 18px; padding: 14px 16px; max-width: 940px; margin: 0 auto; }
+  .left { flex: 0 0 46%; }
+  .right { flex: 1; border-left: 1px solid var(--line); padding-left: 18px; min-height: 400px; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
+  button {
+    font: inherit; font-size: 13px; padding: 4px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--fg);
+  }
+  button:hover { border-color: var(--ac); color: var(--ac); }
+  svg text { font-family: inherit; }
+  .node { cursor: pointer; }
+  .node rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; transition: stroke .2s, fill .2s; }
+  .node text { fill: var(--fg); transition: fill .2s; }
+  .node.active rect { stroke: var(--ac); stroke-width: 2.5; fill: var(--ac); fill-opacity: 0.10; }
+  .node.active text { fill: var(--ac); font-weight: bold; }
+  .edge { fill: none; stroke: var(--fg); stroke-width: 1.4; opacity: 0.75; }
+  .edge-label { fill: var(--dim); font-size: 10.5px; }
+  h3 { margin: 2px 0 8px; font-size: 17px; }
+  h3 .tag { font-size: 12px; font-weight: normal; color: var(--ac); margin-left: 8px; }
+  #panel p { margin: 6px 0; line-height: 1.65; }
+  .stuck { margin-top: 12px; padding: 8px 12px; border-left: 3px solid var(--ac); background: color-mix(in srgb, var(--ac) 8%, transparent); }
+  .stuck b { color: var(--ac); }
+  .hint { margin-top: 14px; font-size: 12px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="toolbar">
+      <button id="btnPlay">▶ 播放训练流程</button>
+      <button id="btnReset">重置</button>
+    </div>
+    <svg viewBox="0 0 480 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LTSSM 正常路径状态图">
+      <!-- 进入 Detect -->
+      <line class="edge" x1="70" y1="42" x2="148" y2="42" stroke-dasharray="5 4"/>
+      <polygon points="148,42 140,38 140,46" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="70" y="32">PERST# 释放后进入</text>
+
+      <!-- 主链路 -->
+      <g class="node" data-state="Detect"><rect x="150" y="20" width="120" height="44" rx="8"/><text x="210" y="47" text-anchor="middle" font-size="15">Detect</text></g>
+      <line class="edge" x1="210" y1="64" x2="210" y2="98"/>
+      <polygon points="210,98 205,90 215,90" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="220" y="86">探测到对端接收器</text>
+
+      <g class="node" data-state="Polling"><rect x="150" y="100" width="120" height="44" rx="8"/><text x="210" y="127" text-anchor="middle" font-size="15">Polling</text></g>
+      <line class="edge" x1="210" y1="144" x2="210" y2="178"/>
+      <polygon points="210,178 205,170 215,170" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="220" y="166">位／符号锁定完成</text>
+
+      <g class="node" data-state="Configuration"><rect x="150" y="180" width="120" height="44" rx="8"/><text x="210" y="207" text-anchor="middle" font-size="15">Configuration</text></g>
+      <line class="edge" x1="210" y1="224" x2="210" y2="258"/>
+      <polygon points="210,258 205,250 215,250" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="220" y="246">编号与宽度确定</text>
+
+      <g class="node" data-state="L0"><rect x="150" y="260" width="120" height="44" rx="8"/><text x="210" y="287" text-anchor="middle" font-size="15">L0</text></g>
+
+      <!-- L0 ⇄ Recovery -->
+      <line class="edge" x1="270" y1="274" x2="328" y2="274"/>
+      <polygon points="328,274 320,270 320,278" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="299" y="266" text-anchor="middle">变速·重训</text>
+      <line class="edge" x1="328" y1="292" x2="270" y2="292"/>
+      <polygon points="270,292 278,288 278,296" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="299" y="308" text-anchor="middle">训练完成</text>
+
+      <g class="node" data-state="Recovery"><rect x="330" y="255" width="120" height="54" rx="8"/><text x="390" y="279" text-anchor="middle" font-size="15">Recovery</text><text x="390" y="297" text-anchor="middle" font-size="10.5" fill="var(--dim)">变速·均衡·重训</text></g>
+
+      <!-- Recovery → Detect -->
+      <path class="edge" d="M390 255 V42 H272" />
+      <polygon points="272,42 280,38 280,46" fill="var(--fg)" opacity="0.75"/>
+      <text class="edge-label" x="399" y="150">无法恢复，</text>
+      <text class="edge-label" x="399" y="164">重新探测</text>
+    </svg>
+  </div>
+  <div class="right">
+    <h3><span id="pTitle">Detect</span><span class="tag" id="pTag">点击左侧状态查看说明</span></h3>
+    <div id="pBody"></div>
+    <div class="hint">只保留正常路径，省略 L0s／L1、Disabled、Hot Reset、Loopback 等状态；本图为本页自绘示意图。</div>
+  </div>
+</div>
+
+<script>
+var STATES = {
+  Detect: {
+    title: "Detect：确认线上是否有接收端",
+    body: "<p>端口首先探测对端是否存在。检测不到接收器时，插卡、供电、连接器、复位和端口使能都属于候选检查项，不能仅凭这个状态就断定某一根差分线损坏。</p>",
+    stuck: "对端不在——插卡到位、供电时序、连接器接触、复位释放、端口使能逐项排查。"
+  },
+  Polling: {
+    title: "Polling：以初始速率建立基本同步",
+    body: "<p>两端交换 TS1／TS2 训练有序集，完成<b>位锁定</b>（确定位流中每个 bit 的边界）和<b>符号锁定</b>（确定 8b/10b 符号的切分位置），并确认双方能够继续配置 Link。</p><p>首次建立链路固定使用 2.5 GT/s；更高目标速率不在这一步一步到位完成。</p>",
+    stuck: "候选检查项——连线、连接器、供电、参考时钟、复位和端口配置；不能仅凭 Polling 阶段就锁定某一种原因。"
+  },
+  Configuration: {
+    title: "Configuration：建立 Link 与 Lane 的逻辑关系",
+    body: "<p>两端继续交换训练信息，确定 Link 编号、Lane 编号和初始可用宽度。到这里，物理连接已被组织成一条可识别的 Link，但主机还不知道设备支持哪些功能，也没有完成地址窗口分配。</p>",
+    stuck: "Lane 逻辑协商——极性反转一般由硬件自动处理，持续卡在这里更可疑的是部分 Lane 未连通。"
+  },
+  L0: {
+    title: "L0：正常传输状态",
+    body: "<p>链路进入工作状态，数据链路层随后完成流控初始化，事务层才可以正常交换 TLP 和链路控制包。</p><p>到这一步仍不能说“SSD 已经可以供文件系统使用”——枚举、资源分配、驱动加载和块设备初始化还在后面。</p>",
+    stuck: null
+  },
+  Recovery: {
+    title: "Recovery：变速、重训和错误恢复的共同通道",
+    body: "<p>Gen3 及以上的目标速率通过 Recovery 中的变速过程进入，均衡训练也在其相关子状态完成。具体采用哪条变速路径，以及失败后保持原速率、重试还是降到较低速率，取决于控制器实现和平台配置；不能用固定的逐档升速或退档路径概括。</p><ul style='margin:6px 0;padding-left:20px;line-height:1.7'><li>进入 Recovery 不等于一定降速；</li><li>成功回到 L0 也不等于原来的故障已经消失。</li></ul>",
+    stuck: "高速信号完整性——Gen3 及以上均衡失败、信道损耗超标，定位方法归 B-D.10.4。"
+  }
+};
+
+var PLAY_SEQ = [
+  ["Detect", 1900], ["Polling", 2300], ["Configuration", 2300],
+  ["L0", 1600], ["Recovery", 3000], ["L0", 2000]
+];
+
+var nodes = Array.prototype.slice.call(document.querySelectorAll(".node"));
+var pTitle = document.getElementById("pTitle");
+var pTag = document.getElementById("pTag");
+var pBody = document.getElementById("pBody");
+var btnPlay = document.getElementById("btnPlay");
+var btnReset = document.getElementById("btnReset");
+var playing = false, timers = [];
+
+function select(name, tagText) {
+  nodes.forEach(function (n) { n.classList.toggle("active", n.dataset.state === name); });
+  var s = STATES[name];
+  pTitle.textContent = s.title.split("：")[0];
+  pTag.textContent = tagText || "";
+  var html = s.body;
+  if (s.stuck) html += "<div class='stuck'><b>卡在这里，第一嫌疑：</b>" + s.stuck + "</div>";
+  pBody.innerHTML = html;
+}
+
+nodes.forEach(function (n) {
+  n.addEventListener("click", function () { stopPlay(); select(n.dataset.state, "（手动选择）"); });
+});
+
+function stopPlay() {
+  playing = false;
+  timers.forEach(clearTimeout); timers = [];
+  btnPlay.textContent = "▶ 播放训练流程";
+}
+btnReset.addEventListener("click", function () { stopPlay(); select("Detect", ""); });
+
+btnPlay.addEventListener("click", function () {
+  if (playing) { stopPlay(); return; }
+  playing = true;
+  btnPlay.textContent = "⏸ 暂停";
+  var delay = 0;
+  PLAY_SEQ.forEach(function (step, i) {
+    timers.push(setTimeout(function () {
+      if (!playing) return;
+      var isLast = i === PLAY_SEQ.length - 1;
+      select(step[0], isLast ? "（训练完成，链路可用）" : "（训练进行中…）");
+      if (isLast) {
+        timers.push(setTimeout(function () { stopPlay(); select("Detect", ""); }, step[1]));
+      }
+    }, delay));
+    delay += step[1];
+  });
+});
+
+// 支持 ?state=Recovery 直接定位到某状态（便于截图/深链）
+var qs = new URLSearchParams(location.search);
+var init = qs.get("state");
+select(STATES[init] ? init : "Detect", "");
+if (qs.has("play")) btnPlay.click();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="300" viewBox="0 0 760 300">
+<title>一条 PCIe Lane 的全双工差分连接</title>
+<style>
+  text { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  /* 方向 A→B：蓝；方向 B→A：橙 */
+  .c1 { stroke: #0969da; fill: #0969da; }
+  .c2 { stroke: #b35900; fill: #b35900; }
+  @media (prefers-color-scheme: dark) {
+    .fg  { stroke: #d0d7de; }
+    .fgf { fill: #d0d7de; }
+    .c1  { stroke: #58a6ff; fill: #58a6ff; }
+    .c2  { stroke: #e8a33d; fill: #e8a33d; }
+  }
+</style>
+
+<!-- 端口 A -->
+<rect class="fg" x="40" y="80" width="170" height="140" rx="6" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="125" y="116" text-anchor="middle" font-size="15" fill="#24292f">端口 A</text>
+<text class="fgf" x="125" y="140" text-anchor="middle" font-size="11" fill="#24292f">Root Port</text>
+<text class="c1" x="200" y="108" text-anchor="end" font-size="12" font-weight="bold">TX ▸</text>
+<text class="c2" x="200" y="190" text-anchor="end" font-size="12" font-weight="bold">RX ◂</text>
+
+<!-- 端口 B -->
+<rect class="fg" x="550" y="80" width="170" height="140" rx="6" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="635" y="116" text-anchor="middle" font-size="15" fill="#24292f">端口 B</text>
+<text class="fgf" x="635" y="140" text-anchor="middle" font-size="11" fill="#24292f">NVMe SSD</text>
+<text class="c1" x="560" y="108" font-size="12" font-weight="bold">◂ RX</text>
+<text class="c2" x="560" y="190" font-size="12" font-weight="bold">▸ TX</text>
+
+<!-- A→B 差分对 -->
+<text class="c1" x="385" y="70" text-anchor="middle" font-size="12">方向 A → B：一对差分线</text>
+<rect class="c1" x="215" y="93" width="340" height="24" rx="12" fill="none" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
+<line class="c1" x1="215" y1="100" x2="550" y2="100" fill="none" stroke-width="1.5"/>
+<line class="c1" x1="215" y1="110" x2="550" y2="110" fill="none" stroke-width="1.5"/>
+<polygon class="c1" points="541,98 552,105 541,112"/>
+<text class="c1" x="228" y="97" font-size="10">D＋</text>
+<text class="c1" x="228" y="122" font-size="10">D−</text>
+
+<!-- B→A 差分对 -->
+<text class="c2" x="385" y="166" text-anchor="middle" font-size="12">方向 B → A：另一对差分线</text>
+<rect class="c2" x="215" y="171" width="340" height="24" rx="12" fill="none" stroke-width="1" stroke-dasharray="4 3" opacity="0.3"/>
+<line class="c2" x1="550" y1="178" x2="215" y2="178" fill="none" stroke-width="1.5"/>
+<line class="c2" x1="550" y1="188" x2="215" y2="188" fill="none" stroke-width="1.5"/>
+<polygon class="c2" points="213,172 224,183 213,194"/>
+<text class="c2" x="530" y="175" text-anchor="end" font-size="10">D＋</text>
+<text class="c2" x="530" y="200" text-anchor="end" font-size="10">D−</text>
+
+<!-- 底部结论 -->
+<text class="fgf" x="380" y="252" text-anchor="middle" font-size="13" fill="#24292f">1 条 Lane ＝ 2 对差分线（4 根线），两个方向可同时传输</text>
+<text class="fgf" x="380" y="278" text-anchor="middle" font-size="12" fill="#24292f">x4 Link ＝ 4 条这样的 Lane 并行（16 根线）；x16 ＝ 16 条（64 根线）</text>
+</svg>

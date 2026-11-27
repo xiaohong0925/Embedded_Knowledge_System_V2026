@@ -1,0 +1,83 @@
+{
+  "section": "B-D.10.1",
+  "article": "docs/B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层.md",
+  "main_question": "同一条 Gen4 RC—NVMe 链路怎样从上电训练走到 L0，并在枚举与 BAR 映射已完成的教学前提下，通过一次 32 位 Memory Read 读取 BAR0＋0x08 的 VS 并收到 Completion？",
+  "baseline": {
+    "reviewed_at": "2026-11-27",
+    "article_sha256": "59718c6077d4642dbf12362ee901e35b9e4ea947efef3ed1df94662b54773d72",
+    "agent_sha256": "af86c60a9f087181be46d3592b38f399cd40c5b82fd4bea7e51753f9389bb13c",
+    "plan_sha256": "23afae390e29a56fa4cfd9e7f70386c718cbaee7ee15e4f1d6659d6f31f1dcdd"
+  },
+  "scope": {
+    "outlines": [
+      "docs/00-模板/总线协议_2026深度调研与写作大纲_v3.md",
+      "docs/00-模板/B扩展_重构后完整目录_v4.md",
+      "reviews/designs/B-D.10_PCIe节组设计.md"
+    ],
+    "source_snapshots": [
+      "reviews/evidence/B-D.10/pcie-log-2026-11-27.txt"
+    ],
+    "assets": [
+      "docs/B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层_transaction.md",
+      "docs/B. 总线协议/D. 专用网络总线/html/10.1-pcie-ltssm-explorer.html",
+      "docs/B. 总线协议/D. 专用网络总线/svg/10.1-pcie-prsnt-loop.svg",
+      "docs/B. 总线协议/D. 专用网络总线/images/10.1-nvme-ssd.jpg",
+      "docs/B. 总线协议/D. 专用网络总线/images/10.1-pcie-slots.jpg",
+      "mkdocs.yml",
+      "docs/B. 总线协议/D. 专用网络总线/README.md"
+    ],
+    "related_sections": [
+      "docs/B. 总线协议/C. 中高速外设与存储/B-C.9.5_实战OV摄像头点亮全流程.md",
+      "docs/B. 总线协议/D. 专用网络总线/B-D.10.2_PCIe枚举与配置空间.md",
+      "docs/B. 总线协议/D. 专用网络总线/B-D.10.4_PCIe进阶Gen456信号完整性与AER.md",
+      "docs/B. 总线协议/F. 前沿高速串行/B-F.16.1_SerDes通识均衡眼图抖动信道预算.md"
+    ]
+  },
+  "reader_checks": {
+    "dependency": {
+      "status": "pass",
+      "evidence": "最终稿已重新通读并补齐新引入的 TLP、CRC、PHY、GPIO、CEM、NRZ、PCI-X 等首次依赖。实物照片和教学拓扑明确区分实测、用户记录与教学构造；完整 Domain 命令用于避免多域误选。"
+    },
+    "mainline": {
+      "status": "pass",
+      "evidence": "第一页按“路径→宽度→训练前提→L0→带宽→状态核对→插拔重建”组织，完整 NVMe 复合读取已移到第二页并明确为第二笔操作。Switch 不再被误写成 RC 扩展设备的唯一方式，PRSNT 只承担在位检测和生命周期衔接。"
+    },
+    "blind_delete": {
+      "status": "pass",
+      "evidence": "删除照片、外部 SVG、iframe、Mermaid、代码块和表格后，正文仍能解释拓扑、Lane、时钟复位、LTSSM、带宽、链路状态、Memory Read、NVMe DMA 和热插拔边界。重复 GIF、废弃注释 iframe 和低价值 PixPin 引用已移除。"
+    },
+    "follow": {
+      "status": "pass",
+      "evidence": "正常路径覆盖上电条件、Detect→Polling→Configuration→L0、Recovery 变速、LnkCap／LnkSta 双端核对、Memory Read 往返、SEQ=5 重传和 4 KB NVMe 复合读取。PRSNT 等待时间按不同规范条件拆分，没有统一写成 100 ms。"
+    }
+  },
+  "verification": {
+    "static_checks": {
+      "status": "pass",
+      "result": "2026-11-27 最终 git diff --check 无内容错误，仅有 LF／CRLF 提示。零宽代码围栏和行尾空格已清除；生成 HTML 中代码块、完整 Domain 命令、NVMe 第二笔操作、PRSNT SVG、上电时序标题及跨页链接均存在。"
+    },
+    "strict_build": {
+      "status": "pass",
+      "command": "\"/c/Users/75672/AppData/Local/Python/pythoncore-3.14-64/python.exe\" -m mkdocs build --strict",
+      "result": "2026-11-27 对最终修订实际执行，退出码 0，Documentation built in 27.74 seconds。输出包含 Material 团队公告和项目既有 slug/nav INFO，未出现 MkDocs 构建 WARNING。仅表示当前文档严格构建成功。"
+    },
+    "browser": {
+      "status": "not_verified",
+      "result": "not_verified（待统一桌面验收）。未实际点击或播放上电时序与 LTSSM iframe，也未做桌面 DOM 交互、Mermaid 实际渲染、窄屏或全站浏览器回归。"
+    },
+    "teaching_code": {
+      "compile": "not_applicable",
+      "run": "not_applicable",
+      "hardware": "not_applicable",
+      "instrument": "not_applicable",
+      "note": "本组没有教学代码、构建实验、目标板操作或仪器实验。Gen4 RC—NVMe、VS=0x00010400 和链路输出均明确为教学构造；用户实机记录只作为归档的软件观察证据。"
+    }
+  },
+  "open_issues": [
+    "尚未取得完整 PCI-SIG Base Specification 的印刷页码；本轮使用 PCI-SIG 资料、AMD 官方资料、Linux 主控驱动文档、pciutils、NVMe 官方规范及其他一手资料核对当前结论，未伪造本地源码快照。",
+    "上电时序与 LTSSM iframe 的实际播放、点击、重置和桌面渲染仍未验证，留待统一桌面验收。",
+    "主实例未绑定一块真实 Gen4 板卡，所有相关数值均标为教学构造或理论计算，不能据此宣称目标运行、链路训练或 NVMe 实测通过。",
+    "reader_checks 的 AI 复核和 record_state=current 不表示人工教学质量通过，仍待用户连续阅读两页并确认。"
+  ],
+  "next_action": "由用户人工阅读优化后的 B-D.10.1 两页，重点检查跨页任务切换、REFCLK／PERST#、LTSSM 软件职责和 NVMe 复合读取是否清楚；确认后按设计归档第 14 节单独诊断 B-D.10.2。"
+}

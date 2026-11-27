@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+<title>PCIe 卡边缘连接器宽度等比对比：x1／x4／x8／x16</title>
+<style>
+  text { font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
+  @media (prefers-color-scheme: dark) {
+    .fg { stroke: #d0d7de; }
+    .fgf { fill: #d0d7de; }
+    .hl { fill: #58a6ff; }
+  }
+</style>
+
+<!-- 公共信号段说明 -->
+<text class="fgf" x="80" y="30" font-size="11" fill="#24292f">公共信号段：前 36 针（电源、复位、时钟请求、JTAG 等），所有规格相同</text>
+<rect class="hl" x="80" y="40" width="100" height="200" fill="#0969da" opacity="0.12"/>
+
+<!-- x1 -->
+<text class="fgf" x="66" y="55" text-anchor="end" font-size="14" font-weight="bold" fill="#24292f">x1</text>
+<rect class="fg" x="80" y="42" width="100" height="20" rx="2" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="188" y="57" font-size="11" fill="#24292f">36 针 · ≈25 mm · 2 对差分线</text>
+
+<!-- x4 -->
+<text class="fgf" x="66" y="105" text-anchor="end" font-size="14" font-weight="bold" fill="#24292f">x4</text>
+<rect class="fg" x="80" y="92" width="156" height="20" rx="2" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="244" y="107" font-size="11" fill="#24292f">64 针 · ≈39 mm · 8 对差分线</text>
+
+<!-- x8 -->
+<text class="fgf" x="66" y="155" text-anchor="end" font-size="14" font-weight="bold" fill="#24292f">x8</text>
+<rect class="fg" x="80" y="142" width="226" height="20" rx="2" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="314" y="157" font-size="11" fill="#24292f">98 针 · ≈57 mm · 16 对差分线</text>
+
+<!-- x16 -->
+<text class="fgf" x="66" y="205" text-anchor="end" font-size="14" font-weight="bold" fill="#24292f">x16</text>
+<rect class="fg" x="80" y="192" width="356" height="20" rx="2" fill="none" stroke="#24292f" stroke-width="1.5"/>
+<text class="fgf" x="444" y="207" font-size="11" fill="#24292f">164 针 · ≈89 mm · 32 对差分线</text>
+
+<!-- x16 尺寸标尺 -->
+<line class="fg" x1="80" y1="232" x2="436" y2="232" fill="none" stroke="#24292f" stroke-width="1"/>
+<line class="fg" x1="80" y1="226" x2="80" y2="238" fill="none" stroke="#24292f" stroke-width="1"/>
+<line class="fg" x1="436" y1="226" x2="436" y2="238" fill="none" stroke="#24292f" stroke-width="1"/>
+<text class="fgf" x="258" y="254" text-anchor="middle" font-size="11" fill="#24292f">≈89 mm（针距 1.0 mm，各规格等比绘制）</text>
+
+<!-- 底部注释 -->
+<text class="fgf" x="80" y="282" font-size="11" fill="#24292f"> Lane 信号（差分对）位于公共段之后；连接器越长，可容纳的 Lane 越多。</text>
+</svg>

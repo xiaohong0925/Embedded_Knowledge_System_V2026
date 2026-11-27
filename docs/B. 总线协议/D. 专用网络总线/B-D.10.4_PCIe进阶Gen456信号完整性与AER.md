@@ -227,6 +227,8 @@ nvme 0000:01:00.0: PCIe Bus Error: severity=Corrected, type=Data Link Layer, (Re
 2. **意外移除（surprise removal）**是另一回事：线被碰掉、背板接触不良。设备侧表现是所有配置读返回全 1（`0xFFFFFFFF`——10.2 讲的"无设备应答读回全 1"在这里复现），内核将通道标记为 offline，注册的 `pci_error_handlers.error_detected` 回调被调用。**健壮的驱动必须实现这套错误处理回调**，否则意外拔卡后内核可能带着半死的设备继续跑。
 3. **PERST# 时序是 bring-up 经典坑**：复位释放到链路训练有最小间隔要求；复位与上电顺序反了，设备可能进入不确定状态，枚举阶段报训练错误。设备树里 `reset-gpios` 的延迟参数不是装饰。
 
+调试插拔问题时，还要把 Root Port 的能力与当前状态分开读：Slot Capabilities 说明插槽是否声明 HotPlug、Power Controller 等能力，Slot Status 则给出当前 Presence Detect State 和相应变化标志。`PresDet` 只回答当前是否检测到设备，不能代替 `pciehp` 日志、链路状态和重新枚举结果。PRSNT# 只是可能的检测来源之一，具体带外／带内条件及等待时间按平台手册和对应规范核对。
+
 ---
 
 ## <span class="blue"> 链路器件与线缆生态

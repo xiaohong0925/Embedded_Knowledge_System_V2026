@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 440" font-family="system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .fg { fill: #c9d1d9; }
+      .dim { fill: #8b949e; }
+      .an { stroke: #e8a33d; }
+      .anf { fill: #e8a33d; }
+    }
+  </style>
+
+  <!-- 纵轴标题：代际 -->
+  <text class="fg" fill="#1f2328" font-size="13" text-anchor="middle" transform="rotate(-90 40 214)" x="40" y="214">代际（每 Lane 符号率）↑</text>
+
+  <!-- 行标签 + 每 Lane 符号率 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="end" x="98" y="92">Gen5</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="end" x="98" y="108">32 GT/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="end" x="98" y="152">Gen4</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="end" x="98" y="168">16 GT/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="end" x="98" y="212">Gen3</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="end" x="98" y="228">8 GT/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="end" x="98" y="272">Gen2</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="end" x="98" y="288">5 GT/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="end" x="98" y="332">Gen1</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="end" x="98" y="348">2.5 GT/s</text>
+
+  <!-- Gen5 行 -->
+  <rect x="110" y="70"  width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.20"/>
+  <rect x="257" y="70"  width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.38"/>
+  <rect x="404" y="70"  width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.50"/>
+  <rect x="551" y="70"  width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.64"/>
+  <!-- Gen4 行 -->
+  <rect x="110" y="130" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.16"/>
+  <rect x="257" y="130" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.28"/>
+  <rect x="404" y="130" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.38"/>
+  <rect x="551" y="130" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.50"/>
+  <!-- Gen3 行 -->
+  <rect x="110" y="190" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.12"/>
+  <rect x="257" y="190" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.20"/>
+  <rect x="404" y="190" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.28"/>
+  <rect x="551" y="190" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.38"/>
+  <!-- Gen2 行 -->
+  <rect x="110" y="250" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.09"/>
+  <rect x="257" y="250" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.15"/>
+  <rect x="404" y="250" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.21"/>
+  <rect x="551" y="250" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.29"/>
+  <!-- Gen1 行 -->
+  <rect x="110" y="310" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.07"/>
+  <rect x="257" y="310" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.11"/>
+  <rect x="404" y="310" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.15"/>
+  <rect x="551" y="310" width="135" height="48" rx="5" fill="#0969da" fill-opacity="0.21"/>
+
+  <!-- 数值：Gen5 行 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="178" y="92">3.94</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="106">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="325" y="92">15.8</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="106">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="472" y="92">31.5</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="106">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="619" y="92">63.0</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="106">GB/s</text>
+  <!-- 数值：Gen4 行 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="178" y="152">1.97</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="166">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="325" y="152">7.88</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="166">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="472" y="152">15.8</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="166">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="619" y="152">31.5</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="166">GB/s</text>
+  <!-- 数值：Gen3 行 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="178" y="212">0.98</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="226">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="325" y="212">3.94</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="226">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="472" y="212">7.88</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="226">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="619" y="212">15.8</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="226">GB/s</text>
+  <!-- 数值：Gen2 行 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="178" y="272">0.50</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="286">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="325" y="272">2.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="286">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="472" y="272">4.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="286">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="619" y="272">8.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="286">GB/s</text>
+  <!-- 数值：Gen1 行 -->
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="178" y="332">0.25</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="346">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="325" y="332">1.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="346">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="472" y="332">2.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="346">GB/s</text>
+  <text class="fg" fill="#1f2328" font-size="15" font-weight="600" text-anchor="middle" x="619" y="332">4.00</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="346">GB/s</text>
+
+  <!-- 列标签 -->
+  <text class="fg" fill="#1f2328" font-size="14" font-weight="600" text-anchor="middle" x="178" y="380">x1</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="178" y="395">1 条</text>
+  <text class="fg" fill="#1f2328" font-size="14" font-weight="600" text-anchor="middle" x="325" y="380">x4</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="325" y="395">4 条</text>
+  <text class="fg" fill="#1f2328" font-size="14" font-weight="600" text-anchor="middle" x="472" y="380">x8</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="472" y="395">8 条</text>
+  <text class="fg" fill="#1f2328" font-size="14" font-weight="600" text-anchor="middle" x="619" y="380">x16</text>
+  <text class="dim" fill="#59636e" font-size="10" text-anchor="middle" x="619" y="395">16 条</text>
+  <text class="dim" fill="#59636e" font-size="12" text-anchor="middle" x="398" y="416">链路宽度（一条 Link 内的 Lane 数）→</text>
+
+  <!-- 高亮：Gen5×1 与 Gen1×16 几乎同速 -->
+  <rect x="106" y="66"  width="143" height="56" rx="7" fill="none" stroke="#9a6700" stroke-width="1.6" stroke-dasharray="5 4" class="an"/>
+  <rect x="547" y="306" width="143" height="56" rx="7" fill="none" stroke="#9a6700" stroke-width="1.6" stroke-dasharray="5 4" class="an"/>
+  <path d="M 178 66 V 40 H 690 V 364 H 619" fill="none" stroke="#9a6700" stroke-width="1.3" stroke-dasharray="5 4" class="an"/>
+  <text class="anf" fill="#9a6700" font-size="12.5" text-anchor="middle" x="398" y="28">16 × Gen1 ≈ 1 × Gen5 ≈ 4 GB/s —— 宽度可以抵消代际差距</text>
+
+  <!-- 本页实例标记：Gen4 × x4 -->
+  <text class="anf" fill="#9a6700" font-size="12" text-anchor="start" x="112" y="436">◆ Gen4 x4 ≈ 7.88 GB/s（本页实例）</text>
+  <text class="dim" fill="#59636e" font-size="11" text-anchor="start" x="330" y="436">颜色越深 = 带宽越大；数值为编码后单向理论带宽，不含协议开销</text>
+</svg>

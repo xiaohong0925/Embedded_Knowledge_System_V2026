@@ -773,7 +773,9 @@ nav:
               - B-C.9.5 实战OV摄像头点亮全流程: B. 总线协议/C. 中高速外设与存储/B-C.9.5_实战OV摄像头点亮全流程.md
       - D. 专用网络总线:
           - D.10 PCIe:
-              - B-D.10.1 PCIe基础与物理层: B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层.md
+              - B-D.10.1 PCIe基础与物理层:
+                  - 拓扑与物理链路: B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层.md
+                  - 事务与软件模型: B. 总线协议/D. 专用网络总线/B-D.10.1_PCIe基础与物理层_transaction.md
               - B-D.10.2 PCIe枚举与配置空间: B. 总线协议/D. 专用网络总线/B-D.10.2_PCIe枚举与配置空间.md
               - B-D.10.3 PCIe Linux驱动与DMA: B. 总线协议/D. 专用网络总线/B-D.10.3_PCIe Linux驱动与DMA.md
               - B-D.10.4 PCIe进阶Gen456信号完整性与AER: B. 总线协议/D. 专用网络总线/B-D.10.4_PCIe进阶Gen456信号完整性与AER.md
